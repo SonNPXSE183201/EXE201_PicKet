@@ -1,0 +1,34 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SonNPXSE183201/EXE201_PicKet.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/SonNPXSE183201/EXE201_PicKet/issues"
+  },
+  "homepage": "https://github.com/SonNPXSE183201/EXE201_PicKet#readme",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.0"
+  },
+  "lint-staged": {
+    "web/**/*.{js,jsx,ts,tsx}": [
+      "npm run lint --prefix web"
+    ],
+    "mobile/**/*.dart": [
+      "cd mobile && flutter analyze"
+    ]
+  }
+}
