@@ -1,17 +1,13 @@
-# mobile
+# Picket mobile
 
-A new Flutter project.
+Flutter Android implementation based on Picket.MockUI. See `../docs/ANDROID_SETUP.md` for functionality, Supabase schema, Google Play configuration, signing and native verification.
 
-## Getting Started
+```powershell
+flutter pub get
+flutter analyze --no-pub
+flutter test --no-pub
+```
 
-This project is a starting point for a Flutter application.
+No Android build or deployment has been performed. Production values belong in ignored `config/production.json`, copied from `config/production.example.json`. Release signing uses a private upload keystore configured in ignored `android/key.properties`.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Feature modules: finance, auth, capture, settings, billing, admin, partners. SQLite stores AES-GCM financial snapshots; Supabase synchronizes snapshots using optimistic concurrency and owner RLS. Private media is stored separately. See setup documentation for limits and conflict behavior.

@@ -1,0 +1,4 @@
+storeFile=C:/secure/picket-upload.jks
+storePassword=REPLACE_LOCALLY
+keyAlias=picket-upload
+keyPassword=REPLACE_LOCALLY

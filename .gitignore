@@ -1,1 +1,9 @@
 node_modules/
+
+mobile/config/production.json
+mobile/android/key.properties
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example

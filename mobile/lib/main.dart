@@ -1,121 +1,162 @@
+import 'dart:async';
+import 'features/billing/data/billing_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/config/app_config.dart';
+import 'core/security/device_lock.dart';
+import 'features/auth/data/secure_auth_storage.dart';
+import 'features/auth/presentation/auth_gate.dart';
+import 'core/theme/picket_theme.dart';
+import 'features/finance/presentation/screens/app_shell.dart';
+import 'features/finance/presentation/screens/onboarding_screen.dart';
+import 'features/finance/presentation/state/finance_controller.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    AppConfig.validate();
+    if (AppConfig.configured) {
+      await Supabase.initialize(
+        url: AppConfig.supabaseUrl,
+        publishableKey: AppConfig.supabaseKey,
+        authOptions: FlutterAuthClientOptions(
+          localStorage: SecureAuthStorage(),
+        ),
+      );
+    }
+    runApp(
+      AppConfig.configured
+          ? const AuthGate()
+          : const ProviderScope(child: PicketApp(enableDeviceLock: true)),
+    );
+  } catch (_) {
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text(
+                'Không khởi tạo được ứng dụng. Kiểm tra cấu hình phát hành hoặc khởi động lại.',
+              ),
+            ),
+          ),
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class PicketApp extends ConsumerStatefulWidget {
+  const PicketApp({super.key, this.enableDeviceLock = false});
+  final bool enableDeviceLock;
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  ConsumerState<PicketApp> createState() => _PicketAppState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _PicketAppState extends ConsumerState<PicketApp>
+    with WidgetsBindingObserver {
+  Timer? _syncTimer;
+  DateTime? _lastSync, _lastBillingRefresh;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    ref.read(financeProvider).load();
+    if (ref.read(financeProvider).cloudEnabled) {
+      _syncTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+        if (WidgetsBinding.instance.lifecycleState ==
+            AppLifecycleState.resumed) {
+          _refreshCloud();
+        }
+      });
+    }
+  }
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  void _refreshCloud() {
+    final controller = ref.read(financeProvider);
+    if (!controller.cloudEnabled ||
+        controller.loading ||
+        controller.saving ||
+        controller.syncing) {
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastSync == null || now.difference(_lastSync!).inSeconds >= 30) {
+      _lastSync = now;
+      unawaited(controller.synchronize());
+    }
+    if (_lastBillingRefresh == null ||
+        now.difference(_lastBillingRefresh!).inMinutes >= 5) {
+      final billing = ref.read(billingProvider);
+      if (!billing.busy) {
+        _lastBillingRefresh = now;
+        unawaited(billing.initialize());
+      }
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _refreshCloud();
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    final controller = ref.watch(financeProvider);
+    if (controller.cloudEnabled) ref.watch(billingProvider);
+    return MaterialApp(
+      title: 'Picket',
+      debugShowCheckedModeBanner: false,
+      theme: picketTheme(),
+      locale: const Locale('vi'),
+      supportedLocales: const [Locale('vi'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      builder: (context, child) =>
+          widget.enableDeviceLock ? DeviceLock(child: child!) : child!,
+      home: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) {
+          if (controller.loading) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (controller.loadError != null) {
+            return Scaffold(
+              body: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off_outlined, size: 48),
+                      const SizedBox(height: 24),
+                      Text(controller.loadError!, textAlign: TextAlign.center),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: controller.load,
+                        child: const Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+          return controller.data.onboarded
+              ? AppShell(controller: controller)
+              : OnboardingScreen(controller: controller);
+        },
       ),
     );
   }
