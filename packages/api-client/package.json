@@ -1,0 +1,13 @@
+{
+  "name": "@picket/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "peerDependencies": {
+    "@picket/domain": "0.1.0"
+  }
+}

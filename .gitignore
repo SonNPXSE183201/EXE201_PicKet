@@ -1,4 +1,7 @@
 node_modules/
+.idea/
+supabase/.branches/
+supabase/.temp/
 
 mobile/config/production.json
 mobile/android/key.properties

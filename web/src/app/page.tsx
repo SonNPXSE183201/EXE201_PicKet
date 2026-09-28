@@ -1,69 +1,121 @@
-import Image from "next/image";
+"use client";
+
+import { PicketApiClient } from "@picket/api-client";
+import { useEffect, useMemo, useState } from "react";
+
+type ApiState = "checking" | "online" | "offline";
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export default function Home() {
+  const [apiState, setApiState] = useState<ApiState>("checking");
+  const client = useMemo(
+    () =>
+      new PicketApiClient(apiBaseUrl),
+    [],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    client
+      .health(controller.signal)
+      .then(() => setApiState("online"))
+      .catch((error: unknown) => {
+        if (!(error instanceof Error && error.name === "AbortError")) {
+          setApiState("offline");
+        }
+      });
+    return () => controller.abort();
+  }, [client]);
+
+  const statusText = {
+    checking: "Đang kiểm tra API",
+    online: "Dart API đang hoạt động",
+    offline: "Dart API chưa được khởi động",
+  }[apiState];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main>
+      <nav className="nav shell" aria-label="Điều hướng chính">
+        <a className="brand" href="#top" aria-label="Picket trang chủ">
+          <span className="brand-mark">P</span>
+          <span>Picket</span>
+        </a>
+        <span className={`api-status ${apiState}`}>
+          <span className="status-dot" aria-hidden="true" />
+          {statusText}
+        </span>
+      </nav>
+
+      <section className="hero shell" id="top">
+        <div className="hero-copy">
+          <p className="eyebrow">Tài chính rõ ràng, mỗi ngày</p>
+          <h1>Biến từng hóa đơn thành một quyết định tốt hơn.</h1>
+          <p className="lead">
+            Picket gom mọi khoản thu chi vào một nơi. Quét hóa đơn nhanh trên
+            thiết bị, đồng bộ an toàn và theo dõi kế hoạch trên web hoặc mobile.
           </p>
+          <div className="actions">
+            <a className="button primary" href="#architecture">
+              Khám phá nền tảng
+            </a>
+            <a className="button secondary" href={`${apiBaseUrl}/openapi.yaml`}>
+              Xem API contract
+            </a>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="overview-card" aria-label="Bản xem trước tổng quan">
+          <div className="card-heading">
+            <div>
+              <span>Số dư tháng này</span>
+              <strong>18.420.000 ₫</strong>
+            </div>
+            <span className="trend">+8,4%</span>
+          </div>
+          <div className="chart" aria-hidden="true">
+            {[38, 52, 47, 68, 60, 82, 74, 92].map((height, index) => (
+              <span key={index} style={{ height: `${height}%` }} />
+            ))}
+          </div>
+          <div className="summary-row">
+            <div>
+              <span>Thu nhập</span>
+              <strong className="income">24.800.000 ₫</strong>
+            </div>
+            <div>
+              <span>Chi tiêu</span>
+              <strong className="expense">6.380.000 ₫</strong>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="features shell" id="architecture">
+        <article>
+          <span className="feature-number">01</span>
+          <h2>OCR ưu tiên thiết bị</h2>
+          <p>
+            ML Kit xử lý nhanh, hoạt động ngoại tuyến. Ảnh khó mới chuyển sang
+            fallback để giữ trải nghiệm mượt trên Android cấu hình yếu.
+          </p>
+        </article>
+        <article>
+          <span className="feature-number">02</span>
+          <h2>Một hợp đồng API</h2>
+          <p>
+            Next.js và Expo dùng chung client TypeScript, giao tiếp với Dart Frog
+            qua REST/OpenAPI thay vì phụ thuộc trực tiếp vào dữ liệu nội bộ.
+          </p>
+        </article>
+        <article>
+          <span className="feature-number">03</span>
+          <h2>Đồng bộ có kiểm soát</h2>
+          <p>
+            Supabase tiếp tục đảm nhiệm xác thực và Postgres. JWT người dùng được
+            chuyển tiếp để mọi chính sách RLS vẫn được bảo toàn.
+          </p>
+        </article>
+      </section>
+    </main>
   );
 }

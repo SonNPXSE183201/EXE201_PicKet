@@ -19,7 +19,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@picket/api-client": ["../packages/api-client/src/index.ts"],
+      "@picket/design-tokens": ["../packages/design-tokens/src/index.ts"],
+      "@picket/domain": ["../packages/domain-ts/src/index.ts"]
     }
   },
   "include": [

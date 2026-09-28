@@ -5,6 +5,16 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import '../domain/receipt_parser.dart';
 
 class ReceiptOcr {
+  ReceiptOcr({TextRecognizer? recognizer})
+    : _recognizer =
+          recognizer ?? TextRecognizer(script: TextRecognitionScript.latin);
+
+  final TextRecognizer _recognizer;
+  bool _closed = false;
+  bool _reading = false;
+  Completer<void>? _idle;
+  Future<void>? _closeFuture;
+
   Future<void> recordEvent(bool success, int duration) async {
     try {
       final client = Supabase.instance.client;
@@ -24,20 +34,46 @@ class ReceiptOcr {
   }
 
   Future<ReceiptDraft> read(String path) async {
-    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    if (_closed) throw StateError('OCR recognizer has been closed');
+    if (_reading) throw StateError('OCR is already processing an image');
+    _reading = true;
+    final idle = Completer<void>();
+    _idle = idle;
     final watch = Stopwatch()..start();
     bool success = false;
     try {
-      final result = await recognizer.processImage(
+      final result = await _recognizer.processImage(
         InputImage.fromFilePath(path),
       );
       success = result.text.trim().isNotEmpty;
-      return parseReceipt(result.text);
+      final lines = [
+        for (final block in result.blocks)
+          for (final line in block.lines)
+            ReceiptTextLine(
+              text: line.text,
+              confidence: line.confidence,
+              left: line.boundingBox.left,
+              top: line.boundingBox.top,
+              right: line.boundingBox.right,
+              bottom: line.boundingBox.bottom,
+            ),
+      ];
+      return parseReceiptLines(lines, rawText: result.text);
     } finally {
-      await recognizer.close();
+      _reading = false;
+      idle.complete();
       if (AppConfig.configured) {
         unawaited(recordEvent(success, watch.elapsedMilliseconds));
       }
     }
+  }
+
+  Future<void> close() => _closeFuture ??= _close();
+
+  Future<void> _close() async {
+    _closed = true;
+    final idle = _idle;
+    if (idle != null && !idle.isCompleted) await idle.future;
+    await _recognizer.close();
   }
 }

@@ -1,12 +1,59 @@
-name: Validate mobile and backend source
+name: Validate Picket source
 on:
   push:
-    paths: ['mobile/**', 'supabase/**', '.github/workflows/source-validation.yml']
+    paths: ['apps/**', 'mobile/**', 'packages/**', 'supabase/**', 'web/**', '.github/workflows/source-validation.yml']
   pull_request:
-    paths: ['mobile/**', 'supabase/**', '.github/workflows/source-validation.yml']
+    paths: ['apps/**', 'mobile/**', 'packages/**', 'supabase/**', 'web/**', '.github/workflows/source-validation.yml']
 permissions:
   contents: read
 jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: '3.12.0'
+      - run: dart pub get
+      - run: dart format --output=none --set-exit-if-changed lib routes test
+      - run: dart analyze
+      - run: dart test
+      - run: dart pub global activate dart_frog_cli 1.2.14
+      - run: dart_frog build
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+  expo:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npx expo-doctor
   flutter:
     runs-on: ubuntu-latest
     defaults:

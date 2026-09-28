@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -23,6 +24,8 @@ class CaptureScreen extends StatefulWidget {
 }
 
 class _CaptureScreenState extends State<CaptureScreen> {
+  late final ReceiptOcr _ocr;
+  final PhotoStorage _photos = PhotoStorage();
   String? path, error;
   bool busy = false;
   bool keepsake = false;
@@ -34,7 +37,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       error = null;
     });
     try {
-      final result = await ReceiptOcr().read(path!);
+      final result = await _ocr.read(path!);
       if (mounted) setState(() => draft = result);
     } catch (_) {
       if (mounted) {
@@ -51,7 +54,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
   @override
   void initState() {
     super.initState();
+    _ocr = ReceiptOcr();
     path = widget.recoveredPath;
+  }
+
+  @override
+  void dispose() {
+    unawaited(_ocr.close());
+    super.dispose();
   }
 
   Future<void> pick(ImageSource source) async {
@@ -60,7 +70,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
       error = null;
     });
     try {
-      final selected = await PhotoStorage().pick(source);
+      final selected = await _photos.pick(
+        source,
+        maxWidth: keepsake ? 1800 : 1280,
+        imageQuality: keepsake ? 85 : 82,
+      );
       if (selected != null && mounted) {
         setState(() {
           path = selected;
@@ -183,9 +197,28 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 title: Text(
                   draft!.amount == null
                       ? 'Cần nhập tổng tiền thủ công'
+                      : draft!.needsFallback
+                      ? 'Kết quả OCR chưa chắc chắn'
                       : 'Đã đọc được tổng tiền · cần xác nhận',
                 ),
                 children: [
+                  if (draft!.reviewReason != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Text(
+                        '${draft!.reviewReason} Hãy chụp lại hoặc nhập tay.',
+                        style: const TextStyle(color: PicketColors.expense),
+                      ),
+                    ),
+                  if (draft!.amountConfidence != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Text(
+                        'Độ tin cậy tổng tiền: '
+                        '${(draft!.amountConfidence! * 100).round()}%',
+                        style: const TextStyle(color: PicketColors.muted),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: SelectableText(

@@ -92,6 +92,44 @@ void main() {
     expect(parseReceipt('Shop\n31/02/2026\nitem 900.000').date, isNull);
     expect(parseReceipt('Shop\nitem 900.000').amount, isNull);
   });
+  test('Receipt parser uses OCR geometry and exposes fallback confidence', () {
+    final draft = parseReceiptLines(const [
+      ReceiptTextLine(
+        text: 'CỬA HÀNG ABC',
+        confidence: 0.96,
+        top: 20,
+        bottom: 60,
+      ),
+      ReceiptTextLine(
+        text: 'Tạm tính 140.000',
+        confidence: 0.94,
+        top: 500,
+        bottom: 540,
+      ),
+      ReceiptTextLine(
+        text: 'Tiền khách 200.000',
+        confidence: 0.95,
+        top: 600,
+        bottom: 640,
+      ),
+      ReceiptTextLine(
+        text: 'TỔNG CỘNG 125.000 đ',
+        confidence: 0.93,
+        top: 700,
+        bottom: 750,
+      ),
+    ]);
+    expect(draft.merchant, 'CỬA HÀNG ABC');
+    expect(draft.amount, 125000);
+    expect(draft.amountConfidence, greaterThanOrEqualTo(0.9));
+    expect(draft.needsFallback, isFalse);
+
+    final weak = parseReceiptLines(const [
+      ReceiptTextLine(text: 'SHOP', confidence: 0.4),
+    ]);
+    expect(weak.needsFallback, isTrue);
+    expect(weak.reviewReason, isNotNull);
+  });
   test('CSV neutralizes formulas and escapes quotes', () {
     expect(csvCell('=SUM(A1)'), '"\'=SUM(A1)"');
     expect(csvCell('a"b'), '"a""b"');

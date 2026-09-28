@@ -4,11 +4,15 @@ import 'package:path_provider/path_provider.dart';
 
 class PhotoStorage {
   final ImagePicker _picker = ImagePicker();
-  Future<String?> pick(ImageSource source) async {
+  Future<String?> pick(
+    ImageSource source, {
+    double maxWidth = 1800,
+    int imageQuality = 85,
+  }) async {
     final photo = await _picker.pickImage(
       source: source,
-      maxWidth: 1800,
-      imageQuality: 85,
+      maxWidth: maxWidth,
+      imageQuality: imageQuality,
     );
     return photo == null ? null : _persist(photo);
   }
