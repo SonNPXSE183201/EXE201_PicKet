@@ -18,10 +18,19 @@ abstract final class AppConfig {
     if (environment == 'production' && !configured) {
       throw StateError('Thiếu cấu hình Supabase production.');
     }
-    if (configured &&
-        (Uri.tryParse(supabaseUrl)?.scheme != 'https' ||
-            Uri.parse(supabaseUrl).host.isEmpty)) {
-      throw StateError('Supabase phải dùng HTTPS.');
+    if (configured) {
+      final uri = Uri.tryParse(supabaseUrl);
+      final localDevelopment =
+          environment != 'production' &&
+          uri?.scheme == 'http' &&
+          const {'localhost', '127.0.0.1', '10.0.2.2'}.contains(uri?.host);
+      if (uri == null ||
+          uri.host.isEmpty ||
+          (uri.scheme != 'https' && !localDevelopment)) {
+        throw StateError(
+          'Supabase phải dùng HTTPS; development chỉ cho phép localhost, 127.0.0.1 hoặc 10.0.2.2.',
+        );
+      }
     }
     if (supabaseKey.split('.').length == 3) {
       try {

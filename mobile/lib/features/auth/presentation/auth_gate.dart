@@ -17,48 +17,49 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  StreamSubscription<AuthState>? subscription;
-  bool recovering = false;
-  String? userId;
+  StreamSubscription<AuthState>? _subscription;
+  bool _recovering = false;
+  String? _userId;
+
   @override
   void initState() {
     super.initState();
-    userId = Supabase.instance.client.auth.currentUser?.id;
-    subscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+    _userId = Supabase.instance.client.auth.currentUser?.id;
+    _subscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       state,
     ) {
       if (!mounted) return;
-      if (userId == state.session?.user.id &&
-          state.event != AuthChangeEvent.passwordRecovery) {
-        return;
-      }
       setState(() {
-        userId = state.session?.user.id;
-        if (state.event == AuthChangeEvent.passwordRecovery) recovering = true;
-        if (state.session == null) recovering = false;
+        _userId = state.session?.user.id;
+        if (state.event == AuthChangeEvent.passwordRecovery) {
+          _recovering = true;
+        } else if (state.event == AuthChangeEvent.signedOut ||
+            state.session == null) {
+          _recovering = false;
+        }
       });
     });
   }
 
   @override
   void dispose() {
-    subscription?.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (userId == null || recovering) {
+    if (_userId == null || _recovering) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: picketTheme(),
         home: AuthScreen(
-          recovery: recovering,
-          onRecovered: () => setState(() => recovering = false),
+          recovery: _recovering,
+          onRecovered: () => setState(() => _recovering = false),
         ),
       );
     }
-    final id = userId!;
+    final id = _userId!;
     return ProviderScope(
       key: ValueKey(id),
       overrides: [

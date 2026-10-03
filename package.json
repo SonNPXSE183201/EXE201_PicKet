@@ -28,7 +28,7 @@
       "npm run lint --prefix web"
     ],
     "mobile/**/*.dart": [
-      "cd mobile && flutter analyze"
+      "flutter analyze mobile"
     ]
   }
 }

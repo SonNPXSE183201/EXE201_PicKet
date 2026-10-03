@@ -24,7 +24,7 @@ paths:
         - bearerAuth: []
       responses:
         '200':
-          description: Current versioned finance snapshot
+          description: Current finance contract assembled from normalized tables
           content:
             application/json:
               schema:
@@ -54,11 +54,79 @@ paths:
                     type: integer
                     format: int64
         '400':
-          description: Invalid snapshot
+          description: Invalid finance contract
         '401':
           $ref: '#/components/responses/Unauthorized'
         '409':
           description: Optimistic concurrency conflict
+  /v1/me:
+    get:
+      operationId: getCurrentProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current authenticated profile and preferences
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/onboarding:
+    post:
+      operationId: completeOnboarding
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteOnboardingRequest'
+      responses:
+        '201':
+          description: Profile, preferences and first wallet created atomically
+        '400':
+          description: Invalid onboarding data
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /v1/profile:
+    patch:
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                display_name: {type: string, maxLength: 120}
+                avatar_url: {type: string, maxLength: 2048}
+                locale: {type: string, maxLength: 16}
+                timezone: {type: string, maxLength: 80}
+      responses:
+        '200': {description: Profile updated}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /v1/preferences:
+    patch:
+      operationId: updatePreferences
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                persona: {type: string, maxLength: 80}
+                goal: {type: string, maxLength: 120}
+                currency_code: {type: string, pattern: '^[A-Z]{3}$'}
+                hide_balance: {type: boolean}
+      responses:
+        '200': {description: Preferences updated}
+        '401': {$ref: '#/components/responses/Unauthorized'}
 components:
   securitySchemes:
     bearerAuth:
@@ -117,6 +185,17 @@ components:
           minimum: 0
         payload:
           $ref: '#/components/schemas/FinancePayload'
+    CompleteOnboardingRequest:
+      type: object
+      additionalProperties: false
+      required: [displayName, persona, goal, currencyCode, walletName, openingBalance]
+      properties:
+        displayName: {type: string, minLength: 1, maxLength: 120}
+        persona: {type: string, minLength: 1, maxLength: 80}
+        goal: {type: string, minLength: 1, maxLength: 120}
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        walletName: {type: string, minLength: 1, maxLength: 80}
+        openingBalance: {type: integer, format: int64}
     FinancePayload:
       type: object
       required: [version, name, onboarded, hideBalance, wallets, entries, budgets, bills, keepsakes]

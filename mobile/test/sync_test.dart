@@ -137,9 +137,12 @@ void main() {
         'https://example.test',
         'anon',
         httpClient: MockClient((request) async {
-          if (request.method == 'POST') {
+          if (request.url.path.endsWith('/rpc/save_normalized_finance')) {
             return http.Response(
-              jsonEncode({'code': '40001', 'message': 'Snapshot conflict'}),
+              jsonEncode({
+                'code': '40001',
+                'message': 'Normalized finance conflict',
+              }),
               409,
               request: request,
               headers: {'content-type': 'application/json'},

@@ -29,7 +29,7 @@ Future<void> main() async {
     runApp(
       AppConfig.configured
           ? const AuthGate()
-          : const ProviderScope(child: PicketApp(enableDeviceLock: true)),
+          : const _MissingBackendConfigurationApp(),
     );
   } catch (_) {
     runApp(
@@ -47,6 +47,33 @@ Future<void> main() async {
       ),
     );
   }
+}
+
+class _MissingBackendConfigurationApp extends StatelessWidget {
+  const _MissingBackendConfigurationApp();
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    theme: picketTheme(),
+    home: const Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text(
+              'Picket cần Supabase để đăng nhập. Chạy ứng dụng với:\n\n'
+              'flutter run -d emulator-5554 '
+              '--dart-define-from-file=config/production.json\n\n'
+              'Production dùng HTTPS. Android Emulator có thể dùng '
+              'http://10.0.2.2:54321 trong development.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class PicketApp extends ConsumerStatefulWidget {

@@ -191,6 +191,48 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+          if (controller.cloudEnabled) ...[
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              key: const Key('profile-sign-out'),
+              onPressed: controller.saving || controller.syncing
+                  ? null
+                  : () async {
+                      final accepted = await showDialog<bool>(
+                        context: context,
+                        builder: (dialogContext) => AlertDialog(
+                          title: const Text('Đăng xuất?'),
+                          content: const Text(
+                            'Dữ liệu đã đồng bộ vẫn được giữ trong tài khoản của bạn.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pop(dialogContext, false),
+                              child: const Text('Hủy'),
+                            ),
+                            FilledButton(
+                              onPressed: () =>
+                                  Navigator.pop(dialogContext, true),
+                              child: const Text('Đăng xuất'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (accepted != true) return;
+                      await Supabase.instance.client.auth.signOut(
+                        scope: SignOutScope.local,
+                      );
+                      if (context.mounted) {
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                      }
+                    },
+              icon: const Icon(Icons.logout),
+              label: const Text('Đăng xuất'),
+            ),
+          ],
           const SizedBox(height: 20),
           Surface(
             child: SwitchListTile(

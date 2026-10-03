@@ -32,7 +32,7 @@ Flutter vẫn là ứng dụng phát hành hiện tại. Expo được phát tri
 ### Next.js và Expo
 
 - Cùng dùng `@picket/api-client` và `@picket/domain`.
-- Không truy cập trực tiếp bảng finance snapshot trong code mới.
+- Không truy cập trực tiếp bảng dữ liệu từ client; finance contract đi qua Dart API/RPC và được lưu trong 15 bảng domain.
 - Supabase SDK phía client chỉ nên đảm nhiệm phiên đăng nhập; access token được gửi đến Dart API.
 
 ### OCR
@@ -53,7 +53,7 @@ Flutter đã có bước 1–3 và cờ `needsFallback`. Dịch vụ PP-OCR và 
 2. Chuyển lần lượt dashboard, giao dịch, ngân sách và đồng bộ sang shared API client.
 3. Xây OCR module Expo bằng ML Kit Latin, benchmark trên Android RAM thấp.
 4. Triển khai PP-OCRv5 service với giới hạn kích thước, timeout, rate limit và chính sách xóa ảnh ngay sau xử lý.
-5. Chuẩn hóa dần JSONB snapshot thành bảng domain khi contract và hành vi đã ổn định.
+5. Di chuyển dữ liệu snapshot cũ (nếu có trên production) sang 15 bảng domain và ngừng cấp quyền cho RPC snapshot cũ.
 
 ## Biến môi trường
 

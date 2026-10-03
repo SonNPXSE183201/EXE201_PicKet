@@ -27,10 +27,24 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).at(0), 'An');
-    await tester.enterText(find.byType(TextFormField).at(2), '1000000');
-    await tester.ensureVisible(find.text('Bắt đầu cùng Picket'));
-    await tester.pumpAndSettle();
+    Future<void> next() async {
+      await tester.tap(find.byKey(const Key('onboarding-next')));
+      await tester.pumpAndSettle();
+    }
+
+    await next();
+    await tester.enterText(find.byKey(const Key('onboarding-name')), 'An');
+    await next();
+    await next();
+    await next();
+    await next();
+    await next();
+    await tester.enterText(
+      find.byKey(const Key('onboarding-balance')),
+      '1000000',
+    );
+    await next();
+    await tester.tap(find.byType(Checkbox));
     await tester.tap(find.text('Bắt đầu cùng Picket'));
     await tester.pumpAndSettle();
     expect(find.text('Chào An,'), findsOneWidget);

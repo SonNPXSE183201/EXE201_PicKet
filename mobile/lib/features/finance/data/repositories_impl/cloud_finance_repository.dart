@@ -25,12 +25,12 @@ class CloudFinanceRepository extends SqliteFinanceRepository {
     if (_syncing) throw StateError('Sync is running');
     _syncing = true;
     try {
-      final remote = await client
-          .from('finance_snapshots')
-          .select('payload,revision')
-          .eq('user_id', scope)
-          .maybeSingle()
+      final response = await client
+          .rpc('load_normalized_finance')
           .timeout(const Duration(seconds: 20));
+      final remote = response == null
+          ? null
+          : Map<String, dynamic>.from(response as Map);
       if (remote == null) throw StateError('Remote snapshot unavailable');
       final db = await database;
       final remotePayload = keepLocal
@@ -76,7 +76,7 @@ class CloudFinanceRepository extends SqliteFinanceRepository {
         final payload = await cloudMedia.upload(data.toJson());
         final revision = await client
             .rpc(
-              'save_finance_snapshot',
+              'save_normalized_finance',
               params: {
                 'expected_revision': local['revision'],
                 'new_payload': payload,
@@ -90,20 +90,13 @@ class CloudFinanceRepository extends SqliteFinanceRepository {
           );
         });
       } else {
-        final head = await client
-            .from('finance_snapshots')
-            .select('revision')
-            .eq('user_id', scope)
-            .maybeSingle()
+        final response = await client
+            .rpc('load_normalized_finance')
             .timeout(const Duration(seconds: 20));
-        if (head == null || head['revision'] == local?['revision']) return;
-        final remote = await client
-            .from('finance_snapshots')
-            .select('payload,revision')
-            .eq('user_id', scope)
-            .maybeSingle()
-            .timeout(const Duration(seconds: 20));
-        if (remote == null) return;
+        final remote = response == null
+            ? null
+            : Map<String, dynamic>.from(response as Map);
+        if (remote == null || remote['revision'] == local?['revision']) return;
         final remoteData = await cloudMedia.download(
           Map<String, dynamic>.from(remote['payload'] as Map),
         );

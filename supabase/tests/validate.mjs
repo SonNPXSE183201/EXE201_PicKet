@@ -24,6 +24,7 @@ for (
     "202609150002_billing.sql",
     "202609150003_administration.sql",
     "202609150004_account_controls.sql",
+    "202610010001_normalized_finance.sql",
   ]
 ) {
   await db.exec(
@@ -60,6 +61,81 @@ const payload = {
   closedMonths: [],
 };
 await asUser(a);
+const onboarding = await db.query(
+  "select public.complete_onboarding($1,$2,$3,$4,$5,$6) as wallet_id",
+  ["An", "Đi làm", "Hiểu chi tiêu", "VND", "Tiền mặt", 1000000],
+);
+assert.ok(onboarding.rows[0].wallet_id);
+assert.equal(
+  (await db.query("select onboarding_completed from public.profiles"))
+    .rows[0].onboarding_completed,
+  true,
+);
+assert.equal(
+  (await db.query("select opening_balance from public.wallets"))
+    .rows[0].opening_balance,
+  1000000,
+);
+assert.equal(
+  (await db.query("select public.current_profile() as profile"))
+    .rows[0].profile.currencyCode,
+  "VND",
+);
+const normalizedBefore = (
+  await db.query("select public.load_normalized_finance() as data")
+).rows[0].data;
+const normalizedPayload = {
+  ...payload,
+  name: "An",
+  onboarded: true,
+  wallets: [
+    {
+      id: onboarding.rows[0].wallet_id,
+      name: "Tiền mặt",
+      openingBalance: 1000000,
+    },
+  ],
+  entries: [
+    {
+      id: "33333333-3333-4333-8333-333333333333",
+      title: "Cà phê",
+      amount: 45000,
+      type: "expense",
+      walletId: onboarding.rows[0].wallet_id,
+      category: "Ăn uống",
+      date: "2026-10-01T08:00:00.000Z",
+      destinationId: null,
+      note: "",
+      receiptPath: null,
+      refundOf: null,
+      parts: [],
+      reconciled: false,
+      reconciledWalletIds: [],
+    },
+  ],
+  customCategories: ["Ăn uống"],
+  preferences: {
+    persona: "Đi làm",
+    goal: "Hiểu chi tiêu",
+    currency: "VND",
+    notifications: true,
+  },
+};
+const normalizedSave = await db.query(
+  "select public.save_normalized_finance($1,$2) as revision",
+  [normalizedBefore.revision, normalizedPayload],
+);
+assert.ok(normalizedSave.rows[0].revision);
+const normalizedAfter = (
+  await db.query("select public.load_normalized_finance() as data")
+).rows[0].data;
+assert.equal(normalizedAfter.payload.entries[0].title, "Cà phê");
+assert.equal(normalizedAfter.payload.preferences.notifications, true);
+assert.equal(
+  (await db.query("select count(*)::int as count from public.transactions"))
+    .rows[0].count,
+  1,
+);
 assert.equal(
   (await db.query("select public.save_finance_snapshot(0,$1)", [payload]))
     .rows[0].save_finance_snapshot,
@@ -88,6 +164,12 @@ await rejects(
   [b + "/photo.jpg"],
 );
 await asUser(b);
+assert.equal((await db.query("select * from public.profiles")).rows.length, 0);
+assert.equal((await db.query("select * from public.wallets")).rows.length, 0);
+await rejects(
+  "insert into public.wallets(user_id,name,opening_balance) values($1,'Ví giả',0)",
+  [a],
+);
 assert.equal(
   (await db.query("select * from public.finance_snapshots")).rows.length,
   0,
@@ -159,6 +241,8 @@ assert.equal(
   (await db.query("select * from public.finance_snapshots")).rows.length,
   0,
 );
+assert.equal((await db.query("select * from public.profiles")).rows.length, 0);
+assert.equal((await db.query("select * from public.wallets")).rows.length, 0);
 await db.close();
 console.log(
   "SQL validation passed: migrations, ownership, media isolation, conflicts, invalid payloads, staff permissions, maintenance, cascade deletion.",

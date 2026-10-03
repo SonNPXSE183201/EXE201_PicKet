@@ -1,5 +1,15 @@
 # User handlers independently validate the bearer JWT with auth.getUser.
 # This also supports projects using asymmetric Supabase signing keys.
+[auth]
+site_url = "com.picket.mobile://auth/callback"
+additional_redirect_urls = ["com.picket.mobile://auth/callback"]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+
 [functions.verify-purchase]
 verify_jwt = false
 [functions.delete-account]

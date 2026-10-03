@@ -12,7 +12,7 @@ Flutter mobile (hiện hành, giữ lại đến khi Expo đạt feature parity)
 
 ## Cấu trúc chính
 
-- `apps/api`: API Dart Frog; xác thực Supabase JWT, giữ nguyên RLS và cung cấp finance snapshot.
+- `apps/api`: API Dart Frog; xác thực Supabase JWT, giữ nguyên RLS và cung cấp profile/onboarding/preferences cùng finance contract trên 15 bảng chuẩn hóa.
 - `apps/mobile`: Expo SDK 57 / React Native; nền móng cho mobile mới.
 - `web`: Next.js 16; web client mới.
 - `packages/api-client`: REST client dùng chung cho Next.js và Expo.

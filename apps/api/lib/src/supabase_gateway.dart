@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:picket_api/src/api_config.dart';
 import 'package:picket_api/src/finance_contract.dart';
+import 'package:picket_api/src/profile_contract.dart';
 
 class GatewayException implements Exception {
   const GatewayException(this.statusCode, this.message);
@@ -43,27 +44,29 @@ class SupabaseGateway {
   }
 
   Future<FinanceSnapshotEnvelope> loadSnapshot(String accessToken) async {
-    final userId = await authenticate(accessToken);
+    await authenticate(accessToken);
     final response = await _client
-        .get(
-          _uri('/rest/v1/finance_snapshots', {
-            'select': 'payload,revision,updated_at',
-            'user_id': 'eq.$userId',
-            'limit': '1',
-          }),
+        .post(
+          _uri('/rest/v1/rpc/load_normalized_finance'),
           headers: _headers(accessToken),
+          body: '{}',
         )
         .timeout(const Duration(seconds: 20));
     _ensureSuccess(response);
     final body = jsonDecode(response.body);
-    if (body is! List || body.isEmpty) {
+    if (body == null) {
       return const FinanceSnapshotEnvelope(revision: 0, payload: null);
     }
-    final row = Map<String, dynamic>.from(body.first as Map);
+    if (body is! Map) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid finance data.',
+      );
+    }
+    final row = Map<String, dynamic>.from(body);
     return FinanceSnapshotEnvelope(
       revision: row['revision'] as int,
       payload: Map<String, dynamic>.from(row['payload'] as Map),
-      updatedAt: DateTime.tryParse(row['updated_at'] as String? ?? ''),
     );
   }
 
@@ -74,7 +77,7 @@ class SupabaseGateway {
     await authenticate(accessToken);
     final response = await _client
         .post(
-          _uri('/rest/v1/rpc/save_finance_snapshot'),
+          _uri('/rest/v1/rpc/save_normalized_finance'),
           headers: _headers(accessToken),
           body: jsonEncode({
             'expected_revision': request.expectedRevision,
@@ -91,6 +94,80 @@ class SupabaseGateway {
       );
     }
     return revision;
+  }
+
+  Future<Map<String, dynamic>?> currentProfile(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/current_profile'),
+          headers: _headers(accessToken),
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body == null) return null;
+    if (body is! Map) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid profile.',
+      );
+    }
+    return Map<String, dynamic>.from(body);
+  }
+
+  Future<String> completeOnboarding(
+    String accessToken,
+    CompleteOnboardingRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/complete_onboarding'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson()),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final walletId = jsonDecode(response.body);
+    if (walletId is! String) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid wallet.',
+      );
+    }
+    return walletId;
+  }
+
+  Future<void> updateProfile(
+    String accessToken,
+    Map<String, dynamic> patch,
+  ) async {
+    final userId = await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/profiles', {'id': 'eq.$userId'}),
+          headers: _headers(accessToken),
+          body: jsonEncode(patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+  }
+
+  Future<void> updatePreferences(
+    String accessToken,
+    Map<String, dynamic> patch,
+  ) async {
+    final userId = await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/user_preferences', {'user_id': 'eq.$userId'}),
+          headers: _headers(accessToken),
+          body: jsonEncode(patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
   }
 
   void _ensureSuccess(http.Response response) {

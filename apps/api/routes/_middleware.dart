@@ -10,7 +10,7 @@ Handler middleware(Handler handler) {
           final origin = context.request.headers['origin'];
           final allowedOrigin = cors.allowOrigin(origin);
           final headers = <String, String>{
-            'access-control-allow-methods': 'GET,PUT,OPTIONS',
+            'access-control-allow-methods': 'GET,POST,PATCH,PUT,DELETE,OPTIONS',
             'access-control-allow-headers': 'authorization,content-type',
             'vary': 'Origin',
             if (allowedOrigin != null)
