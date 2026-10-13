@@ -59,6 +59,7 @@ jobs:
       - run: npm ci
       - run: npm audit --omit=dev
       - run: npm run lint
+      - run: npx next typegen
       - run: npx tsc --noEmit
       - run: npm run build
       - name: Build standalone production image
