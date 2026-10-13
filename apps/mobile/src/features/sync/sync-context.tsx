@@ -1,0 +1,113 @@
+import { AppState } from "react-native";
+import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { picketApi } from "@/core/api/client";
+import {
+  subscribeToFinanceChanges,
+  type FinanceRealtimeConnection,
+} from "@/core/sync/finance-realtime";
+import { shouldRefreshFromRealtime } from "@/core/sync/finance-realtime-policy";
+import { flushPendingMutations } from "@/core/sync/mutation-executor";
+import { mutationConflictCount, pendingMutationCount, subscribeToMutationQueue } from "@/core/sync/mutation-queue";
+import { useAccounts } from "@/features/accounts/accounts-context";
+import { useAuth } from "@/features/auth/auth-context";
+import { useBudgets } from "@/features/budgets/budgets-context";
+import { useProfile } from "@/features/profile/profile-context";
+import { useTransactions } from "@/features/transactions/transactions-context";
+
+type SyncValue = { pendingCount: number; conflictCount: number; syncing: boolean; realtimeConnection: FinanceRealtimeConnection; lastSyncedAt: number | null; refreshRemote(): Promise<void>; flush(): Promise<void> };
+const SyncContext = createContext<SyncValue | null>(null);
+
+export function SyncProvider({ children }: PropsWithChildren) {
+  const { session } = useAuth();
+  const { refresh: refreshProfile } = useProfile();
+  const { refresh: refreshAccounts } = useAccounts();
+  const { refresh: refreshTransactions } = useTransactions();
+  const { refresh: refreshBudgets } = useBudgets();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [conflictCount, setConflictCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [realtimeConnection, setRealtimeConnection] = useState<FinanceRealtimeConnection>("disconnected");
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
+  const syncingRef = useRef(false);
+  const pendingCountRef = useRef(0);
+  const refreshingRemoteRef = useRef(false);
+  const refreshRemote = useCallback(async () => {
+    if (!session || !picketApi || refreshingRemoteRef.current) return;
+    refreshingRemoteRef.current = true;
+    try {
+      await Promise.all([
+        refreshProfile(),
+        refreshAccounts(),
+        refreshTransactions(),
+        refreshBudgets(),
+      ]);
+    } finally {
+      refreshingRemoteRef.current = false;
+    }
+  }, [refreshAccounts, refreshBudgets, refreshProfile, refreshTransactions, session]);
+  const flush = useCallback(async () => {
+    if (!session || !picketApi || syncingRef.current) return;
+    syncingRef.current = true;
+    setSyncing(true);
+    try {
+      const result = await flushPendingMutations(picketApi, session.access_token, session.user.id);
+      if (result.completed > 0 || result.conflicts > 0) {
+        setLastSyncedAt(Date.now());
+        await refreshRemote();
+      }
+    } finally {
+      const [pending, conflicts] = await Promise.all([
+        pendingMutationCount(session.user.id),
+        mutationConflictCount(session.user.id),
+      ]);
+      setPendingCount(pending);
+      setConflictCount(conflicts);
+      syncingRef.current = false;
+      setSyncing(false);
+    }
+  }, [refreshRemote, session]);
+  useEffect(() => {
+    pendingCountRef.current = pendingCount;
+  }, [pendingCount]);
+  useEffect(() => {
+    if (!session) return;
+    void Promise.all([
+      pendingMutationCount(session.user.id),
+      mutationConflictCount(session.user.id),
+    ]).then(([pending, conflicts]) => {
+      setPendingCount(pending);
+      setConflictCount(conflicts);
+    });
+    const unsubscribe = subscribeToMutationQueue(() => {
+      void pendingMutationCount(session.user.id).then(setPendingCount);
+      void mutationConflictCount(session.user.id).then(setConflictCount);
+    });
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        void flush();
+        void refreshRemote();
+      }
+    });
+    const unsubscribeRealtime = subscribeToFinanceChanges({
+      userId: session.user.id,
+      onChange() {
+        if (shouldRefreshFromRealtime({
+          pendingCount: pendingCountRef.current,
+          syncing: syncingRef.current,
+        })) {
+          void refreshRemote();
+        }
+      },
+      onConnectionChange: setRealtimeConnection,
+    });
+    const initialTimer = setTimeout(() => {
+      void flush();
+      void refreshRemote();
+    }, 0);
+    const remotePoll = setInterval(() => void refreshRemote(), 60_000);
+    return () => { clearTimeout(initialTimer); clearInterval(remotePoll); subscription.remove(); unsubscribeRealtime(); unsubscribe(); };
+  }, [session, flush, refreshRemote]);
+  const value = useMemo(() => ({ pendingCount, conflictCount, syncing, realtimeConnection, lastSyncedAt, refreshRemote, flush }), [pendingCount, conflictCount, syncing, realtimeConnection, lastSyncedAt, refreshRemote, flush]);
+  return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
+}
+export function useSync() { const value = useContext(SyncContext); if (!value) throw new Error("useSync must be used inside SyncProvider."); return value; }

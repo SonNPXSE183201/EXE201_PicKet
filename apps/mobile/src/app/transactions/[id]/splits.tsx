@@ -1,0 +1,163 @@
+import { colors, radii } from "@picket/design-tokens";
+import { formatVnd } from "@picket/domain";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { routes } from "@/core/navigation/routes";
+import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
+import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
+import { useAuth } from "@/features/auth/auth-context";
+import { useTransactions } from "@/features/transactions/transactions-context";
+
+export default function TransactionSplitsScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { session } = useAuth();
+  const { categories, getSplits, setSplits, transactions } = useTransactions();
+  const transaction = transactions.find((item) => item.id === id);
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const availableCategories = useMemo(
+    () =>
+      categories.filter(
+        (item) =>
+          transaction &&
+          (item.kind === transaction.kind || item.kind === "both"),
+      ),
+    [categories, transaction],
+  );
+
+  useEffect(() => {
+    if (!session || !id || !transaction) return;
+    let active = true;
+    void getSplits(id)
+      .then((splits) => {
+        if (!active) return;
+        setAmounts(
+          Object.fromEntries(
+            splits.map((item) => [item.categoryId, String(item.amount)]),
+          ),
+        );
+      })
+      .catch(() => {
+        if (active) setMessage("Không tải được dữ liệu phân bổ.");
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [getSplits, id, session, transaction]);
+
+  if (!session) return <Redirect href={routes.login} />;
+  if (!transaction || !loaded) {
+    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator color={colors.mauve} /> : <Text style={styles.error}>Không tìm thấy giao dịch.</Text>}</SafeAreaView>;
+  }
+  if (transaction.kind !== "expense" && transaction.kind !== "income") {
+    return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>Loại giao dịch này không hỗ trợ chia danh mục.</Text><Pressable onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Quay lại</Text></Pressable></SafeAreaView>;
+  }
+
+  const normalizedAmounts = availableCategories.map((category) => {
+    const fallback =
+      Object.keys(amounts).length === 0 && category.id === transaction.categoryId
+        ? String(transaction.amount)
+        : "";
+    return { category, value: amounts[category.id] ?? fallback };
+  });
+  const total = normalizedAmounts.reduce(
+    (sum, item) => sum + (Number.parseInt(item.value, 10) || 0),
+    0,
+  );
+  const transactionAmount = transaction.amount;
+  const transactionId = transaction.id;
+  const transactionVersion = transaction.version;
+
+  async function submit() {
+    const splits = normalizedAmounts
+      .filter((item) => item.value.trim() !== "")
+      .map((item) => ({
+        amount: Number.parseInt(item.value, 10),
+        categoryId: item.category.id,
+      }));
+    if (splits.some((item) => !Number.isInteger(item.amount) || item.amount <= 0)) {
+      return setMessage("Mỗi phần phải là số nguyên lớn hơn 0.");
+    }
+    if (splits.length > 0 && total !== transactionAmount) {
+      return setMessage(`Tổng phân bổ phải bằng ${formatVnd(transactionAmount)}.`);
+    }
+    setBusy(true);
+    setMessage(null);
+    try {
+      await setSplits(transactionId, {
+        expectedVersion: transactionVersion,
+        splits,
+      });
+      router.replace(routes.transaction(transactionId));
+    } catch (error) {
+      if (isOfflineQueuedError(error)) {
+        router.replace(routes.transaction(transactionId));
+        return;
+      }
+      setMessage("Không lưu được phân bổ. Giao dịch có thể đã đổi hoặc đã có hoàn tiền.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>Chia danh mục</Text>
+        <Text style={styles.subtitle}>{transaction.title}</Text>
+        <View style={styles.totalCard}>
+          <Text style={styles.totalLabel}>Đã phân bổ</Text>
+          <Text style={[styles.totalValue, total === transaction.amount ? styles.valid : styles.invalid]}>{formatVnd(total)} / {formatVnd(transaction.amount)}</Text>
+        </View>
+        {normalizedAmounts.map(({ category, value }) => (
+          <View key={category.id} style={styles.row}>
+            <Text style={styles.category}>{category.name}</Text>
+            <TextInput keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
+          </View>
+        ))}
+        {message && <Text style={styles.error}>{message}</Text>}
+        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu phân bổ</Text>}</Pressable>
+        <Pressable disabled={busy} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); }} style={styles.clear}><Text style={styles.clearText}>Bỏ toàn bộ phân bổ</Text></Pressable>
+        <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: { backgroundColor: colors.cream, flex: 1 },
+  center: { alignItems: "center", justifyContent: "center", padding: 24 },
+  content: { gap: 12, padding: 24, paddingBottom: 48 },
+  title: { color: colors.ink, fontSize: 30, fontWeight: "800", marginTop: 20 },
+  subtitle: { color: colors.muted, fontSize: 15, marginBottom: 8 },
+  totalCard: { backgroundColor: colors.white, borderRadius: radii.medium, marginBottom: 6, padding: 16 },
+  totalLabel: { color: colors.muted, fontSize: 12 },
+  totalValue: { fontSize: 18, fontWeight: "800", marginTop: 5 },
+  valid: { color: colors.income },
+  invalid: { color: colors.expense },
+  row: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", gap: 12, padding: 12 },
+  category: { color: colors.ink, flex: 1, fontSize: 15, fontWeight: "700" },
+  amountInput: { borderColor: colors.peach, borderRadius: 8, borderWidth: 1, color: colors.ink, minHeight: 44, paddingHorizontal: 12, textAlign: "right", width: 130 },
+  error: { color: colors.expense, fontSize: 14, lineHeight: 20 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", marginTop: 8, minHeight: 52 },
+  primaryText: { color: colors.white, fontSize: 16, fontWeight: "800" },
+  clear: { alignItems: "center", minHeight: 44, padding: 12 },
+  clearText: { color: colors.expense, fontSize: 14, fontWeight: "800" },
+  secondary: { alignItems: "center", minHeight: 44, padding: 12 },
+  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "800" },
+});

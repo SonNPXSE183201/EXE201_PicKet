@@ -6,34 +6,68 @@
     "@picket/api-client": "file:../../packages/api-client",
     "@picket/design-tokens": "file:../../packages/design-tokens",
     "@picket/domain": "file:../../packages/domain-ts",
-    "expo": "~57.0.25",
+    "@supabase/supabase-js": "^2.117.3",
+    "expo": "~57.0.27",
     "expo-constants": "~57.0.19",
+    "expo-crypto": "~57.0.3",
     "expo-dev-client": "~57.0.19",
-    "expo-linking": "~57.0.11",
-    "expo-router": "~57.0.23",
+    "expo-document-picker": "~57.0.3",
+    "expo-file-system": "~57.0.7",
+    "expo-image-manipulator": "~57.0.21",
+    "expo-image-picker": "~57.0.20",
+    "expo-linking": "~57.0.12",
+    "expo-router": "~57.0.25",
+    "expo-secure-store": "~57.0.4",
+    "expo-sharing": "~57.0.22",
+    "expo-splash-screen": "~57.0.9",
+    "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
+    "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
-    "react-native-web": "^0.21.2"
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-web": "^0.21.2",
+    "rn-mlkit-ocr": "^0.3.1"
   },
   "devDependencies": {
+    "@expo/env": "^2.4.3",
+    "@types/node": "^26.6.4",
+    "@types/react": "~19.2.2",
     "@typescript-eslint/eslint-plugin": "8.70.0",
     "@typescript-eslint/parser": "8.70.0",
-    "@types/react": "~19.2.2",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~57.0.2",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "test:api": "tsx --test src/core/api/*.test.ts",
+    "test:auth": "tsx --test src/features/auth/*.test.ts",
+    "test:ocr": "tsx --test src/core/ocr/*.test.ts",
+    "test:sync": "tsx --test src/core/sync/*.test.ts",
+    "test:ui": "tsx --test src/core/ui/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "release:preflight": "node scripts/validate-release-env.mjs"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "rn-mlkit-ocr"
+        ]
+      }
+    }
+  },
+  "overrides": {
+    "shell-quote": "1.12.0"
   },
   "private": true
 }

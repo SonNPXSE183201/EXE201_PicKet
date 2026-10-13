@@ -2,15 +2,17 @@
   "expo": {
     "name": "Picket",
     "slug": "picket",
-    "scheme": "picket",
+    "scheme": "com.picket.mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.picket.mobile",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.picket.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -24,7 +26,29 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Cho phép Picket dùng camera để chụp hóa đơn.",
+          "photosPermission": "Cho phép Picket truy cập ảnh để chọn hóa đơn.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "rn-mlkit-ocr",
+        {
+          "ocrModels": [
+            "latin"
+          ],
+          "ocrUseBundled": true
+        }
+      ],
+      "expo-splash-screen",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true
