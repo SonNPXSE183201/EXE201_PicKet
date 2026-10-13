@@ -11,6 +11,7 @@ export const routes = {
   resetPassword: "/auth/reset-password" as Href,
   onboarding: "/onboarding" as Href,
   profile: "/profile" as Href,
+  billing: "/billing" as Href,
   restore: "/restore" as Href,
   deleteAccount: "/delete-account" as Href,
   syncConflicts: "/sync-conflicts" as Href,

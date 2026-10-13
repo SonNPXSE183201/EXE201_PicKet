@@ -25,6 +25,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/with-android-release-signing",
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",
@@ -48,7 +49,8 @@
         }
       ],
       "expo-splash-screen",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": true

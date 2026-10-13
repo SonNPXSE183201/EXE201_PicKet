@@ -28,6 +28,7 @@ import type {
   FindDuplicateReceiptRequest,
   OcrFallbackJobResponse,
   OcrFallbackJobsResponse,
+  PlayPurchaseVerification,
   ReceiptRecordResponse,
   ReceiptRecordsResponse,
   RestoreFinanceRequest,
@@ -48,6 +49,7 @@ import type {
   UpdateCategoryRequest,
   UpdateReceiptRecordRequest,
   UpdateTransactionRequest,
+  VerifyPlayPurchaseRequest,
 } from "@picket/domain";
 
 export interface PicketApiClientOptions {
@@ -94,6 +96,23 @@ export class PicketApiClient {
       headers: this.authHeaders(accessToken),
       signal,
     });
+  }
+
+  verifyPlayPurchase(
+    accessToken: string,
+    request: VerifyPlayPurchaseRequest,
+    signal?: AbortSignal,
+  ): Promise<PlayPurchaseVerification> {
+    return this.request<PlayPurchaseVerification>(
+      "/v1/billing/google-play/verify",
+      {
+        method: "POST",
+        headers: this.jsonAuthHeaders(accessToken),
+        body: JSON.stringify(request),
+        signal,
+        timeoutMs: 40_000,
+      },
+    );
   }
 
   adminOverview(

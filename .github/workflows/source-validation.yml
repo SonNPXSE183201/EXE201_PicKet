@@ -101,6 +101,7 @@ jobs:
       - run: npm ci
       - run: npm run test:api
       - run: npm run test:auth
+      - run: npm run test:billing
       - run: npm run test:ocr
       - run: npm run test:sync
       - run: npm run test:ui

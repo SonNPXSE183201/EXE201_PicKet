@@ -103,6 +103,46 @@ paths:
                   ocrFallbackUsed: {type: integer, minimum: 0}
                   ocrFallbackRemaining: {type: integer, minimum: 0}
         '401': {$ref: '#/components/responses/Unauthorized'}
+  /v1/billing/google-play/verify:
+    post:
+      operationId: verifyGooglePlayPurchase
+      summary: Verify a Picket subscription with Google Play and refresh server entitlements
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [productId, purchaseToken]
+              properties:
+                productId:
+                  type: string
+                  enum: [picket_plus_monthly, picket_plus_yearly, picket_pro_monthly, picket_pro_yearly]
+                purchaseToken:
+                  type: string
+                  minLength: 1
+                  maxLength: 10000
+      responses:
+        '200':
+          description: Server-authoritative Google Play verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [verified, active, tier, expiresAt]
+                properties:
+                  verified: {type: boolean, enum: [true]}
+                  active: {type: boolean}
+                  tier: {type: string, enum: [free, plus, pro]}
+                  expiresAt: {type: string, format: date-time}
+        '400': {description: Unknown product or invalid purchase token}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '413': {description: Request body is too large}
+        '502': {description: Google Play verifier is unavailable or returned an invalid result}
   /v1/account:
     delete:
       operationId: deleteAccount

@@ -6,6 +6,7 @@ import 'package:picket_api/src/account_contract.dart';
 import 'package:picket_api/src/admin_action_contract.dart';
 import 'package:picket_api/src/admin_contract.dart';
 import 'package:picket_api/src/api_config.dart';
+import 'package:picket_api/src/billing_contract.dart';
 import 'package:picket_api/src/budget_contract.dart';
 import 'package:picket_api/src/category_contract.dart';
 import 'package:picket_api/src/entitlement_contract.dart';
@@ -116,6 +117,29 @@ class SupabaseGateway {
         .timeout(const Duration(seconds: 20));
     _ensureSuccess(response);
     return EntitlementsResource.fromDatabase(jsonDecode(response.body));
+  }
+
+  Future<PlayPurchaseVerification> verifyPlayPurchase(
+    String accessToken,
+    VerifyPlayPurchaseRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/functions/v1/verify-purchase'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toFunctionJson()),
+        )
+        .timeout(const Duration(seconds: 35));
+    _ensureSuccess(response);
+    try {
+      return PlayPurchaseVerification.fromJson(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid purchase verification result.',
+      );
+    }
   }
 
   Future<AdminOverviewResource> adminOverview(

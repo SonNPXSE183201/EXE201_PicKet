@@ -91,6 +91,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         {entitlements && <View style={styles.planCard}><Text style={styles.planTitle}>Gói {entitlements.tier.toUpperCase()}</Text><Text style={styles.planText}>OCR cloud còn {entitlements.ocrFallbackRemaining}/{entitlements.ocrFallbackDailyLimit} lượt trong 24 giờ.</Text></View>}
         {message && <Text accessibilityLiveRegion="polite" style={message.startsWith("Đã") ? styles.success : styles.error}>{message}</Text>}
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={styles.primary}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}</Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push(routes.billing)} style={styles.secondary}><Text style={styles.secondaryText}>Gói Picket và thanh toán</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void exportData()} style={styles.secondary}><Text style={styles.secondaryText}>Export dữ liệu JSON</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push(routes.restore)} style={styles.secondary}><Text style={styles.secondaryText}>Khôi phục từ bản export</Text></Pressable>
         <Text style={styles.sensitive}>Bản export chứa dữ liệu tài chính nhạy cảm. Chỉ lưu ở nơi bạn tin cậy.</Text>
