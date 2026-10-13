@@ -16,6 +16,7 @@ Future<Response> handleAuthenticated(
   RequestContext context, {
   required Set<HttpMethod> methods,
   required AuthenticatedAction action,
+  int maxContentLength = 65536,
 }) async {
   final request = context.request;
   if (!methods.contains(request.method)) {
@@ -26,7 +27,7 @@ Future<Response> handleAuthenticated(
     return apiError(HttpStatus.unauthorized, 'Unauthorized');
   }
   final contentLength = int.tryParse(request.headers['content-length'] ?? '');
-  if (contentLength != null && contentLength > 65536) {
+  if (contentLength != null && contentLength > maxContentLength) {
     return apiError(HttpStatus.requestEntityTooLarge, 'Request too large');
   }
 

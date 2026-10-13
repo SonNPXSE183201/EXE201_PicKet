@@ -28,6 +28,47 @@ void main() {
     );
   });
 
+  test('rejects a legacy service-role JWT in the public API', () {
+    const serviceRoleJwt =
+        'eyJhbGciOiJIUzI1NiJ9.'
+        'eyJyb2xlIjoic2VydmljZV9yb2xlIn0.'
+        'signature';
+    expect(
+      () => ApiConfig.fromEnvironment({
+        'SUPABASE_URL': 'https://example.supabase.co',
+        'SUPABASE_PUBLISHABLE_KEY': serviceRoleJwt,
+      }),
+      throwsA(isA<ApiConfigException>()),
+    );
+  });
+
+  test('production requires HTTPS Supabase and explicit HTTPS CORS', () {
+    expect(
+      () => ApiConfig.fromEnvironment({
+        'APP_ENV': 'production',
+        'SUPABASE_URL': 'http://127.0.0.1:54321',
+        'SUPABASE_PUBLISHABLE_KEY': 'sb_publishable_example',
+      }),
+      throwsA(isA<ApiConfigException>()),
+    );
+    expect(
+      () => CorsConfig.fromEnvironment({'APP_ENV': 'production'}),
+      throwsA(isA<ApiConfigException>()),
+    );
+    expect(
+      () => CorsConfig.fromEnvironment({
+        'APP_ENV': 'production',
+        'ALLOWED_ORIGINS': 'http://localhost:3000',
+      }),
+      throwsA(isA<ApiConfigException>()),
+    );
+    final cors = CorsConfig.fromEnvironment({
+      'APP_ENV': 'production',
+      'ALLOWED_ORIGINS': 'https://app.picket.vn',
+    });
+    expect(cors.allowOrigin('https://app.picket.vn'), isNotNull);
+  });
+
   test('only reflects allow-listed CORS origins', () {
     final cors = CorsConfig.fromEnvironment({
       'ALLOWED_ORIGINS': 'https://picket.vn,http://localhost:3000',

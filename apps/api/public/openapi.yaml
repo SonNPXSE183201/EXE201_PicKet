@@ -6,6 +6,207 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /v1/admin/overview:
+    get:
+      operationId: getAdminOverview
+      summary: Get an audited, paginated overview for active staff members
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema: {type: integer, minimum: 0, maximum: 100000, default: 0}
+      responses:
+        '200':
+          description: Staff overview
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminOverview'}
+        '400': {description: Invalid page}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {description: Active staff membership is required}
+  /v1/admin/users/{id}/actions:
+    post:
+      operationId: performAdminUserAction
+      summary: Perform a confirmed, audited action on a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  additionalProperties: false
+                  required: [action, confirmation]
+                  properties:
+                    action: {type: string, enum: [suspend]}
+                    confirmation: {type: string, enum: [SUSPEND]}
+                - type: object
+                  additionalProperties: false
+                  required: [action, confirmation]
+                  properties:
+                    action: {type: string, enum: [restore]}
+                    confirmation: {type: string, enum: [RESTORE]}
+                - type: object
+                  additionalProperties: false
+                  required: [action, confirmation]
+                  properties:
+                    action: {type: string, enum: [reset_password]}
+                    confirmation: {type: string, enum: [RESET]}
+                - type: object
+                  additionalProperties: false
+                  required: [action, confirmation, tier]
+                  properties:
+                    action: {type: string, enum: [grant_plan]}
+                    confirmation: {type: string, enum: [GRANT]}
+                    tier: {type: string, enum: [free, plus, pro]}
+      responses:
+        '200':
+          description: Action completed and audited
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updated]
+                properties:
+                  updated: {type: boolean, enum: [true]}
+        '400': {description: Invalid action or confirmation}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {description: Active staff membership is required}
+        '404': {description: Target user not found}
+  /v1/entitlements:
+    get:
+      operationId: getCurrentEntitlements
+      summary: Get the authenticated user's server-authoritative plan and OCR quota
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current plan and rolling 24-hour OCR quota
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [tier, ocrFallbackDailyLimit, ocrFallbackUsed, ocrFallbackRemaining]
+                properties:
+                  tier: {type: string, enum: [free, plus, pro]}
+                  ocrFallbackDailyLimit: {type: integer, minimum: 0}
+                  ocrFallbackUsed: {type: integer, minimum: 0}
+                  ocrFallbackRemaining: {type: integer, minimum: 0}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /v1/account:
+    delete:
+      operationId: deleteAccount
+      summary: Permanently delete the current user's media, data and auth user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [confirmation]
+              properties:
+                confirmation: {type: string, enum: [DELETE]}
+      responses:
+        '200':
+          description: Account permanently deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: {type: boolean, enum: [true]}
+        '400': {description: Exact confirmation is required}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {description: Recent sign-in is required}
+        '503': {description: Account deletion could not be completed}
+  /v1/export:
+    get:
+      operationId: exportFinance
+      summary: Export all finance data owned by the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Versioned JSON export; responses must not be cached
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [format, schemaVersion, exportedAt, revision, data]
+                properties:
+                  format: {type: string, enum: [picket-export-v1]}
+                  schemaVersion: {type: integer, enum: [1]}
+                  exportedAt: {type: string, format: date-time}
+                  revision: {type: integer, minimum: 0}
+                  data: {type: object, additionalProperties: true}
+        '400': {description: No finance data is available}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /v1/import:
+    post:
+      operationId: validateFinanceImport
+      summary: Validate and summarize a versioned finance export without writing data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FinanceExport'}
+      responses:
+        '200':
+          description: Export is valid
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FinanceImportSummary'}
+        '400': {description: Invalid export file}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '413': {description: Request exceeds 11 MB}
+    put:
+      operationId: restoreFinanceImport
+      summary: Transactionally replace finance data from a validated export
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [expectedRevision, confirmation, export]
+              properties:
+                expectedRevision: {type: integer, minimum: 0}
+                confirmation: {type: string, enum: [RESTORE]}
+                export: {$ref: '#/components/schemas/FinanceExport'}
+      responses:
+        '200':
+          description: Finance data restored
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [restored, revision]
+                properties:
+                  restored: {type: boolean, enum: [true]}
+                  revision: {type: integer, minimum: 1}
+        '400': {description: Invalid restore request}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Snapshot revision conflict}
+        '413': {description: Request exceeds 11 MB}
   /health:
     get:
       operationId: getHealth
@@ -17,9 +218,560 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /v1/accounts:
+    get:
+      operationId: listAccounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active financial accounts owned by the current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountsResponse'
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: createAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400': {description: Invalid account data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or business rule conflict}
+  /v1/accounts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    patch:
+      operationId: updateAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequest'
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400': {description: Invalid account data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Account version conflict}
+    delete:
+      operationId: archiveAccount
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expectedVersion
+          in: query
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Account archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400': {description: Invalid account identifier or version}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Account version conflict}
+  /v1/categories:
+    get:
+      operationId: listCategories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active default and custom categories owned by the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoriesResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: createCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateCategoryRequest'}
+      responses:
+        '201':
+          description: Custom category created
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '400': {description: Invalid category data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or duplicate name conflict}
+  /v1/categories/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    patch:
+      operationId: updateCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateCategoryRequest'}
+      responses:
+        '200':
+          description: Custom category updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '400': {description: Invalid category data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Category version conflict or immutable default category}
+    delete:
+      operationId: archiveCategory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expectedVersion
+          in: query
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Custom category archived
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CategoryResponse'}
+        '400': {description: Invalid category identifier or version}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Category version conflict or immutable default category}
+  /v1/budgets:
+    get:
+      operationId: listBudgets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active budgets owned by the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BudgetsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: createBudget
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateBudgetRequest'}
+      responses:
+        '201':
+          description: Budget created idempotently
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BudgetResponse'}
+        '400': {description: Invalid budget data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or category uniqueness conflict}
+  /v1/budgets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    patch:
+      operationId: updateBudget
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateBudgetRequest'}
+      responses:
+        '200':
+          description: Budget updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BudgetResponse'}
+        '400': {description: Invalid budget data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Budget version conflict}
+    delete:
+      operationId: archiveBudget
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expectedVersion
+          in: query
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Budget archived
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BudgetResponse'}
+        '400': {description: Invalid budget identifier or version}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Budget version conflict}
+  /v1/transactions:
+    get:
+      operationId: listTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema: {type: integer, minimum: 1, maximum: 200, default: 100}
+      responses:
+        '200':
+          description: Recent active transactions owned by the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: createTransaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateTransactionRequest'}
+      responses:
+        '201':
+          description: Income or expense transaction created atomically
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionResponse'}
+        '400': {description: Invalid transaction data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or business rule conflict}
+  /v1/transactions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    patch:
+      operationId: updateTransaction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateTransactionRequest'}
+      responses:
+        '200':
+          description: Transaction updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionResponse'}
+        '400': {description: Invalid transaction data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Transaction version or business rule conflict}
+    delete:
+      operationId: archiveTransaction
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expectedVersion
+          in: query
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Transaction archived
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionResponse'}
+        '400': {description: Invalid transaction identifier or version}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Transaction version or business rule conflict}
+  /v1/transfers:
+    post:
+      operationId: createTransfer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateTransferRequest'}
+      responses:
+        '201':
+          description: Transfer created atomically between same-currency accounts
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionResponse'}
+        '400': {description: Invalid transfer data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or business rule conflict}
+  /v1/transactions/{id}/refunds:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: createRefund
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateRefundRequest'}
+      responses:
+        '201':
+          description: Partial or full refund created without exceeding the source expense
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionResponse'}
+        '400': {description: Invalid refund data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or business rule conflict}
+  /v1/transactions/{id}/splits:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listTransactionSplits
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Category allocation for a transaction
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TransactionSplitsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    put:
+      operationId: setTransactionSplits
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SetTransactionSplitsRequest'}
+      responses:
+        '200':
+          description: Split allocation replaced atomically
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SetTransactionSplitsResponse'}
+        '400': {description: Split total or category is invalid}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Transaction version or business rule conflict}
+  /v1/ocr/jobs:
+    get:
+      summary: List recent OCR fallback jobs
+      operationId: listOcrFallbackJobs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Recent server OCR fallback jobs owned by the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OcrFallbackJobsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      summary: Queue a private receipt image for server OCR
+      operationId: createOcrFallbackJob
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateOcrFallbackJobRequest'}
+      responses:
+        '202':
+          description: OCR fallback job queued or idempotently returned
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OcrFallbackJobResponse'}
+        '400': {description: Invalid OCR job data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: Private source image not found}
+        '429': {description: Rolling 24-hour plan quota exceeded}
+  /v1/receipts:
+    get:
+      summary: List recent receipt records
+      operationId: listReceipts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Receipts owned by the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReceiptRecordsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      summary: Create a structured receipt and line items
+      operationId: createReceipt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateReceiptRecordRequest'}
+      responses:
+        '201':
+          description: Receipt and line items created atomically
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReceiptRecordResponse'}
+        '400': {description: Invalid receipt or line-item data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Duplicate image hash}
+  /v1/receipts/duplicates:
+    post:
+      summary: Find exact or likely duplicate receipts
+      operationId: findDuplicateReceipts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/FindDuplicateReceiptRequest'}
+      responses:
+        '200':
+          description: Up to five duplicate candidates
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DuplicateReceiptsResponse'}
+        '400': {description: Insufficient duplicate matching data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+  /v1/receipts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      summary: Get a receipt with line items
+      operationId: getReceipt
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Receipt detail
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReceiptRecordResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: Receipt not found}
+    put:
+      summary: Review receipt metadata and atomically replace line items
+      operationId: updateReceipt
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateReceiptRecordRequest'}
+      responses:
+        '200':
+          description: Reviewed receipt with replacement line items
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ReceiptRecordResponse'}
+        '400': {description: Invalid receipt review or line items}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: Receipt not found}
+        '409': {description: Receipt version conflict}
+  /v1/ocr/jobs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      summary: Get an OCR fallback job
+      operationId: getOcrFallbackJob
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current state and result of an OCR fallback job
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OcrFallbackJobResponse'}
+        '400': {description: Invalid OCR job identifier}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '404': {description: OCR job not found}
   /v1/finance/snapshot:
     get:
       operationId: getFinanceSnapshot
+      deprecated: true
       security:
         - bearerAuth: []
       responses:
@@ -33,6 +785,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
     put:
       operationId: saveFinanceSnapshot
+      deprecated: true
       security:
         - bearerAuth: []
       requestBody:
@@ -67,6 +820,10 @@ paths:
       responses:
         '200':
           description: Current authenticated profile and preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentProfileResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
   /v1/onboarding:
@@ -83,6 +840,10 @@ paths:
       responses:
         '201':
           description: Profile, preferences and first wallet created atomically
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteOnboardingResult'
         '400':
           description: Invalid onboarding data
         '401':
@@ -141,6 +902,584 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    AdminOverview:
+      type: object
+      additionalProperties: false
+      required: [totalUsers, totalLedgers, users, audit, settings]
+      properties:
+        totalUsers: {type: integer, minimum: 0}
+        totalLedgers: {type: integer, minimum: 0}
+        users:
+          type: array
+          maxItems: 25
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, email, createdAt, bannedUntil, revision, entryCount]
+            properties:
+              id: {type: string, format: uuid}
+              email: {type: string, format: email}
+              createdAt: {type: string, format: date-time}
+              bannedUntil: {type: [string, 'null'], format: date-time}
+              revision: {type: [integer, 'null'], minimum: 0}
+              entryCount: {type: integer, minimum: 0}
+        audit:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required: [action, target, createdAt]
+            properties:
+              action: {type: string}
+              target: {type: [string, 'null']}
+              createdAt: {type: string, format: date-time}
+        settings:
+          type: object
+          additionalProperties: false
+          required: [maintenance, notice]
+          properties:
+            maintenance: {type: boolean}
+            notice: {type: string}
+    FinancialAccount:
+      type: object
+      additionalProperties: false
+      required: [id, name, kind, currencyCode, openingBalance, version, createdAt, updatedAt, deletedAt, archived]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 80}
+        kind: {type: string, enum: [cash, bank, ewallet, other]}
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        openingBalance: {type: integer, format: int64}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        archived: {type: boolean}
+    AccountsResponse:
+      type: object
+      additionalProperties: false
+      required: [accounts]
+      properties:
+        accounts:
+          type: array
+          items: {$ref: '#/components/schemas/FinancialAccount'}
+    AccountResponse:
+      type: object
+      additionalProperties: false
+      required: [account]
+      properties:
+        account: {$ref: '#/components/schemas/FinancialAccount'}
+    CreateAccountRequest:
+      type: object
+      additionalProperties: false
+      required: [name, kind, currencyCode, openingBalance]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 80}
+        kind: {type: string, enum: [cash, bank, ewallet, other]}
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        openingBalance: {type: integer, format: int64}
+    UpdateAccountRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        name: {type: string, minLength: 1, maxLength: 80}
+        kind: {type: string, enum: [cash, bank, ewallet, other]}
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+    Category:
+      type: object
+      additionalProperties: false
+      required: [id, name, kind, color, icon, custom, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 80}
+        kind: {type: string, enum: [expense, income, both]}
+        color:
+          oneOf:
+            - type: string
+              pattern: '^#[0-9A-F]{6}$'
+            - type: 'null'
+        icon:
+          oneOf:
+            - type: string
+              maxLength: 80
+            - type: 'null'
+        custom: {type: boolean}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    CategoriesResponse:
+      type: object
+      additionalProperties: false
+      required: [categories]
+      properties:
+        categories:
+          type: array
+          items: {$ref: '#/components/schemas/Category'}
+    CategoryResponse:
+      type: object
+      additionalProperties: false
+      required: [category]
+      properties:
+        category: {$ref: '#/components/schemas/Category'}
+    CreateCategoryRequest:
+      type: object
+      additionalProperties: false
+      required: [name, kind]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 80}
+        kind: {type: string, enum: [expense, income, both]}
+        color:
+          oneOf:
+            - type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+            - type: 'null'
+        icon:
+          oneOf:
+            - type: string
+              maxLength: 80
+            - type: 'null'
+    UpdateCategoryRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        name: {type: string, minLength: 1, maxLength: 80}
+        kind: {type: string, enum: [expense, income, both]}
+        color:
+          oneOf:
+            - type: string
+              pattern: '^#[0-9A-Fa-f]{6}$'
+            - type: 'null'
+        icon:
+          oneOf:
+            - type: string
+              maxLength: 80
+            - type: 'null'
+    Budget:
+      type: object
+      additionalProperties: false
+      required: [id, categoryId, name, defaultLimit, alertPercent, active, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        categoryId: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 120}
+        defaultLimit: {type: integer, format: int64, minimum: 1}
+        alertPercent: {type: integer, minimum: 1, maximum: 100}
+        active: {type: boolean}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    BudgetsResponse:
+      type: object
+      additionalProperties: false
+      required: [budgets]
+      properties:
+        budgets:
+          type: array
+          items: {$ref: '#/components/schemas/Budget'}
+    BudgetResponse:
+      type: object
+      additionalProperties: false
+      required: [budget]
+      properties:
+        budget: {$ref: '#/components/schemas/Budget'}
+    CreateBudgetRequest:
+      type: object
+      additionalProperties: false
+      required: [categoryId, name, defaultLimit, alertPercent]
+      properties:
+        categoryId: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 120}
+        defaultLimit: {type: integer, format: int64, minimum: 1}
+        alertPercent: {type: integer, minimum: 1, maximum: 100}
+    UpdateBudgetRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        name: {type: string, minLength: 1, maxLength: 120}
+        defaultLimit: {type: integer, format: int64, minimum: 1}
+        alertPercent: {type: integer, minimum: 1, maximum: 100}
+        active: {type: boolean}
+    Transaction:
+      type: object
+      additionalProperties: false
+      required: [id, title, amount, kind, accountId, destinationAccountId, categoryId, occurredAt, note, refundOfTransactionId, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1}
+        kind: {type: string, enum: [expense, income, transfer, refund]}
+        accountId: {type: string, format: uuid}
+        destinationAccountId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        categoryId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        occurredAt: {type: string, format: date-time}
+        note: {type: string, maxLength: 2000}
+        refundOfTransactionId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    TransactionsResponse:
+      type: object
+      additionalProperties: false
+      required: [transactions]
+      properties:
+        transactions:
+          type: array
+          items: {$ref: '#/components/schemas/Transaction'}
+    TransactionResponse:
+      type: object
+      additionalProperties: false
+      required: [transaction]
+      properties:
+        transaction: {$ref: '#/components/schemas/Transaction'}
+    CreateTransactionRequest:
+      type: object
+      additionalProperties: false
+      required: [title, amount, kind, accountId, occurredAt]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1}
+        kind: {type: string, enum: [expense, income]}
+        accountId: {type: string, format: uuid}
+        categoryId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        occurredAt: {type: string, format: date-time}
+        note: {type: string, maxLength: 2000}
+    UpdateTransactionRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1}
+        accountId: {type: string, format: uuid}
+        categoryId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        occurredAt: {type: string, format: date-time}
+        note: {type: string, maxLength: 2000}
+    CreateTransferRequest:
+      type: object
+      additionalProperties: false
+      required: [sourceAccountId, destinationAccountId, title, amount, occurredAt]
+      properties:
+        sourceAccountId: {type: string, format: uuid}
+        destinationAccountId: {type: string, format: uuid}
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1}
+        occurredAt: {type: string, format: date-time}
+        note: {type: string, maxLength: 2000}
+    CreateRefundRequest:
+      type: object
+      additionalProperties: false
+      required: [amount, occurredAt]
+      properties:
+        amount: {type: integer, format: int64, minimum: 1}
+        occurredAt: {type: string, format: date-time}
+        note: {type: string, maxLength: 2000}
+    TransactionSplit:
+      type: object
+      additionalProperties: false
+      required: [id, transactionId, categoryId, amount, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        transactionId: {type: string, format: uuid}
+        categoryId: {type: string, format: uuid}
+        amount: {type: integer, format: int64, minimum: 1}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt: {type: 'null'}
+    TransactionSplitInput:
+      type: object
+      additionalProperties: false
+      required: [categoryId, amount]
+      properties:
+        categoryId: {type: string, format: uuid}
+        amount: {type: integer, format: int64, minimum: 1}
+    TransactionSplitsResponse:
+      type: object
+      additionalProperties: false
+      required: [splits]
+      properties:
+        splits:
+          type: array
+          maxItems: 20
+          items: {$ref: '#/components/schemas/TransactionSplit'}
+    SetTransactionSplitsRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, splits]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        splits:
+          type: array
+          maxItems: 20
+          items: {$ref: '#/components/schemas/TransactionSplitInput'}
+    SetTransactionSplitsResponse:
+      type: object
+      additionalProperties: false
+      required: [transaction, splits]
+      properties:
+        transaction: {$ref: '#/components/schemas/Transaction'}
+        splits:
+          type: array
+          maxItems: 20
+          items: {$ref: '#/components/schemas/TransactionSplit'}
+    OcrFallbackJob:
+      type: object
+      additionalProperties: false
+      required: [id, storagePath, localConfidence, status, result, errorCode, createdAt, updatedAt, expiresAt, startedAt, completedAt]
+      properties:
+        id: {type: string, format: uuid}
+        storagePath: {type: string, maxLength: 1024}
+        localConfidence: {type: number, minimum: 0, maximum: 1}
+        status: {type: string, enum: [queued, processing, completed, failed, cancelled, expired]}
+        result:
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: 'null'
+        errorCode:
+          oneOf:
+            - type: string
+            - type: 'null'
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        startedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        completedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    OcrFallbackJobsResponse:
+      type: object
+      additionalProperties: false
+      required: [jobs]
+      properties:
+        jobs:
+          type: array
+          maxItems: 20
+          items: {$ref: '#/components/schemas/OcrFallbackJob'}
+    OcrFallbackJobResponse:
+      type: object
+      additionalProperties: false
+      required: [job]
+      properties:
+        job: {$ref: '#/components/schemas/OcrFallbackJob'}
+    CreateOcrFallbackJobRequest:
+      type: object
+      additionalProperties: false
+      required: [storagePath, localConfidence, idempotencyKey]
+      properties:
+        storagePath:
+          type: string
+          maxLength: 1024
+          pattern: '^[^/]+/ocr/.+\.(jpg|jpeg|png|webp)$'
+        localConfidence: {type: number, minimum: 0, maximum: 1}
+        idempotencyKey: {type: string, format: uuid}
+    ReceiptLineItem:
+      type: object
+      additionalProperties: false
+      required: [id, receiptId, name, quantity, unitPrice, total, confidence, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        receiptId: {type: string, format: uuid}
+        name: {type: string, minLength: 1, maxLength: 200}
+        quantity: {type: number, exclusiveMinimum: 0}
+        unitPrice:
+          oneOf: [{type: integer, format: int64, minimum: 0}, {type: 'null'}]
+        total: {type: integer, format: int64, minimum: 1}
+        confidence:
+          oneOf: [{type: number, minimum: 0, maximum: 1}, {type: 'null'}]
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt: {type: 'null'}
+    ReceiptRecord:
+      type: object
+      additionalProperties: false
+      required: [id, transactionId, storagePath, merchant, detectedTotal, purchasedAt, currencyCode, confidence, ocrProvider, reviewRequired, rawText, imageSha256, status, version, createdAt, updatedAt, deletedAt, lineItems]
+      properties:
+        id: {type: string, format: uuid}
+        transactionId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        storagePath: {type: string, maxLength: 1024}
+        merchant:
+          oneOf: [{type: string, maxLength: 160}, {type: 'null'}]
+        detectedTotal:
+          oneOf: [{type: integer, format: int64, minimum: 1}, {type: 'null'}]
+        purchasedAt:
+          oneOf: [{type: string, format: date-time}, {type: 'null'}]
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        confidence:
+          oneOf: [{type: number, minimum: 0, maximum: 1}, {type: 'null'}]
+        ocrProvider: {type: string, enum: [ml-kit, pp-ocr, manual]}
+        reviewRequired: {type: boolean}
+        rawText:
+          oneOf: [{type: string, maxLength: 32000}, {type: 'null'}]
+        imageSha256:
+          oneOf: [{type: string, pattern: '^[0-9a-f]{64}$'}, {type: 'null'}]
+        status: {type: string, enum: [processing, review_required, confirmed, failed]}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf: [{type: string, format: date-time}, {type: 'null'}]
+        lineItems:
+          type: array
+          maxItems: 100
+          items: {$ref: '#/components/schemas/ReceiptLineItem'}
+    ReceiptRecordsResponse:
+      type: object
+      required: [receipts]
+      properties:
+        receipts:
+          type: array
+          items: {$ref: '#/components/schemas/ReceiptRecord'}
+    ReceiptRecordResponse:
+      type: object
+      required: [receipt]
+      properties:
+        receipt: {$ref: '#/components/schemas/ReceiptRecord'}
+    CreateReceiptRecordRequest:
+      type: object
+      additionalProperties: false
+      required: [storagePath, currencyCode, ocrProvider, reviewRequired]
+      properties:
+        transactionId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        storagePath: {type: string, maxLength: 1024}
+        merchant:
+          oneOf: [{type: string, maxLength: 160}, {type: 'null'}]
+        detectedTotal:
+          oneOf: [{type: integer, format: int64, minimum: 1}, {type: 'null'}]
+        purchasedAt:
+          oneOf: [{type: string, format: date-time}, {type: 'null'}]
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        confidence:
+          oneOf: [{type: number, minimum: 0, maximum: 1}, {type: 'null'}]
+        ocrProvider: {type: string, enum: [ml-kit, pp-ocr, manual]}
+        reviewRequired: {type: boolean}
+        rawText:
+          oneOf: [{type: string, maxLength: 32000}, {type: 'null'}]
+        imageSha256:
+          oneOf: [{type: string, pattern: '^[0-9a-f]{64}$'}, {type: 'null'}]
+        lineItems:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required: [name, quantity, total]
+            properties:
+              name: {type: string, minLength: 1, maxLength: 200}
+              quantity: {type: number, exclusiveMinimum: 0}
+              unitPrice:
+                oneOf: [{type: integer, format: int64, minimum: 0}, {type: 'null'}]
+              total: {type: integer, format: int64, minimum: 1}
+              confidence:
+                oneOf: [{type: number, minimum: 0, maximum: 1}, {type: 'null'}]
+    UpdateReceiptRecordRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, merchant, detectedTotal, purchasedAt, reviewRequired, lineItems]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        merchant:
+          oneOf: [{type: string, maxLength: 160}, {type: 'null'}]
+        detectedTotal:
+          oneOf: [{type: integer, format: int64, minimum: 1}, {type: 'null'}]
+        purchasedAt:
+          oneOf: [{type: string, format: date-time}, {type: 'null'}]
+        reviewRequired: {type: boolean}
+        lineItems:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required: [name, quantity, total]
+            properties:
+              name: {type: string, minLength: 1, maxLength: 200}
+              quantity: {type: number, exclusiveMinimum: 0}
+              unitPrice:
+                oneOf: [{type: integer, format: int64, minimum: 0}, {type: 'null'}]
+              total: {type: integer, format: int64, minimum: 1}
+              confidence:
+                oneOf: [{type: number, minimum: 0, maximum: 1}, {type: 'null'}]
+    FindDuplicateReceiptRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        imageSha256:
+          oneOf: [{type: string, pattern: '^[0-9a-f]{64}$'}, {type: 'null'}]
+        merchant:
+          oneOf: [{type: string, maxLength: 160}, {type: 'null'}]
+        purchasedAt:
+          oneOf: [{type: string, format: date-time}, {type: 'null'}]
+        total:
+          oneOf: [{type: integer, format: int64, minimum: 1}, {type: 'null'}]
+    DuplicateReceiptsResponse:
+      type: object
+      required: [duplicates]
+      properties:
+        duplicates:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            required: [id, matchType]
+            properties:
+              id: {type: string, format: uuid}
+              matchType: {type: string, enum: [exact_hash, merchant_date_total]}
     HealthResponse:
       type: object
       required: [status, service, version]
@@ -196,6 +1535,61 @@ components:
         currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
         walletName: {type: string, minLength: 1, maxLength: 80}
         openingBalance: {type: integer, format: int64}
+    CompleteOnboardingResult:
+      type: object
+      additionalProperties: false
+      required: [walletId]
+      properties:
+        walletId: {type: string, format: uuid}
+    CurrentProfileResponse:
+      type: object
+      additionalProperties: false
+      required: [profile]
+      properties:
+        profile:
+          oneOf:
+            - $ref: '#/components/schemas/CurrentProfile'
+            - type: 'null'
+    CurrentProfile:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, avatarUrl, onboardingCompleted, locale, timezone, persona, goal, currencyCode, hideBalance]
+      properties:
+        id: {type: string, format: uuid}
+        displayName: {type: string}
+        avatarUrl:
+          oneOf:
+            - type: string
+            - type: 'null'
+        onboardingCompleted: {type: boolean}
+        locale: {type: string}
+        timezone: {type: string}
+        persona: {type: string}
+        goal: {type: string}
+        currencyCode: {type: string, pattern: '^[A-Z]{3}$'}
+        hideBalance: {type: boolean}
+    FinanceExport:
+      type: object
+      additionalProperties: false
+      required: [format, schemaVersion, exportedAt, revision, data]
+      properties:
+        format: {type: string, enum: [picket-export-v1]}
+        schemaVersion: {type: integer, enum: [1]}
+        exportedAt: {type: string, format: date-time}
+        revision: {type: integer, minimum: 0}
+        data: {$ref: '#/components/schemas/FinancePayload'}
+    FinanceImportSummary:
+      type: object
+      additionalProperties: false
+      required: [valid, wallets, entries, budgets, bills, keepsakes, subscriptions]
+      properties:
+        valid: {type: boolean, enum: [true]}
+        wallets: {type: integer, minimum: 0}
+        entries: {type: integer, minimum: 0}
+        budgets: {type: integer, minimum: 0}
+        bills: {type: integer, minimum: 0}
+        keepsakes: {type: integer, minimum: 0}
+        subscriptions: {type: integer, minimum: 0}
     FinancePayload:
       type: object
       required: [version, name, onboarded, hideBalance, wallets, entries, budgets, bills, keepsakes]
