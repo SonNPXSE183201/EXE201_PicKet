@@ -1,13 +1,14 @@
 # Picket
 
-Picket đang được chuyển dần sang kiến trúc đa nền tảng mà không làm gián đoạn ứng dụng Flutter hiện tại.
+Picket đang chuyển sang một kiến trúc thống nhất: Next.js cho web, Expo cho
+mobile và Dart Frog cho toàn bộ backend nghiệp vụ.
 
 ```text
 Next.js web ────┐
                 ├── REST / OpenAPI ── Dart Frog ── Supabase / Postgres
 Expo mobile ────┘
 
-Flutter mobile (hiện hành, giữ lại đến khi Expo đạt feature parity)
+Flutter mobile (legacy reference, không nhận nghiệp vụ mới)
 ```
 
 ## Cấu trúc chính
@@ -18,10 +19,14 @@ Flutter mobile (hiện hành, giữ lại đến khi Expo đạt feature parity)
 - `packages/api-client`: REST client dùng chung cho Next.js và Expo.
 - `packages/domain-ts`: hợp đồng dữ liệu tài chính TypeScript.
 - `packages/design-tokens`: màu sắc và kích thước dùng chung.
-- `mobile`: Flutter app hiện hành, gồm OCR ML Kit đã tối ưu cho Android cấu hình yếu.
+- `mobile`: Flutter legacy chỉ dùng để đối chiếu và regression trong quá trình
+  chuyển đổi; chỉ nhận bản sửa lỗi bảo mật, crash hoặc mất dữ liệu.
 - `supabase`: schema, RLS, RPC và Edge Functions hiện tại.
 
-Chi tiết quyết định kiến trúc và lộ trình nằm trong [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Chi tiết quyết định kiến trúc và lộ trình nằm trong
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
+[ADR-001](docs/architecture/ADR-001-next-expo-dart.md) và
+[feature parity matrix](docs/migration/FEATURE_PARITY.md).
 
 ## Chạy local
 
@@ -41,3 +46,9 @@ npm run start
 ```
 
 Android Emulator truy cập máy host qua `http://10.0.2.2:8080`. Điện thoại thật cần đặt `EXPO_PUBLIC_API_URL` thành IP LAN của máy chạy API.
+
+## Triển khai production một VPS
+
+Stack Caddy + Next.js + Dart Frog + OCR worker + PP-OCR CPU nằm trong
+`compose.production.yml`. Hướng dẫn DNS, secret, build, smoke test và rollback:
+[deploy/VPS_DEPLOYMENT.md](deploy/VPS_DEPLOYMENT.md).

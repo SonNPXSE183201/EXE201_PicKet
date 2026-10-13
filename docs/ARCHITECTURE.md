@@ -16,7 +16,9 @@ Giai đoạn nền móng đã tách giao diện mới khỏi dữ liệu bằng 
          └── ML Kit local trước, OCR fallback khi confidence thấp
 ```
 
-Flutter vẫn là ứng dụng phát hành hiện tại. Expo được phát triển song song và chỉ thay thế Flutter sau khi các luồng đăng nhập, tài chính, đồng bộ, OCR và kiểm thử thiết bị đạt feature parity.
+Expo là mobile client đích. Flutter đã ở trạng thái legacy: không nhận feature
+hoặc business rule mới và chỉ được dùng làm chuẩn đối chiếu/regression cho đến
+khi Expo vượt qua toàn bộ tiêu chí cutover.
 
 ## Ranh giới trách nhiệm
 
@@ -26,7 +28,9 @@ Flutter vẫn là ứng dụng phát hành hiện tại. Expo được phát tri
 - Xác minh token với Supabase Auth.
 - Dùng publishable key cùng JWT người dùng khi gọi REST/RPC, vì vậy RLS vẫn là lớp bảo vệ dữ liệu cuối cùng.
 - Không đưa `service_role` hoặc secret key vào client hay API façade.
-- Dùng optimistic concurrency qua `expectedRevision`; xung đột trả HTTP `409`.
+- Snapshot và `expectedRevision` chỉ là contract tương thích tạm thời. API đích
+  dùng CRUD theo entity, idempotency key và optimistic locking theo record;
+  xung đột trả HTTP `409`.
 - Hợp đồng máy đọc được nằm tại `apps/api/public/openapi.yaml`.
 
 ### Next.js và Expo
@@ -45,22 +49,36 @@ Luồng mục tiêu ưu tiên tốc độ và máy Android yếu:
 4. Chỉ khi confidence thấp hoặc thiếu trường bắt buộc mới gửi ảnh đã nén đến PP-OCR fallback.
 5. Luôn cho người dùng xác nhận tổng tiền/ngày trước khi lưu.
 
-Flutter đã có bước 1–3 và cờ `needsFallback`. Dịch vụ PP-OCR và native ML Kit module cho Expo là giai đoạn kế tiếp; `expo-dev-client` đã được thêm vì OCR native không chạy trong Expo Go mặc định.
+PP-OCR chạy ngoài tiến trình API công khai. Dart worker dùng secret key chỉ trong
+môi trường server để claim job theo lease, tải ảnh private, gọi model qua HTTPS,
+ghi kết quả rồi xóa ảnh khi hết hạn. Expo và Dart Frog API không được nhận biến
+`SUPABASE_SECRET_KEY`.
+
+Flutter legacy đã có bước 1–3 và cờ `needsFallback`; implementation này chỉ là
+nguồn tham chiếu. Dịch vụ fallback và native ML Kit module phải được xây trong
+Expo/Dart. `expo-dev-client` là bắt buộc vì OCR native không chạy trong Expo Go.
 
 ## Lộ trình tiếp theo
 
-1. Đưa đăng nhập Supabase và refresh session vào Next.js/Expo.
-2. Chuyển lần lượt dashboard, giao dịch, ngân sách và đồng bộ sang shared API client.
-3. Xây OCR module Expo bằng ML Kit Latin, benchmark trên Android RAM thấp.
-4. Triển khai PP-OCRv5 service với giới hạn kích thước, timeout, rate limit và chính sách xóa ảnh ngay sau xử lý.
-5. Di chuyển dữ liệu snapshot cũ (nếu có trên production) sang 15 bảng domain và ngừng cấp quyền cho RPC snapshot cũ.
+1. Khóa Flutter và duy trì feature parity matrix.
+2. Chuẩn hóa typed contract và chuyển business rule sang Dart domain package.
+3. Thay snapshot write bằng CRUD/incremental sync trên các bảng domain.
+4. Đưa Auth, onboarding, finance và offline sync vào Expo.
+5. Xây OCR module Expo bằng ML Kit Latin và benchmark Android RAM thấp.
+6. Chuyển billing, account deletion và admin action từ Edge Function sang Dart.
+7. Chỉ archive/xóa Flutter sau khi hoàn tất cutover checklist.
 
 ## Biến môi trường
 
 | Thành phần | Biến | Ghi chú |
 | --- | --- | --- |
+| Dart API | `APP_ENV` | Dùng `production` trên hosting; bật fail-fast HTTPS/CORS |
 | Dart API | `SUPABASE_URL` | URL HTTPS của Supabase project |
 | Dart API | `SUPABASE_PUBLISHABLE_KEY` | Publishable/anon key, không dùng secret key |
 | Dart API | `ALLOWED_ORIGINS` | Danh sách origin web, phân cách bằng dấu phẩy |
+| Dart OCR worker | `SUPABASE_SECRET_KEY` | Secret server-only, không đưa vào API/client |
+| Dart OCR worker | `OCR_PROVIDER_URL` | Endpoint PP-OCR private, HTTPS ngoài local |
+| Dart OCR worker | `OCR_PROVIDER_TOKEN` | Bearer token tùy chọn của dịch vụ model |
+| Dart OCR worker | `OCR_WORKER_ID` | ID duy nhất, tối đa 80 ký tự |
 | Next.js | `NEXT_PUBLIC_API_URL` | URL Dart API thấy được từ trình duyệt |
 | Expo | `EXPO_PUBLIC_API_URL` | URL Dart API thấy được từ thiết bị/emulator |

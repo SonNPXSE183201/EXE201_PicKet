@@ -1,6 +1,14 @@
-# Picket Android — source và triển khai
+# Picket Android — tài liệu Flutter legacy
 
-Source: `mobile/`. Backend: `supabase/`. Chưa build APK/AAB, chưa deploy Functions và chưa chạy SQL lên Supabase của bạn.
+> Trạng thái: tài liệu này mô tả ứng dụng Flutter cũ tại `mobile/`, chỉ giữ để
+> đối chiếu và regression. Không dùng nó để triển khai sản phẩm mới.
+>
+> Ứng dụng Android đích là Expo/React Native tại `apps/mobile`; backend nghiệp
+> vụ là Dart Frog tại `apps/api`; schema và Edge Functions nằm trong `supabase/`.
+> Hướng dẫn chạy mới xem [README Expo](../apps/mobile/README.md), còn tiến độ
+> chuyển đổi xem [feature parity](migration/FEATURE_PARITY.md).
+
+Source legacy: `mobile/`. Backend chung: `supabase/`.
 
 ## Chức năng đã nối
 
@@ -39,7 +47,7 @@ on conflict do nothing;
 
 App không có quyền tự cấp staff. Tạm khóa tài khoản chặn cloud; không xóa dữ liệu ngoại tuyến đã có trên thiết bị.
 
-## 2. Cấu hình app
+## 2. Cấu hình app legacy
 
 Sao chép `mobile/config/production.example.json` thành `mobile/config/production.json`. Điền `APP_ENV=production`, `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` của project mới. Chỉ dùng publishable hoặc legacy anon key; không dùng service-role/secret key trong app.
 
@@ -67,7 +75,7 @@ Cấp quyền Android Publisher API cho service account, đặt secret `GOOGLE_P
 
 Cấu hình Google Play RTDN tới Pub/Sub, authenticated push tới `https://YOUR_PROJECT_REF.supabase.co/functions/v1/play-notifications`. Đặt secrets `GOOGLE_PLAY_RTDN_AUDIENCE` và `GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL` đúng audience/email của push. Handler xác minh chữ ký, issuer, audience, email, package rồi truy vấn trạng thái Play. Cache entitlement tối đa 24 giờ; mở app/khôi phục giao dịch xác minh lại. Kiểm thử renewal, cancel, grace period và refund trước khi phát hành.
 
-## 5. Android release — chưa build
+## 5. Android release legacy
 
 Flutter đã dùng: 3.44.4 / Dart 3.12.2. MinSdk ít nhất 24. Đã khai báo deep link, INTERNET, sinh trắc học, notification và boot receiver; FlutterFragmentActivity, AppCompat, desugaring.
 
@@ -84,7 +92,7 @@ flutter run -d emulator-5554 --dart-define-from-file=config/production.json
 
 Để test Auth thật, lần lượt kiểm tra đăng ký → OTP email → đăng xuất/đăng nhập → quên mật khẩu → deep link → Google. Nếu email không đến, kiểm tra SMTP, template có `{{ .Token }}` và rate limit trong Supabase Auth.
 
-## 6. Kiểm tra và giới hạn
+## 6. Kiểm tra và giới hạn legacy
 
 Từ mobile: `flutter pub get`, `flutter analyze --no-pub`, `flutter test --no-pub`.
 
