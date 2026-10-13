@@ -1,12 +1,27 @@
 name: Validate Picket source
 on:
   push:
-    paths: ['apps/**', 'mobile/**', 'packages/**', 'supabase/**', 'web/**', '.github/workflows/source-validation.yml']
+    paths: ['apps/**', 'deploy/**', 'mobile/**', 'packages/**', 'services/**', 'supabase/**', 'web/**', 'compose.production.yml', '.dockerignore', '.github/workflows/source-validation.yml']
   pull_request:
-    paths: ['apps/**', 'mobile/**', 'packages/**', 'supabase/**', 'web/**', '.github/workflows/source-validation.yml']
+    paths: ['apps/**', 'deploy/**', 'mobile/**', 'packages/**', 'services/**', 'supabase/**', 'web/**', 'compose.production.yml', '.dockerignore', '.github/workflows/source-validation.yml']
 permissions:
   contents: read
 jobs:
+  shared-contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.13'
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: ./node_modules/.bin/tsc -p ../../packages/domain-ts/tsconfig.json
+      - run: ./node_modules/.bin/tsc -p ../../packages/api-client/tsconfig.json
   api:
     runs-on: ubuntu-latest
     defaults:
@@ -18,13 +33,19 @@ jobs:
         with:
           sdk: '3.12.0'
       - run: dart pub get
-      - run: dart format --output=none --set-exit-if-changed lib routes test
+      - run: dart format --output=none --set-exit-if-changed bin lib routes test
       - run: dart analyze
       - run: dart test
       - run: dart pub global activate dart_frog_cli 1.2.14
       - run: dart_frog build
+      - run: docker build --tag picket-api:ci .
+      - run: docker build --file Dockerfile.worker --tag picket-ocr-worker:ci .
   web:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: https://api.example.com
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_only_not_a_real_key
     defaults:
       run:
         working-directory: web
@@ -36,8 +57,34 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
+      - run: npm audit --omit=dev
       - run: npm run lint
+      - run: npx tsc --noEmit
       - run: npm run build
+      - name: Build standalone production image
+        working-directory: .
+        run: |
+          docker build --file web/Dockerfile --tag picket-web:ci \
+            --build-arg NEXT_PUBLIC_API_URL="$NEXT_PUBLIC_API_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" .
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate OCR provider contract
+        working-directory: services/ocr-provider
+        run: |
+          python -m unittest discover -s tests -v
+          python -m compileall -q ocr_service
+      - name: Build OCR provider image without downloading models
+        working-directory: services/ocr-provider
+        run: docker build --build-arg PRELOAD_MODELS=0 --tag picket-ocr-provider:ci .
+      - name: Validate production Compose
+        run: docker compose --env-file deploy/.env.production.example -f compose.production.yml config --quiet
   expo:
     runs-on: ubuntu-latest
     defaults:
@@ -51,6 +98,11 @@ jobs:
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
       - run: npm ci
+      - run: npm run test:api
+      - run: npm run test:auth
+      - run: npm run test:ocr
+      - run: npm run test:sync
+      - run: npm run test:ui
       - run: npm run lint
       - run: npm run typecheck
       - run: npx expo-doctor
