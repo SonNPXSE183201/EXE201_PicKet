@@ -27,6 +27,31 @@ npx expo run:android
 
 Ứng dụng dùng native secure storage và sẽ dùng native ML Kit ở giai đoạn OCR,
 vì vậy development build là luồng chuẩn; không dùng Expo Go làm tiêu chí release.
+`expo-iap` cũng là native module nên màn thanh toán không hoạt động trong Expo Go.
+
+## Google Play Billing
+
+Màn Hồ sơ mở màn `Gói Picket và thanh toán`, tải bốn subscription từ Google
+Play, mua/khôi phục giao dịch và mở trang quản lý subscription. Client gửi
+`productId` cùng `purchaseToken` tới Dart API; không tự tin cậy tier, giá hoặc
+trạng thái từ thiết bị. Transaction chỉ được finish sau khi server trả
+`verified: true`.
+
+Để kiểm thử thật cần:
+
+- tạo đúng bốn product `picket_plus_monthly`, `picket_plus_yearly`,
+  `picket_pro_monthly`, `picket_pro_yearly` trong Play Console;
+- upload một Android App Bundle vào Internal testing, khai báo license tester
+  và cài app từ link Google Play bằng đúng tài khoản tester;
+- deploy Supabase Edge Function `verify-purchase` với secret
+  `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`, đồng thời cấp quyền Android Publisher cho
+  service account;
+- dùng development/release build có `expo-iap`; emulator hoặc APK sideload
+  không phải bằng chứng hoàn tất sandbox lifecycle.
+
+Sau khi thêm/nâng `expo-iap`, chạy `npx expo prebuild --platform android` rồi
+build lại native app. Không gọi `finishTransaction` khi Dart API chưa xác minh,
+để Google Play còn có thể phát lại giao dịch sau lỗi mạng.
 
 ## Kiểm tra và đóng gói Android release
 
@@ -65,7 +90,11 @@ APK nằm tại
 dùng cho đa số điện thoại Android thật và không cài được lên emulator x86_64.
 Release phải ký bằng upload keystore của Picket, không dùng debug keystore. File
 `android/` là output native bị ignore; nếu chạy `expo prebuild --clean`, phải
-khôi phục cấu hình signing cục bộ trước khi build lại.
+tạo `apps/mobile/key.properties` cục bộ (file này bị gitignore) với
+`storeFile`, `storePassword`, `keyAlias`, `keyPassword`. Config plugin sẽ áp lại
+release signing sau mỗi lần prebuild; khi file không tồn tại, release để unsigned
+chứ không tự hạ xuống debug key. Sao chép `key.properties.example` để lấy đúng
+định dạng và dùng dấu `/` trong đường dẫn Windows.
 
 Artifact demo đã kiểm tra được lưu ngoài source tại `.artifacts/releases/` với
 hậu tố `arm64-v8a` cho điện thoại thật và `x86_64` cho emulator. Không commit
@@ -112,6 +141,7 @@ npm run typecheck
 npm run lint
 npm run test:api
 npm run test:auth
+npm run test:billing
 npm run test:ocr
 npm run test:sync
 npm run test:ui

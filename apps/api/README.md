@@ -18,6 +18,7 @@ Endpoints:
 - `GET /v1/me`
 - `POST /v1/onboarding`
 - `GET /v1/entitlements`
+- `POST /v1/billing/google-play/verify` (Google Play subscription token; authenticated user only)
 - `GET /v1/admin/overview?page=0` (staff only; every view is audited)
 - `POST /v1/admin/users/{id}/actions` (staff only; exact confirmation and audit)
 - `PATCH /v1/profile`
@@ -44,6 +45,15 @@ payload version 2. Clients must validate first, obtain the current snapshot
 revision, and send that revision with exact `RESTORE` confirmation. A concurrent
 change returns a conflict and the normalized save RPC rolls back the whole write.
 Request bodies are limited to 11 MB.
+
+Google Play billing goes through the Dart API. The public API validates the
+product allow-list, authenticates the caller and forwards only the product ID
+and purchase token with that user's JWT to the private verifier. The mobile
+client must finish a transaction only after this endpoint returns
+`verified: true`. The current verifier is the Supabase `verify-purchase` Edge
+Function, so production also requires `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` and
+the four matching subscription products in Google Play Console. No service
+account credential is stored in the Dart public API or mobile application.
 
 Mọi endpoint tạo account, category, budget và transaction yêu cầu header
 `Idempotency-Key` (8–128 ký tự transport-safe). Retry cùng user, operation và
