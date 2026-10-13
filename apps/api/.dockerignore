@@ -1,0 +1,10 @@
+.dart_tool/
+.git/
+.github/
+.idea/
+.packages
+build/
+coverage/
+.env
+.env.*
+!.env.example

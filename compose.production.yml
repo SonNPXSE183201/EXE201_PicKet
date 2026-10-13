@@ -1,0 +1,139 @@
+name: picket
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  caddy:
+    <<: *service-defaults
+    image: caddy:2.10.2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+      PICKET_API_DOMAIN: ${PICKET_API_DOMAIN}
+      PICKET_WEB_DOMAIN: ${PICKET_WEB_DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+    cpus: 0.25
+    mem_limit: 160m
+
+  web:
+    <<: *service-defaults
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+    environment:
+      APP_BASE_URL: https://${PICKET_WEB_DOMAIN}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+    expose:
+      - "3000"
+    networks:
+      - edge
+    cap_drop:
+      - ALL
+    cpus: 0.75
+    mem_limit: 768m
+
+  api:
+    <<: *service-defaults
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: production
+      PORT: "8080"
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    expose:
+      - "8080"
+    networks:
+      - edge
+    read_only: true
+    cap_drop:
+      - ALL
+    cpus: 0.50
+    mem_limit: 256m
+
+  ocr-provider:
+    <<: *service-defaults
+    build:
+      context: ./services/ocr-provider
+      dockerfile: Dockerfile
+      args:
+        PRELOAD_MODELS: ${OCR_PRELOAD_MODELS:-1}
+    environment:
+      OCR_PROVIDER_TOKEN: ${OCR_PROVIDER_TOKEN}
+      OCR_CPU_THREADS: ${OCR_CPU_THREADS:-2}
+      OMP_NUM_THREADS: "1"
+    expose:
+      - "8000"
+    networks:
+      - backend
+    cap_drop:
+      - ALL
+    shm_size: 512m
+    cpus: 2.25
+    mem_limit: 4g
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+  ocr-worker:
+    <<: *service-defaults
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.worker
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY}
+      OCR_PROVIDER_URL: http://ocr-provider:8000/predict
+      OCR_PROVIDER_TOKEN: ${OCR_PROVIDER_TOKEN}
+      OCR_ALLOW_INSECURE_PRIVATE_URL: "true"
+      OCR_WORKER_ID: ${OCR_WORKER_ID:-picket-vps-worker-01}
+      OCR_POLL_INTERVAL_MS: ${OCR_POLL_INTERVAL_MS:-2000}
+    depends_on:
+      ocr-provider:
+        condition: service_healthy
+    networks:
+      - backend
+    read_only: true
+    cap_drop:
+      - ALL
+    cpus: 0.25
+    mem_limit: 192m
+
+networks:
+  edge:
+  backend:
+
+volumes:
+  caddy_data:
+  caddy_config:
