@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Picket Next.js web
 
-## Getting Started
+Web client dùng Next.js 16, Supabase Auth cookie SSR và Dart Frog API dùng
+chung với ứng dụng Expo.
 
-First, run the development server:
+## Cấu hình
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Sao chép `.env.example` thành `.env.local` rồi điền:
+
+```text
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Trong Supabase Dashboard → Authentication → URL Configuration, thêm redirect:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000/auth/callback
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Khi deploy, thêm callback của domain production, ví dụ:
+`https://app.example.com/auth/callback`.
 
-## Learn More
+## Chạy và kiểm tra
 
-To learn more about Next.js, take a look at the following resources:
+```powershell
+npm install
+npm run dev
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Landing page: `http://localhost:3000`
+- Đăng nhập: `http://localhost:3000/login`
+- Đăng ký/OTP: `http://localhost:3000/register`
+- Quên mật khẩu: `http://localhost:3000/forgot-password`
+- Onboarding cần session: `http://localhost:3000/onboarding`
+- Dashboard cần session: `http://localhost:3000/dashboard`
+- Tài khoản: `http://localhost:3000/accounts`
+- Giao dịch: `http://localhost:3000/transactions`
+- Chuyển tiền: `http://localhost:3000/transactions/transfer`
+- Hoàn tiền: mở từ một khoản chi trong trang giao dịch
+- Chia danh mục: mở từ một khoản thu/chi trong trang giao dịch
+- Danh mục: `http://localhost:3000/categories`
+- Ngân sách: `http://localhost:3000/budgets`
+- Hồ sơ và tùy chọn: `http://localhost:3000/profile`
+- Hồ sơ hiển thị gói hiện tại và quota OCR cloud do Dart API xác thực
+- Export dữ liệu: `http://localhost:3000/data`
+- Xóa tài khoản: khu vực nguy hiểm trong `http://localhost:3000/data`
+- Hóa đơn: `http://localhost:3000/receipts` (xem/sửa line items và kiểm tra trùng theo cửa hàng, ngày, tổng tiền)
 
-## Deploy on Vercel
+Proxy Next.js refresh Supabase cookie; callback đổi PKCE code thành session. Dashboard
+xác minh claims trước khi lấy access token để gọi Dart API.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Các trang tài chính đăng ký Supabase Realtime theo đúng user để tự tải lại dữ
+liệu do Expo hoặc tab khác thay đổi. Khi Realtime mất kết nối, web chuyển sang
+refresh lúc tab trở lại foreground và polling mỗi 60 giây.

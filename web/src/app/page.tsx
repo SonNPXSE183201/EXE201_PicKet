@@ -55,8 +55,8 @@ export default function Home() {
             thiết bị, đồng bộ an toàn và theo dõi kế hoạch trên web hoặc mobile.
           </p>
           <div className="actions">
-            <a className="button primary" href="#architecture">
-              Khám phá nền tảng
+            <a className="button primary" href="/login">
+              Đăng nhập Picket
             </a>
             <a className="button secondary" href={`${apiBaseUrl}/openapi.yaml`}>
               Xem API contract
