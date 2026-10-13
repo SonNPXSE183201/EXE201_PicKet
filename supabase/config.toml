@@ -1,8 +1,12 @@
 # User handlers independently validate the bearer JWT with auth.getUser.
 # This also supports projects using asymmetric Supabase signing keys.
 [auth]
-site_url = "com.picket.mobile://auth/callback"
-additional_redirect_urls = ["com.picket.mobile://auth/callback"]
+site_url = "https://picket.51-79-207-154.sslip.io"
+additional_redirect_urls = [
+  "com.picket.mobile://auth/callback",
+  "com.picket.mobile://auth/reset-password",
+  "https://picket.51-79-207-154.sslip.io/auth/callback",
+]
 enable_signup = true
 
 [auth.email]

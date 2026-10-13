@@ -19,10 +19,16 @@ Deno.serve(async (request) => {
     ) return json({ error: "Staff required" }, 403);
     const body = await request.text();
     if (body.length > 2000) return json({ error: "Request too large" }, 413);
-    const { targetUser, action, tier } = JSON.parse(body);
+    const { targetUser, action, tier, confirmation } = JSON.parse(body);
+    const confirmations: Record<string, string> = {
+      suspend: "SUSPEND",
+      restore: "RESTORE",
+      reset_password: "RESET",
+      grant_plan: "GRANT",
+    };
     if (
       typeof targetUser !== "string" ||
-      !["suspend", "restore", "reset_password", "grant_plan"].includes(action)
+      !confirmations[action] || confirmation !== confirmations[action]
     ) return json({ error: "Invalid action" }, 400);
     const { data: target, error } = await client.auth.admin.getUserById(
       targetUser,
@@ -69,7 +75,10 @@ Deno.serve(async (request) => {
     });
     if (audit.error) throw audit.error;
     return json({ updated: true });
-  } catch (_) {
-    return json({ error: "Unable to complete action" }, 503);
+  } catch (error) {
+    return json(
+      { error: "Unable to complete action" },
+      error instanceof Error && error.message === "Unauthorized" ? 401 : 503,
+    );
   }
 });
