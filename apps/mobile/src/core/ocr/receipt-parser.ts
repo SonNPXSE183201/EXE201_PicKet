@@ -27,7 +27,9 @@ export type ReceiptDraftLine = {
   confidence: number;
 };
 
-const totalWords = /tong\s*(cong|tien|thanh\s*toan)?|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*thanh\s*toan|thanh\s*toan|phai\s*tra|grand\s*total|total\s*due|amount\s*due|^total\b/i;
+const totalWords = /tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*thanh\s*toan|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
+const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
+const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
 const rejectedTotalWords = /subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|so\s*luong/i;
 const rejectedItemWords = /\b(tong|total|subtotal|tam\s*tinh|thanh\s*toan|phai\s*tra|vat|tax|thue|giam\s*gia|discount|tien\s*thua|tien\s*khach|change|cash|barcode|ma\s*hang|don\s*gia|so\s*luong|qty|ngay|date|gio|time|mst|ma\s*so\s*thue|hoa\s*don|receipt|invoice|dia\s*chi|address|hotline|tel)\b/i;
 
@@ -123,12 +125,26 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     if (!totalWords.test(clean) || rejectedTotalWords.test(clean)) return;
     const ownNumbers = [...line.text.matchAll(/\d[\d.,\s]*/g)];
     const next = lines[index + 1];
-    const source = ownNumbers.length > 0 ? line : next;
-    const numbers = ownNumbers.length > 0 ? ownNumbers : (next ? [...next.text.matchAll(/\d[\d.,\s]*/g)] : []);
+    const previous = lines[index - 1];
+    const previousNumbers = previous
+      ? [...previous.text.matchAll(/\d[\d.,\s]*/g)]
+      : [];
+    const usePrevious =
+      ownNumbers.length === 0 &&
+      trailingTotalWords.test(clean) &&
+      previousNumbers.length > 0;
+    const source = ownNumbers.length > 0 ? line : usePrevious ? previous : next;
+    const numbers = ownNumbers.length > 0
+      ? ownNumbers
+      : usePrevious
+        ? previousNumbers
+        : next
+          ? [...next.text.matchAll(/\d[\d.,\s]*/g)]
+          : [];
     const amount = numbers.length > 0 ? parseReceiptMoney(numbers.at(-1)?.[0] ?? "") : null;
     if (!source || amount === null) return;
     const nearBottom = maxBottom > 0 && (source.bottom ?? 0) / maxBottom >= 0.55;
-    const score = Math.min(1, 0.52 + confidence(source) * 0.22 + (source === line ? 0.14 : 0.08) + (nearBottom ? 0.08 : 0.0) + (/tong\s*cong|thanh\s*toan|phai\s*tra/i.test(clean) ? 0.04 : 0));
+    const score = Math.min(1, 0.52 + confidence(source) * 0.22 + (source === line ? 0.14 : 0.08) + (nearBottom ? 0.08 : 0.0) + (strongTotalWords.test(clean) ? 0.12 : 0));
     totals.push({ amount, score });
   });
   totals.sort((left, right) => right.score - left.score);
