@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
+import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import {
   parseReceiptText,
@@ -124,13 +125,7 @@ export default function CaptureReceiptScreen() {
         source === "camera"
           ? ImagePicker.launchCameraAsync
           : ImagePicker.launchImageLibraryAsync;
-      const result = await picker({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [3, 4],
-        quality: 0.8,
-        exif: false,
-      });
+      const result = await picker(receiptImagePickerOptions);
       if (result.canceled) return;
 
       const uri = result.assets[0]?.uri;

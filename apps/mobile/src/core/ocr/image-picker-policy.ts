@@ -1,0 +1,10 @@
+import type { ImagePickerOptions } from "expo-image-picker";
+
+// Receipts are commonly much taller than the editor's fixed crop ratio. Keep
+// the complete frame so merchant headers and payable totals reach OCR intact.
+export const receiptImagePickerOptions = {
+  mediaTypes: ["images"],
+  allowsEditing: false,
+  quality: 0.8,
+  exif: false,
+} satisfies ImagePickerOptions;
