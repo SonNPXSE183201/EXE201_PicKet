@@ -16,10 +16,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import {
-  parseReceiptText,
-  type ReceiptDraftLine,
-} from "@/core/ocr/receipt-parser";
+import type { ReceiptDraftLine } from "@/core/ocr/receipt-parser";
+import { parseServerOcrResult } from "@/core/ocr/server-result";
 import {
   pollServerOcrFallback,
   queueServerOcrFallback,
@@ -209,27 +207,12 @@ export default function CaptureReceiptScreen() {
                   onStatus: (current) => setFallbackStatus(current.status),
                 });
                 if (completed.status === "completed" && completed.result) {
-                  const merchant = completed.result.merchant;
-                  const detectedAmount = completed.result.amount;
-                  if (typeof merchant === "string" && merchant.trim()) {
-                    setTitle(merchant.trim());
-                  }
-                  if (
-                    typeof detectedAmount === "number" &&
-                    Number.isSafeInteger(detectedAmount) &&
-                    detectedAmount > 0
-                  ) {
-                    setAmount(String(detectedAmount));
-                  }
-                  if (typeof completed.result.rawText === "string") {
-                    setRawText(completed.result.rawText);
-                    setLineItems(
-                      parseReceiptText(completed.result.rawText).lineItems,
-                    );
-                  }
-                  if (typeof completed.result.purchasedAt === "string") {
-                    setPurchasedAt(completed.result.purchasedAt);
-                  }
+                  const parsed = parseServerOcrResult(completed.result);
+                  if (parsed.merchant) setTitle(parsed.merchant);
+                  if (parsed.amount) setAmount(String(parsed.amount));
+                  setRawText(parsed.rawText || null);
+                  setLineItems(parsed.lineItems);
+                  setPurchasedAt(parsed.date);
                   setProvider("pp-ocr");
                   setAttachReceipt(true);
                   setMessage(
