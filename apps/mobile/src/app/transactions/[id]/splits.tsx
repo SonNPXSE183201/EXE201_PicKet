@@ -62,7 +62,7 @@ export default function TransactionSplitsScreen() {
 
   if (!session) return <Redirect href={routes.login} />;
   if (!transaction || !loaded) {
-    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator color={colors.mauve} /> : <Text style={styles.error}>Không tìm thấy giao dịch.</Text>}</SafeAreaView>;
+    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator accessibilityLabel="Đang tải phân bổ giao dịch" color={colors.mauve} /> : <Text style={styles.error}>Không tìm thấy giao dịch.</Text>}</SafeAreaView>;
   }
   if (transaction.kind !== "expense" && transaction.kind !== "income") {
     return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>Loại giao dịch này không hỗ trợ chia danh mục.</Text><Pressable onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Quay lại</Text></Pressable></SafeAreaView>;
@@ -131,7 +131,7 @@ export default function TransactionSplitsScreen() {
           </View>
         ))}
         {message && <Text style={styles.error}>{message}</Text>}
-        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu phân bổ</Text>}</Pressable>
+        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang lưu phân bổ giao dịch" color={colors.white} /> : <Text style={styles.primaryText}>Lưu phân bổ</Text>}</Pressable>
         <Pressable disabled={busy} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); }} style={styles.clear}><Text style={styles.clearText}>Bỏ toàn bộ phân bổ</Text></Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
       </ScrollView>

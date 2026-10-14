@@ -133,7 +133,7 @@ export default function RestoreScreen() {
           <Text style={styles.noticeText}>Backup sẽ thay thế dữ liệu tài chính hiện tại. Nếu revision đã thay đổi hoặc có lỗi, giao dịch sẽ rollback toàn bộ.</Text>
         </View>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void chooseBackup()} style={styles.secondary}>
-          {busy && !pending ? <ActivityIndicator color={colors.mauve} /> : <Text style={styles.secondaryText}>Chọn file JSON</Text>}
+          {busy && !pending ? <ActivityIndicator accessibilityLabel="Đang đọc file backup" color={colors.mauve} /> : <Text style={styles.secondaryText}>Chọn file JSON</Text>}
         </Pressable>
         {pending && (
           <View style={styles.summary}>
@@ -164,7 +164,7 @@ export default function RestoreScreen() {
               onPress={() => void restore()}
               style={[styles.primary, (busy || confirmation !== "RESTORE") && styles.disabled]}
             >
-              {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Khôi phục dữ liệu</Text>}
+              {busy ? <ActivityIndicator accessibilityLabel="Đang khôi phục dữ liệu" color={colors.white} /> : <Text style={styles.primaryText}>Khôi phục dữ liệu</Text>}
             </Pressable>
           </>
         )}

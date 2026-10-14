@@ -213,10 +213,10 @@ export default function NewTransactionScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text accessibilityRole="header" style={styles.title}>Giao dịch mới</Text>
-        {loadingDraft && <ActivityIndicator color={colors.mauve} />}
+        {loadingDraft && <ActivityIndicator accessibilityLabel="Đang tải bản nháp hóa đơn" color={colors.mauve} />}
         {receiptDraft && (
           <View style={styles.receiptCard}>
-            <Image source={{ uri: receiptDraft.imageUri }} style={styles.receiptImage} />
+            <Image accessibilityLabel="Ảnh hóa đơn của giao dịch mới" source={{ uri: receiptDraft.imageUri }} style={styles.receiptImage} />
             <View style={styles.receiptCopy}>
               <Text style={styles.receiptTitle}>Có đính kèm hóa đơn</Text>
               <Text style={styles.receiptHint}>
@@ -263,7 +263,7 @@ export default function NewTransactionScreen() {
         <TextInput accessibilityLabel="Ghi chú giao dịch, không bắt buộc" multiline numberOfLines={3} placeholder="Ghi chú (không bắt buộc)" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <Pressable disabled={busy || loadingDraft} onPress={() => void submit()} style={[styles.primary, loadingDraft && styles.disabled]}>
-          {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu giao dịch</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel="Đang lưu giao dịch" color={colors.white} /> : <Text style={styles.primaryText}>Lưu giao dịch</Text>}
         </Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}>
           <Text style={styles.secondaryText}>Hủy</Text>

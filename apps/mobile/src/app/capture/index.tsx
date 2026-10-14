@@ -486,7 +486,7 @@ export default function CaptureReceiptScreen() {
           style={[styles.primary, (isRecognizing || isContinuing) && styles.disabled]}
         >
           {isContinuing ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.white} />
           ) : (
             <Text style={styles.primaryText}>Kiểm tra và tạo giao dịch</Text>
           )}

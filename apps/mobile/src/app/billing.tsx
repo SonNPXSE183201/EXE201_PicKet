@@ -262,7 +262,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           <Text style={styles.notice}>Thanh toán trong ứng dụng hiện chỉ hỗ trợ Android.</Text>
         ) : !connected ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator color={colors.mauve} />
+            <ActivityIndicator accessibilityLabel="Đang kết nối Google Play" color={colors.mauve} />
             <Text style={styles.notice}>Đang kết nối Google Play…</Text>
           </View>
         ) : orderedProducts.length === 0 ? (
@@ -293,7 +293,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                   style={styles.primary}
                 >
                   {busyProduct === product.id ? (
-                    <ActivityIndicator color={colors.white} />
+                    <ActivityIndicator accessibilityLabel={`Đang mua ${copy.name} ${copy.cadence}`} color={colors.white} />
                   ) : (
                     <Text style={styles.primaryText}>Chọn gói</Text>
                   )}
@@ -313,7 +313,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           onPress={() => void restore()}
           style={styles.secondary}
         >
-          {restoring ? <ActivityIndicator color={colors.mauve} /> : <Text style={styles.secondaryText}>Khôi phục giao dịch</Text>}
+          {restoring ? <ActivityIndicator accessibilityLabel="Đang khôi phục giao dịch Google Play" color={colors.mauve} /> : <Text style={styles.secondaryText}>Khôi phục giao dịch</Text>}
         </Pressable>
         <Pressable
           disabled={Platform.OS !== "android"}

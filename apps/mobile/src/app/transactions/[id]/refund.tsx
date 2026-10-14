@@ -33,7 +33,7 @@ export default function RefundScreen() {
 
   if (!session) return <Redirect href={routes.login} />;
   if (loading && !original) {
-    return <SafeAreaView style={[styles.safeArea, styles.center]}><ActivityIndicator color={colors.mauve} /></SafeAreaView>;
+    return <SafeAreaView style={[styles.safeArea, styles.center]}><ActivityIndicator accessibilityLabel="Đang tải giao dịch cần hoàn tiền" color={colors.mauve} /></SafeAreaView>;
   }
   if (!original || original.kind !== "expense") {
     return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>Chỉ khoản chi đang hoạt động mới có thể hoàn tiền.</Text><Pressable onPress={() => router.replace(routes.transactions)} style={styles.secondary}><Text style={styles.secondaryText}>Về danh sách</Text></Pressable></SafeAreaView>;
@@ -75,7 +75,7 @@ export default function RefundScreen() {
         <TextInput accessibilityLabel="Lý do hoặc ghi chú hoàn tiền" multiline placeholder="Lý do hoặc ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text style={styles.error}>{message}</Text>}
         <Pressable disabled={busy || remaining === 0} onPress={() => void submit()} style={[styles.primary, remaining === 0 && styles.disabled]}>
-          {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Tạo khoản hoàn</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel="Đang tạo khoản hoàn" color={colors.white} /> : <Text style={styles.primaryText}>Tạo khoản hoàn</Text>}
         </Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
       </ScrollView>

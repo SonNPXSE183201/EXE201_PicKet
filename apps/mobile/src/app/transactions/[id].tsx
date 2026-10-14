@@ -52,7 +52,7 @@ export default function TransactionDetailScreen() {
   if (loading && !transaction) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator color={colors.mauve} />
+        <ActivityIndicator accessibilityLabel="Đang tải giao dịch" color={colors.mauve} />
       </SafeAreaView>
     );
   }
@@ -140,7 +140,7 @@ export default function TransactionDetailScreen() {
         <TextInput accessibilityLabel="Ghi chú giao dịch" editable={editable} multiline numberOfLines={3} placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note, !editable && styles.readonly]} value={currentNote} onChangeText={setNote} />
         {message && <Text style={styles.error}>{message}</Text>}
         {editable && <Pressable disabled={busy} onPress={() => void save()} style={styles.primary}>
-          {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel="Đang lưu giao dịch" color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}
         </Pressable>}
         {editable && <Pressable disabled={busy} onPress={() => router.push(routes.splits(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>Chia theo danh mục</Text></Pressable>}
         {transaction.kind === "expense" && <Pressable disabled={busy} onPress={() => router.push(routes.refund(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>Tạo khoản hoàn tiền</Text></Pressable>}

@@ -21,7 +21,7 @@ export default function ProfileScreen() {
   const { loading, profile } = useProfile();
 
   if (!session) return <Redirect href={routes.login} />;
-  if (loading || !profile) return <SafeAreaView style={[styles.safeArea, styles.center]}><ActivityIndicator color={colors.mauve} /></SafeAreaView>;
+  if (loading || !profile) return <SafeAreaView style={[styles.safeArea, styles.center]}><ActivityIndicator accessibilityLabel="Đang tải hồ sơ" color={colors.mauve} /></SafeAreaView>;
 
   return <ProfileForm key={profile.id} profile={profile} />;
 }
@@ -90,7 +90,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>Ẩn số dư</Text><Text style={styles.switchDescription}>Che số tiền trên màn hình tổng quan.</Text></View><Switch accessibilityLabel="Ẩn số dư" onValueChange={setHideBalance} thumbColor={colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={hideBalance} /></View>
         {entitlements && <View style={styles.planCard}><Text style={styles.planTitle}>Gói {entitlements.tier.toUpperCase()}</Text><Text style={styles.planText}>OCR cloud còn {entitlements.ocrFallbackRemaining}/{entitlements.ocrFallbackDailyLimit} lượt trong 24 giờ.</Text></View>}
         {message && <Text accessibilityLiveRegion="polite" style={message.startsWith("Đã") ? styles.success : styles.error}>{message}</Text>}
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={styles.primary}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}</Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang lưu hồ sơ" color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}</Pressable>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push(routes.billing)} style={styles.secondary}><Text style={styles.secondaryText}>Gói Picket và thanh toán</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void exportData()} style={styles.secondary}><Text style={styles.secondaryText}>Export dữ liệu JSON</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push(routes.restore)} style={styles.secondary}><Text style={styles.secondaryText}>Khôi phục từ bản export</Text></Pressable>

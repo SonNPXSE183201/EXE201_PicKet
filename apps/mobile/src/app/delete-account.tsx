@@ -41,7 +41,7 @@ export default function DeleteAccountScreen() {
         <Text style={styles.label}>Nhập DELETE để xác nhận</Text>
         <TextInput accessibilityLabel="Xác nhận xóa tài khoản" autoCapitalize="characters" autoComplete="off" onChangeText={setConfirmation} style={styles.input} value={confirmation} />
         {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text>}
-        <Pressable accessibilityRole="button" disabled={busy || confirmation !== "DELETE"} onPress={() => void remove()} style={[styles.deleteButton, confirmation !== "DELETE" && styles.disabled]}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.deleteText}>Xóa vĩnh viễn tài khoản</Text>}</Pressable>
+        <Pressable accessibilityRole="button" disabled={busy || confirmation !== "DELETE"} onPress={() => void remove()} style={[styles.deleteButton, confirmation !== "DELETE" && styles.disabled]}>{busy ? <ActivityIndicator accessibilityLabel="Đang xóa vĩnh viễn tài khoản" color={colors.white} /> : <Text style={styles.deleteText}>Xóa vĩnh viễn tài khoản</Text>}</Pressable>
       </View>
     </SafeAreaView>
   );

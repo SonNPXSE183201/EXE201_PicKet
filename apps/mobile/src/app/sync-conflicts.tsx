@@ -49,7 +49,7 @@ export default function SyncConflictsScreen() {
         <Pressable onPress={() => router.replace(routes.home)}><Text style={styles.back}>‹ Trang chủ</Text></Pressable>
         <Text style={styles.title}>Xung đột đồng bộ</Text>
         <Text style={styles.subtitle}>Picket không tự ghi đè khi phiên bản trên máy chủ đã thay đổi. Hãy mở lại dữ liệu mới nhất và thực hiện thay đổi lần nữa nếu vẫn cần.</Text>
-        {loading && <ActivityIndicator color={colors.mauve} />}
+        {loading && <ActivityIndicator accessibilityLabel="Đang tải xung đột đồng bộ" color={colors.mauve} />}
         {items.map((item) => (
           <View key={item.id} style={styles.card}>
             <Text style={styles.name}>{labels[item.kind] ?? item.kind}</Text>

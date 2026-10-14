@@ -67,7 +67,7 @@ export default function TransactionsScreen() {
         )}
 
         {loading && transactions.length === 0 ? (
-          <ActivityIndicator color={colors.mauve} style={styles.loader} />
+          <ActivityIndicator accessibilityLabel="Đang tải giao dịch" color={colors.mauve} style={styles.loader} />
         ) : error ? (
           <Pressable onPress={() => void refresh()} style={styles.errorCard}>
             <Text style={styles.error}>{error}</Text>

@@ -72,7 +72,7 @@ export default function HomeScreen() {
   if (authLoading || (session && (profileLoading || accountsLoading))) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator color={colors.mauve} />
+        <ActivityIndicator accessibilityLabel="Đang tải tổng quan tài chính" color={colors.mauve} />
       </SafeAreaView>
     );
   }
@@ -276,7 +276,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           {apiState === "checking" && (
-            <ActivityIndicator color={colors.mauve} />
+            <ActivityIndicator accessibilityLabel="Đang kiểm tra kết nối Dart API" color={colors.mauve} />
           )}
         </Pressable>
 

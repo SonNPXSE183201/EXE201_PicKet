@@ -72,7 +72,7 @@ export default function NewAccountScreen() {
         <TextInput accessibilityLabel="Mã tiền tệ" autoCapitalize="characters" maxLength={3} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} onChangeText={(value) => setCurrencyCode(value.toUpperCase())} />
         <TextInput accessibilityLabel="Số dư ban đầu" keyboardType="number-pad" placeholder="Số dư ban đầu" placeholderTextColor={colors.muted} style={styles.input} value={openingBalance} onChangeText={setOpeningBalance} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
-        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Tạo tài khoản</Text>}</Pressable>
+        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang tạo tài khoản" color={colors.white} /> : <Text style={styles.primaryText}>Tạo tài khoản</Text>}</Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
       </ScrollView>
     </SafeAreaView>

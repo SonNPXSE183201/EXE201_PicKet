@@ -36,7 +36,7 @@ export default function AccountDetailScreen() {
   if (!account && loading) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator color={colors.mauve} />
+        <ActivityIndicator accessibilityLabel="Đang tải tài khoản" color={colors.mauve} />
       </SafeAreaView>
     );
   }
@@ -163,7 +163,7 @@ function AccountForm({ account }: { account: FinancialAccount }) {
         />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <Pressable disabled={busy} onPress={() => void save()} style={styles.primary}>
-          {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel="Đang lưu tài khoản" color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}
         </Pressable>
         <Pressable disabled={busy} onPress={confirmArchive} style={styles.archive}>
           <Text style={styles.archiveText}>Lưu trữ tài khoản</Text>

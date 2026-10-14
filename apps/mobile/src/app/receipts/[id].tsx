@@ -215,12 +215,12 @@ export default function ReceiptDetailScreen() {
           <Text style={styles.back}>‹ Giao dịch</Text>
         </Pressable>
         <Text accessibilityRole="header" style={styles.title}>Chi tiết hóa đơn</Text>
-        {loading && <ActivityIndicator color={colors.mauve} style={styles.loader} />}
+        {loading && <ActivityIndicator accessibilityLabel="Đang tải hóa đơn" color={colors.mauve} style={styles.loader} />}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         {receipt && (
           <>
             {imageUrl ? (
-              <Image source={{ uri: imageUrl }} resizeMode="contain" style={styles.image} />
+              <Image accessibilityLabel="Ảnh hóa đơn đã lưu" source={{ uri: imageUrl }} resizeMode="contain" style={styles.image} />
             ) : (
               <View style={[styles.image, styles.imagePlaceholder]}>
                 <Text style={styles.hint}>Không tải được ảnh xem trước.</Text>
@@ -298,7 +298,7 @@ export default function ReceiptDetailScreen() {
             {editing ? (
               <View style={styles.editorActions}>
                 <Pressable disabled={saving} onPress={() => void saveReview()} style={styles.primaryButton}>
-                  {saving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu kết quả kiểm tra</Text>}
+                  {saving ? <ActivityIndicator accessibilityLabel="Đang lưu kết quả kiểm tra hóa đơn" color={colors.white} /> : <Text style={styles.primaryText}>Lưu kết quả kiểm tra</Text>}
                 </Pressable>
                 <Pressable disabled={saving} onPress={() => { setEditing(false); setMessage(null); }} style={styles.outlineButton}>
                   <Text style={styles.outlineText}>Hủy chỉnh sửa</Text>

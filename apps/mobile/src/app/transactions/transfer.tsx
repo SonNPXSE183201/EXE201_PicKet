@@ -105,7 +105,7 @@ export default function NewTransferScreen() {
         <TextInput accessibilityLabel="Ghi chú chuyển tiền" multiline placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>
-          {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Xác nhận chuyển</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel="Đang chuyển tiền" color={colors.white} /> : <Text style={styles.primaryText}>Xác nhận chuyển</Text>}
         </Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
       </ScrollView>
