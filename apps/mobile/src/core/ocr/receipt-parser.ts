@@ -172,10 +172,14 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     .map((line, index) => {
       const clean = normalized(line.text);
       const digitCount = (line.text.match(/\d/g) ?? []).length;
-      if (line.text.length < 3 || !/[A-Za-zÀ-ỹ]/.test(line.text) || /hoa\s*don|receipt|invoice|mst|tax|dia\s*chi|address|hotline|tel\b|ngay\b|date\b|tong|subtotal|thanh\s*toan/i.test(clean) || digitCount > line.text.length / 3) return null;
+      if (line.text.length < 3 || !/[A-Za-zÀ-ỹ]/.test(line.text) || /hoa\s*don|bi(?:e)?n\s*lai|cash\s*bill|receipt|invoice|mst|tax|dia\s*chi|address|hotline|tel\b|ngay\b|date\b|tong|subtotal|thanh\s*toan|^no\.?\s*\d|\bjalan\b|\b\d{5}\b/i.test(clean) || digitCount > line.text.length / 3) return null;
       const relativeTop = maxBottom > 0 && line.top !== undefined ? line.top / maxBottom : index / Math.max(1, lines.length);
       const letters = line.text.replace(/[^A-Za-zÀ-ỹ]/g, "");
-      return { value: line.text, score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && letters === letters.toUpperCase() ? 0.1 : 0)) };
+      const uppercaseCount = [...letters].filter(
+        (letter) => letter === letter.toUpperCase(),
+      ).length;
+      const uppercaseRatio = letters.length > 0 ? uppercaseCount / letters.length : 0;
+      return { value: line.text, score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
     })
     .filter((candidate): candidate is { value: string; score: number } => candidate !== null)
     .sort((left, right) => right.score - left.score);
