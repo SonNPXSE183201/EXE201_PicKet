@@ -13,7 +13,7 @@ that the merchant header and payable total are not removed by a fixed crop.
 | --- | --- | --- | --- |
 | RED | `npm exec -- tsx --test src/core/ocr/image-picker-policy.test.ts` | Expected failure | `Cannot find module './image-picker-policy'` before the policy existed. |
 | GREEN | `npm exec -- tsx --test src/core/ocr/image-picker-policy.test.ts` | 2/2 pass | Picker disables editing and has no fixed `aspect`. |
-| Regression | `npm run test:ocr` | 18/18 pass | Picker policy and receipt parser tests pass together. |
+| Regression | `npm run test:ocr` | 20/20 pass | Picker policy, receipt parser, and server-result mapping tests pass together. |
 | Static checks | `npm run typecheck` and `npm run lint` | Pass | Expo mobile source type-checks and lints cleanly. |
 | Android release | `gradlew.bat assembleRelease -PreactNativeArchitectures=x86_64` | Pass | Release APK rebuilt and installed on `emulator-5554`. |
 
@@ -32,8 +32,25 @@ Observed local ML Kit results:
 | SROIE example | `BOOK TA K (TAMAN DAYA) SDN BHD` | Not detected | 2562 ms | Requires review/server fallback. |
 
 No fatal Android or React Native error was observed during the release smoke
-test. The production API was unreachable from the emulator during this run, so
-the server fallback UI/job path was not exercised.
+test.
+
+## Production server-fallback evidence
+
+The first production fallback run completed in the worker but left amount
+blank because the PP-OCR provider intentionally returns receipt fields as null
+and exposes the recognized content through `rawText`. A RED test reproduced
+the missing mapping before `parseServerOcrResult` was added.
+
+| Stage | Command or journey | Result | Evidence |
+| --- | --- | --- | --- |
+| RED | `npm exec -- tsx --test src/core/ocr/server-result.test.ts` | Expected failure | `Cannot find module './server-result'` before the mapper existed. |
+| GREEN | `npm exec -- tsx --test src/core/ocr/server-result.test.ts` | 2/2 pass | Null structured fields fall back to parsed `rawText`; valid structured fields still take precedence. |
+| Production build | Forced release bundle with `EXPO_PUBLIC_API_URL=https://api.51-79-207-154.sslip.io` | Pass | APK SHA-256 `AF7608E40CF1DD63619AEC03E69544ACF45BFEDD4616131CB05898518AB05022`; bundle contains the production API URL. |
+| Android E2E | Pixel 5 emulator → public CORD receipt → consent → private upload → server OCR | Pass | Merchant `Nasi Campur Bali`, amount `1591600`, and `OCR máy chủ: completed` appeared in the review form. |
+| Worker | Production `ocr-worker` logs | Pass | Worker reported exactly one processed job during the test window. |
+
+The review screen was not submitted, so the test did not create a production
+transaction or receipt.
 
 ## Guarantees and known gaps
 
@@ -41,6 +58,7 @@ the server fallback UI/job path was not exercised.
 - The full selected receipt is passed to the local OCR adapter.
 - Clear Vietnamese totals continue to parse locally without an upload.
 - Low-contrast receipts may still require PP-OCR fallback.
-- A follow-up production test must start the Picket API and OCR worker, enable
-  the fallback build flag, and verify consent, private upload, polling, and
-  result replacement end to end.
+- Consent, private upload, polling, worker processing, and result replacement
+  are verified end to end against production from the release APK.
+- ML Kit still needs a physical low-RAM Android benchmark and a larger
+  anonymized Vietnamese receipt corpus before the local-model row is verified.
