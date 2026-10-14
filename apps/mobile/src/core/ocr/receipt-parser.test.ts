@@ -86,8 +86,8 @@ Cash
   assert.equal(result.needsReview, false);
 });
 
-test("skips receipt headings when choosing a Vietnamese merchant", () => {
-  const result = parseReceiptText(`BIEN LAI BAN HANG
+test("skips OCR-damaged receipt headings when choosing a Vietnamese merchant", () => {
+  const result = parseReceiptText(`BIN LAI BAN HANG
 CUA HANG DEMO
 MST: 0000000000
 Ngay ban: 14/06/2026
