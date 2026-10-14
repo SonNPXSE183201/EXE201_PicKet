@@ -43,3 +43,34 @@ Static policy proves that controls expose names in code; it does not prove the
 spoken order, pronunciation, keyboard behavior or focus transitions on a real
 device. Accessibility therefore remains `in-progress` until the full screen
 matrix passes TalkBack, large-font and physical-device testing.
+
+## Loading and image semantics follow-up
+
+As a TalkBack user, I want loading states and receipt images to explain their
+purpose, so that a screen never appears silent while work is in progress and an
+important receipt image is not announced as an unnamed graphic.
+
+| Stage | Command | Result | Evidence |
+| --- | --- | --- | --- |
+| RED | `npm run test:ui --prefix apps/mobile` | Expected failure | Policy found 30 unnamed `ActivityIndicator` instances and two unnamed receipt images. Commit `66d1cd6`. |
+| GREEN | `npm run test:ui --prefix apps/mobile` | 6/6 pass | Loading states now announce their concrete operation; receipt preview/detail images have stable names. Commit `6abfe97`. |
+| Coverage | `npx tsx --test --experimental-test-coverage src/core/ui/*.test.ts` | 100% line/branch/function for the policy target | Six accessibility policy tests pass. |
+
+Regression after the follow-up: Expo typecheck/lint, 34/34 tests and Android
+export of 1,462 modules all passed. Secret-pattern, `console.log` and diff checks
+had no findings.
+
+## Pixel 5 TalkBack smoke
+
+TalkBack was enabled on the Pixel 5 x86_64 AVD running Android 17 at font scale
+100%. The installed production APK exposed the unauthenticated screen in this
+logical order: heading and description, Email, Password, Sign in, Continue with
+Google, Forgot password, Register. Both text fields and every action had a
+stable accessible name, and the screen rendered without clipping.
+
+This is partial device evidence only. The AVD had no authenticated session, and
+the installed signed APK predates the two TDD increments above. Android refused
+to replace it with the debug APK because the signatures differ; rebuilding the
+current x86_64 production APK also requires restoring the ignored local
+`apps/mobile/key.properties`. Full authenticated TalkBack traversal and a real
+device therefore remain open gates.
