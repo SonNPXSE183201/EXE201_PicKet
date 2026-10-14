@@ -55,3 +55,35 @@ test("every TextInput has an explicit accessible name", () => {
 
   assert.deepEqual(violations, []);
 });
+
+test("every loading indicator has an explicit accessible name", () => {
+  const violations = sourceFiles(sourceRoot).flatMap((file) => {
+    const source = readFileSync(file, "utf8");
+    return [...source.matchAll(/<ActivityIndicator\b[\s\S]*?\/>/g)]
+      .filter((match) => !/\baccessibilityLabel\s*=/.test(match[0]))
+      .map((match) => {
+        const line = source.slice(0, match.index).split("\n").length;
+        return `${path.relative(sourceRoot, file)}:${line}`;
+      });
+  });
+
+  assert.deepEqual(violations, []);
+});
+
+test("every image is named or explicitly decorative", () => {
+  const violations = sourceFiles(sourceRoot).flatMap((file) => {
+    const source = readFileSync(file, "utf8");
+    return [...source.matchAll(/<Image\b[\s\S]*?\/>/g)]
+      .filter(
+        (match) =>
+          !/\baccessibilityLabel\s*=/.test(match[0]) &&
+          !/\baccessible\s*=\s*\{false\}/.test(match[0]),
+      )
+      .map((match) => {
+        const line = source.slice(0, match.index).split("\n").length;
+        return `${path.relative(sourceRoot, file)}:${line}`;
+      });
+  });
+
+  assert.deepEqual(violations, []);
+});
