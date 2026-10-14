@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Picket API
   version: 0.1.0
-  description: REST façade used while Picket migrates from Flutter to Next.js and Expo.
+  description: REST API for the Picket Next.js web and Expo Android clients.
 servers:
   - url: http://localhost:8080
 paths:

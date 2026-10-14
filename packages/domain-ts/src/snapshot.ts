@@ -81,7 +81,7 @@ export interface LegacyMonthClose {
   closedAt: string;
 }
 
-/** Compatibility contract used only while Flutter data is migrated. */
+/** Legacy compatibility contract retained only for controlled snapshot migration. */
 export interface FinancePayload {
   version: 1 | 2;
   name: string;
