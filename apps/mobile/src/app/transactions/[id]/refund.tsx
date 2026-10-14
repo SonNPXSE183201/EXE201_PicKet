@@ -71,8 +71,8 @@ export default function RefundScreen() {
         <Text style={styles.title}>Hoàn tiền</Text>
         <Text style={styles.subtitle}>{original.title}</Text>
         <Text style={styles.remaining}>Có thể hoàn: {formatVnd(remaining)}</Text>
-        <TextInput keyboardType="number-pad" placeholder="Số tiền hoàn" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
-        <TextInput multiline placeholder="Lý do hoặc ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
+        <TextInput accessibilityLabel="Số tiền hoàn" keyboardType="number-pad" placeholder="Số tiền hoàn" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
+        <TextInput accessibilityLabel="Lý do hoặc ghi chú hoàn tiền" multiline placeholder="Lý do hoặc ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text style={styles.error}>{message}</Text>}
         <Pressable disabled={busy || remaining === 0} onPress={() => void submit()} style={[styles.primary, remaining === 0 && styles.disabled]}>
           {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Tạo khoản hoàn</Text>}

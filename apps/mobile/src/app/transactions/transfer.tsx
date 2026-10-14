@@ -100,9 +100,9 @@ export default function NewTransferScreen() {
           ))}
           {destinations.length === 0 && <Text style={styles.empty}>Không có tài khoản đích cùng loại tiền.</Text>}
         </View>
-        <TextInput placeholder="Nội dung" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
-        <TextInput keyboardType="number-pad" placeholder="Số tiền" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
-        <TextInput multiline placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
+        <TextInput accessibilityLabel="Nội dung chuyển tiền" placeholder="Nội dung" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
+        <TextInput accessibilityLabel="Số tiền chuyển" keyboardType="number-pad" placeholder="Số tiền" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
+        <TextInput accessibilityLabel="Ghi chú chuyển tiền" multiline placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>
           {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Xác nhận chuyển</Text>}

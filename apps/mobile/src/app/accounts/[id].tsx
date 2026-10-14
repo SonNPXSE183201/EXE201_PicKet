@@ -126,6 +126,7 @@ function AccountForm({ account }: { account: FinancialAccount }) {
         </Text>
         <Text style={styles.label}>Tên tài khoản</Text>
         <TextInput
+          accessibilityLabel="Tên tài khoản"
           maxLength={80}
           placeholder="Tên tài khoản"
           placeholderTextColor={colors.muted}
@@ -151,6 +152,7 @@ function AccountForm({ account }: { account: FinancialAccount }) {
         </View>
         <Text style={styles.label}>Tiền tệ</Text>
         <TextInput
+          accessibilityLabel="Mã tiền tệ"
           autoCapitalize="characters"
           maxLength={3}
           placeholder="VND"

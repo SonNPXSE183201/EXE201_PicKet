@@ -238,8 +238,8 @@ export default function NewTransactionScreen() {
           ))}
         </View>
 
-        <TextInput placeholder="Nội dung, ví dụ: Ăn trưa" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
-        <TextInput keyboardType="number-pad" placeholder="Số tiền (VND)" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
+        <TextInput accessibilityLabel="Nội dung giao dịch" placeholder="Nội dung, ví dụ: Ăn trưa" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
+        <TextInput accessibilityLabel="Số tiền giao dịch" keyboardType="number-pad" placeholder="Số tiền (VND)" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
 
         <Text style={styles.label}>Tài khoản</Text>
         <View accessibilityRole="radiogroup" style={styles.choices}>
@@ -260,7 +260,7 @@ export default function NewTransactionScreen() {
           {availableCategories.length === 0 && <Text style={styles.empty}>Chưa có danh mục phù hợp.</Text>}
         </View>
 
-        <TextInput multiline numberOfLines={3} placeholder="Ghi chú (không bắt buộc)" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
+        <TextInput accessibilityLabel="Ghi chú giao dịch, không bắt buộc" multiline numberOfLines={3} placeholder="Ghi chú (không bắt buộc)" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <Pressable disabled={busy || loadingDraft} onPress={() => void submit()} style={[styles.primary, loadingDraft && styles.disabled]}>
           {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu giao dịch</Text>}

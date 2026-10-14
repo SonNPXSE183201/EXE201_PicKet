@@ -229,11 +229,11 @@ export default function ReceiptDetailScreen() {
             {editing ? (
               <View style={styles.card}>
                 <Text style={styles.fieldLabel}>Cửa hàng</Text>
-                <TextInput value={merchant} onChangeText={setMerchant} placeholder="Tên cửa hàng" placeholderTextColor={colors.muted} style={styles.input} />
+                <TextInput accessibilityLabel="Tên cửa hàng" value={merchant} onChangeText={setMerchant} placeholder="Tên cửa hàng" placeholderTextColor={colors.muted} style={styles.input} />
                 <Text style={styles.fieldLabel}>Tổng hóa đơn</Text>
-                <TextInput value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder="Tổng tiền" placeholderTextColor={colors.muted} style={styles.input} />
+                <TextInput accessibilityLabel="Tổng hóa đơn" value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder="Tổng tiền" placeholderTextColor={colors.muted} style={styles.input} />
                 <Text style={styles.fieldLabel}>Ngày mua</Text>
-                <TextInput value={purchasedAt} onChangeText={setPurchasedAt} placeholder="YYYY-MM-DD" placeholderTextColor={colors.muted} style={styles.input} />
+                <TextInput accessibilityLabel="Ngày mua theo định dạng năm tháng ngày" value={purchasedAt} onChangeText={setPurchasedAt} placeholder="YYYY-MM-DD" placeholderTextColor={colors.muted} style={styles.input} />
               </View>
             ) : (
               <View style={styles.card}>
@@ -265,12 +265,12 @@ export default function ReceiptDetailScreen() {
                         <Text style={styles.remove}>Xóa</Text>
                       </Pressable>
                     </View>
-                    <TextInput value={line.name} onChangeText={(value) => updateLine(line.key, "name", value)} placeholder="Tên sản phẩm" placeholderTextColor={colors.muted} style={styles.input} />
+                    <TextInput accessibilityLabel={`Tên sản phẩm ${index + 1}`} value={line.name} onChangeText={(value) => updateLine(line.key, "name", value)} placeholder="Tên sản phẩm" placeholderTextColor={colors.muted} style={styles.input} />
                     <View style={styles.inputRow}>
-                      <TextInput value={line.quantity} onChangeText={(value) => updateLine(line.key, "quantity", value)} keyboardType="decimal-pad" placeholder="Số lượng" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
-                      <TextInput value={line.unitPrice} onChangeText={(value) => updateLine(line.key, "unitPrice", value)} keyboardType="number-pad" placeholder="Đơn giá" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
+                      <TextInput accessibilityLabel={`Số lượng sản phẩm ${index + 1}`} value={line.quantity} onChangeText={(value) => updateLine(line.key, "quantity", value)} keyboardType="decimal-pad" placeholder="Số lượng" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
+                      <TextInput accessibilityLabel={`Đơn giá sản phẩm ${index + 1}`} value={line.unitPrice} onChangeText={(value) => updateLine(line.key, "unitPrice", value)} keyboardType="number-pad" placeholder="Đơn giá" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
                     </View>
-                    <TextInput value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder="Thành tiền" placeholderTextColor={colors.muted} style={styles.input} />
+                    <TextInput accessibilityLabel={`Thành tiền sản phẩm ${index + 1}`} value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder="Thành tiền" placeholderTextColor={colors.muted} style={styles.input} />
                   </View>
                 ))}
                 <Pressable disabled={lines.length >= 100} onPress={() => setLines((current) => [...current, { key: `new-${Date.now()}-${current.length}`, name: "", quantity: "1", unitPrice: "", total: "" }])} style={[styles.outlineButton, lines.length >= 100 && styles.disabled]}>

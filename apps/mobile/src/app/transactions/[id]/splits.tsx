@@ -127,7 +127,7 @@ export default function TransactionSplitsScreen() {
         {normalizedAmounts.map(({ category, value }) => (
           <View key={category.id} style={styles.row}>
             <Text style={styles.category}>{category.name}</Text>
-            <TextInput keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
+            <TextInput accessibilityLabel={`Số tiền phân bổ cho ${category.name}`} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
           </View>
         ))}
         {message && <Text style={styles.error}>{message}</Text>}

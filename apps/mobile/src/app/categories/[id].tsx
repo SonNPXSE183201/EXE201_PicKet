@@ -59,7 +59,7 @@ export default function EditCategoryScreen() {
 
   return <SafeAreaView style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <Text accessibilityRole="header" style={styles.title}>Sửa danh mục</Text>
-    <TextInput placeholder="Tên danh mục" placeholderTextColor={colors.muted} style={styles.input} value={currentName} onChangeText={setName} />
+    <TextInput accessibilityLabel="Tên danh mục" placeholder="Tên danh mục" placeholderTextColor={colors.muted} style={styles.input} value={currentName} onChangeText={setName} />
     <Text style={styles.label}>Áp dụng cho</Text><View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: currentKind === item.value }} key={item.value} onPress={() => setKind(item.value)} style={[styles.choice, currentKind === item.value && styles.selected]}><Text style={[styles.choiceText, currentKind === item.value && styles.selectedText]}>{item.label}</Text></Pressable>)}</View>
     <Text style={styles.label}>Màu sắc</Text><View accessibilityRole="radiogroup" style={styles.choices}>{swatches.map((item) => <Pressable accessibilityLabel={`Màu ${item}`} accessibilityRole="radio" accessibilityState={{ checked: currentColor === item }} key={item} onPress={() => setColor(item)} style={[styles.swatch, { backgroundColor: item }, currentColor === item && styles.swatchSelected]} />)}</View>
     {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}

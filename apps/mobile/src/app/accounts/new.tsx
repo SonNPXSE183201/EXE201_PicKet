@@ -66,11 +66,11 @@ export default function NewAccountScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text accessibilityRole="header" style={styles.title}>Thêm tài khoản</Text>
         <Text style={styles.subtitle}>Tài khoản được lưu qua Dart API và bảo vệ bằng Supabase RLS.</Text>
-        <TextInput placeholder="Tên tài khoản" placeholderTextColor={colors.muted} style={styles.input} value={name} onChangeText={setName} />
+        <TextInput accessibilityLabel="Tên tài khoản" placeholder="Tên tài khoản" placeholderTextColor={colors.muted} style={styles.input} value={name} onChangeText={setName} />
         <Text style={styles.label}>Loại tài khoản</Text>
         <View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: kind === item.value }} key={item.value} onPress={() => setKind(item.value)} style={[styles.choice, kind === item.value && styles.selected]}><Text style={[styles.choiceText, kind === item.value && styles.selectedText]}>{item.label}</Text></Pressable>)}</View>
-        <TextInput autoCapitalize="characters" maxLength={3} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} onChangeText={(value) => setCurrencyCode(value.toUpperCase())} />
-        <TextInput keyboardType="number-pad" placeholder="Số dư ban đầu" placeholderTextColor={colors.muted} style={styles.input} value={openingBalance} onChangeText={setOpeningBalance} />
+        <TextInput accessibilityLabel="Mã tiền tệ" autoCapitalize="characters" maxLength={3} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} onChangeText={(value) => setCurrencyCode(value.toUpperCase())} />
+        <TextInput accessibilityLabel="Số dư ban đầu" keyboardType="number-pad" placeholder="Số dư ban đầu" placeholderTextColor={colors.muted} style={styles.input} value={openingBalance} onChangeText={setOpeningBalance} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Tạo tài khoản</Text>}</Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>

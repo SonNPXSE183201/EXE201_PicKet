@@ -49,7 +49,7 @@ export default function NewCategoryScreen() {
   return (
     <SafeAreaView style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Text accessibilityRole="header" style={styles.title}>Danh mục mới</Text>
-      <TextInput placeholder="Tên danh mục" placeholderTextColor={colors.muted} style={styles.input} value={name} onChangeText={setName} />
+      <TextInput accessibilityLabel="Tên danh mục" placeholder="Tên danh mục" placeholderTextColor={colors.muted} style={styles.input} value={name} onChangeText={setName} />
       <Text style={styles.label}>Áp dụng cho</Text>
       <View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: kind === item.value }} key={item.value} onPress={() => setKind(item.value)} style={[styles.choice, kind === item.value && styles.selected]}><Text style={[styles.choiceText, kind === item.value && styles.selectedText]}>{item.label}</Text></Pressable>)}</View>
       <Text style={styles.label}>Màu sắc</Text>

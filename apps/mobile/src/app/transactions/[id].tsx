@@ -135,9 +135,9 @@ export default function TransactionDetailScreen() {
         <Text style={transaction.kind === "income" ? styles.income : styles.expense}>
           {transaction.kind === "income" ? "Khoản thu" : "Khoản chi"}
         </Text>
-        <TextInput editable={editable} placeholder="Nội dung" placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentTitle} onChangeText={setTitle} />
-        <TextInput editable={editable} keyboardType="number-pad" placeholder="Số tiền (VND)" placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentAmount} onChangeText={setAmount} />
-        <TextInput editable={editable} multiline numberOfLines={3} placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note, !editable && styles.readonly]} value={currentNote} onChangeText={setNote} />
+        <TextInput accessibilityLabel="Nội dung giao dịch" editable={editable} placeholder="Nội dung" placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentTitle} onChangeText={setTitle} />
+        <TextInput accessibilityLabel="Số tiền giao dịch" editable={editable} keyboardType="number-pad" placeholder="Số tiền (VND)" placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentAmount} onChangeText={setAmount} />
+        <TextInput accessibilityLabel="Ghi chú giao dịch" editable={editable} multiline numberOfLines={3} placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note, !editable && styles.readonly]} value={currentNote} onChangeText={setNote} />
         {message && <Text style={styles.error}>{message}</Text>}
         {editable && <Pressable disabled={busy} onPress={() => void save()} style={styles.primary}>
           {busy ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}
