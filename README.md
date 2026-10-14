@@ -1,26 +1,22 @@
 # Picket
 
-Picket đang chuyển sang một kiến trúc thống nhất: Next.js cho web, Expo cho
-mobile và Dart Frog cho toàn bộ backend nghiệp vụ.
+Picket dùng một kiến trúc thống nhất: Next.js cho web, Expo/React Native cho
+Android và Dart Frog cho toàn bộ backend nghiệp vụ.
 
 ```text
 Next.js web ────┐
                 ├── REST / OpenAPI ── Dart Frog ── Supabase / Postgres
-Expo mobile ────┘
-
-Flutter mobile (legacy reference, không nhận nghiệp vụ mới)
+Expo Android ───┘
 ```
 
 ## Cấu trúc chính
 
 - `apps/api`: API Dart Frog; xác thực Supabase JWT, giữ nguyên RLS và cung cấp profile/onboarding/preferences cùng finance contract trên 15 bảng chuẩn hóa.
-- `apps/mobile`: Expo SDK 57 / React Native; nền móng cho mobile mới.
-- `web`: Next.js 16; web client mới.
+- `apps/mobile`: Expo SDK 57 / React Native; ứng dụng Android chính thức.
+- `web`: Next.js 16; web client và admin portal.
 - `packages/api-client`: REST client dùng chung cho Next.js và Expo.
 - `packages/domain-ts`: hợp đồng dữ liệu tài chính TypeScript.
 - `packages/design-tokens`: màu sắc và kích thước dùng chung.
-- `mobile`: Flutter legacy chỉ dùng để đối chiếu và regression trong quá trình
-  chuyển đổi; chỉ nhận bản sửa lỗi bảo mật, crash hoặc mất dữ liệu.
 - `supabase`: schema, RLS, RPC và Edge Functions hiện tại.
 
 Chi tiết quyết định kiến trúc và lộ trình nằm trong

@@ -1,6 +1,6 @@
 # ADR-001: Next.js, Expo và Dart là stack đích
 
-- Trạng thái: Accepted
+- Trạng thái: Accepted — Android cutover completed 2026-10-15
 - Ngày: 2026-10-08
 
 ## Bối cảnh
@@ -12,13 +12,13 @@ Next.js ở mức landing page. Business rule, persistence và tích hợp thanh
 ## Quyết định
 
 - Next.js là web client và admin portal.
-- Expo/React Native là mobile client Android/iOS.
+- Expo/React Native là Android client; iOS không nằm trong phạm vi sản phẩm hiện tại.
 - Dart Frog là backend nghiệp vụ duy nhất.
 - Supabase chỉ cung cấp Auth, PostgreSQL/RLS và Storage.
 - Client chỉ dùng Supabase SDK cho phiên đăng nhập; dữ liệu nghiệp vụ đi qua
   REST/OpenAPI của Dart API.
-- Flutter được đóng băng. Không thêm feature/business rule mới và chỉ sửa lỗi
-  bảo mật, crash hoặc mất dữ liệu trong thời gian chuyển đổi.
+- Flutter đã được xóa khỏi nhánh chính sau khi nghiệp vụ được chuyển sang
+  Expo/Next.js/Dart. Lịch sử vẫn được bảo toàn trong Git.
 - Edge Function TypeScript hiện có phải được chuyển sang Dart trước khi xóa.
 - Snapshot API là compatibility layer tạm thời và phải được thay bằng CRUD cùng
   incremental sync theo entity.
@@ -35,7 +35,8 @@ DOM và React Native không có cùng primitive.
   Dart backend.
 - Expo cần local SQLite/outbox để hỗ trợ offline, nhưng PostgreSQL vẫn là source
   of truth.
-- Không xóa Flutter trước khi toàn bộ mục P0 trong parity matrix đạt `verified`.
+- Android chỉ được phát hành từ `apps/mobile`; không tạo thêm implementation
+  Flutter hoặc iOS trong repository này.
 - Migration phải có rollback window và không được làm mất dữ liệu hiện hữu.
 
 ## Tiêu chí hoàn tất chuyển đổi

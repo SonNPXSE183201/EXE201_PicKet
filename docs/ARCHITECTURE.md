@@ -16,9 +16,8 @@ Giai đoạn nền móng đã tách giao diện mới khỏi dữ liệu bằng 
          └── ML Kit local trước, OCR fallback khi confidence thấp
 ```
 
-Expo là mobile client đích. Flutter đã ở trạng thái legacy: không nhận feature
-hoặc business rule mới và chỉ được dùng làm chuẩn đối chiếu/regression cho đến
-khi Expo vượt qua toàn bộ tiêu chí cutover.
+Expo là Android client duy nhất. Flutter và iOS không còn nằm trong phạm vi
+repository; mọi nghiệp vụ mobile mới phải được triển khai trong `apps/mobile`.
 
 ## Ranh giới trách nhiệm
 
@@ -43,7 +42,7 @@ khi Expo vượt qua toàn bộ tiêu chí cutover.
 
 Luồng mục tiêu ưu tiên tốc độ và máy Android yếu:
 
-1. Thu ảnh ở độ phân giải giới hạn, sửa orientation và tránh giữ nhiều bitmap trong RAM.
+1. Thu toàn bộ khung ảnh ở độ phân giải giới hạn, sửa orientation và tránh giữ nhiều bitmap trong RAM. Không crop cố định hóa đơn dài.
 2. Chạy Google ML Kit Text Recognition Latin ở local; tái sử dụng recognizer thay vì khởi tạo mỗi lần quét.
 3. Parser chấm confidence dựa trên dòng chữ, tổng tiền, ngày và cấu trúc hóa đơn.
 4. Chỉ khi confidence thấp hoặc thiếu trường bắt buộc mới gửi ảnh đã nén đến PP-OCR fallback.
@@ -54,19 +53,17 @@ môi trường server để claim job theo lease, tải ảnh private, gọi mod
 ghi kết quả rồi xóa ảnh khi hết hạn. Expo và Dart Frog API không được nhận biến
 `SUPABASE_SECRET_KEY`.
 
-Flutter legacy đã có bước 1–3 và cờ `needsFallback`; implementation này chỉ là
-nguồn tham chiếu. Dịch vụ fallback và native ML Kit module phải được xây trong
-Expo/Dart. `expo-dev-client` là bắt buộc vì OCR native không chạy trong Expo Go.
+Native ML Kit và fallback đã được triển khai trong Expo/Dart. `expo-dev-client`
+là bắt buộc vì OCR native không chạy trong Expo Go.
 
 ## Lộ trình tiếp theo
 
-1. Khóa Flutter và duy trì feature parity matrix.
-2. Chuẩn hóa typed contract và chuyển business rule sang Dart domain package.
-3. Thay snapshot write bằng CRUD/incremental sync trên các bảng domain.
-4. Đưa Auth, onboarding, finance và offline sync vào Expo.
-5. Xây OCR module Expo bằng ML Kit Latin và benchmark Android RAM thấp.
-6. Chuyển billing, account deletion và admin action từ Edge Function sang Dart.
-7. Chỉ archive/xóa Flutter sau khi hoàn tất cutover checklist.
+1. Hoàn tất Google OAuth web/Android và accessibility matrix.
+2. Xác minh duplicate receipt Expo end to end.
+3. Benchmark ML Kit Latin trên Android RAM thấp và corpus hóa đơn mở rộng.
+4. Loại traffic snapshot compatibility sau thời gian quan sát production.
+5. Hoàn tất Google Play Billing khi có Play Console và thiết bị thật.
+6. Chạy staged rollout Android với monitoring và rollback window.
 
 ## Biến môi trường
 

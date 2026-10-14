@@ -1,6 +1,7 @@
 # Picket Expo mobile
 
-Đây là mobile client đích thay thế Flutter legacy trong `../../mobile`.
+Đây là Android client chính thức của Picket. Dự án không còn duy trì Flutter
+hoặc iOS trong repository này.
 
 ## Cấu hình local
 
@@ -100,7 +101,8 @@ Artifact demo đã kiểm tra được lưu ngoài source tại `.artifacts/rele
 hậu tố `arm64-v8a` cho điện thoại thật và `x86_64` cho emulator. Không commit
 APK hoặc file signing vào Git.
 
-Màn quét hỗ trợ chọn/chụp, crop và xoay ảnh 90° trước khi chạy lại ML Kit.
+Màn quét hỗ trợ chọn/chụp ảnh nguyên khung và xoay ảnh 90° trước khi chạy lại
+ML Kit. Không bật crop cố định vì có thể cắt mất phần tổng tiền của hóa đơn dài.
 Sau khi thêm hoặc nâng cấp module native như `expo-image-manipulator`, cần tạo
 lại development build bằng `npx expo run:android` trước khi kiểm thử.
 Parser OCR có corpus tổng hợp, không chứa dữ liệu người dùng, cho các kiểu hóa

@@ -1,51 +1,54 @@
-# Flutter to Expo feature parity
+# Picket delivery and release parity
 
-Đây là nguồn theo dõi chính cho việc xóa Flutter. Giá trị hợp lệ:
+Đây là nguồn theo dõi chính cho stack Next.js + Expo Android + Dart. Flutter và
+iOS không còn nằm trong phạm vi repository. Giá trị hợp lệ:
 `not-started`, `in-progress`, `implemented`, `verified`, `blocked`.
 
-| Capability | Priority | Flutter reference | Dart API | Expo | Next.js | Exit criteria |
-| --- | --- | --- | --- | --- | --- | --- |
-| Session gate và restore | P0 | implemented | partial | verified | verified | Cold start/SSR khôi phục đúng session |
-| Email/password login | P0 | implemented | partial | verified | verified | E2E login/logout pass |
-| Register và email OTP | P0 | implemented | partial | verified | verified | Signup, resend và verify pass trên Expo/Next |
-| Password recovery | P0 | implemented | partial | verified | verified | Recovery session và thay mật khẩu pass trên Expo/Next |
-| Google OAuth | P0 | implemented | partial | implemented | implemented | Android, iOS và web callback pass |
-| Onboarding 8 bước | P0 | implemented | verified | verified | verified | Tạo profile, preference và ví atomically |
-| Profile và preferences | P0 | implemented | implemented | verified | verified | Web/mobile đồng bộ tên, persona, goal, currency và ẩn số dư |
-| Wallet/account CRUD | P0 | implemented | verified | verified | verified | CRUD + authorization + offline pass |
-| Category CRUD | P0 | implemented | verified | verified | verified | Default seed + custom CRUD + authorization pass |
-| Transaction CRUD | P0 | implemented | verified | verified | verified | CRUD typed API + E2E pass |
-| Transfer | P0 | implemented | verified | verified | verified | Hai phía cân bằng, idempotent, atomic và RLS pass |
-| Split transaction | P0 | implemented | verified | verified | verified | Tổng split, optimistic version và rollback pass |
-| Refund | P0 | implemented | verified | verified | verified | Partial refund, proportional split, idempotency và giới hạn pass |
-| Budget | P0 | implemented | verified | verified | verified | CRUD, version, RLS, idempotency và summary pass |
-| Offline mutation queue | P0 | implemented | compatibility-only | verified | n/a | Pixel 5 E2E: create khi API tắt, queue sống qua force-stop, flush đúng một lần khi API trở lại và bản ghi test được dọn |
-| Multi-device sync | P0 | partial | compatibility-only | verified | verified | Realtime Postgres theo user + refresh foreground/60 giây fallback đã E2E hai phiên trên Expo và Next |
-| Camera/crop/rotate | P0 | partial | n/a | in-progress | n/a | Thư viện, crop và xoay 90° chủ động đã chạy trên Pixel 5 emulator; camera thật và máy RAM thấp còn lại |
-| ML Kit Latin local | P0 | implemented | n/a | implemented | n/a | Latin bundled chạy offline; cần benchmark tập hóa đơn và thiết bị RAM thấp để chuyển `verified` |
-| OCR review/confidence | P0 | partial | not-started | implemented | partial | Parser tự điền merchant/total/date, lý do review và sửa tay đã có; 11 test pass với 4 fixture hóa đơn Việt Nam đại diện, còn cần corpus ảnh thật đã ẩn danh |
-| OCR server fallback | P1 | not-started | verified | verified | n/a | APK production đã E2E ảnh CORD công khai qua consent → private upload → job → worker PP-OCR → polling → tự điền merchant/total; Dart API/worker và Expo đều verified |
-| Receipt line items | P1 | not-started | verified | verified | verified | Atomic create/update + optimistic locking; Expo tự tách dòng từ OCR; Expo và Next đều cho sửa/thêm/xóa sản phẩm |
-| Duplicate receipt | P1 | not-started | implemented | implemented | verified | Expo tính SHA-256 trước upload; Next fuzzy duplicate đã E2E production và mở đúng bản đã có |
-| Export/backup | P0 | implemented | verified | verified | verified | Export versioned, stale rollback, picker/share và restore production pass trên Expo/Next |
-| Delete account | P0 | implemented | verified | verified | verified | Dart endpoint và xác nhận/xóa session trên Expo/Next pass |
-| Billing/restore | P1 | implemented | implemented | implemented | n/a | Google Play Internal testing lifecycle pass trên thiết bị thật |
-| Entitlement/quota | P1 | partial | verified | verified | verified | Server-authoritative enforcement |
-| User dashboard | P1 | partial | partial | verified | verified | Dữ liệu thật, không hard-code |
-| Admin portal | P1 | partial | verified | n/a | verified | Staff/non-staff RBAC, action lifecycle và audit production pass |
-| Accessibility | P0 | partial | n/a | in-progress | in-progress | Screen reader, scale và touch target pass |
+| Capability | Priority | Dart API | Expo Android | Next.js | Exit criteria |
+| --- | --- | --- | --- | --- | --- |
+| Session gate và restore | P0 | partial | verified | verified | Cold start/SSR khôi phục đúng session |
+| Email/password login | P0 | partial | verified | verified | E2E login/logout pass |
+| Register và email OTP | P0 | partial | verified | verified | Signup, resend và verify pass trên Expo/Next |
+| Password recovery | P0 | partial | verified | verified | Recovery session và thay mật khẩu pass trên Expo/Next |
+| Google OAuth | P0 | partial | implemented | implemented | Android và web callback pass |
+| Onboarding 8 bước | P0 | verified | verified | verified | Tạo profile, preference và ví atomically |
+| Profile và preferences | P0 | implemented | verified | verified | Web/mobile đồng bộ tên, persona, goal, currency và ẩn số dư |
+| Wallet/account CRUD | P0 | verified | verified | verified | CRUD + authorization + offline pass |
+| Category CRUD | P0 | verified | verified | verified | Default seed + custom CRUD + authorization pass |
+| Transaction CRUD | P0 | verified | verified | verified | CRUD typed API + E2E pass |
+| Transfer | P0 | verified | verified | verified | Hai phía cân bằng, idempotent, atomic và RLS pass |
+| Split transaction | P0 | verified | verified | verified | Tổng split, optimistic version và rollback pass |
+| Refund | P0 | verified | verified | verified | Partial refund, proportional split, idempotency và giới hạn pass |
+| Budget | P0 | verified | verified | verified | CRUD, version, RLS, idempotency và summary pass |
+| Offline mutation queue | P0 | compatibility-only | verified | n/a | Pixel 5 E2E: create khi API tắt, queue sống qua force-stop, flush đúng một lần khi API trở lại và bản ghi test được dọn |
+| Multi-device sync | P0 | compatibility-only | verified | verified | Realtime Postgres theo user + refresh foreground/60 giây fallback đã E2E hai phiên trên Expo và Next |
+| Camera/full-frame/rotate | P0 | n/a | in-progress | n/a | Thư viện nguyên khung và xoay 90° đã chạy trên Pixel 5 emulator; camera thật và máy RAM thấp còn lại |
+| ML Kit Latin local | P0 | n/a | implemented | n/a | Latin bundled chạy offline; cần benchmark tập hóa đơn và thiết bị RAM thấp để chuyển `verified` |
+| OCR review/confidence | P0 | not-started | implemented | partial | Parser tự điền merchant/total/date, lý do review và sửa tay đã có; 20 test OCR pass, còn cần corpus ảnh thật đã ẩn danh |
+| OCR server fallback | P1 | verified | verified | n/a | APK production đã E2E ảnh CORD công khai qua consent → private upload → job → worker PP-OCR → polling → tự điền merchant/total |
+| Receipt line items | P1 | verified | verified | verified | Atomic create/update + optimistic locking; Expo tự tách dòng từ OCR; Expo và Next đều cho sửa/thêm/xóa sản phẩm |
+| Duplicate receipt | P1 | implemented | implemented | verified | Expo tính SHA-256 trước upload; Next fuzzy duplicate đã E2E production và mở đúng bản đã có |
+| Export/backup | P0 | verified | verified | verified | Export versioned, stale rollback, picker/share và restore production pass trên Expo/Next |
+| Delete account | P0 | verified | verified | verified | Dart endpoint và xác nhận/xóa session trên Expo/Next pass |
+| Billing/restore | P1 | implemented | implemented | n/a | Google Play Internal testing lifecycle pass trên thiết bị thật |
+| Entitlement/quota | P1 | verified | verified | verified | Server-authoritative enforcement |
+| User dashboard | P1 | partial | verified | verified | Dữ liệu thật, không hard-code |
+| Admin portal | P1 | verified | n/a | verified | Staff/non-staff RBAC, action lifecycle và audit production pass |
+| Accessibility | P0 | n/a | in-progress | in-progress | Screen reader, scale và touch target pass |
 
 ## Quy tắc cập nhật
 
 - `implemented` nghĩa là code đã tồn tại nhưng chưa đủ bằng chứng release.
 - `verified` yêu cầu automated test và kiểm thử trên môi trường staging/device.
-- Chỉ các capability P0 ở trạng thái `verified` mới cho phép bắt đầu cutover.
-- Flutter chỉ được archive sau staged rollout Expo và rollback window.
+- Chỉ các capability P0 trong phạm vi release ở trạng thái `verified` mới cho
+  phép staged rollout Android.
+- Các giới hạn cần Play Console hoặc điện thoại thật phải được ghi `blocked`
+  kèm điều kiện mở khóa thay vì giả định đã kiểm thử.
 
 ## Bằng chứng gần nhất
 
 - Android development APK x86_64 build thành công với Expo SDK 57 và ML Kit Latin bundled.
-- Pixel 5 emulator mở được thư viện, crop ảnh và trả ảnh về màn review.
+- Pixel 5 emulator mở được thư viện, giữ nguyên khung ảnh và trả ảnh về màn review.
 - ML Kit chọn local Latin model, pipeline thành công và lần quét lạnh mẫu mất 3.525 ms trên emulator.
 - Ảnh thử không có tổng hóa đơn: merchant được điền nháp, tổng tiền để trống và UI yêu cầu người dùng sửa trước khi lưu.
 - Parser hóa đơn Expo có 11 automated test, gồm 4 fixture riêng tư-an-toàn đại diện siêu thị, cửa hàng tiện lợi, quán cà phê và nhà thuốc. Parser nhận ngày `dd/mm`, `dd-mm`, `dd.mm` với năm 2/4 chữ số; tổng tiền tiếng Việt/Anh, giá có hậu tố thập phân và item dạng số lượng được kiểm tra, còn metadata/tạm tính/tiền khách/tiền thừa bị loại. Dart API có 57 test và `dart analyze` không còn lỗi.
@@ -75,7 +78,7 @@
 - Kiểm thử Pixel 5 ở font scale 150% đã phát hiện thanh điều hướng dashboard tràn ngang; bố cục đã đổi thành hai hàng có wrap và các header danh sách cũng cho phép wrap. Sau cold boot, development client tải bản mới và ảnh xác nhận cho thấy brand, ba hành động cùng header Tài khoản không còn vượt viewport ở 150%. Chưa nâng Accessibility lên `verified` vì TalkBack, toàn bộ màn và máy thật vẫn còn trong checklist; font emulator đã được trả về 100%.
 - Android release đã được chẩn đoán: lần build dài là native C++ của React Native New Architecture, không phải deadlock. APK x86_64 release đã mở trên Pixel 5 emulator khi không chạy Metro; app khởi động và khôi phục session, nhưng đúng chủ đích từ chối Dart API local HTTP vì release không bật cleartext traffic.
 - APK production đã build cho cả `arm64-v8a` và `x86_64`, minSdk 24/targetSdk 36 và dùng APK Signature Scheme v2 với certificate `Picket Team`. Cả hai artifact chỉ chứa đúng một ABI; `release:preflight` đạt với Dart API/Supabase public HTTPS và OCR fallback được bật. Bản x86_64 cài/cold-start trên AVD sạch, hiển thị auth gate, mở Google OAuth tới `accounts.google.com` và không có crash/cleartext warning. ARM64 còn cần cài thử trên điện thoại thật trước staged rollout.
-- APK production x86_64 đã E2E email/password bằng Auth user tạm trên Supabase production: đăng nhập từ màn auth, hoàn tất đủ 8 bước onboarding, thấy ví mới trên dashboard, force-stop/mở lại vẫn khôi phục session và nút Đăng xuất trả về auth gate. Tài khoản cùng dữ liệu tạm đã được xóa sau kiểm thử; Expo email/password và onboarding được nâng lên `verified`, còn callback iOS và web vẫn là hạng mục riêng.
+- APK production x86_64 đã E2E email/password bằng Auth user tạm trên Supabase production: đăng nhập từ màn auth, hoàn tất đủ 8 bước onboarding, thấy ví mới trên dashboard, force-stop/mở lại vẫn khôi phục session và nút Đăng xuất trả về auth gate. Tài khoản cùng dữ liệu tạm đã được xóa sau kiểm thử; Expo email/password và onboarding được nâng lên `verified`, còn callback web vẫn là hạng mục riêng.
 - Password recovery Expo đã được xác minh bằng recovery link thật của Supabase production trên APK release x86_64: cả cold-start và callback khi app đang mở đều vào màn đặt mật khẩu, cập nhật mật khẩu thành công và tài khoản tạm được xóa. Chính sách client đã đồng bộ production: tối thiểu 12 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt; 4 auth test, TypeScript và ESLint đều đạt. Hai APK production chỉ chứa đúng ABI mục tiêu, ký bằng APK Signature Scheme v2: ARM64 SHA-256 `404ca1229f27cbae320352f7fffd0dcf3c2c2122aa50b723ba75fbacecdb1238`; bản x86_64 được rebuild ngày 2026-10-13 với cấu hình production và có SHA-256 `c74151ea0d684677be5e620b7684028d496418bbfa55dd74c823e3d8329e39ba`.
 - Register/email OTP Expo đã E2E trên APK production x86_64 với Supabase production: tạo tài khoản từ UI trả đúng màn xác thực, resend thật sau cooldown 62 giây hiện “Mã mới đã được gửi”, OTP production xác nhận email, tạo session và chuyển tài khoản chưa onboarding tới bước `Thiết lập 1/8`. Server xác nhận `email_confirmed_at`; toàn bộ Auth user tạm được xóa và audit còn lại `0`. OTP kiểm thử được lấy qua Admin generate-link thay vì đọc hộp thư ngoài, nên vận hành SMTP/inbox vẫn cần giám sát riêng nhưng client flow được nâng lên `verified`.
 - Profile/preferences Expo đã E2E trên APK production x86_64: đăng nhập tài khoản đã onboard, đổi tên thành `PicketProfileE2E`, persona `Gia đình`, mục tiêu `Tiết kiệm`, tiền tệ `USD` và bật ẩn số dư từ UI. Dart `GET /v1/me` trả đúng đủ 5 trường; dashboard Expo hiển thị số dư dạng `••••••`. Next.js cũng đã browser-E2E form mutation, render đúng lựa chọn và che số dư; hai client đều ở trạng thái `verified`.
