@@ -86,6 +86,31 @@ Cash
   assert.equal(result.needsReview, false);
 });
 
+test("skips receipt headings when choosing a Vietnamese merchant", () => {
+  const result = parseReceiptText(`BIEN LAI BAN HANG
+CUA HANG DEMO
+MST: 0000000000
+Ngay ban: 14/06/2026
+Tong cong: 320.000 VND`);
+
+  assert.equal(result.merchant, "CUA HANG DEMO");
+});
+
+test("skips address lines when choosing a merchant", () => {
+  const result = parseReceiptText(`tan woon yann
+BOOK TA .K (TAMaN Daya)SDN BHD
+789417-W
+NO.5: 55,57 & 59, JALAN SAGU 18
+TAMAN DAYA
+81100 JOHOR BAHRU
+Date
+25/12/2018
+Round d Total (RM)
+9.00`);
+
+  assert.equal(result.merchant, "BOOK TA .K (TAMaN Daya)SDN BHD");
+});
+
 test("requires manual review when no payable total is found", () => {
   const result = parseReceiptLines([
     { text: "Picket", top: 5, bottom: 30 },
