@@ -42,6 +42,50 @@ test("rejects subtotal and chooses the payable total", () => {
   assert.equal(result.needsReview, false);
 });
 
+test("extracts a payable amount printed before a terminal due label", () => {
+  const result = parseReceiptText(`PICKET CAFE
+SUBTOTAL
+503,000
+PB1
+52,815
+SVC CHRG
+25,150
+580,965
+DUE`);
+
+  assert.equal(result.amount, 580965);
+  assert.equal(result.needsReview, false);
+});
+
+test("recognizes a Vietnamese total label with dropped OCR vowels", () => {
+  const result = parseReceiptText(`CUA HANG DEMO
+Ngày bán: 14/06/2026
+Tm tính:
+80.000 VND
+VAT:
+0 VND
+Tng cng:
+80.000 VND`);
+
+  assert.equal(result.amount, 80000);
+  assert.equal(result.needsReview, false);
+});
+
+test("prefers rounded total over an earlier generic total", () => {
+  const result = parseReceiptText(`BOOK STORE
+Total
+3.00
+Rounding Adjustment
+0.00
+Rounded Total (RM)
+9.00
+Cash
+10.00`);
+
+  assert.equal(result.amount, 9);
+  assert.equal(result.needsReview, false);
+});
+
 test("requires manual review when no payable total is found", () => {
   const result = parseReceiptLines([
     { text: "Picket", top: 5, bottom: 30 },
