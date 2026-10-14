@@ -41,3 +41,17 @@ test("every Pressable screen uses the accessible wrapper", () => {
     });
   assert.deepEqual(violations, []);
 });
+
+test("every TextInput has an explicit accessible name", () => {
+  const violations = sourceFiles(sourceRoot).flatMap((file) => {
+    const source = readFileSync(file, "utf8");
+    return [...source.matchAll(/<TextInput\b[\s\S]*?\/>/g)]
+      .filter((match) => !/\baccessibilityLabel\s*=/.test(match[0]))
+      .map((match) => {
+        const line = source.slice(0, match.index).split("\n").length;
+        return `${path.relative(sourceRoot, file)}:${line}`;
+      });
+  });
+
+  assert.deepEqual(violations, []);
+});
