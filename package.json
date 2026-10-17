@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run test:mobile && npm run test:web && npm run test:api",
-    "test:mobile": "npm run test:api --prefix apps/mobile && npm run test:auth --prefix apps/mobile && npm run test:billing --prefix apps/mobile && npm run test:ocr --prefix apps/mobile && npm run test:sync --prefix apps/mobile && npm run test:ui --prefix apps/mobile",
-    "test:web": "npm run lint --prefix web && npm run typecheck --prefix web",
+    "test:mobile": "npm run test:api --prefix apps/mobile && npm run test:auth --prefix apps/mobile && npm run test:billing --prefix apps/mobile && npm run test:subscriptions --prefix apps/mobile && npm run test:transactions --prefix apps/mobile && npm run test:notifications --prefix apps/mobile && npm run test:keepsakes --prefix apps/mobile && npm run test:ocr --prefix apps/mobile && npm run test:sync --prefix apps/mobile && npm run test:ui --prefix apps/mobile && npm run test:export --prefix apps/mobile",
+    "test:web": "npm run test:auth --prefix web && npm run lint --prefix web && npm run typecheck --prefix web",
     "test:api": "cd apps/api && dart test",
     "lint": "npm run lint --prefix apps/mobile && npm run lint --prefix web && cd apps/api && dart analyze",
     "typecheck": "npm run typecheck --prefix apps/mobile && npm run typecheck --prefix web",
