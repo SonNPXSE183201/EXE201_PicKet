@@ -23,13 +23,15 @@ export function AccessiblePressable({
   return (
     <Pressable
       {...props}
+      android_ripple={props.android_ripple ?? { color: "rgba(74,44,42,0.12)" }}
       accessibilityRole={accessibilityRole}
       accessibilityState={resolvedAccessibilityState}
       disabled={disabled}
       hitSlop={hitSlop}
       style={(state) => [
-        styles.minimumTarget,
         typeof style === "function" ? style(state) : style,
+        styles.minimumTarget,
+        disabled && styles.disabled,
       ]}
     />
   );
@@ -40,4 +42,5 @@ const styles = StyleSheet.create({
     minHeight: minimumTouchTarget,
     minWidth: minimumTouchTarget,
   },
+  disabled: { opacity: 0.5 },
 });
