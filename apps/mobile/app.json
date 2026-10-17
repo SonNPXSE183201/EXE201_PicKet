@@ -5,15 +5,13 @@
     "scheme": "com.picket.mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/picket-logo.png",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.picket.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FFF8F0",
+        "foregroundImage": "./assets/picket-logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -22,8 +20,11 @@
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",
+      "expo-local-authentication",
+      "expo-notifications",
       "expo-web-browser",
       "expo-sqlite",
+      ["expo-camera", { "cameraPermission": "Cho phép Picket dùng camera để quét hóa đơn.", "recordAudioAndroid": false }],
       [
         "expo-image-picker",
         {
