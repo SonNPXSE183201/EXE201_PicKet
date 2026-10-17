@@ -17,9 +17,14 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
           requestedLimit > 100) {
         throw const FormatException('Limit must be between 1 and 100.');
       }
+      final offset = int.tryParse(request.uri.queryParameters['offset'] ?? '0');
+      if (offset == null || offset < 0 || offset > 1000000) {
+        throw const FormatException('Offset must be between 0 and 1000000.');
+      }
       final transactions = await gateway.listTransactions(
         token,
         limit: requestedLimit,
+        offset: offset,
       );
       return Response.json(
         body: {
