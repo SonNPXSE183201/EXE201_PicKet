@@ -1,7 +1,8 @@
 import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from "react-native";
+import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -19,7 +20,7 @@ export default function DeleteAccountScreen() {
 
   async function remove() {
     if (confirmation !== "DELETE") return setMessage("Hãy nhập chính xác DELETE để xác nhận.");
-    if (!session || !picketApi) return setMessage("Dart API chưa được cấu hình.");
+    if (!session || !picketApi) return setMessage("Chưa thực hiện được lúc này. Hãy đăng nhập và thử lại.");
     setBusy(true);
     setMessage(null);
     try {
@@ -48,5 +49,5 @@ export default function DeleteAccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 }, content: { flex: 1, gap: 18, justifyContent: "center", padding: 26 }, back: { color: colors.mauve, fontSize: 15, fontWeight: "800" }, title: { color: colors.ink, fontSize: 34, fontWeight: "800" }, description: { color: colors.muted, fontSize: 15, lineHeight: 24 }, label: { color: colors.ink, fontSize: 14, fontWeight: "800" }, input: { backgroundColor: colors.white, borderColor: colors.expense, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: 54, paddingHorizontal: 16 }, error: { color: colors.expense, fontSize: 14, lineHeight: 20 }, deleteButton: { alignItems: "center", backgroundColor: colors.expense, borderRadius: radii.small, justifyContent: "center", minHeight: 54 }, disabled: { opacity: 0.45 }, deleteText: { color: colors.white, fontSize: 15, fontWeight: "800" },
+  safeArea: { backgroundColor: colors.cream, flex: 1 }, content: { flex: 1, gap: 18, justifyContent: "center", padding: 26 }, back: { color: colors.mauve, fontSize: 15, fontWeight: "700" }, title: { color: colors.ink, fontSize: 34, fontWeight: "700" }, description: { color: colors.muted, fontSize: 15, lineHeight: 24 }, label: { color: colors.ink, fontSize: 14, fontWeight: "700" }, input: { backgroundColor: colors.white, borderColor: colors.expense, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: 54, paddingHorizontal: 16 }, error: { color: colors.expense, fontSize: 14, lineHeight: 20 }, deleteButton: { alignItems: "center", backgroundColor: colors.expense, borderRadius: radii.small, justifyContent: "center", minHeight: 54 }, disabled: { opacity: 0.45 }, deleteText: { color: colors.white, fontSize: 15, fontWeight: "700" },
 });
