@@ -24,6 +24,7 @@ services:
       PICKET_WEB_DOMAIN: ${PICKET_WEB_DOMAIN}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./apps/landing/dist:/srv/picket-landing:ro
       - caddy_data:/data
       - caddy_config:/config
     networks:
