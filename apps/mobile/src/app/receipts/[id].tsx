@@ -3,13 +3,13 @@ import { formatVnd, MAX_MONEY, type ReceiptRecord } from "@picket/domain";
 import { ApiError } from "@picket/api-client";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
+import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
   ActivityIndicator,
   Image,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -211,8 +211,8 @@ export default function ReceiptDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable accessibilityRole="link" onPress={() => router.replace(routes.transactions)}>
-          <Text style={styles.back}>‹ Giao dịch</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Quay lại màn hình trước" onPress={() => router.canGoBack() ? router.back() : router.replace(routes.transactions)}>
+          <Text style={styles.back}>‹ Quay lại</Text>
         </Pressable>
         <Text accessibilityRole="header" style={styles.title}>Chi tiết hóa đơn</Text>
         {loading && <ActivityIndicator accessibilityLabel="Đang tải hóa đơn" color={colors.mauve} style={styles.loader} />}
@@ -231,7 +231,7 @@ export default function ReceiptDetailScreen() {
                 <Text style={styles.fieldLabel}>Cửa hàng</Text>
                 <TextInput accessibilityLabel="Tên cửa hàng" value={merchant} onChangeText={setMerchant} placeholder="Tên cửa hàng" placeholderTextColor={colors.muted} style={styles.input} />
                 <Text style={styles.fieldLabel}>Tổng hóa đơn</Text>
-                <TextInput accessibilityLabel="Tổng hóa đơn" value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder="Tổng tiền" placeholderTextColor={colors.muted} style={styles.input} />
+                <TextInput money accessibilityLabel="Tổng hóa đơn" value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder="Tổng tiền" placeholderTextColor={colors.muted} style={styles.input} />
                 <Text style={styles.fieldLabel}>Ngày mua</Text>
                 <TextInput accessibilityLabel="Ngày mua theo định dạng năm tháng ngày" value={purchasedAt} onChangeText={setPurchasedAt} placeholder="YYYY-MM-DD" placeholderTextColor={colors.muted} style={styles.input} />
               </View>
@@ -268,9 +268,9 @@ export default function ReceiptDetailScreen() {
                     <TextInput accessibilityLabel={`Tên sản phẩm ${index + 1}`} value={line.name} onChangeText={(value) => updateLine(line.key, "name", value)} placeholder="Tên sản phẩm" placeholderTextColor={colors.muted} style={styles.input} />
                     <View style={styles.inputRow}>
                       <TextInput accessibilityLabel={`Số lượng sản phẩm ${index + 1}`} value={line.quantity} onChangeText={(value) => updateLine(line.key, "quantity", value)} keyboardType="decimal-pad" placeholder="Số lượng" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
-                      <TextInput accessibilityLabel={`Đơn giá sản phẩm ${index + 1}`} value={line.unitPrice} onChangeText={(value) => updateLine(line.key, "unitPrice", value)} keyboardType="number-pad" placeholder="Đơn giá" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
+                      <TextInput money accessibilityLabel={`Đơn giá sản phẩm ${index + 1}`} value={line.unitPrice} onChangeText={(value) => updateLine(line.key, "unitPrice", value)} keyboardType="number-pad" placeholder="Đơn giá" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
                     </View>
-                    <TextInput accessibilityLabel={`Thành tiền sản phẩm ${index + 1}`} value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder="Thành tiền" placeholderTextColor={colors.muted} style={styles.input} />
+                    <TextInput money accessibilityLabel={`Thành tiền sản phẩm ${index + 1}`} value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder="Thành tiền" placeholderTextColor={colors.muted} style={styles.input} />
                   </View>
                 ))}
                 <Pressable disabled={lines.length >= 100} onPress={() => setLines((current) => [...current, { key: `new-${Date.now()}-${current.length}`, name: "", quantity: "1", unitPrice: "", total: "" }])} style={[styles.outlineButton, lines.length >= 100 && styles.disabled]}>
@@ -327,35 +327,35 @@ export default function ReceiptDetailScreen() {
 const styles = StyleSheet.create({
   safe: { backgroundColor: colors.cream, flex: 1 },
   content: { gap: 14, padding: 22, paddingBottom: 48 },
-  back: { color: colors.mauve, fontWeight: "800" },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "800" },
+  back: { color: colors.mauve, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 30, fontWeight: "700" },
   loader: { marginTop: 32 },
   image: { backgroundColor: colors.white, borderRadius: radii.large, height: 360, width: "100%" },
   imagePlaceholder: { alignItems: "center", justifyContent: "center" },
   card: { backgroundColor: colors.white, borderRadius: radii.medium, gap: 6, padding: 18 },
-  merchant: { color: colors.ink, fontSize: 20, fontWeight: "800" },
+  merchant: { color: colors.ink, fontSize: 20, fontWeight: "700" },
   amount: { color: colors.expense, fontSize: 24, fontWeight: "900" },
   meta: { color: colors.muted, fontSize: 13, lineHeight: 19 },
-  sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: "800", marginTop: 6 },
+  sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: "700", marginTop: 6 },
   lineItem: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", padding: 15 },
   lineCopy: { flex: 1 },
-  lineName: { color: colors.ink, fontWeight: "800" },
-  lineTotal: { color: colors.ink, fontWeight: "800" },
+  lineName: { color: colors.ink, fontWeight: "700" },
+  lineTotal: { color: colors.ink, fontWeight: "700" },
   hint: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   rawText: { color: colors.ink, fontFamily: "monospace", fontSize: 12, lineHeight: 18 },
   error: { color: colors.expense, fontWeight: "700" },
-  fieldLabel: { color: colors.ink, fontSize: 13, fontWeight: "800", marginTop: 3 },
+  fieldLabel: { color: colors.ink, fontSize: 13, fontWeight: "700", marginTop: 3 },
   input: { backgroundColor: colors.cream, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, minHeight: 48, paddingHorizontal: 13 },
   inputRow: { flexDirection: "row", gap: 10 },
   flexInput: { flex: 1 },
   editLine: { backgroundColor: colors.white, borderRadius: radii.small, gap: 9, padding: 14 },
   lineHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  remove: { color: colors.expense, fontSize: 13, fontWeight: "800" },
+  remove: { color: colors.expense, fontSize: 13, fontWeight: "700" },
   warning: { backgroundColor: "#FFF4DD", borderRadius: radii.small, color: colors.ink, fontSize: 12, lineHeight: 18, padding: 12 },
   editorActions: { gap: 10, marginTop: 4 },
   primaryButton: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 50, paddingHorizontal: 14 },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: "800" },
+  primaryText: { color: colors.white, fontSize: 15, fontWeight: "700" },
   outlineButton: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 48, paddingHorizontal: 14 },
-  outlineText: { color: colors.mauve, fontSize: 14, fontWeight: "800" },
+  outlineText: { color: colors.mauve, fontSize: 14, fontWeight: "700" },
   disabled: { opacity: 0.55 },
 });
