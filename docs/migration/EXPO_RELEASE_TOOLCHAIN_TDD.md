@@ -16,3 +16,5 @@ The landing release exposed existing Expo CI problems after the previously uncom
 - `npm audit --omit=dev` still reports 30 affected dependency entries (12 moderate/18 high, 0 critical), originating in four advisories: braces, decode-uri-component, node-forge and uuid. This does not prove 30 independently exploitable APK flaws; some paths are build tooling. No forced/major dependency fixes were applied during this landing release. A separate reachability/dependency remediation review remains necessary; do not describe this MVP as security-audited.
 
 Binary metadata and final CI outcome will be recorded after verification.
+
+Fresh-install follow-up: after the patch updates, `npm ci --dry-run --ignore-scripts` exposed an optional `react-dom@19.3.1` peer selected during npm install, conflicting with the app's pinned React 19.2.3. This also stopped CI run `39080804103` at install. Pin react-dom to the SDK's 19.2.3 recommendation rather than using `--force`/`--legacy-peer-deps`. Do not mutate installed dependencies during an active native build; update the lock first and verify/rebuild after installation.
