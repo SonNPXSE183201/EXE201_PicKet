@@ -44,6 +44,13 @@ for (
     "202610120005_finance_revision_tracking.sql",
     "202610120006_receipt_conflict_code.sql",
     "202610120007_receipt_line_positions.sql",
+    "202610150001_incremental_bills.sql",
+    "202610150002_incremental_subscriptions.sql",
+    "202610170001_incremental_keepsakes.sql",
+    "202610170002_budget_planning.sql",
+    "202610170003_wallet_reconciliation.sql",
+    "202610180001_budget_planning_split_rollover.sql",
+    "202610180002_purge_closed_month_data.sql",
   ]
 ) {
   await db.exec(
@@ -636,7 +643,35 @@ await rejects("select public.save_finance_snapshot(2,$1)", [{
   ...payload,
   entries: [null],
 }]);
+const c = "33333333-3333-4333-8333-333333333333";
 await db.exec("reset role");
+await db.query("insert into auth.users(id,email) values($1,$2)", [c, "c@example.test"]);
+await asUser(c);
+const wallet = (await db.query(
+  "select public.complete_onboarding($1,$2,$3,$4,$5,$6) as id",
+  ["Chi", "Đi làm", "Theo dõi", "VND", "Tiền mặt", 0],
+)).rows[0].id;
+const food = "44444444-4444-4444-8444-444444444444";
+const other = "55555555-5555-4555-8555-555555555555";
+await db.query("insert into public.categories(id,user_id,name,kind) values($1,$2,'Test food','expense'),($3,$2,'Test other','expense')", [food,c,other]);
+const budgetId = "66666666-6666-4666-8666-666666666666";
+await db.query("insert into public.budgets(id,user_id,category_id,name,default_limit) values($1,$2,$3,'Food budget',100000)", [budgetId,c,food]);
+const expenseId = "77777777-7777-4777-8777-777777777777";
+const refundId = "88888888-8888-4888-8888-888888888888";
+await db.query("insert into public.transactions(id,user_id,wallet_id,title,amount,kind,occurred_at) values($1,$2,$3,'Split expense',100000,'expense','2026-01-10')", [expenseId,c,wallet]);
+await db.query("insert into public.transaction_splits(user_id,transaction_id,category_id,amount) values($1,$2,$3,60000),($1,$2,$4,40000)", [c,expenseId,food,other]);
+await db.query("insert into public.transactions(id,user_id,wallet_id,refund_of,title,amount,kind,occurred_at) values($1,$2,$3,$4,'Partial refund',20000,'refund','2026-01-11')", [refundId,c,wallet,expenseId]);
+await db.query("insert into public.transaction_splits(user_id,transaction_id,category_id,amount) values($1,$2,$3,12000),($1,$2,$4,8000)", [c,refundId,food,other]);
+await db.query("select public.close_budget_month('2026-01-01',true,'Test split rollover')");
+assert.equal((await db.query("select limit_amount from public.budget_periods where user_id=$1 and budget_id=$2 and period_start='2026-02-01'", [c,budgetId])).rows[0].limit_amount, 152000);
+await db.query("select public.close_budget_month('2026-04-01',false,'')");
+await rejects("select public.close_budget_month('2026-03-01',true,'')");
+await rejects("select public.purge_user_data($1)", [c]);
+await db.exec("reset role");
+await db.query("select public.purge_user_data($1)", [c]);
+assert.equal((await db.query("select count(*)::int as n from public.month_closes where user_id=$1", [c])).rows[0].n, 0);
+assert.equal((await db.query("select count(*)::int as n from public.transaction_splits where user_id=$1", [c])).rows[0].n, 0);
+await db.query("delete from auth.users where id=$1", [c]);
 await db.query("delete from auth.users where id=$1", [a]);
 assert.equal(
   (await db.query("select * from public.finance_snapshots")).rows.length,
