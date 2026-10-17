@@ -17,6 +17,8 @@ export default async function FinanceLayout({ children }: LayoutProps<"/">) {
           <Link href="/accounts">Tài khoản</Link>
           <Link href="/transactions">Giao dịch</Link>
           <Link href="/receipts">Hóa đơn</Link>
+          <Link href="/bills">Kỳ thanh toán</Link>
+          <Link href="/subscriptions">Định kỳ</Link>
           <Link href="/transactions/transfer">Chuyển tiền</Link>
           <Link href="/categories">Danh mục</Link>
           <Link href="/budgets">Ngân sách</Link>
