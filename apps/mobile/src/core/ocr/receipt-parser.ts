@@ -31,7 +31,7 @@ const totalWords = /tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*han
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
 const rejectedTotalWords = /subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|so\s*luong/i;
-const rejectedItemWords = /\b(tong|total|subtotal|tam\s*tinh|thanh\s*toan|phai\s*tra|vat|tax|thue|giam\s*gia|discount|tien\s*thua|tien\s*khach|change|cash|barcode|ma\s*hang|don\s*gia|so\s*luong|qty|ngay|date|gio|time|mst|ma\s*so\s*thue|hoa\s*don|receipt|invoice|dia\s*chi|address|hotline|tel)\b/i;
+const rejectedItemWords = /\b(tong|total|subtotal|tam\s*tinh|thanh\s*toan|phai\s*tra|vat|tax|thue|giam\s*gia|discount|tien\s*thua|tien\s*khach|change|cash|barcode|ma\s*hang|don\s*gia|so\s*luong|so\s*chung\s*tu|qty|ngay|date|gio|time|mst|ma\s*so\s*thue|hoa\s*don|receipt|invoice|dia\s*chi|address|hotline|tel)\b/i;
 
 function normalized(value: string) {
   return value
