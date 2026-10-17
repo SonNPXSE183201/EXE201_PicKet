@@ -22,6 +22,10 @@ http://localhost:3000/auth/callback
 Khi deploy, thêm callback của domain production, ví dụ:
 `https://app.example.com/auth/callback`.
 
+Google OAuth dùng **Google Console → Supabase callback → Picket callback**;
+không đưa Google Client Secret vào Next.js. Xem [hướng dẫn cấu hình và
+kiểm thử](../docs/migration/GOOGLE_OAUTH_SETUP.md).
+
 ## Chạy và kiểm tra
 
 ```powershell
