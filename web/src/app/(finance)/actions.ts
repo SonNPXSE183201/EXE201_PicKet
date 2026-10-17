@@ -1,6 +1,6 @@
 "use server";
 
-import { MAX_MONEY, type AccountKind, type Category, type ReceiptLineItemInput, type TransactionKind } from "@picket/domain";
+import { MAX_MONEY, type AccountKind, type BillStatus, type Category, type ReceiptLineItemInput, type SubscriptionCadence, type TransactionKind } from "@picket/domain";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -9,6 +9,8 @@ import { requireApiSession } from "@/core/auth/require-api-session";
 const accountKinds = new Set<AccountKind>(["cash", "bank", "ewallet", "other"]);
 const categoryKinds = new Set<Category["kind"]>(["expense", "income", "both"]);
 const transactionKinds = new Set<TransactionKind>(["expense", "income"]);
+const billStatuses = new Set<BillStatus>(["pending", "paid", "overdue", "cancelled"]);
+const subscriptionCadences = new Set<SubscriptionCadence>(["weekly", "monthly", "quarterly", "yearly", "custom"]);
 
 function text(data: FormData, key: string, max: number) {
   const value = String(data.get(key) ?? "").trim();
@@ -47,6 +49,12 @@ function currency(data: FormData) {
 function occurredAt(data: FormData) {
   const date = text(data, "occurredAt", 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("Invalid date");
+  return `${date}T12:00:00.000Z`;
+}
+
+function dateTimeAt(data: FormData, key: string) {
+  const date = text(data, key, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`Invalid ${key}`);
   return `${date}T12:00:00.000Z`;
 }
 
@@ -410,5 +418,64 @@ export async function updatePreferences(data: FormData) {
       currency_code: currencyCode,
       hide_balance: hideBalance,
     });
+  });
+}
+
+export async function createBill(data: FormData) {
+  const request = { title: text(data, "title", 160), amount: integer(data, "amount", { min: 1, max: MAX_MONEY }), dueAt: dateTimeAt(data, "dueAt") };
+  await commit("/bills", async () => {
+    const { accessToken, api, claims } = await requireApiSession();
+    await api.createBill(accessToken, request, `${claims.sub}:${crypto.randomUUID()}`);
+  });
+}
+
+export async function updateBill(data: FormData) {
+  const billId = id(data, "id");
+  const status = text(data, "status", 20) as BillStatus;
+  if (!billStatuses.has(status)) throw new Error("Invalid bill status");
+  await commit("/bills", async () => {
+    const { accessToken, api } = await requireApiSession();
+    await api.updateBill(accessToken, billId, { expectedVersion: integer(data, "version", { min: 1 }), title: text(data, "title", 160), amount: integer(data, "amount", { min: 1, max: MAX_MONEY }), dueAt: dateTimeAt(data, "dueAt"), status });
+  });
+}
+
+export async function archiveBill(data: FormData) {
+  const billId = id(data, "id");
+  await commit("/bills", async () => {
+    const { accessToken, api } = await requireApiSession();
+    await api.archiveBill(accessToken, billId, integer(data, "version", { min: 1 }));
+  });
+}
+
+function subscriptionInput(data: FormData) {
+  const cadence = text(data, "cadence", 20) as SubscriptionCadence;
+  if (!subscriptionCadences.has(cadence)) throw new Error("Invalid cadence");
+  const walletId = String(data.get("walletId") ?? "").trim();
+  const categoryId = String(data.get("categoryId") ?? "").trim();
+  return { walletId: walletId ? id(data, "walletId") : null, categoryId: categoryId ? id(data, "categoryId") : null, title: text(data, "title", 160), amount: integer(data, "amount", { min: 1, max: MAX_MONEY }), cadence, nextDueAt: dateTimeAt(data, "nextDueAt"), cycleMonths: integer(data, "cycleMonths", { min: 1, max: 120 }), note: optionalText(data, "note", 2000), alertDays: integer(data, "alertDays", { min: 0, max: 365 }) };
+}
+
+export async function createSubscription(data: FormData) {
+  const request = subscriptionInput(data);
+  await commit("/subscriptions", async () => {
+    const { accessToken, api, claims } = await requireApiSession();
+    await api.createSubscription(accessToken, request, `${claims.sub}:${crypto.randomUUID()}`);
+  });
+}
+
+export async function updateSubscription(data: FormData) {
+  const subscriptionId = id(data, "id");
+  const request = subscriptionInput(data);
+  await commit("/subscriptions", async () => {
+    const { accessToken, api } = await requireApiSession();
+    await api.updateSubscription(accessToken, subscriptionId, { expectedVersion: integer(data, "version", { min: 1 }), ...request, active: data.get("active") === "on" });
+  });
+}
+
+export async function archiveSubscription(data: FormData) {
+  const subscriptionId = id(data, "id");
+  await commit("/subscriptions", async () => {
+    const { accessToken, api } = await requireApiSession();
+    await api.archiveSubscription(accessToken, subscriptionId, integer(data, "version", { min: 1 }));
   });
 }
