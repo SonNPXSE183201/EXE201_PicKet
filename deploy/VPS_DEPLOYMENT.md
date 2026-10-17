@@ -37,6 +37,8 @@ hoặc chuyển fallback sang serverless GPU.
    - Giữ callback deep link mobile hiện có.
 4. Google OAuth vẫn dùng callback của Supabase:
    `https://PROJECT_REF.supabase.co/auth/v1/callback`.
+   Giá trị cần điền trong Google Console, Supabase Dashboard và cách kiểm thử
+   web/Android nằm ở [GOOGLE_OAUTH_SETUP.md](../docs/migration/GOOGLE_OAUTH_SETUP.md).
 
 ## 2. Tạo cấu hình bí mật
 
@@ -115,3 +117,25 @@ docker stats --no-stream
 Giữ image/tag ổn định trước mỗi lần nâng cấp để rollback. Dữ liệu người dùng ở
 Supabase nên rollback container không rollback database migration; migration
 production phải luôn backward-compatible trong cửa sổ rollback.
+
+### Triển khai bằng image từ GHCR
+
+Workflow `Publish production images` chạy thủ công hoặc khi push tag `v*` và
+đẩy bốn image `picket-web`, `picket-api`, `picket-ocr-worker` và
+`picket-ocr-provider` lên GitHub Container Registry. Trước lần chạy đầu, cấu
+hình ba repository variables `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`
+và `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; đây đều là cấu hình public được đóng
+vào bundle web, không dùng Supabase secret key.
+
+Trên VPS, đặt bốn biến `PICKET_*_IMAGE` trong `deploy/.env.production` theo đúng
+tag immutable, đăng nhập GHCR nếu package chưa public, rồi cập nhật mà không
+build lại trên VPS:
+
+```bash
+docker compose --env-file deploy/.env.production -f compose.production.yml pull web api ocr-worker ocr-provider
+docker compose --env-file deploy/.env.production -f compose.production.yml up -d --no-build web api ocr-provider ocr-worker
+docker compose -f compose.production.yml ps
+```
+
+Không dùng tag `latest` cho production. Tag phiên bản giúp rollback bằng cách
+đổi lại bốn biến image và chạy lại `pull`/`up -d --no-build`.
