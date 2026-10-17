@@ -1,9 +1,10 @@
+import { TopAppBar , ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import type { Category } from "@picket/domain";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
+import { StyleSheet, Text, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
@@ -19,14 +20,14 @@ const kinds: { value: Category["kind"]; label: string }[] = [
 const swatches = ["#8C6A7D", "#D46A6A", "#4F8A6B", "#C98A3D", "#5577A8"];
 
 export default function NewCategoryScreen() {
-  const { session } = useAuth();
+  const { session, localMode } = useAuth();
   const { createCategory } = useTransactions();
   const [name, setName] = useState("");
   const [kind, setKind] = useState<Category["kind"]>("expense");
   const [color, setColor] = useState(swatches[0]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  if (!session) return <Redirect href={routes.login} />;
+  if (!session && !localMode) return <Redirect href={routes.login} />;
 
   async function submit() {
     if (!name.trim()) return setMessage("Hãy nhập tên danh mục.");
@@ -46,29 +47,30 @@ export default function NewCategoryScreen() {
     }
   }
 
-  return (
-    <SafeAreaView style={styles.safeArea}><ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Text accessibilityRole="header" style={styles.title}>Danh mục mới</Text>
-      <TextInput accessibilityLabel="Tên danh mục" placeholder="Tên danh mục" placeholderTextColor={colors.muted} style={styles.input} value={name} onChangeText={setName} />
-      <Text style={styles.label}>Áp dụng cho</Text>
-      <View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: kind === item.value }} key={item.value} onPress={() => setKind(item.value)} style={[styles.choice, kind === item.value && styles.selected]}><Text style={[styles.choiceText, kind === item.value && styles.selectedText]}>{item.label}</Text></Pressable>)}</View>
-      <Text style={styles.label}>Màu sắc</Text>
+  return <PicketScreen>
+    <TopAppBar title="Danh mục mới" backDisabled={busy} />
+    <Text style={styles.subtitle}>Tạo nhóm riêng để theo dõi thu chi đúng với thói quen của bạn.</Text>
+    <Surface>
+      <FieldLabel>Tên danh mục</FieldLabel>
+      <TextInput accessibilityLabel="Tên danh mục" autoCapitalize="sentences" maxLength={80} onChangeText={setName} placeholder="Ví dụ: Ăn uống" placeholderTextColor={colors.muted} style={styles.input} value={name} />
+      <FieldLabel>Áp dụng cho</FieldLabel>
+      <View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={kind === item.value} key={item.value} label={item.label} onPress={() => setKind(item.value)} />)}</View>
+      <FieldLabel>Màu sắc</FieldLabel>
       <View accessibilityRole="radiogroup" style={styles.choices}>{swatches.map((item) => <Pressable accessibilityLabel={`Màu ${item}`} accessibilityRole="radio" accessibilityState={{ checked: color === item }} key={item} onPress={() => setColor(item)} style={[styles.swatch, { backgroundColor: item }, color === item && styles.swatchSelected]} />)}</View>
-      {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
-      <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang tạo danh mục" color={colors.white} /> : <Text style={styles.primaryText}>Tạo danh mục</Text>}</Pressable>
-      <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
-    </ScrollView></SafeAreaView>
-  );
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
+      <PrimaryAction busy={busy} label="Tạo danh mục" onPress={() => void submit()} />
+    </Surface>
+  </PicketScreen>;
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 }, content: { gap: 14, padding: 24 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "800", marginBottom: 8, marginTop: 20 },
-  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 52, paddingHorizontal: 16 },
-  label: { color: colors.ink, fontSize: 14, fontWeight: "800" }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
-  choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.pill, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 }, selected: { backgroundColor: colors.mauve },
-  choiceText: { color: colors.ink, fontWeight: "700" }, selectedText: { color: colors.white },
-  swatch: { borderRadius: 20, height: 40, width: 40 }, swatchSelected: { borderColor: colors.ink, borderWidth: 3 },
-  error: { color: colors.expense, fontSize: 14 }, primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 52 },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: "800" }, secondary: { alignItems: "center", padding: 12 }, secondaryText: { color: colors.mauve, fontWeight: "800" },
+  appBar: { justifyContent: "center", minHeight: 52 },
+  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  heading: { color: colors.ink, fontSize: 29, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 },
+  subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 22, marginTop: 7 },
+  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 },
+  choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
+  swatch: { borderRadius: 22, height: 44, width: 44 },
+  swatchSelected: { borderColor: colors.ink, borderWidth: 3 },
+  error: { color: colors.expense, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 },
 });
