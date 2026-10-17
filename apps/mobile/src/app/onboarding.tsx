@@ -2,12 +2,12 @@ import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -61,7 +61,7 @@ export default function OnboardingScreen() {
       });
       router.replace(routes.home);
     } catch {
-      setMessage("Không hoàn tất được onboarding. Hãy kiểm tra Dart API và thử lại.");
+      setMessage("Chưa lưu được lựa chọn. Hãy kiểm tra kết nối và thử lại.");
     } finally {
       setBusy(false);
     }
@@ -78,7 +78,7 @@ export default function OnboardingScreen() {
         {step === 3 && <Step title="Mục tiêu chính" description="Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này."><Choices values={goals} selected={goal} onSelect={setGoal} /></Step>}
         {step === 4 && <Step title="Đơn vị tiền tệ" description="Bạn có thể thay đổi lựa chọn này sau."><Choices values={currencies} selected={currencyCode} onSelect={setCurrencyCode} /></Step>}
         {step === 5 && <Step title="Tạo ví đầu tiên" description="Ví có thể là tiền mặt, tài khoản ngân hàng hoặc quỹ riêng."><Field value={walletName} onChangeText={setWalletName} placeholder="Tên ví" /></Step>}
-        {step === 6 && <Step title="Số dư hiện tại" description="Nhập số dư để báo cáo bắt đầu đúng từ hôm nay."><Field value={openingBalance} onChangeText={setOpeningBalance} keyboardType="number-pad" placeholder="Số dư" /></Step>}
+        {step === 6 && <Step title="Số dư hiện tại" description="Nhập số dư để báo cáo bắt đầu đúng từ hôm nay."><Field money value={openingBalance} onChangeText={setOpeningBalance} keyboardType="number-pad" placeholder="Số dư" /></Step>}
         {step === 7 && <Step title="Sẵn sàng bắt đầu" description={`${displayName}, bạn sẽ bắt đầu với ví “${walletName}”.`}><Pressable accessibilityLabel="Đồng ý lưu và đồng bộ dữ liệu tài chính" accessibilityRole="checkbox" accessibilityState={{ checked: privacyAccepted }} onPress={() => setPrivacyAccepted((value) => !value)} style={styles.consent}><View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.checkbox, privacyAccepted && styles.checked]} /><Text style={styles.consentText}>Tôi hiểu dữ liệu tài chính sẽ được lưu và đồng bộ an toàn theo cài đặt của mình.</Text></Pressable></Step>}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
       </ScrollView>
@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
   progressTrack: { backgroundColor: colors.peach, height: 5 },
   progress: { backgroundColor: colors.mauve, height: 5 },
   content: { flexGrow: 1, justifyContent: "center", padding: 28 },
-  counter: { color: colors.mauve, fontSize: 13, fontWeight: "800", marginBottom: 24 },
-  title: { color: colors.ink, fontSize: 32, fontWeight: "800", lineHeight: 38 },
+  counter: { color: colors.mauve, fontSize: 13, fontWeight: "700", marginBottom: 24 },
+  title: { color: colors.ink, fontSize: 32, fontWeight: "700", lineHeight: 38 },
   description: { color: colors.muted, fontSize: 16, lineHeight: 24, marginTop: 12 },
   stepBody: { marginTop: 28 },
   input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 },
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   error: { color: colors.expense, fontSize: 14, marginTop: 20 },
   actions: { flexDirection: "row", gap: 12, padding: 20 },
   primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, flex: 1, justifyContent: "center", minHeight: 52, paddingHorizontal: 16 },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: "800" },
+  primaryText: { color: colors.white, fontSize: 15, fontWeight: "700" },
   secondary: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52, paddingHorizontal: 16 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "800" },
+  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
 });
