@@ -34,6 +34,22 @@ void main() {
     expect(request.rpcJson['p_line_items'], hasLength(1));
   });
 
+  test('receipt create preserves the OCR review flag for the database', () {
+    final request = CreateReceiptRequest.fromJson({
+      'transactionId': transactionId,
+      'storagePath': '$userId/receipts/needs-review.jpg',
+      'merchant': 'Picket Test',
+      'detectedTotal': 25000,
+      'currencyCode': 'VND',
+      'confidence': 0.4,
+      'ocrProvider': 'ml-kit',
+      'reviewRequired': true,
+      'lineItems': const <Object>[],
+    });
+    expect(request.rpcJson['p_review_required'], isTrue);
+    expect(request.rpcJson['p_confidence'], 0.4);
+  });
+
   test('receipt create rejects inconsistent line totals', () {
     expect(
       () => CreateReceiptRequest.fromJson({
