@@ -495,6 +495,160 @@ paths:
         '400': {description: Invalid budget identifier or version}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '409': {description: Budget version conflict}
+  /v1/bills:
+    get:
+      operationId: listBills
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active bills owned by the current user, ordered by due date
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BillsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: createBill
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateBillRequest'}
+      responses:
+        '201':
+          description: Bill created idempotently
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BillResponse'}
+        '400': {description: Invalid bill data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency conflict}
+  /v1/bills/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    patch:
+      operationId: updateBill
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateBillRequest'}
+      responses:
+        '200':
+          description: Bill updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BillResponse'}
+        '400': {description: Invalid bill data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Bill version conflict}
+    delete:
+      operationId: archiveBill
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expectedVersion
+          in: query
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Bill archived
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/BillResponse'}
+        '400': {description: Invalid bill identifier or version}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Bill version conflict}
+  /v1/subscriptions:
+    get:
+      operationId: listSubscriptions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active subscriptions owned by the current user
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionsResponse'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: createSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateSubscriptionRequest'}
+      responses:
+        '201':
+          description: Subscription created idempotently
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionResponse'}
+        '400': {description: Invalid subscription data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Idempotency or referenced resource conflict}
+  /v1/subscriptions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    patch:
+      operationId: updateSubscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateSubscriptionRequest'}
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionResponse'}
+        '400': {description: Invalid subscription data}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Subscription version conflict}
+    delete:
+      operationId: archiveSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: expectedVersion
+          in: query
+          required: true
+          schema: {type: integer, format: int64, minimum: 1}
+      responses:
+        '200':
+          description: Subscription archived
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SubscriptionResponse'}
+        '400': {description: Invalid subscription identifier or version}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Subscription version conflict}
   /v1/transactions:
     get:
       operationId: listTransactions
@@ -630,6 +784,32 @@ paths:
         '400': {description: Invalid refund data}
         '401': {$ref: '#/components/responses/Unauthorized'}
         '409': {description: Idempotency or business rule conflict}
+  /v1/transaction-splits:
+    get:
+      operationId: listTransactionSplitsByIds
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: Comma-separated list of 1 to 25 distinct transaction UUIDs
+          schema: {type: string}
+      responses:
+        '200':
+          description: Category allocations for the requested transactions, filtered by row-level security
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [splits]
+                properties:
+                  splits:
+                    type: array
+                    maxItems: 500
+                    items: {$ref: '#/components/schemas/TransactionSplit'}
+        '400': {description: Invalid transaction identifiers}
+        '401': {$ref: '#/components/responses/Unauthorized'}
   /v1/transactions/{id}/splits:
     parameters:
       - name: id
@@ -1160,6 +1340,137 @@ components:
         defaultLimit: {type: integer, format: int64, minimum: 1}
         alertPercent: {type: integer, minimum: 1, maximum: 100}
         active: {type: boolean}
+    Bill:
+      type: object
+      additionalProperties: false
+      required: [id, paidTransactionId, title, amount, dueAt, status, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        paidTransactionId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1, maximum: 9000000000000}
+        dueAt: {type: string, format: date-time}
+        status: {type: string, enum: [pending, paid, overdue, cancelled]}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    BillsResponse:
+      type: object
+      additionalProperties: false
+      required: [bills]
+      properties:
+        bills:
+          type: array
+          items: {$ref: '#/components/schemas/Bill'}
+    BillResponse:
+      type: object
+      additionalProperties: false
+      required: [bill]
+      properties:
+        bill: {$ref: '#/components/schemas/Bill'}
+    CreateBillRequest:
+      type: object
+      additionalProperties: false
+      required: [title, amount, dueAt]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1, maximum: 9000000000000}
+        dueAt: {type: string, format: date-time}
+    UpdateBillRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1, maximum: 9000000000000}
+        dueAt: {type: string, format: date-time}
+        status: {type: string, enum: [pending, paid, overdue, cancelled]}
+        paidTransactionId:
+          oneOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+    Subscription:
+      type: object
+      additionalProperties: false
+      required: [id, walletId, categoryId, title, amount, cadence, nextDueAt, cycleMonths, active, note, alertDays, version, createdAt, updatedAt, deletedAt]
+      properties:
+        id: {type: string, format: uuid}
+        walletId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        categoryId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1, maximum: 9000000000000}
+        cadence: {type: string, enum: [weekly, monthly, quarterly, yearly, custom]}
+        nextDueAt: {type: string, format: date-time}
+        cycleMonths: {type: integer, minimum: 1, maximum: 120}
+        active: {type: boolean}
+        note: {type: string, maxLength: 2000}
+        alertDays: {type: integer, minimum: 0, maximum: 365}
+        version: {type: integer, format: int64, minimum: 1}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        deletedAt:
+          oneOf: [{type: string, format: date-time}, {type: 'null'}]
+    SubscriptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [subscriptions]
+      properties:
+        subscriptions:
+          type: array
+          items: {$ref: '#/components/schemas/Subscription'}
+    SubscriptionResponse:
+      type: object
+      additionalProperties: false
+      required: [subscription]
+      properties:
+        subscription: {$ref: '#/components/schemas/Subscription'}
+    CreateSubscriptionRequest:
+      type: object
+      additionalProperties: false
+      required: [title, amount, cadence, nextDueAt, cycleMonths, note, alertDays]
+      properties:
+        walletId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        categoryId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1, maximum: 9000000000000}
+        cadence: {type: string, enum: [weekly, monthly, quarterly, yearly, custom]}
+        nextDueAt: {type: string, format: date-time}
+        cycleMonths: {type: integer, minimum: 1, maximum: 120}
+        note: {type: string, maxLength: 2000}
+        alertDays: {type: integer, minimum: 0, maximum: 365}
+    UpdateSubscriptionRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion]
+      properties:
+        expectedVersion: {type: integer, format: int64, minimum: 1}
+        walletId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        categoryId:
+          oneOf: [{type: string, format: uuid}, {type: 'null'}]
+        title: {type: string, minLength: 1, maxLength: 160}
+        amount: {type: integer, format: int64, minimum: 1, maximum: 9000000000000}
+        cadence: {type: string, enum: [weekly, monthly, quarterly, yearly, custom]}
+        nextDueAt: {type: string, format: date-time}
+        cycleMonths: {type: integer, minimum: 1, maximum: 120}
+        active: {type: boolean}
+        note: {type: string, maxLength: 2000}
+        alertDays: {type: integer, minimum: 0, maximum: 365}
     Transaction:
       type: object
       additionalProperties: false
