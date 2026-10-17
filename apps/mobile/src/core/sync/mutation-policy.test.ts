@@ -11,6 +11,16 @@ test("retries connection failures without quarantining offline changes", () => {
   assert.equal(mutationFailureReason(error), "api_0");
 });
 
+test("authentication expiry remains retryable regardless of offline retry count", () => {
+  const expired = new ApiError("session expired", 401);
+  for (const attempts of [0, 4, 20, 100]) {
+    assert.equal(decideMutationFailure(expired, attempts), "retry");
+  }
+  assert.equal(mutationFailureReason(expired), "api_401");
+  // Authorization rejection is not equivalent to an expired session.
+  assert.equal(decideMutationFailure(new ApiError("forbidden", 403), 0), "conflict");
+});
+
 test("moves optimistic-version conflicts out of the active queue", () => {
   const error = new ApiError("stale version", 409);
   assert.equal(decideMutationFailure(error, 0), "conflict");
