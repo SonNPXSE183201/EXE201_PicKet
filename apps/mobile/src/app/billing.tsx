@@ -134,7 +134,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     setMessage("Đang xác minh giao dịch an toàn với Google Play…");
     try {
       const api = picketApi;
-      if (!api) throw new Error("Dart API chưa được cấu hình.");
+      if (!api) throw new Error("Chưa kích hoạt được gói. Hãy thử lại sau.");
       const result = await verifyAndFinishPurchase(
         purchase,
         (request) => api.verifyPlayPurchase(accessToken, request),
@@ -246,7 +246,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         </Pressable>
         <Text accessibilityRole="header" style={styles.title}>Gói Picket</Text>
         <Text style={styles.description}>
-          Thanh toán do Google Play xử lý. Picket chỉ kích hoạt gói sau khi server xác minh giao dịch.
+          Thanh toán an toàn qua Google Play. Gói của bạn được kích hoạt sau khi thanh toán được xác nhận.
         </Text>
 
         {entitlements && (
@@ -333,25 +333,25 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.cream, flex: 1 },
   content: { gap: 14, padding: 24, paddingBottom: 48 },
-  back: { color: colors.mauve, fontSize: 15, fontWeight: "800" },
-  title: { color: colors.ink, fontSize: 32, fontWeight: "800", lineHeight: 38 },
+  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 32, fontWeight: "700", lineHeight: 38 },
   description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
   currentPlan: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, gap: 6, padding: 16 },
-  currentPlanTitle: { color: colors.ink, fontSize: 16, fontWeight: "800" },
+  currentPlanTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
   currentPlanText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
   loadingRow: { alignItems: "center", flexDirection: "row", gap: 10 },
   notice: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.large, borderWidth: 1, gap: 14, padding: 18 },
   planHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, justifyContent: "space-between" },
   planNameBlock: { flex: 1 },
-  planName: { color: colors.ink, fontSize: 20, fontWeight: "800" },
+  planName: { color: colors.ink, fontSize: 20, fontWeight: "700" },
   cadence: { color: colors.muted, fontSize: 13, marginTop: 3 },
-  price: { color: colors.mauve, fontSize: 17, fontWeight: "800" },
+  price: { color: colors.mauve, fontSize: 17, fontWeight: "700" },
   planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 50 },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: "800" },
+  primaryText: { color: colors.white, fontSize: 15, fontWeight: "700" },
   secondary: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "800" },
+  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
   linkButton: { alignItems: "center", justifyContent: "center" },
   linkText: { color: colors.mauve, fontSize: 14, fontWeight: "700", textAlign: "center" },
   footnote: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
