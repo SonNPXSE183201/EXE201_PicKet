@@ -138,6 +138,7 @@ export interface Transaction extends VersionedEntity {
   title: string;
   amount: number;
   kind: TransactionKind;
+  reconciledAccountIds?: EntityId[];
   accountId: EntityId;
   destinationAccountId: EntityId | null;
   categoryId: EntityId | null;
@@ -227,11 +228,81 @@ export interface BudgetResponse { budget: Budget; }
 export interface CreateBudgetRequest { categoryId: EntityId; name: string; defaultLimit: number; alertPercent: number; }
 export interface UpdateBudgetRequest { expectedVersion: number; name?: string; defaultLimit?: number; alertPercent?: number; active?: boolean; }
 
+export type BillStatus = "pending" | "paid" | "overdue" | "cancelled";
+
+export interface Bill extends VersionedEntity {
+  paidTransactionId: EntityId | null;
+  title: string;
+  amount: number;
+  dueAt: IsoDateTime;
+  status: BillStatus;
+}
+
+export interface BillsResponse { bills: Bill[]; }
+export interface BillResponse { bill: Bill; }
+export interface CreateBillRequest { title: string; amount: number; dueAt: IsoDateTime; }
+export interface UpdateBillRequest {
+  expectedVersion: number;
+  title?: string;
+  amount?: number;
+  dueAt?: IsoDateTime;
+  status?: BillStatus;
+  paidTransactionId?: EntityId | null;
+}
+
+export type SubscriptionCadence = "weekly" | "monthly" | "quarterly" | "yearly" | "custom";
+export interface FinanceSubscription extends VersionedEntity { walletId: EntityId | null; categoryId: EntityId | null; title: string; amount: number; cadence: SubscriptionCadence; nextDueAt: IsoDateTime; cycleMonths: number; active: boolean; note: string; alertDays: number; }
+export interface SubscriptionsResponse { subscriptions: FinanceSubscription[]; }
+export interface SubscriptionResponse { subscription: FinanceSubscription; }
+export interface CreateSubscriptionRequest { walletId?: EntityId | null; categoryId?: EntityId | null; title: string; amount: number; cadence: SubscriptionCadence; nextDueAt: IsoDateTime; cycleMonths: number; note: string; alertDays: number; }
+export interface UpdateSubscriptionRequest { expectedVersion: number; walletId?: EntityId | null; categoryId?: EntityId | null; title?: string; amount?: number; cadence?: SubscriptionCadence; nextDueAt?: IsoDateTime; cycleMonths?: number; active?: boolean; note?: string; alertDays?: number; }
+
 export interface BudgetPeriod extends VersionedEntity {
   budgetId: EntityId;
   month: string;
   limit: number;
 }
+export type BudgetMethod = "simple" | "envelope" | "zero_based" | "fifty_thirty_twenty" | "event";
+export interface PlanningPeriod { budgetId: EntityId; month: string; limit: number; carriedAmount: number; }
+export interface PlanningMonthClose { month: string; closedAt: IsoDateTime; income: number; expense: number; note: string; rollover: boolean; }
+export interface PlanningResponse { method: BudgetMethod; periods: PlanningPeriod[]; close: PlanningMonthClose | null; }
+export interface TransferBudgetLimitRequest { sourceBudgetId: EntityId; destinationBudgetId: EntityId; month: string; amount: number; }
+export interface CloseBudgetMonthRequest { month: string; rollover: boolean; note: string; }
+export interface PlanningActionResponse { month: string; sourceLimit?: number; destinationLimit?: number; income?: number; expense?: number; rollover?: boolean; }
+export interface ReconcileWalletRequest {
+  requestId: EntityId;
+  accountId: EntityId;
+  statementDate: string;
+  statementBalance: number;
+  selectedTransactionIds: EntityId[];
+  reason: string;
+}
+export interface ReconcileWalletResponse { id: EntityId; difference: number; adjustmentTransactionId: EntityId | null; replayed: boolean; }
+
+export interface Keepsake extends VersionedEntity {
+  title: string;
+  amount: number;
+  purchasedAt: IsoDateTime;
+  note: string;
+  category: string;
+  warrantyUntil: string | null;
+  returnUntil: string | null;
+  mediaPath: string | null;
+}
+export interface KeepsakesResponse { keepsakes: Keepsake[]; }
+export interface KeepsakeResponse { keepsake: Keepsake; }
+export interface CreateKeepsakeRequest {
+  id: EntityId;
+  title: string;
+  amount: number;
+  purchasedAt: IsoDateTime;
+  note: string;
+  category: string;
+  warrantyUntil?: string | null;
+  returnUntil?: string | null;
+  mediaPath?: string | null;
+}
+export type UpdateKeepsakeRequest = Partial<Omit<CreateKeepsakeRequest, "id">> & { expectedVersion: number };
 
 export type ReceiptStatus =
   | "captured"
