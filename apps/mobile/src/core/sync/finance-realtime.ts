@@ -1,5 +1,5 @@
 import { supabase } from "@/core/supabase/client";
-import { financeRealtimeTables } from "@/core/sync/finance-realtime-policy";
+import { financeRealtimeTables, nextFinanceChannelName } from "@/core/sync/finance-realtime-policy";
 
 export type FinanceRealtimeConnection = "connected" | "disconnected";
 
@@ -12,11 +12,13 @@ export function subscribeToFinanceChanges(input: {
   if (!client) return () => undefined;
 
   let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  let active = true;
   const scheduleRefresh = () => {
+    if (!active) return;
     if (refreshTimer !== null) clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(input.onChange, 350);
+    refreshTimer = setTimeout(() => { if (active) input.onChange(); }, 350);
   };
-  let channel = client.channel(`finance-sync-${input.userId}`);
+  let channel = client.channel(nextFinanceChannelName(input.userId));
 
   for (const subscription of financeRealtimeTables) {
     channel = channel.on(
@@ -32,14 +34,17 @@ export function subscribeToFinanceChanges(input: {
   }
 
   channel.subscribe((status) => {
+    if (!active) return;
     input.onConnectionChange?.(
       status === "SUBSCRIBED" ? "connected" : "disconnected",
     );
   });
 
   return () => {
+    if (!active) return;
+    active = false;
     if (refreshTimer !== null) clearTimeout(refreshTimer);
     input.onConnectionChange?.("disconnected");
-    void client.removeChannel(channel);
+    void client.removeChannel(channel).catch(() => undefined);
   };
 }
