@@ -19,3 +19,5 @@ supabase/.temp/
 web/.next-dev/
 .artifacts/
 *.apk
+.playwright-cli/
+output/playwright/
