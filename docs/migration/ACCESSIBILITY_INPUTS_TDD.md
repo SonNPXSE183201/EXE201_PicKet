@@ -74,3 +74,23 @@ to replace it with the debug APK because the signatures differ; rebuilding the
 current x86_64 production APK also requires restoring the ignored local
 `apps/mobile/key.properties`. Full authenticated TalkBack traversal and a real
 device therefore remain open gates.
+
+## Authenticated large-font and touch-target follow-up
+
+As an Android user with enlarged text or reduced motor precision, I want every
+authenticated control to remain named, visible and at least 48 dp, so that the
+finance flows stay usable without relying on small tap areas.
+
+| Stage | Command | Result | Evidence |
+| --- | --- | --- | --- |
+| Device audit | `adb shell uiautomator dump` across 14 authenticated routes | Found overridable touch-target minimum and a compact native Switch | The installed production session covered dashboard, transactions, transfer, budgets, profile, bills, subscriptions, accounts, categories and capture. |
+| RED | `npm run test:ui` | Expected 2 failures | Policy reproduced caller styles overriding the shared 48 dp minimum and the native Switch missing an expanded hit area. |
+| GREEN | `npm run test:ui` | 8/8 pass | Shared minimum style now wins over caller styles; every native Switch must declare `hitSlop`. |
+| Regression | `npm run lint`, `npm run typecheck`, all six mobile test suites | PASS | 49/49 tests passed across API, auth, billing, OCR, sync and UI. |
+| Release/device | x86_64 release build, install-over, UIAutomator matrix at font scale 150% | PASS | All 14 routes had zero unnamed interactive controls and zero horizontal out-of-bounds controls; Android log had zero matching app/React/FATAL errors. |
+
+The signed production APK SHA-256 is
+`248E0D14F7C36125C8782D203C8E32BE4C9AD81A4419688DCA1BF5A48BEEE21C`.
+The emulator font scale was restored to 100% after testing. Accessibility stays
+`in-progress`: an actual spoken TalkBack traversal of every authenticated
+screen and an ARM64 physical-device pass are still required.
