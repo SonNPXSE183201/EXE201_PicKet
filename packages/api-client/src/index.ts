@@ -7,14 +7,20 @@ import type {
   AccountsResponse,
   BudgetResponse,
   BudgetsResponse,
+  BillResponse,
+  BillsResponse,
   CategoriesResponse,
   CategoryResponse,
   CompleteOnboardingRequest,
   CompleteOnboardingResult,
   CreateAccountRequest,
   CreateBudgetRequest,
+  CloseBudgetMonthRequest,
+  CreateBillRequest,
+  CreateKeepsakeRequest,
   CreateCategoryRequest,
   CreateRefundRequest,
+  CreateSubscriptionRequest,
   CreateReceiptRecordRequest,
   CreateTransactionRequest,
   CreateTransferRequest,
@@ -24,13 +30,20 @@ import type {
   FinanceSnapshotEnvelope,
   FinanceExportEnvelope,
   FinanceImportSummary,
+  KeepsakeResponse,
+  KeepsakesResponse,
   Entitlements,
   FindDuplicateReceiptRequest,
   OcrFallbackJobResponse,
   OcrFallbackJobsResponse,
   PlayPurchaseVerification,
+  PlanningActionResponse,
+  PlanningResponse,
+  BudgetMethod,
   ReceiptRecordResponse,
   ReceiptRecordsResponse,
+  ReconcileWalletRequest,
+  ReconcileWalletResponse,
   RestoreFinanceRequest,
   RestoreFinanceResult,
   DuplicateReceiptsResponse,
@@ -40,14 +53,20 @@ import type {
   SaveFinanceSnapshotResult,
   SetTransactionSplitsRequest,
   SetTransactionSplitsResponse,
+  SubscriptionResponse,
+  SubscriptionsResponse,
   TransactionResponse,
+  TransferBudgetLimitRequest,
   TransactionSplitsResponse,
   TransactionsResponse,
   UpdateResult,
   UpdateAccountRequest,
   UpdateBudgetRequest,
+  UpdateBillRequest,
+  UpdateKeepsakeRequest,
   UpdateCategoryRequest,
   UpdateReceiptRecordRequest,
+  UpdateSubscriptionRequest,
   UpdateTransactionRequest,
   VerifyPlayPurchaseRequest,
 } from "@picket/domain";
@@ -60,13 +79,18 @@ export interface PicketApiClientOptions {
 type PicketRequestInit = RequestInit & { timeoutMs?: number };
 
 export class ApiError extends Error {
+  readonly status: number;
+  readonly details?: unknown;
+
   constructor(
     message: string,
-    readonly status: number,
-    readonly details?: unknown,
+    status: number,
+    details?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
+    this.details = details;
   }
 }
 
@@ -323,6 +347,66 @@ export class PicketApiClient {
     return this.request<BudgetResponse>(`/v1/budgets/${encodeURIComponent(id)}?${new URLSearchParams({ expectedVersion: String(expectedVersion) })}`, { method: "DELETE", headers: this.authHeaders(accessToken), signal });
   }
 
+  listBills(accessToken: string, signal?: AbortSignal): Promise<BillsResponse> {
+    return this.request<BillsResponse>("/v1/bills", { headers: this.authHeaders(accessToken), signal });
+  }
+
+  createBill(accessToken: string, request: CreateBillRequest, idempotencyKey: string, signal?: AbortSignal): Promise<BillResponse> {
+    if (!idempotencyKey.trim()) throw new ApiError("Missing idempotency key", 400);
+    return this.request<BillResponse>("/v1/bills", { method: "POST", headers: { ...this.jsonAuthHeaders(accessToken), "idempotency-key": idempotencyKey }, body: JSON.stringify(request), signal });
+  }
+
+  updateBill(accessToken: string, id: string, request: UpdateBillRequest, signal?: AbortSignal): Promise<BillResponse> {
+    return this.request<BillResponse>(`/v1/bills/${encodeURIComponent(id)}`, { method: "PATCH", headers: this.jsonAuthHeaders(accessToken), body: JSON.stringify(request), signal });
+  }
+
+  archiveBill(accessToken: string, id: string, expectedVersion: number, signal?: AbortSignal): Promise<BillResponse> {
+    return this.request<BillResponse>(`/v1/bills/${encodeURIComponent(id)}?${new URLSearchParams({ expectedVersion: String(expectedVersion) })}`, { method: "DELETE", headers: this.authHeaders(accessToken), signal });
+  }
+
+  listSubscriptions(accessToken: string, signal?: AbortSignal): Promise<SubscriptionsResponse> {
+    return this.request<SubscriptionsResponse>("/v1/subscriptions", { headers: this.authHeaders(accessToken), signal });
+  }
+  createSubscription(accessToken: string, request: CreateSubscriptionRequest, idempotencyKey: string, signal?: AbortSignal): Promise<SubscriptionResponse> {
+    if (!idempotencyKey.trim()) throw new ApiError("Missing idempotency key", 400);
+    return this.request<SubscriptionResponse>("/v1/subscriptions", { method: "POST", headers: { ...this.jsonAuthHeaders(accessToken), "idempotency-key": idempotencyKey }, body: JSON.stringify(request), signal });
+  }
+  updateSubscription(accessToken: string, id: string, request: UpdateSubscriptionRequest, signal?: AbortSignal): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/v1/subscriptions/${encodeURIComponent(id)}`, { method: "PATCH", headers: this.jsonAuthHeaders(accessToken), body: JSON.stringify(request), signal });
+  }
+  archiveSubscription(accessToken: string, id: string, expectedVersion: number, signal?: AbortSignal): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/v1/subscriptions/${encodeURIComponent(id)}?${new URLSearchParams({ expectedVersion: String(expectedVersion) })}`, { method: "DELETE", headers: this.authHeaders(accessToken), signal });
+  }
+
+  listKeepsakes(accessToken: string, signal?: AbortSignal): Promise<KeepsakesResponse> {
+    return this.request<KeepsakesResponse>("/v1/keepsakes", { headers: this.authHeaders(accessToken), signal });
+  }
+  createKeepsake(accessToken: string, request: CreateKeepsakeRequest, signal?: AbortSignal): Promise<KeepsakeResponse> {
+    return this.request<KeepsakeResponse>("/v1/keepsakes", { method: "POST", headers: this.jsonAuthHeaders(accessToken), body: JSON.stringify(request), signal });
+  }
+  updateKeepsake(accessToken: string, id: string, request: UpdateKeepsakeRequest, signal?: AbortSignal): Promise<KeepsakeResponse> {
+    return this.request<KeepsakeResponse>(`/v1/keepsakes/${encodeURIComponent(id)}`, { method: "PATCH", headers: this.jsonAuthHeaders(accessToken), body: JSON.stringify(request), signal });
+  }
+  archiveKeepsake(accessToken: string, id: string, expectedVersion: number, signal?: AbortSignal): Promise<KeepsakeResponse> {
+    return this.request<KeepsakeResponse>(`/v1/keepsakes/${encodeURIComponent(id)}?${new URLSearchParams({ expectedVersion: String(expectedVersion) })}`, { method: "DELETE", headers: this.authHeaders(accessToken), signal });
+  }
+
+  getPlanning(accessToken: string, month: string, signal?: AbortSignal): Promise<PlanningResponse> {
+    return this.request<PlanningResponse>(`/v1/planning?${new URLSearchParams({ month })}`, { headers:this.authHeaders(accessToken), signal });
+  }
+  setBudgetMethod(accessToken: string, method: BudgetMethod, signal?: AbortSignal): Promise<PlanningResponse> {
+    return this.request<PlanningResponse>("/v1/planning", { method:"PATCH", headers:this.jsonAuthHeaders(accessToken), body:JSON.stringify({ method }), signal });
+  }
+  transferBudgetLimit(accessToken: string, request: TransferBudgetLimitRequest, signal?: AbortSignal): Promise<PlanningActionResponse> {
+    return this.request<PlanningActionResponse>("/v1/planning/transfer", { method:"POST", headers:this.jsonAuthHeaders(accessToken), body:JSON.stringify(request), signal });
+  }
+  closeBudgetMonth(accessToken: string, request: CloseBudgetMonthRequest, signal?: AbortSignal): Promise<PlanningActionResponse> {
+    return this.request<PlanningActionResponse>("/v1/planning/close", { method:"POST", headers:this.jsonAuthHeaders(accessToken), body:JSON.stringify(request), signal });
+  }
+  reconcileWallet(accessToken: string, request: ReconcileWalletRequest, signal?: AbortSignal): Promise<ReconcileWalletResponse> {
+    return this.request<ReconcileWalletResponse>("/v1/reconciliations", { method:"POST", headers:this.jsonAuthHeaders(accessToken), body:JSON.stringify(request), signal });
+  }
+
   listCategories(
     accessToken: string,
     signal?: AbortSignal,
@@ -386,11 +470,14 @@ export class PicketApiClient {
 
   listTransactions(
     accessToken: string,
-    options: { limit?: number; signal?: AbortSignal } = {},
+    options: { limit?: number; offset?: number; signal?: AbortSignal } = {},
   ): Promise<TransactionsResponse> {
     const query = new URLSearchParams();
     if (options.limit !== undefined) {
       query.set("limit", String(options.limit));
+    }
+    if (options.offset !== undefined) {
+      query.set("offset", String(options.offset));
     }
     const suffix = query.size > 0 ? `?${query}` : "";
     return this.request<TransactionsResponse>(`/v1/transactions${suffix}`, {
@@ -506,6 +593,20 @@ export class PicketApiClient {
   ): Promise<TransactionSplitsResponse> {
     return this.request<TransactionSplitsResponse>(
       `/v1/transactions/${encodeURIComponent(transactionId)}/splits`,
+      { headers: this.authHeaders(accessToken), signal },
+    );
+  }
+
+  listTransactionSplitsByIds(
+    accessToken: string,
+    transactionIds: string[],
+    signal?: AbortSignal,
+  ): Promise<TransactionSplitsResponse> {
+    if (transactionIds.length < 1 || transactionIds.length > 25) {
+      throw new ApiError("Expected 1 to 25 transaction IDs", 400);
+    }
+    return this.request<TransactionSplitsResponse>(
+      `/v1/transaction-splits?${new URLSearchParams({ ids: transactionIds.join(",") })}`,
       { headers: this.authHeaders(accessToken), signal },
     );
   }
