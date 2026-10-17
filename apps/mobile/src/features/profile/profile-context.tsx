@@ -17,6 +17,8 @@ import {
 import { picketApi } from "@/core/api/client";
 import { apiErrorMessage, reportApiError } from "@/core/api/api-error-message";
 import { useAuth } from "@/features/auth/auth-context";
+import { useCachedState } from "@/core/sync/use-cached-state";
+import { useGuestFinance } from "@/core/local/guest-finance-context";
 
 interface ProfileContextValue {
   loading: boolean;
@@ -31,9 +33,10 @@ interface ProfileContextValue {
 const ProfileContext = createContext<ProfileContextValue | null>(null);
 
 export function ProfileProvider({ children }: PropsWithChildren) {
-  const { session } = useAuth();
+  const { session, localMode } = useAuth();
+  const guest = useGuestFinance();
   const [loading, setLoading] = useState(session !== null);
-  const [profile, setProfile] = useState<CurrentProfile | null>(null);
+  const [profile, setProfile] = useCachedState<CurrentProfile | null>(session?.user.id ?? null, "profile", null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -78,27 +81,30 @@ export function ProfileProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<ProfileContextValue>(
     () => ({
-      loading,
-      profile,
+      loading: localMode ? guest.loading : loading,
+      profile: localMode ? guest.data.profile : profile,
       error,
-      refresh,
+      refresh: localMode ? async () => undefined : refresh,
       async completeOnboarding(request) {
-        if (!session || !picketApi) throw new Error("Dart API is unavailable.");
+        if (localMode) { await guest.commit((current) => ({ type: "profile.replace", value: { ...current.profile, displayName: request.displayName, persona: request.persona, goal: request.goal, currencyCode: request.currencyCode, onboardingCompleted: true } })); return; }
+        if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
         await picketApi.completeOnboarding(session.access_token, request);
         await refresh();
       },
       async updateProfile(patch) {
-        if (!session || !picketApi) throw new Error("Dart API is unavailable.");
+        if (localMode) { await guest.commit((current) => ({ type: "profile.replace", value: { ...current.profile, displayName: patch.display_name ?? current.profile.displayName, avatarUrl: patch.avatar_url ?? current.profile.avatarUrl, locale: patch.locale ?? current.profile.locale, timezone: patch.timezone ?? current.profile.timezone } })); return; }
+        if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
         await picketApi.updateProfile(session.access_token, patch);
         await refresh();
       },
       async updatePreferences(patch) {
-        if (!session || !picketApi) throw new Error("Dart API is unavailable.");
+        if (localMode) { await guest.commit((current) => ({ type: "profile.replace", value: { ...current.profile, persona: patch.persona ?? current.profile.persona, goal: patch.goal ?? current.profile.goal, currencyCode: patch.currency_code ?? current.profile.currencyCode, hideBalance: patch.hide_balance ?? current.profile.hideBalance } })); return; }
+        if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
         await picketApi.updatePreferences(session.access_token, patch);
         await refresh();
       },
     }),
-    [error, loading, profile, refresh, session],
+    [error, guest, loading, localMode, profile, refresh, session],
   );
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
