@@ -1,6 +1,7 @@
 import { colors, radii } from "@picket/design-tokens";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,6 +16,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
+import { AppIcon } from "@/core/ui/app-icon";
+import { ReceiptCamera } from "@/core/ui/receipt-camera";
+import { TopAppBar } from "@/core/ui/picket-ui";
 import type { ReceiptDraftLine } from "@/core/ocr/receipt-parser";
 import { parseServerOcrResult } from "@/core/ocr/server-result";
 import {
@@ -23,13 +26,14 @@ import {
   queueServerOcrFallback,
 } from "@/core/ocr/server-fallback";
 import { savePendingReceiptDraft } from "@/core/receipts/pending-receipt";
+import { guestOwnerId } from "@/core/local/guest-finance";
 import { useAuth } from "@/features/auth/auth-context";
 
 const serverFallbackEnabled =
   process.env.EXPO_PUBLIC_OCR_FALLBACK_ENABLED === "true";
 
 export default function CaptureReceiptScreen() {
-  const { session } = useAuth();
+  const { session, localMode } = useAuth();
   const pollingController = useRef<AbortController | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -88,7 +92,7 @@ export default function CaptureReceiptScreen() {
       );
     } catch {
       setMessage(
-        "OCR chưa sẵn sàng trong development build này. Hãy cài lại APK native mới; bạn vẫn có thể nhập tay.",
+        "Chưa đọc được hóa đơn. Hãy thử ảnh khác hoặc nhập thông tin bên dưới.",
       );
     } finally {
       setIsRecognizing(false);
@@ -135,7 +139,7 @@ export default function CaptureReceiptScreen() {
       await runOcr(uri);
     } catch {
       setMessage(
-        "Camera chưa sẵn sàng trong development build này. Hãy cài lại APK native mới trước khi thử lại.",
+        "Chưa mở được camera. Bạn có thể chọn ảnh từ thư viện hoặc thử lại.",
       );
     }
   }
@@ -164,7 +168,7 @@ export default function CaptureReceiptScreen() {
       await runOcr(rotated.uri);
     } catch {
       setMessage(
-        "Không xoay được ảnh trong development build này. Hãy cài lại APK native mới và thử lại.",
+        "Chưa xoay được ảnh. Hãy thử lại hoặc chọn ảnh khác.",
       );
     } finally {
       setIsRecognizing(false);
@@ -214,6 +218,8 @@ export default function CaptureReceiptScreen() {
                   setLineItems(parsed.lineItems);
                   setPurchasedAt(parsed.date);
                   setProvider("pp-ocr");
+                  setLocalConfidence(parsed.confidence ?? 0);
+                  setNeedsFallback(parsed.needsReview);
                   setAttachReceipt(true);
                   setMessage(
                     "OCR nâng cao đã hoàn tất. Hãy kiểm tra kết quả trước khi lưu.",
@@ -235,11 +241,7 @@ export default function CaptureReceiptScreen() {
                 if (error instanceof Error && error.name === "AbortError") {
                   return;
                 }
-                setMessage(
-                  error instanceof Error
-                    ? error.message
-                    : "Không thể tạo yêu cầu OCR nâng cao.",
-                );
+                setMessage("Chưa nhận diện được. Hãy thử lại khi có kết nối hoặc nhập thông tin bên dưới.");
               })
               .finally(() => {
                 pollingController.current = null;
@@ -268,7 +270,7 @@ export default function CaptureReceiptScreen() {
     setIsContinuing(true);
     setMessage(null);
     try {
-      if (!attachReceipt || !session) {
+      if (!attachReceipt && !localMode) {
         router.push({
           pathname: "/transactions/new",
           params: { title: title.trim(), amount: String(parsedAmount) },
@@ -276,12 +278,12 @@ export default function CaptureReceiptScreen() {
         return;
       }
       const draft = await savePendingReceiptDraft({
-        userId: session.user.id,
+        userId: session?.user.id ?? guestOwnerId,
         imageUri,
         merchant: title.trim(),
         amount: parsedAmount,
         purchasedAt,
-        confidence: localConfidence || null,
+        confidence: provider === "manual" ? null : localConfidence,
         provider,
         reviewRequired: needsFallback,
         rawText,
@@ -304,20 +306,17 @@ export default function CaptureReceiptScreen() {
     }
   }
 
+  if (!imageUri) return <ReceiptCamera onCancel={() => router.back()} onLibrary={() => void choose("library")} onManual={() => router.push("/transactions/new")} onCapture={(uri) => { setImageUri(uri); setAttachReceipt(false); void runOcr(uri); }} />;
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()}>
-          <Text style={styles.back}>‹ Quay lại</Text>
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>Quét hóa đơn</Text>
+        <TopAppBar title="Quét hóa đơn" />
         <Text style={styles.subtitle}>
-          ML Kit Latin nhận diện ngay trên máy. Ảnh chỉ được tải lên khi bạn chủ
-          động đồng ý dùng OCR nâng cao và bạn luôn có thể sửa kết quả trước khi
-          lưu.
+          Chụp rõ toàn bộ hóa đơn. Picket sẽ điền thông tin để bạn kiểm tra trước khi lưu.
         </Text>
 
         {imageUri ? (
@@ -330,7 +329,7 @@ export default function CaptureReceiptScreen() {
           />
         ) : (
           <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}>▣</Text>
+            <AppIcon name="line-scan" size={64} />
             <Text style={styles.placeholderTitle}>
               Đặt hóa đơn trên nền phẳng, đủ sáng
             </Text>
@@ -342,10 +341,10 @@ export default function CaptureReceiptScreen() {
             accessibilityRole="button"
             accessibilityState={{ disabled: isRecognizing }}
             disabled={isRecognizing}
-            onPress={() => void choose("camera")}
+            onPress={() => { pollingController.current?.abort(); setImageUri(null); }}
             style={[styles.primary, isRecognizing && styles.disabled]}
           >
-            <Text style={styles.primaryText}>Chụp ảnh</Text>
+            <AppIcon name="camera-outline" color={colors.white} /><Text style={styles.primaryText}>Chụp ảnh</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -354,7 +353,7 @@ export default function CaptureReceiptScreen() {
             onPress={() => void choose("library")}
             style={[styles.secondary, isRecognizing && styles.disabled]}
           >
-            <Text style={styles.secondaryText}>Chọn từ thư viện</Text>
+            <AppIcon name="image-outline" /><Text style={styles.secondaryText}>Chọn từ thư viện</Text>
           </Pressable>
         </View>
 
@@ -380,7 +379,7 @@ export default function CaptureReceiptScreen() {
         {isRecognizing && (
           <View accessibilityLiveRegion="polite" style={styles.progress}>
             <ActivityIndicator accessibilityLabel="Đang nhận diện hóa đơn" color={colors.mauve} />
-            <Text style={styles.progressText}>Đang chạy OCR cục bộ…</Text>
+            <Text style={styles.progressText}>Đang đọc hóa đơn…</Text>
           </View>
         )}
 
@@ -394,7 +393,7 @@ export default function CaptureReceiptScreen() {
           style={styles.input}
         />
         <Text style={styles.label}>Tổng tiền</Text>
-        <TextInput
+        <TextInput money
           accessibilityLabel="Tổng tiền hóa đơn"
           value={amount}
           onChangeText={setAmount}
@@ -405,7 +404,7 @@ export default function CaptureReceiptScreen() {
         />
 
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.message}>{message}</Text>}
-        {ocrDurationMs !== null && (
+        {__DEV__ && ocrDurationMs !== null && (
           <Text style={styles.metric}>Thời gian OCR: {ocrDurationMs} ms</Text>
         )}
         {lineItems.length > 0 && (
@@ -415,7 +414,7 @@ export default function CaptureReceiptScreen() {
           </Text>
         )}
 
-        {serverFallbackEnabled && needsFallback && fallbackStatus === null && (
+        {serverFallbackEnabled && !localMode && needsFallback && fallbackStatus === null && (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ busy: isQueueingFallback, disabled: isRecognizing || isQueueingFallback }}
@@ -429,15 +428,15 @@ export default function CaptureReceiptScreen() {
             <Text style={styles.secondaryText}>
               {isQueueingFallback
                 ? "Đang tạo yêu cầu…"
-                : "Thử OCR nâng cao trên máy chủ"}
+                : "Nhận diện nâng cao"}
             </Text>
           </Pressable>
         )}
         {fallbackStatus && (
-          <Text style={styles.metric}>OCR máy chủ: {fallbackStatus}</Text>
+          <Text style={styles.metric}>{fallbackStatus === "completed" ? "Đã nhận diện xong" : fallbackStatus === "failed" || fallbackStatus === "expired" ? "Chưa nhận diện được, bạn có thể nhập tay" : "Đang nhận diện nâng cao…"}</Text>
         )}
 
-        <Pressable
+        {!localMode && <Pressable
           accessibilityLabel="Đính kèm ảnh hóa đơn vào giao dịch"
           accessibilityRole="checkbox"
           accessibilityState={{ checked: attachReceipt }}
@@ -454,7 +453,7 @@ export default function CaptureReceiptScreen() {
               bạn xác nhận giao dịch.
             </Text>
           </View>
-        </Pressable>
+        </Pressable>}
 
         <Pressable
           accessibilityRole="button"
@@ -470,8 +469,7 @@ export default function CaptureReceiptScreen() {
           )}
         </Pressable>
         <Text style={styles.privacy}>
-          Model Latin được đóng gói cùng ứng dụng để lần quét đầu tiên vẫn hoạt
-          động khi không có mạng. Kết quả OCR chỉ dùng để điền nháp.
+          Nhận diện cơ bản hoạt động cả khi không có mạng. Bạn luôn có thể sửa thông tin trước khi lưu.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -481,12 +479,12 @@ export default function CaptureReceiptScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.cream },
   content: { padding: 22, gap: 14, paddingBottom: 48 },
-  back: { color: colors.mauve, fontWeight: "800" },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "800" },
+  back: { color: colors.mauve, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 30, fontWeight: "700" },
   subtitle: { color: colors.muted, lineHeight: 21 },
   placeholder: {
     height: 300,
-    backgroundColor: "#F7E6D8",
+    backgroundColor: colors.peach,
     borderColor: colors.peach,
     borderWidth: 1,
     borderRadius: radii.large,
@@ -497,7 +495,7 @@ const styles = StyleSheet.create({
   placeholderIcon: { fontSize: 50, color: colors.mauve },
   placeholderTitle: {
     color: colors.ink,
-    fontWeight: "800",
+    fontWeight: "700",
     fontSize: 16,
     textAlign: "center",
     marginTop: 12,
@@ -506,15 +504,19 @@ const styles = StyleSheet.create({
   actions: { gap: 10 },
   primary: {
     alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
     backgroundColor: colors.mauve,
-    borderRadius: radii.small,
+    borderRadius: 28,
     justifyContent: "center",
     minHeight: 52,
     paddingHorizontal: 14,
   },
-  primaryText: { color: colors.white, fontWeight: "800", fontSize: 16 },
+  primaryText: { color: colors.white, fontWeight: "700", fontSize: 16 },
   secondary: {
     alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
     backgroundColor: colors.white,
     borderColor: colors.peach,
     borderWidth: 1,
@@ -523,11 +525,11 @@ const styles = StyleSheet.create({
     minHeight: 52,
     paddingHorizontal: 14,
   },
-  secondaryText: { color: colors.mauve, fontWeight: "800", fontSize: 16 },
+  secondaryText: { color: colors.mauve, fontWeight: "700", fontSize: 16 },
   disabled: { opacity: 0.55 },
   progress: { flexDirection: "row", alignItems: "center", gap: 10 },
   progressText: { color: colors.muted, fontWeight: "700" },
-  label: { color: colors.ink, fontWeight: "800", marginTop: 4 },
+  label: { color: colors.ink, fontWeight: "700", marginTop: 4 },
   input: {
     backgroundColor: colors.white,
     borderColor: colors.peach,
@@ -562,7 +564,7 @@ const styles = StyleSheet.create({
   checkboxSelected: { backgroundColor: colors.mauve },
   checkmark: { color: colors.white, fontSize: 14, fontWeight: "900" },
   consentCopy: { flex: 1 },
-  consentTitle: { color: colors.ink, fontWeight: "800" },
+  consentTitle: { color: colors.ink, fontWeight: "700" },
   consentText: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 4 },
   privacy: {
     color: colors.muted,
