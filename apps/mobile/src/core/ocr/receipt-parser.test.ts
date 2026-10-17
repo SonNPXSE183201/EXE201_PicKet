@@ -153,6 +153,15 @@ test("ignores malformed prices and inconsistent quantity totals", () => {
   assert.deepEqual(result, []);
 });
 
+test("does not turn receipt reference numbers into line items", () => {
+  const result = parseReceiptLineItems([
+    { text: "So chung tu: RC-0099", confidence: 0.99 },
+    { text: "Số chứng từ: HD-12345", confidence: 0.98 },
+    { text: "Ca phe sua 45.000", confidence: 0.91 },
+  ]);
+  assert.deepEqual(result.map((item) => item.name), ["Ca phe sua"]);
+});
+
 for (const sample of receiptCorpus) {
   test(`parses receipt corpus: ${sample.name}`, () => {
     const result = parseReceiptText(sample.rawText);
