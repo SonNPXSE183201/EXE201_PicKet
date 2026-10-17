@@ -19,6 +19,10 @@ com.picket.mobile://auth/callback
 com.picket.mobile://auth/reset-password
 ```
 
+Google OAuth dùng chung provider của Supabase với web; cấu hình từng nơi và
+callback tương ứng được liệt kê trong
+[GOOGLE_OAUTH_SETUP.md](../../docs/migration/GOOGLE_OAUTH_SETUP.md).
+
 ## Chạy
 
 ```powershell
