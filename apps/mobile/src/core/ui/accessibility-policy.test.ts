@@ -19,6 +19,11 @@ test("shared pressable enforces a 48 dp minimum touch target", () => {
   assert.match(source, /minimumTouchTarget\s*=\s*48/);
   assert.match(source, /minHeight:\s*minimumTouchTarget/);
   assert.match(source, /minWidth:\s*minimumTouchTarget/);
+  assert.match(
+    source,
+    /typeof style === "function" \? style\(state\) : style,\s*styles\.minimumTarget/,
+    "the minimum target style must be applied after caller styles so it cannot be overridden",
+  );
 });
 
 test("screens do not import React Native Pressable directly", () => {
@@ -79,6 +84,20 @@ test("every image is named or explicitly decorative", () => {
           !/\baccessibilityLabel\s*=/.test(match[0]) &&
           !/\baccessible\s*=\s*\{false\}/.test(match[0]),
       )
+      .map((match) => {
+        const line = source.slice(0, match.index).split("\n").length;
+        return `${path.relative(sourceRoot, file)}:${line}`;
+      });
+  });
+
+  assert.deepEqual(violations, []);
+});
+
+test("native switches extend their compact visual bounds to a 48 dp touch target", () => {
+  const violations = sourceFiles(sourceRoot).flatMap((file) => {
+    const source = readFileSync(file, "utf8");
+    return [...source.matchAll(/<Switch\b[\s\S]*?\/>/g)]
+      .filter((match) => !/\bhitSlop\s*=/.test(match[0]))
       .map((match) => {
         const line = source.slice(0, match.index).split("\n").length;
         return `${path.relative(sourceRoot, file)}:${line}`;
