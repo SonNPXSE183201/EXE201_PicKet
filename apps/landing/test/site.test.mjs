@@ -21,4 +21,6 @@ test('Caddy serves only landing paths statically and preserves existing Next rou
   assert.match(caddy, /root \* \/srv\/picket-landing/);
   assert.match(caddy, /handle \{\s*reverse_proxy web:3000\s*\}/);
   assert.match(caddy, /application\/vnd\.android\.package-archive/);
+  assert.match(caddy, /@revalidated not path \/downloads\/\*\.apk/);
+  assert.match(caddy, /header @revalidated Cache-Control "no-cache"/);
 });
