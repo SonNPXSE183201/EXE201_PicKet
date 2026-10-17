@@ -68,3 +68,36 @@ and a manually authenticated test session are required before running the six
 images through the capture screen. A physical low-RAM Android device and a
 larger, anonymized Vietnamese real-receipt corpus remain required before either
 ML Kit or the end-to-end OCR capability can be marked `verified`.
+
+# Follow-up 2026-10-15: reject invalid provider dates
+
+Journey: when PP-OCR returns a malformed structured date, the user should get
+the valid date parsed from receipt text instead of a draft that fails API
+validation on save.
+
+| Guarantee | Test | RED | GREEN |
+| --- | --- | --- | --- |
+| Invalid text, impossible day, and impossible month from the provider fall back to the raw receipt date | `apps/mobile/src/core/ocr/server-result.test.ts` | OCR suite 22/23; new case failed for `not-a-date` | OCR suite 23/23 |
+| A provider merchant over 160 characters or amount over the Dart API cap falls back to parsed receipt text | Same test | OCR suite 23/24; oversized merchant assertion failed | OCR suite 24/24 |
+
+`npm run test:ocr --prefix apps/mobile` ran before and after the fix. The parser
+now accepts only calendar-valid ISO date/date-time values and otherwise uses
+the raw-text parser result. Structured merchant/amount values are also bounded
+to the Dart receipt contract before they enter the draft. No production receipt
+was written in this test.
+No checkpoint commit was made because the user has not authorized committing.
+# E2E follow-up 2026-10-16: receipt reference is not a product
+
+The user approved using the currently signed-in test account. Expo x86_64 saved
+the public synthetic receipt through capture → transaction → receipt, then read
+back the stored image, merchant, total, date, `ml-kit` provider and 100%
+confidence. Review removed a false product (`So chung tu: RC`, 99 VND) and
+saved successfully. The test record remains in that account; no admin deletion
+was attempted.
+
+The parser regression test in `apps/mobile/src/core/ocr/receipt-parser.test.ts`
+first failed (24/25) for `So chung tu: RC-0099` and `Số chứng từ: HD-12345`.
+Adding `so chung tu` to rejected item labels made the same suite pass (25/25).
+The full mobile suite passed 55/55, along with typecheck and lint. The fix has
+not yet been installed in a new APK. The `reviewRequired=true` create/read
+branch still needs E2E before the roadmap capability can be marked verified.
