@@ -1,6 +1,8 @@
 import type { Session } from "@supabase/supabase-js";
 import * as Linking from "expo-linking";
+import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 import {
   createContext,
   type PropsWithChildren,
@@ -11,8 +13,10 @@ import {
   useState,
 } from "react";
 
-import { supabase } from "@/core/supabase/client";
+import { authStorageKey, supabase } from "@/core/supabase/client";
+import { secureAuthStorage } from "@/core/storage/secure-auth-storage";
 import { AuthCallbackError, parseAuthCallbackUrl } from "@/features/auth/auth-callback";
+import { recoverDeviceSession } from "@/features/auth/session-recovery";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -28,6 +32,9 @@ interface AuthContextValue {
   loading: boolean;
   recovery: boolean;
   session: Session | null;
+  localMode: boolean;
+  enterLocalMode(): Promise<void>;
+  leaveLocalMode(): Promise<void>;
   signIn(email: string, password: string): Promise<void>;
   signUp(email: string, password: string): Promise<boolean>;
   verifySignup(email: string, token: string): Promise<void>;
@@ -39,6 +46,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const localModeStorageKey = "picket_local_mode_v1";
 
 let callbackExchange: Promise<boolean> | null = null;
 
@@ -82,22 +90,45 @@ async function exchangeCallbackUrl(url: string): Promise<boolean> {
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(supabase !== null);
+  const [localMode, setLocalMode] = useState(false);
+  const [localModeLoading, setLocalModeLoading] = useState(true);
   const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    void SecureStore.getItemAsync(localModeStorageKey)
+      .then((stored) => { if (active) setLocalMode(stored === "true"); })
+      .catch(() => undefined)
+      .finally(() => { if (active) setLocalModeLoading(false); });
     if (!supabase) {
-      return;
+      return () => { active = false; };
     }
 
-    let active = true;
-    void supabase.auth.getSession().then(({ data }) => {
-      if (active) {
-        setSession(data.session);
+    let authRevision = 0;
+    const initialRevision = authRevision;
+    const isCurrent = () => active && authRevision === initialRevision;
+    void recoverDeviceSession({
+      getSession: () => supabase!.auth.getSession(),
+      readPersisted: () => Platform.OS !== "web" && authStorageKey
+        ? secureAuthStorage.getItem(authStorageKey) : Promise.resolve(null),
+      isCurrent,
+    }).then((restored) => {
+      if (isCurrent()) {
+        setSession(restored);
         setLoading(false);
       }
     });
     const authSubscription = supabase.auth.onAuthStateChange((event, next) => {
+      if (!active) return;
+      // INITIAL_SESSION null may mean a network-only refresh failure. Let the
+      // guarded bootstrap decide; a real SIGNED_OUT must always invalidate it.
+      if (event === "INITIAL_SESSION" && !next) return;
+      authRevision++;
       setSession(next);
+      if (next) {
+        setLocalMode(false);
+        void SecureStore.setItemAsync(localModeStorageKey, "false").catch(() => undefined);
+      }
       setRecovery(event === "PASSWORD_RECOVERY");
       setLoading(false);
     });
@@ -129,9 +160,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(
     () => ({
       configured: supabase !== null,
-      loading,
+      loading: loading || localModeLoading,
       recovery,
       session,
+      localMode: localMode && !session,
+      async enterLocalMode() {
+        if (session) throw new Error("Sign out before switching to local mode.");
+        await SecureStore.setItemAsync(localModeStorageKey, "true");
+        setLocalMode(true);
+      },
+      async leaveLocalMode() {
+        await SecureStore.setItemAsync(localModeStorageKey, "false");
+        setLocalMode(false);
+      },
       async signIn(email, password) {
         const { error } = await requireClient().auth.signInWithPassword({
           email: email.trim().toLowerCase(),
@@ -208,7 +249,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (error) throw error;
       },
     }),
-    [loading, recovery, requireClient, session],
+    [loading, localMode, localModeLoading, recovery, requireClient, session],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
