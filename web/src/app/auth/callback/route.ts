@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { safeNext } from "@/core/auth/oauth-redirect";
 import { createClient } from "@/core/supabase/server";
-
-function safeNext(value: string | null): string {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
-}
 
 function publicOrigin(request: Request): string {
   const configured = process.env.APP_BASE_URL?.trim();
