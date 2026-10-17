@@ -42,6 +42,13 @@ export default async function ReceiptPage({ params, searchParams }: PageProps) {
       />
       <MutationError visible={Boolean(query.error)} />
       {query.updated === "1" && <p className="admin-success" role="status">Đã lưu kết quả kiểm tra hóa đơn.</p>}
+      {receipt.status === "review_required" ? (
+        <p className="mutation-error" role="status">
+          Hóa đơn cần kiểm tra. Hãy đối chiếu ảnh, tổng tiền và sản phẩm trước khi xác nhận.
+        </p>
+      ) : receipt.status === "confirmed" ? (
+        <p className="admin-success" role="status">Hóa đơn đã được xác nhận.</p>
+      ) : null}
       {query.duplicate && (
         <p className="mutation-error" role="alert">
           {query.duplicate === "exact_hash"
