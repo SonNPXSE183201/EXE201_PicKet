@@ -2,20 +2,19 @@ import { colors, radii } from "@picket/design-tokens";
 import type { TransactionKind } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
+import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
   ActivityIndicator,
   Alert,
   Image,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
+import { ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { picketApi } from "@/core/api/client";
 import {
   getPendingReceiptDraft,
@@ -31,13 +30,17 @@ import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
 import { useAccounts } from "@/features/accounts/accounts-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
+import { guestOwnerId } from "@/core/local/guest-finance";
+import { makeGuestReceipt } from "@/core/receipts/guest-receipt-model";
+import { saveGuestReceipt } from "@/core/receipts/guest-receipt-store";
+import { fromByteArray } from "base64-js";
 
 type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
 
 export default function NewTransactionScreen() {
-  const { session } = useAuth();
+  const { session, localMode } = useAuth();
   const { accounts } = useAccounts();
-  const { categories, create, refresh } = useTransactions();
+  const { categories, create, refresh, transactions } = useTransactions();
   const params = useLocalSearchParams<{
     title?: string;
     amount?: string;
@@ -55,9 +58,9 @@ export default function NewTransactionScreen() {
   const [loadingDraft, setLoadingDraft] = useState(Boolean(params.receiptDraftId));
 
   useEffect(() => {
-    if (!session || !params.receiptDraftId) return;
+    if ((!session && !localMode) || !params.receiptDraftId) return;
     let active = true;
-    void getPendingReceiptDraft(params.receiptDraftId, session.user.id)
+    void getPendingReceiptDraft(params.receiptDraftId, session?.user.id ?? guestOwnerId)
       .then((draft) => {
         if (!active) return;
         setReceiptDraft(draft);
@@ -72,7 +75,7 @@ export default function NewTransactionScreen() {
     return () => {
       active = false;
     };
-  }, [params.receiptDraftId, session]);
+  }, [localMode, params.receiptDraftId, session]);
 
   const availableCategories = useMemo(
     () => categories.filter((item) => item.kind === kind || item.kind === "both"),
@@ -87,7 +90,7 @@ export default function NewTransactionScreen() {
     ? categoryId
     : availableCategories[0]?.id ?? "";
 
-  if (!session) return <Redirect href={routes.login} />;
+  if (!session && !localMode) return <Redirect href={routes.login} />;
 
   async function submit() {
     if (loadingDraft) return;
@@ -114,7 +117,22 @@ export default function NewTransactionScreen() {
         router.replace(routes.transactions);
         return;
       }
-      if (!session || !picketApi) throw new Error("Dart API is unavailable.");
+      if (localMode) {
+        let draft = receiptDraft;
+        if (!draft.transactionId) {
+          const created = await create(request);
+          draft = await updatePendingReceiptProgress(draft, { transactionId: created.id });
+          setReceiptDraft(draft);
+        } else if (!transactions.some((item) => item.id === draft.transactionId)) {
+          throw new Error("Không tìm thấy giao dịch của bản nháp hóa đơn.");
+        }
+        const image = await inspectReceiptImage(draft.imageUri);
+        await saveGuestReceipt(makeGuestReceipt({ transactionId: draft.transactionId!, imageBase64: fromByteArray(new Uint8Array(image.bytes)), contentType: image.contentType, merchant: title.trim(), amount: parsedAmount, purchasedAt: draft.purchasedAt, rawText: draft.rawText, lineItems: draft.lineItems }));
+        await removePendingReceiptDraft(draft);
+        router.replace(routes.transaction(draft.transactionId!));
+        return;
+      }
+      if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
 
       const image = await inspectReceiptImage(receiptDraft.imageUri);
       const duplicateResult = await picketApi.findDuplicateReceipts(
@@ -186,7 +204,7 @@ export default function NewTransactionScreen() {
         currencyCode: "VND",
         confidence: draft.confidence,
         ocrProvider: draft.provider,
-        reviewRequired: false,
+        reviewRequired: draft.reviewRequired,
         rawText: draft.rawText,
         imageSha256: image.sha256,
         lineItems: draft.lineItems,
@@ -199,20 +217,17 @@ export default function NewTransactionScreen() {
         router.replace(routes.transactions);
         return;
       }
-      setMessage(
-        receiptDraft
-          ? "Chưa hoàn tất lưu hóa đơn. Bản nháp vẫn an toàn trên thiết bị; hãy kết nối mạng và thử lại."
-          : "Không lưu được giao dịch. Hãy kiểm tra kết nối và thử lại.",
-      );
+      setMessage(localMode ? "Chưa hoàn tất lưu ảnh hóa đơn. Bản nháp vẫn trên thiết bị; hãy thử lại." : receiptDraft
+        ? "Chưa hoàn tất lưu hóa đơn. Bản nháp vẫn an toàn trên thiết bị; hãy kết nối mạng và thử lại."
+        : "Không lưu được giao dịch. Hãy kiểm tra kết nối và thử lại.");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text accessibilityRole="header" style={styles.title}>Giao dịch mới</Text>
+    <PicketScreen>
+      <TopAppBar title="Giao dịch mới" subtitle="Ghi lại khoản thu hoặc chi của bạn." />
         {loadingDraft && <ActivityIndicator accessibilityLabel="Đang tải bản nháp hóa đơn" color={colors.mauve} />}
         {receiptDraft && (
           <View style={styles.receiptCard}>
@@ -238,60 +253,57 @@ export default function NewTransactionScreen() {
           ))}
         </View>
 
-        <TextInput accessibilityLabel="Nội dung giao dịch" placeholder="Nội dung, ví dụ: Ăn trưa" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
-        <TextInput accessibilityLabel="Số tiền giao dịch" keyboardType="number-pad" placeholder="Số tiền (VND)" placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
+        <Surface style={styles.form}>
+        <FieldLabel>Số tiền</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel="Số tiền giao dịch" keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>VND</Text></View>
+        <FieldLabel>Nội dung</FieldLabel><TextInput accessibilityLabel="Nội dung giao dịch" placeholder="Ví dụ: Ăn trưa" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
 
-        <Text style={styles.label}>Tài khoản</Text>
+        <FieldLabel>Tài khoản</FieldLabel>
         <View accessibilityRole="radiogroup" style={styles.choices}>
           {accounts.map((account) => (
-            <Pressable accessibilityRole="radio" accessibilityState={{ checked: selectedAccountId === account.id }} key={account.id} onPress={() => setAccountId(account.id)} style={[styles.choice, selectedAccountId === account.id && styles.selected]}>
-              <Text style={[styles.choiceText, selectedAccountId === account.id && styles.selectedText]}>{account.name}</Text>
-            </Pressable>
+            <ChoiceChip checked={selectedAccountId === account.id} key={account.id} label={account.name} onPress={() => setAccountId(account.id)} />
           ))}
         </View>
 
         <View style={styles.labelRow}><Text style={styles.label}>Danh mục</Text><Pressable accessibilityRole="link" onPress={() => router.push(routes.categories)}><Text style={styles.manage}>Quản lý</Text></Pressable></View>
         <View accessibilityRole="radiogroup" style={styles.choices}>
           {availableCategories.map((category) => (
-            <Pressable accessibilityRole="radio" accessibilityState={{ checked: selectedCategoryId === category.id }} key={category.id} onPress={() => setCategoryId(category.id)} style={[styles.choice, selectedCategoryId === category.id && styles.selected]}>
-              <Text style={[styles.choiceText, selectedCategoryId === category.id && styles.selectedText]}>{category.name}</Text>
-            </Pressable>
+            <ChoiceChip checked={selectedCategoryId === category.id} key={category.id} label={category.name} onPress={() => setCategoryId(category.id)} />
           ))}
           {availableCategories.length === 0 && <Text style={styles.empty}>Chưa có danh mục phù hợp.</Text>}
         </View>
 
-        <TextInput accessibilityLabel="Ghi chú giao dịch, không bắt buộc" multiline numberOfLines={3} placeholder="Ghi chú (không bắt buộc)" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
+        <FieldLabel>Ghi chú</FieldLabel><TextInput accessibilityLabel="Ghi chú giao dịch, không bắt buộc" multiline numberOfLines={3} placeholder="Không bắt buộc" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
-        <Pressable disabled={busy || loadingDraft} onPress={() => void submit()} style={[styles.primary, loadingDraft && styles.disabled]}>
-          {busy ? <ActivityIndicator accessibilityLabel="Đang lưu giao dịch" color={colors.white} /> : <Text style={styles.primaryText}>Lưu giao dịch</Text>}
-        </Pressable>
-        <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}>
-          <Text style={styles.secondaryText}>Hủy</Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+        <PrimaryAction busy={busy} disabled={loadingDraft} label="Lưu giao dịch" onPress={() => void submit()} />
+        </Surface>
+    </PicketScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
-  content: { gap: 14, padding: 24, paddingBottom: 48 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "800", marginBottom: 4, marginTop: 20 },
-  segment: { backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", padding: 4 },
+  appBar: { justifyContent: "center", minHeight: 52 },
+  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 29, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 },
+  subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 18, marginTop: 7 },
+  segment: { backgroundColor: colors.white, borderRadius: radii.medium, flexDirection: "row", marginBottom: 14, padding: 4 },
   segmentItem: { alignItems: "center", borderRadius: 8, flex: 1, padding: 11 },
   segmentSelected: { backgroundColor: colors.mauve },
-  segmentText: { color: colors.ink, fontWeight: "800" },
+  segmentText: { color: colors.ink, fontWeight: "700" },
   segmentTextSelected: { color: colors.white },
   receiptCard: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", gap: 12, padding: 10 },
   receiptImage: { backgroundColor: colors.cream, borderRadius: 8, height: 64, width: 48 },
   receiptCopy: { flex: 1 },
-  receiptTitle: { color: colors.ink, fontSize: 14, fontWeight: "800" },
+  receiptTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   receiptHint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 3 },
-  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 52, paddingHorizontal: 16 },
+  form: { marginTop: 0 },
+  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 },
+  amountBox: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 },
+  amountInput: { color: colors.mauve, flex: 1, fontSize: 36, fontWeight: "700", fontVariant: ["tabular-nums"], minHeight: 76 },
+  currency: { color: colors.mauve, fontSize: 14, fontWeight: "700" },
   note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" },
-  label: { color: colors.ink, fontSize: 14, fontWeight: "800", marginTop: 2 },
+  label: { color: colors.ink, fontSize: 14, fontWeight: "700", marginTop: 2 },
   labelRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  manage: { color: colors.mauve, fontSize: 13, fontWeight: "800" },
+  manage: { color: colors.mauve, fontSize: 13, fontWeight: "700" },
   choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.pill, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
   selected: { backgroundColor: colors.mauve, borderColor: colors.mauve },
@@ -300,8 +312,8 @@ const styles = StyleSheet.create({
   empty: { color: colors.muted, fontSize: 13 },
   error: { color: colors.expense, fontSize: 14 },
   primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", marginTop: 8, minHeight: 52 },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: "800" },
+  primaryText: { color: colors.white, fontSize: 16, fontWeight: "700" },
   disabled: { opacity: 0.55 },
   secondary: { alignItems: "center", minHeight: 44, padding: 12 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "800" },
+  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
 });
