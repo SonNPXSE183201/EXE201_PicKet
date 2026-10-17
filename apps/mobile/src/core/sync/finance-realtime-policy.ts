@@ -14,3 +14,9 @@ export function shouldRefreshFromRealtime(input: {
 }) {
   return input.pendingCount === 0 && !input.syncing;
 }
+let financeChannelSequence = 0;
+
+/** Supabase caches channels by topic; old unsubscribe/removal is asynchronous. */
+export function nextFinanceChannelName(userId: string): string {
+  return `finance-sync-${userId}-${++financeChannelSequence}`;
+}
