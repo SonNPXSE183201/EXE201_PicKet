@@ -8,7 +8,7 @@ import { apiErrorMessage } from "./api-error-message";
 test("maps API failures without exposing response details", () => {
   assert.equal(
     apiErrorMessage(new ApiError("secret", 0), "fallback"),
-    "Không thể kết nối đến Picket API.",
+    "Chưa có kết nối. Dữ liệu đã lưu vẫn có thể sử dụng.",
   );
   assert.equal(
     apiErrorMessage(new ApiError("secret", 401), "fallback"),
@@ -16,7 +16,7 @@ test("maps API failures without exposing response details", () => {
   );
   assert.equal(
     apiErrorMessage(new ApiError("secret", 503), "fallback"),
-    "Máy chủ đang gặp sự cố. Vui lòng thử lại.",
+    "Chưa thể hoàn tất lúc này. Vui lòng thử lại sau.",
   );
   assert.equal(apiErrorMessage(new Error("secret"), "fallback"), "fallback");
 });
