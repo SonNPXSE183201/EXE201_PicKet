@@ -19,6 +19,7 @@ class TransactionResource {
     this.destinationAccountId,
     this.categoryId,
     this.refundOfTransactionId,
+    this.reconciledAccountIds = const [],
     this.deletedAt,
   });
 
@@ -29,6 +30,8 @@ class TransactionResource {
         destinationAccountId: row['destination_wallet_id'] as String?,
         categoryId: row['category_id'] as String?,
         refundOfTransactionId: row['refund_of'] as String?,
+        reconciledAccountIds:
+            (row['reconciled_wallet_ids'] as List?)?.cast<String>() ?? const [],
         title: row['title'] as String,
         amount: row['amount'] as int,
         kind: row['kind'] as String,
@@ -47,6 +50,7 @@ class TransactionResource {
   final String? destinationAccountId;
   final String? categoryId;
   final String? refundOfTransactionId;
+  final List<String> reconciledAccountIds;
   final String title;
   final int amount;
   final String kind;
@@ -63,6 +67,7 @@ class TransactionResource {
     'destinationAccountId': destinationAccountId,
     'categoryId': categoryId,
     'refundOfTransactionId': refundOfTransactionId,
+    'reconciledAccountIds': reconciledAccountIds,
     'title': title,
     'amount': amount,
     'kind': kind,
