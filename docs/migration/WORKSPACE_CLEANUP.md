@@ -2,6 +2,7 @@
 
 ## Đợt chuẩn bị commit và landing page
 
+- Kết quả cuối đợt: build ARM64 mới ký/kiểm tra thành công rồi xóa thêm `picket-camera-calendar-arm64.apk` cũ. Giữ `picket-production-arm64.apk` (70.016.199 bytes) và `picket-completion-emulator.apk` mới nhất. Gradle clean lần đầu vướng lint JAR đang khóa; dừng daemon và chạy lại `clean --no-daemon` đạt. Workspace sau clean/build landing ~2,33 GiB, gồm bản phân phối ARM64 cần cho landing. Xem [LANDING_RELEASE_TDD.md](LANDING_RELEASE_TDD.md).
 - Kiểm kê lại: khoảng 5,2 GiB logical file sizes; `apps` ~3,92 GiB, `web` ~0,52 GiB, `.git` ~0,38 GiB, `.artifacts` ~0,34 GiB. Không xóa source, dependencies dùng cho lint/typecheck, Next build, Dart tooling, env hoặc signing key.
 - Xóa đúng hai APK phân phối cũ đã có bản thay thế: `picket-camera-calendar-emulator.apk` (72.053.403 bytes) và `picket-roadmap-qa-emulator.apk` (72.070.327 bytes). Các đường dẫn đã resolve dưới `.artifacts/ui-redesign`, không tracked. Có thể build lại từ source; không qua Thùng rác.
 - Giữ `picket-completion-emulator.apk` mới nhất. Giữ ARM64 cũ tạm thời đến khi bản ARM64 mới được ký/kiểm tra để không mất bản dành cho điện thoại.
