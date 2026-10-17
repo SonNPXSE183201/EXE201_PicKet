@@ -13,6 +13,7 @@ Used product-delivery, product-ui-ux, frontend-design, frontend-a11y, TDD and ve
 - Source candidates were checked for private key/secret patterns and size; env files, signing keystores, APKs and QA auth artifacts remain ignored. No secret values were included in commit output.
 - The initial one-file batch used already-passing full-snapshot checks instead of repeating lint-staged for every individual source commit (`HUSKY=0` only for that process). Repository hooks were not edited. Subsequent landing commits used the normal hook.
 - A one-file commit history is not a guarantee that every intermediate commit independently builds; validation applies to the complete snapshot. Do not cherry-pick arbitrary feature files without their dependencies.
+- First push CI run `39079687269`: API/web/backend/deployment passed, Expo/shared-contracts failed at `npm ci`. Reproduced with npm 10.9.2 (`Missing: react-native-worklets@0.10.4 from lock file`), while npm 11.13.0 passed the unchanged lock. Pin npm 11.13.0 in those two jobs; no native package or APK change. A package-lock-only experiment with npm 10 was fully reverted after inspection; both mobile package files match the pushed source. Final CI outcome must be checked after the final push, not inferred from local tests.
 
 ## TDD evidence
 
