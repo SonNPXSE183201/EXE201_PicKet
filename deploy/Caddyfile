@@ -14,7 +14,8 @@
 	@landing path / /launch-assets/* /downloads/* /release.json
 	handle @landing {
 		root * /srv/picket-landing
-		header Cache-Control "no-cache"
+		@revalidated not path /downloads/*.apk
+		header @revalidated Cache-Control "no-cache"
 		header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 		@apk path /downloads/*.apk
 		header @apk {
