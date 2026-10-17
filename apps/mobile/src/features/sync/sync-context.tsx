@@ -6,12 +6,15 @@ import {
   type FinanceRealtimeConnection,
 } from "@/core/sync/finance-realtime";
 import { shouldRefreshFromRealtime } from "@/core/sync/finance-realtime-policy";
+import { refreshFinanceSlices } from "@/core/sync/refresh-finance-slices";
 import { flushPendingMutations } from "@/core/sync/mutation-executor";
 import { mutationConflictCount, pendingMutationCount, subscribeToMutationQueue } from "@/core/sync/mutation-queue";
 import { useAccounts } from "@/features/accounts/accounts-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBudgets } from "@/features/budgets/budgets-context";
+import { useBills } from "@/features/bills/bills-context";
 import { useProfile } from "@/features/profile/profile-context";
+import { useSubscriptions } from "@/features/subscriptions/subscriptions-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 type SyncValue = { pendingCount: number; conflictCount: number; syncing: boolean; realtimeConnection: FinanceRealtimeConnection; lastSyncedAt: number | null; refreshRemote(): Promise<void>; flush(): Promise<void> };
@@ -23,6 +26,8 @@ export function SyncProvider({ children }: PropsWithChildren) {
   const { refresh: refreshAccounts } = useAccounts();
   const { refresh: refreshTransactions } = useTransactions();
   const { refresh: refreshBudgets } = useBudgets();
+  const { refresh: refreshBills } = useBills();
+  const { refresh: refreshSubscriptions } = useSubscriptions();
   const [pendingCount, setPendingCount] = useState(0);
   const [conflictCount, setConflictCount] = useState(0);
   const [syncing, setSyncing] = useState(false);
@@ -35,16 +40,21 @@ export function SyncProvider({ children }: PropsWithChildren) {
     if (!session || !picketApi || refreshingRemoteRef.current) return;
     refreshingRemoteRef.current = true;
     try {
-      await Promise.all([
-        refreshProfile(),
-        refreshAccounts(),
-        refreshTransactions(),
-        refreshBudgets(),
-      ]);
+      // Until optimistic overlays are merged with remote snapshots, refreshing
+      // over unsent edits would silently replace the user's local changes.
+      if (await pendingMutationCount(session.user.id) > 0) return;
+      await refreshFinanceSlices({
+        profile: refreshProfile,
+        accounts: refreshAccounts,
+        transactions: refreshTransactions,
+        budgets: refreshBudgets,
+        bills: refreshBills,
+        subscriptions: refreshSubscriptions,
+      });
     } finally {
       refreshingRemoteRef.current = false;
     }
-  }, [refreshAccounts, refreshBudgets, refreshProfile, refreshTransactions, session]);
+  }, [refreshAccounts, refreshBills, refreshBudgets, refreshProfile, refreshSubscriptions, refreshTransactions, session]);
   const flush = useCallback(async () => {
     if (!session || !picketApi || syncingRef.current) return;
     syncingRef.current = true;
