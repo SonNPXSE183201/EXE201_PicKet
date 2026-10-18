@@ -19,7 +19,7 @@ Open `http://127.0.0.1:4175`. `dist/` and APKs are ignored; distribute signed AP
 
 1. Build the current Expo source for `arm64-v8a` using production public configuration and the existing release signing key. Do not publish the x86_64 QA/emulator artifact.
 2. Use Android `apksigner verify --print-certs` and `aapt2 dump badging`. Check production package, version, minSdk, ABI and non-debuggable build. Inspect the embedded bundle for production API and absence of QA loopback.
-3. Update `release.json` with measured metadata and SHA-256. Include a hash fragment in the filename; never replace bytes at an immutable download URL. The current binary keeps version 1.0.0/code 1; future release work should increment Android versionCode rather than relying only on dates.
+3. Update `release.json` with measured metadata and SHA-256. Include a hash fragment in the filename; never replace bytes at an immutable download URL. Release 1.0.1 uses Android versionCode 2; increment versionCode for every subsequent release rather than relying only on dates.
 4. Rebuild and test. The site and checksum use this single manifest; do not edit download links manually. The QR opens the landing URL and is independent of the APK filename.
 5. Upload `dist/` to `/opt/picket/apps/landing/dist`. Keep previous release content outside the served directory for rollback. Do not put private backups, signing files or env files under `dist/`.
 6. Caddy mounts this directory read-only. Its matcher serves only `/`, `/launch-assets/*`, `/downloads/*`, `/release.json`. All other paths retain `reverse_proxy web:3000`, including `/login`, `/dashboard`, and `/auth/callback`.
