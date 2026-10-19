@@ -15,6 +15,13 @@ The landing release exposed existing Expo CI problems after the previously uncom
 - Expo config now declares app version 1.0.1/Android versionCode 2; the generated Android build config matches. The native release must be signed and checked before the public manifest changes.
 - `npm audit --omit=dev` still reports 30 affected dependency entries (12 moderate/18 high, 0 critical), originating in four advisories: braces, decode-uri-component, node-forge and uuid. This does not prove 30 independently exploitable APK flaws; some paths are build tooling. No forced/major dependency fixes were applied during this landing release. A separate reachability/dependency remediation review remains necessary; do not describe this MVP as security-audited.
 
-Binary metadata and final CI outcome will be recorded after verification.
+Final binary metadata and CI outcome are recorded below.
 
 Fresh-install follow-up: after the patch updates, `npm ci --dry-run --ignore-scripts` exposed an optional `react-dom@19.3.1` peer selected during npm install, conflicting with the app's pinned React 19.2.3. This also stopped CI run `39080804103` at install. Pin react-dom to the SDK's 19.2.3 recommendation rather than using `--force`/`--legacy-peer-deps`. Do not mutate installed dependencies during an active native build; update the lock first and verify/rebuild after installation.
+
+## Final release evidence
+
+- Pinned and installed react-dom 19.2.3; fresh-install dry run PASS and normal online Expo Doctor **21/21 PASS**. GitHub source validation run [39081027151](https://github.com/SonNPXSE183201/EXE201_PicKet/actions/runs/39081027151) passed all seven jobs for source revision `f245508`.
+- After installing the final dependency graph, forced the production JavaScript rebundle and ran signed ARM64 assembleRelease: **BUILD SUCCESSFUL**, 834 tasks, 23 executed. No dependencies changed during that build.
+- Verified APK version 1.0.1/code 2, production package, ARM64-only ABI, minSdk 24/targetSdk 36, non-debuggable manifest, existing signing certificate and production API bundle configuration. Exact size 70,100,451 bytes, SHA-256 `99475290a9de65d3e91ec2e084a865c8246d8601d2fa6db45b343401891dc428`.
+- Landing switched to the approved artifact on 2026-10-19. Full public download hash and HTTP smoke PASS; see [landing release evidence](LANDING_RELEASE_TDD.md). No additional real-device runtime testing was performed during publication. Dependency audit limitations above remain open.
