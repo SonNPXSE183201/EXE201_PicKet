@@ -58,3 +58,12 @@ Three obsolete distribution APKs removed only after replacement was available. N
 Kept the newest x86_64 emulator APK and the new ARM64 phone APK. The landing distribution contains a required deployment copy of ARM64, not a second old release. Temporary test download/archive copies are removed after verification. No build cache needs to be committed; CI rebuilds from source.
 
 Outstanding mobile roadmap items remain in [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md). Publishing a signed MVP download does not complete media retry, multi-device conflict, real-device biometrics or Play Billing acceptance.
+
+## Final Android 1.0.1 publication — 2026-10-19
+
+- Supersedes the initial 1.0.0 landing download above. APK built on 2026-10-18; the final page switch completed on 2026-10-19 after an interrupted SSH connection. The manifest's publishedAt retains the artifact date.
+- Final production rebundle/assembleRelease PASS; package `com.picket.mobile`, version `1.0.1`, versionCode `2`, minSdk 24, targetSdk 36, ARM64 only, non-debuggable. Signature verification PASS with existing certificate SHA-256 `07c04346fc367a7ea5c6c08f34704dd3e36e2db0d68bad6d0f722175e4568bce`. Embedded bundle contains the production API and not the QA loopback.
+- Download: <https://picket.51-79-207-154.sslip.io/downloads/picket-1.0.1-20261018-99475290-arm64.apk>. Exact size **70,100,451 bytes**; SHA-256 `99475290a9de65d3e91ec2e084a865c8246d8601d2fa6db45b343401891dc428`.
+- Uploaded APK first, verified checksum on VPS, then verified staged HTML/JSON against local hashes and renamed each into place. Backups: `/opt/picket/.releases/landing-1.0.1-99475290/backup/`. Old immutable APK URL retained. No Caddy, Next, API, database or Auth configuration changes/restarts.
+- Live home and release JSON expose 1.0.1/code 2. Full HTTPS download matches approved SHA-256; APK HEAD 200, correct Android MIME/attachment, Content-Length and immutable cache; range 0–31 returns 206/32 bytes. Login and API health remain 200.
+- Landing tests **8/8 PASS**, release validator line/branch/function coverage **100%**. Existing responsive visual QA above remains applicable: only release metadata and stale version wording changed. This does not claim new real-phone runtime acceptance.
