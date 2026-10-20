@@ -1,0 +1,51 @@
+import type { ReceiptDraftLine } from "./receipt-parser";
+
+export type CaptureSnapshot = {
+  version: 1; id: string; imageRef: string; title: string; amount: string;
+  purchasedAt: string; explicitDate: string | null; attachReceipt: boolean;
+  provider: "manual" | "ml-kit" | "pp-ocr"; localConfidence: number;
+  needsFallback: boolean; rawText: string | null; lineItems: ReceiptDraftLine[];
+  fallbackStoragePath: string | null;
+};
+function validate(value: unknown): CaptureSnapshot {
+  const d = value as CaptureSnapshot;
+  if (!d || d.version !== 1 || !d.id || typeof d.id !== "string" || typeof d.imageRef !== "string" || !d.imageRef
+    || typeof d.title !== "string" || typeof d.amount !== "string" || typeof d.purchasedAt !== "string"
+    || !Number.isFinite(Date.parse(d.purchasedAt)) || !(d.explicitDate === null || typeof d.explicitDate === "string")
+    || typeof d.attachReceipt !== "boolean" || !["manual", "ml-kit", "pp-ocr"].includes(d.provider)
+    || !Number.isFinite(d.localConfidence) || typeof d.needsFallback !== "boolean" || !Array.isArray(d.lineItems)
+    || !(d.rawText === null || typeof d.rawText === "string") || !(d.fallbackStoragePath === null || typeof d.fallbackStoragePath === "string")) {
+    throw new Error("Invalid capture draft");
+  }
+  return d;
+}
+
+/** Serialize durable changes per owner, including reads and completion. */
+export function createCaptureJournal(io: {
+  read(owner: string): Promise<unknown>;
+  write(owner: string, value: CaptureSnapshot | null): Promise<void>;
+}) {
+  const pending = new Map<string, Promise<unknown>>();
+  const completed = new Set<string>();
+  function enqueue<T>(owner: string, action: () => Promise<T>): Promise<T> {
+    const operation = (pending.get(owner) ?? Promise.resolve()).catch(() => undefined).then(action);
+    pending.set(owner, operation);
+    void operation.finally(() => { if (pending.get(owner) === operation) pending.delete(owner); }).catch(() => undefined);
+    return operation;
+  }
+  return {
+    load: (owner: string) => enqueue(owner, async () => { const value = await io.read(owner); return value === null ? null : validate(value); }),
+    save: (owner: string, value: CaptureSnapshot) => enqueue(owner, async () => {
+      if (completed.has(`${owner}:${value.id}`)) return false;
+      await io.write(owner, validate(value));
+      return true;
+    }),
+    complete: (owner: string, id: string) => enqueue(owner, async () => {
+      const value = await io.read(owner);
+      if (value === null || validate(value).id !== id) return false;
+      await io.write(owner, null);
+      completed.add(`${owner}:${id}`);
+      return true;
+    }),
+  };
+}

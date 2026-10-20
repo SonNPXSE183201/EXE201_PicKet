@@ -1,0 +1,74 @@
+import { fromByteArray, toByteArray } from "base64-js";
+import * as Crypto from "expo-crypto";
+import { Directory, File, Paths } from "expo-file-system";
+import * as SQLite from "expo-sqlite";
+import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
+import { MAX_PHOTO_BYTES, validatePhoto } from "@/features/keepsakes/keepsake-photo-vault";
+import { createCaptureJournal, type CaptureSnapshot } from "./capture-journal";
+
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+function database() {
+  dbPromise ??= SQLite.openDatabaseAsync("picket-capture.db").then(async db => {
+    await db.execAsync("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS capture_drafts (owner_id TEXT PRIMARY KEY NOT NULL, payload TEXT NOT NULL)");
+    return db;
+  });
+  return dbPromise;
+}
+function folder(owner: string, cache = false) {
+  if (!/^[A-Za-z0-9_-]+$/.test(owner)) throw new Error("Invalid capture owner");
+  return new Directory(cache ? Paths.cache : Paths.document, "capture-drafts", owner);
+}
+function imageFile(owner: string, uri: string) {
+  const prefix = folder(owner).uri.replace(/\/$/, "") + "/";
+  if (!uri.startsWith(prefix) || !/^[A-Za-z0-9_-]+\.enc$/.test(uri.slice(prefix.length))) throw new Error("Invalid owned capture image");
+  return new File(uri);
+}
+async function read(owner: string) {
+  const row = await (await database()).getFirstAsync<{ payload: string }>("SELECT payload FROM capture_drafts WHERE owner_id=?", owner);
+  if (!row) return null;
+  if (!row.payload.startsWith("enc-v1:")) throw new Error("Invalid encrypted capture draft");
+  return decryptLocalPayload<CaptureSnapshot>(row.payload, `capture-draft:${owner}`);
+}
+export const captureJournal = createCaptureJournal({
+  read,
+  write: async (owner, value) => {
+    const db = await database();
+    const previous = await read(owner);
+    if (value) {
+      if (!imageFile(owner, value.imageRef).exists) throw new Error("Capture image is missing");
+      const payload = await encryptLocalPayload(value, `capture-draft:${owner}`);
+      await db.runAsync("INSERT INTO capture_drafts(owner_id,payload) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET payload=excluded.payload", owner, payload);
+    } else await db.runAsync("DELETE FROM capture_drafts WHERE owner_id=?", owner);
+    // Only remove the superseded owned image after the replacement is durable.
+    if (previous?.imageRef && previous.imageRef !== value?.imageRef) {
+      try { const old = imageFile(owner, previous.imageRef); if (old.exists) old.delete(); } catch { /* Orphan cleanup can retry later. */ }
+    }
+  },
+});
+export async function persistCaptureImage(owner: string, uri: string) {
+  const source = new File(uri);
+  if (source.size <= 0 || source.size > MAX_PHOTO_BYTES) throw new Error("Ảnh vượt giới hạn 10 MB.");
+  const bytes = await source.bytes();
+  const mime = bytes[0] === 137 && bytes[1] === 80 ? "image/png" : bytes[0] === 0xff && bytes[1] === 0xd8 ? "image/jpeg" : "image/webp";
+  const photo = validatePhoto({ mime, base64: fromByteArray(bytes) });
+  const dir = folder(owner); dir.create({ intermediates: true, idempotent: true });
+  const id = Crypto.randomUUID();
+  const temp = new File(dir, `${id}.tmp`);
+  const destination = new File(dir, `${id}.enc`);
+  try {
+    temp.write(await encryptLocalPayload(photo, `capture-photo:${owner}`));
+    temp.move(destination);
+    return { id, imageRef: destination.uri };
+  } catch (error) { if (temp.exists) temp.delete(); throw error; }
+}
+export async function restoreCaptureImage(owner: string, imageRef: string) {
+  const file = imageFile(owner, imageRef);
+  if (!file.exists || file.size > 30_000_000) throw new Error("Không đọc được ảnh bản nháp.");
+  const raw = await file.text();
+  if (!raw.startsWith("enc-v1:")) throw new Error("Ảnh bản nháp bị hỏng.");
+  const photo = validatePhoto(await decryptLocalPayload(raw, `capture-photo:${owner}`));
+  const dir = folder(owner, true); dir.create({ intermediates: true, idempotent: true });
+  const result = new File(dir, file.name.replace(/\.enc$/, photo.mime === "image/png" ? ".png" : photo.mime === "image/jpeg" ? ".jpg" : ".webp"));
+  result.write(toByteArray(photo.base64));
+  return result.uri;
+}
