@@ -3,6 +3,29 @@ import test from "node:test";
 import { createClient } from "@supabase/supabase-js";
 import { createAuthFetch } from "./auth-fetch";
 
+test("auth can use a dedicated native transport without rerouting storage", async () => {
+  const calls: string[] = [];
+  const shared: typeof fetch = async () => { calls.push("shared"); throw new TypeError("Shared transport unavailable"); };
+  const dedicated: typeof fetch = async (_input, init) => {
+    calls.push("auth");
+    assert.equal(init?.body, "credentials");
+    return new Response('{"accepted":true}', { headers: { "content-type": "application/json" } });
+  };
+  const fetcher = createAuthFetch(shared, "https://project.supabase.co/auth/v1", 100, dedicated);
+  assert.deepEqual(await (await fetcher("https://project.supabase.co/auth/v1/token", { method: "POST", body: "credentials" })).json(), { accepted: true });
+  await assert.rejects(fetcher("https://project.supabase.co/storage/v1/object"), /Shared transport unavailable/);
+  assert.deepEqual(calls, ["auth", "shared"]);
+});
+
+test("dedicated auth failures are not replayed on the shared transport", async () => {
+  let sharedCalls = 0;
+  const shared: typeof fetch = async () => { sharedCalls++; return new Response(); };
+  const dedicated: typeof fetch = async () => { throw new TypeError("Auth transport unavailable"); };
+  const fetcher = createAuthFetch(shared, "https://project.supabase.co/auth/v1", 100, dedicated);
+  await assert.rejects(fetcher("https://project.supabase.co/auth/v1/token"), /Auth transport unavailable/);
+  assert.equal(sharedCalls, 0);
+});
+
 test("stalled auth request is aborted and rejects even if transport ignores abort", async () => {
   let signal: AbortSignal | null = null;
   const fetcher = createAuthFetch(async (_input, init) => {

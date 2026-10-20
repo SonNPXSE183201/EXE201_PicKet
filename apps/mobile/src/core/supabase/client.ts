@@ -1,6 +1,7 @@
 import "react-native-url-polyfill/auto";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { fetch as expoFetch } from "expo/fetch";
 
 import { readPublicConfig } from "@/core/config/public-config";
 import { secureAuthStorage } from "@/core/storage/secure-auth-storage";
@@ -14,7 +15,7 @@ export const authStorageKey = config
 
 export const supabase: SupabaseClient | null = config
   ? createClient(config.supabaseUrl, config.supabasePublishableKey, {
-      global: { fetch: createAuthFetch(globalThis.fetch.bind(globalThis), `${config.supabaseUrl.replace(/\/$/, "")}/auth/v1`) },
+      global: { fetch: createAuthFetch(globalThis.fetch.bind(globalThis), `${config.supabaseUrl.replace(/\/$/, "")}/auth/v1`, 10_000, expoFetch) },
       auth: {
         storageKey: authStorageKey!,
         storage: secureAuthStorage,
