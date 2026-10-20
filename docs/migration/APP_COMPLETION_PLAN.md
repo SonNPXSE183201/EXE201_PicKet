@@ -4,6 +4,10 @@ Ngày rà soát: 2026-10-20. Phạm vi: Expo Android + Dart API hiện có; khô
 
 ## Trạng thái hiện hành — đọc trước các ghi chép lịch sử
 
+- Migration ảnh cũ native: fixture guest PNG chuyển sang `enc-v1:`, restart không tạo lại tham chiếu, ảnh gốc vẫn còn trước cleanup, ảnh lỗi giữ nguyên tham chiếu. Đã dọn hai dòng/file fixture riêng; chưa hoàn tất mọi race đồng thời. Bằng chứng ở `legacy-photo-native-results.json` và báo cáo Photo Vault.
+- Increment auth mới nhất: [AUTH_TRANSPORT_ANDROID_TDD_20261020.md](AUTH_TRANSPORT_ANDROID_TDD_20261020.md). Token hết hạn tự nhiên theo TTL server 3600 giây đã đạt kiểm thử API (401 → refresh 200 → API 200), không chỉnh giờ, user QA riêng đã purge. Đã sửa request auth treo bằng timeout theo origin/path, giữ SDK xử lý session; **252/252** test mobile, typecheck/build QA PASS, lint 0 lỗi/23 cảnh báo. Android đã thoát được phiên A offline bị server ban; đăng nhập B ngay sau đó còn lỗi transport mã 0, còn cold restart rồi đăng nhập B đạt. Do đó toàn ma trận A–B–A vẫn mở; không suy từ API sang native. Chưa push hoặc cập nhật APK công khai.
+- Bulk mixed chưa được chốt: phát hiện conflict thừa khi archive đã commit nhưng mất phản hồi. Sửa API local đạt **79/79** test; còn triển khai có phê duyệt và chạy lại Android. Xem [ARCHIVE_RETRY_TDD_20261020.md](ARCHIVE_RETRY_TDD_20261020.md).
+
 - TalkBack: **người dùng đã tự kiểm thử giao diện, nghe và xác nhận đạt ngày 20/10/2026**, yêu cầu không kiểm thử lặp lại phần này. Ghi nhận là nghiệm thu thủ công của người dùng, không phải chứng nhận tự động từng route. Ca Android lỗi giữa restore đã xác minh rollback dòng/đường dẫn ảnh và dọn ảnh lần thử; xem follow-up mới nhất trong báo cáo Photo Vault.
 
 - Bổ sung nghiệm thu cache hóa đơn 20/10: 28 fixture vượt budget 20 MiB; offline cold restart giữ metadata của ảnh bị eviction và vẫn mở ảnh còn cache. Sau hơn TTL 300 giây mất mạng, ảnh cache vẫn hiển thị; probe server riêng xác nhận URL hết hạn trả `InvalidJWT`. Guest alarm đã có OS notification thực sau reboot/controlled clock, không còn chỉ là đăng ký alarm. Chi tiết/giới hạn bằng chứng ở báo cáo Photo Vault dưới đây; không nâng toàn bộ phần 1 thành hoàn tất.
