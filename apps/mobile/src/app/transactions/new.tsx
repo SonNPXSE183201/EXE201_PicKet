@@ -13,6 +13,7 @@ import {
 } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
+import { completeDuplicateCapture } from "@/core/receipts/duplicate-capture-completion";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { picketApi } from "@/core/api/client";
@@ -167,10 +168,19 @@ export default function NewTransactionScreen() {
               {
                 text: "Xem hóa đơn",
                 onPress: () => {
-                  resolve(false);
-                  if (exact) void removePendingReceiptDraft(receiptDraft);
-                  router.dismissTo(routes.home);
-                  router.push(routes.receipt(duplicate.id));
+                  void (async () => {
+                    try {
+                      await completeDuplicateCapture({ exact, owner: session.user.id,
+                        receiptOwner: receiptDraft.userId, captureId: params.captureDraftId }, {
+                        complete: (owner, id) => captureJournal.complete(owner, id),
+                        remove: () => removePendingReceiptDraft(receiptDraft),
+                      });
+                      router.dismissTo(routes.home);
+                      router.push(routes.receipt(duplicate.id));
+                    } catch {
+                      setMessage("Chưa dọn được bản nháp. Hóa đơn đã lưu vẫn an toàn; hãy thử mở lại.");
+                    } finally { resolve(false); }
+                  })();
                 },
               },
               ...(!exact
