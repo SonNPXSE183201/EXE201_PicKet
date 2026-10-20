@@ -13,6 +13,32 @@ test("persists fresh metadata and uses only the requested owner's cached gallery
 test("does not turn an unreachable server with no cache into an empty gallery", async () => {
   await assert.rejects(loadReceiptGallery("A", { remote: async () => { throw new Error("offline"); }, cached: async () => null, save: async () => {} }));
 });
+
+test("publishes only the requested owner's cached metadata before a slow remote completes", async () => {
+  let finish!: (rows: string[]) => void;
+  const remote = new Promise<string[]>((resolve) => { finish = resolve; });
+  const snapshots: string[][] = [];
+  const loader = {
+    remote: () => remote,
+    cached: async (owner: string) => owner === "B" ? ["B-only"] : ["A-only"],
+    save: async () => {},
+    onCached: (rows: string[]) => snapshots.push(rows),
+  };
+  const pending = loadReceiptGallery("B", loader);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(snapshots, [["B-only"]]);
+  finish(["fresh-B"]);
+  assert.deepEqual(await pending, { rows: ["fresh-B"], stale: false });
+});
+
+test("a broken cached snapshot does not prevent fresh remote metadata", async () => {
+  const loader = {
+    remote: async () => ["fresh"], cached: async () => { throw new Error("corrupt cache"); },
+    save: async () => {}, onCached: () => assert.fail("No valid cache"),
+  };
+  const result = await loadReceiptGallery("A", loader);
+  assert.deepEqual(result, { rows: ["fresh"], stale: false });
+});
 test("cache persistence failure does not discard a successful remote gallery", async () => {
   const result = await loadReceiptGallery("A", { remote: async () => ["new"], cached: async () => null, save: async () => { throw new Error("disk full"); } });
   assert.deepEqual(result, { rows: ["new"], stale: false });
