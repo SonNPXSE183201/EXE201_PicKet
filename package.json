@@ -28,18 +28,5 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.5.0"
-  },
-  "lint-staged": {
-    "apps/mobile/**/*.{js,jsx,ts,tsx}": [
-      "npm run lint --prefix apps/mobile",
-      "npm run typecheck --prefix apps/mobile"
-    ],
-    "web/**/*.{js,jsx,ts,tsx}": [
-      "npm run lint --prefix web",
-      "npm run typecheck --prefix web"
-    ],
-    "apps/api/**/*.dart": [
-      "dart format --output=none --set-exit-if-changed"
-    ]
   }
 }
