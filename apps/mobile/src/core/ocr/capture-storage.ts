@@ -59,7 +59,7 @@ export async function persistCaptureImage(owner: string, uri: string) {
   const destination = new File(dir, `${id}.enc`);
   try {
     temp.write(await encryptLocalPayload(photo, `capture-photo:${owner}`));
-    temp.move(destination);
+    await temp.move(destination);
     return { id, imageRef: destination.uri };
   } catch (error) { if (temp.exists) temp.delete(); throw error; }
 }

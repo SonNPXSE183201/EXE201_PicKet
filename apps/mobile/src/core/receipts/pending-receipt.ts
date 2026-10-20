@@ -100,7 +100,7 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
       await new File(input.imageUri).copy(temp);
       // A prior process may have died before committing this unreferenced ID.
       if (destination.exists) destination.delete();
-      temp.move(destination);
+      await temp.move(destination);
     } finally {
       // File.move mutates the File instance URI; never delete its new target.
       if (temp.uri === tempUri && temp.exists) temp.delete();
