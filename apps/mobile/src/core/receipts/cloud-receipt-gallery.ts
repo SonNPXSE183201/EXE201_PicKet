@@ -7,7 +7,10 @@ import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 
 export type GalleryEntry = { id: string; day: string; title: string; uri?: string; path?: string; transactionId?: string | null };
 
-export async function loadCloudReceiptGallery(owner: string, accessToken: string, month: string, transactionDates: Map<string, string>, signal: AbortSignal) {
+export async function loadCloudReceiptGallery(owner: string, accessToken: string, month: string, transactionDates: Map<string, string>, signal: AbortSignal, onSnapshot?: (result: { rows: GalleryEntry[]; stale: boolean }) => void) {
+  const publish = (rows: GalleryEntry[], stale: boolean) => {
+    if (!signal.aborted) onSnapshot?.({ rows: rows.map((row) => ({ ...row })), stale });
+  };
   const result = await loadReceiptGallery<GalleryEntry>(owner, {
     remote: async () => {
       if (!picketApi) throw new Error("unavailable");
@@ -16,12 +19,16 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
     },
     cached: async (user) => (await readOfflineCache<GalleryEntry[]>(user, "receipt-gallery"))?.value ?? null,
     save: (user, rows) => writeOfflineCache(user, "receipt-gallery", rows),
+    onCached: onSnapshot ? (rows) => publish(rows, true) : undefined,
   });
   if (signal.aborted) throw new Error("aborted");
+  publish(result.rows, result.stale);
   let images = (await readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images").catch(() => null))?.value ?? [];
   const validIds = new Set(result.rows.map((r) => r.id));
   images = trimReceiptImages(images, validIds);
   const rows = result.rows.map((r) => ({ ...r, uri: images.find((image) => image.id === r.id && image.path === r.path)?.dataUri }));
+  publish(rows, result.stale);
+  let downloaded = false;
   for (const row of rows.filter((r) => r.day.startsWith(month))) {
     if (signal.aborted) throw new Error("aborted");
     if (row.uri || result.stale || !row.path || !supabase) continue;
@@ -39,9 +46,13 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
       const dataUri = `data:${mime};base64,${fromByteArray(bytes)}`;
       images = trimReceiptImages([...images, { id: row.id, path: row.path, dataUri, usedAt: Date.now() }], validIds);
       row.uri = dataUri;
+      downloaded = true;
+      publish(rows, result.stale);
     } catch { /* Keep the signed image or cached gallery usable when download fails. */ }
   }
   if (signal.aborted) throw new Error("aborted");
-  try { await writeOfflineCache(owner, "receipt-images", images); } catch { /* Images remain available for this session. */ }
+  if (downloaded) {
+    try { await writeOfflineCache(owner, "receipt-images", images); } catch { /* Images remain available for this session. */ }
+  }
   return { rows, stale: result.stale };
 }
