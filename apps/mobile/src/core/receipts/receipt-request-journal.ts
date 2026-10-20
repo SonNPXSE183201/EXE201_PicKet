@@ -1,5 +1,11 @@
 import { MAX_MONEY, type CreateTransactionRequest } from "@picket/domain";
 
+export function receiptRequestTextError(title: string, note: string) {
+  if ([...title.trim()].length > 160) return "Nội dung giao dịch tối đa 160 ký tự.";
+  if ([...note].length > 2000) return "Ghi chú giao dịch tối đa 2.000 ký tự.";
+  return null;
+}
+
 export function parseReceiptRequest(value: unknown): CreateTransactionRequest {
   const request = value as CreateTransactionRequest;
   if (!request || Array.isArray(request) || typeof request.title !== "string" || !request.title.trim()
@@ -7,7 +13,8 @@ export function parseReceiptRequest(value: unknown): CreateTransactionRequest {
     || !["expense", "income"].includes(request.kind) || typeof request.accountId !== "string" || !request.accountId
     || !(request.categoryId === undefined || request.categoryId === null || typeof request.categoryId === "string")
     || typeof request.occurredAt !== "string" || !Number.isFinite(Date.parse(request.occurredAt))
-    || !(request.note === undefined || typeof request.note === "string")) throw new Error("Invalid receipt request");
+    || !(request.note === undefined || typeof request.note === "string")
+    || receiptRequestTextError(request.title,request.note ?? "")) throw new Error("Invalid receipt request");
   return { title: request.title, amount: request.amount, kind: request.kind, accountId: request.accountId,
     categoryId: request.categoryId ?? null, occurredAt: request.occurredAt, note: request.note ?? "" };
 }

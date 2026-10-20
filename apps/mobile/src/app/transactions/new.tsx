@@ -14,6 +14,7 @@ import {
 
 import { routes } from "@/core/navigation/routes";
 import { completeDuplicateCapture } from "@/core/receipts/duplicate-capture-completion";
+import { receiptRequestTextError } from "@/core/receipts/receipt-request-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { picketApi } from "@/core/api/client";
@@ -112,6 +113,8 @@ export default function NewTransactionScreen() {
     const parsedAmount = Number.parseInt(amount, 10);
     if (!selectedAccountId && !receiptDraft?.transactionRequest) return setMessage("Hãy tạo hoặc chọn một tài khoản.");
     if (!title.trim()) return setMessage("Hãy nhập nội dung giao dịch.");
+    const textError = receiptRequestTextError(title.trim(),note.trim());
+    if (textError) return setMessage(textError);
     if (!/^\d+$/.test(amount) || !Number.isSafeInteger(parsedAmount) || parsedAmount <= 0 || parsedAmount > MAX_MONEY) {
       return setMessage("Số tiền phải là số nguyên từ 1 đến 9.000.000.000.000 VND.");
     }
