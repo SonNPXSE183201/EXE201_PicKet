@@ -95,12 +95,16 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
   const createdImage = !existing;
   if (createdImage) {
     const temp = new File(folder, `${id}-${Crypto.randomUUID()}.tmp`);
+    const tempUri = temp.uri;
     try {
       await new File(input.imageUri).copy(temp);
       // A prior process may have died before committing this unreferenced ID.
       if (destination.exists) destination.delete();
       temp.move(destination);
-    } finally { if (temp.exists) temp.delete(); }
+    } finally {
+      // File.move mutates the File instance URI; never delete its new target.
+      if (temp.uri === tempUri && temp.exists) temp.delete();
+    }
   }
 
   const draft: PendingReceiptDraft = {
