@@ -1,5 +1,5 @@
 import { colors, radii } from "@picket/design-tokens";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
+import { captureJournal, persistCaptureImage, restoreCaptureImage } from "@/core/ocr/capture-storage";
+import type { CaptureSnapshot } from "@/core/ocr/capture-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
 import { ReceiptCamera } from "@/core/ui/receipt-camera";
@@ -28,12 +30,17 @@ import {
 import { savePendingReceiptDraft } from "@/core/receipts/pending-receipt";
 import { guestOwnerId } from "@/core/local/guest-finance";
 import { useAuth } from "@/features/auth/auth-context";
+import { receiptCalendarDate, receiptCaptureDate } from "@/core/ui/receipt-flow-policy";
+import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 
 const serverFallbackEnabled =
   process.env.EXPO_PUBLIC_OCR_FALLBACK_ENABLED === "true";
 
 export default function CaptureReceiptScreen() {
   const { session, localMode } = useAuth();
+  const ownerId = session?.user.id ?? (localMode ? guestOwnerId : null);
+  const params = useLocalSearchParams<{ date?: string }>();
+  const explicitDate = useRef(receiptCalendarDate(params.date));
   const pollingController = useRef<AbortController | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -47,20 +54,94 @@ export default function CaptureReceiptScreen() {
   const [fallbackStatus, setFallbackStatus] = useState<string | null>(null);
   const [rawText, setRawText] = useState<string | null>(null);
   const [lineItems, setLineItems] = useState<ReceiptDraftLine[]>([]);
-  const [purchasedAt, setPurchasedAt] = useState<string | null>(null);
+  const [purchasedAt, setPurchasedAt] = useState(() => receiptCaptureDate(params.date, null));
   const [provider, setProvider] = useState<"ml-kit" | "pp-ocr" | "manual">("manual");
   const [fallbackStoragePath, setFallbackStoragePath] = useState<string | null>(null);
-  const [attachReceipt, setAttachReceipt] = useState(false);
+  const [attachReceipt, setAttachReceipt] = useState(true);
   const [isContinuing, setIsContinuing] = useState(false);
+  const [hydratedOwner, setHydratedOwner] = useState<string | null>(null);
+  const hydrated = ownerId !== null && hydratedOwner === ownerId;
+  const [restoreError, setRestoreError] = useState(false);
+  const [restoreRevision, setRestoreRevision] = useState(0);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const captureRef = useRef<{ id: string; imageRef: string } | null>(null);
+  const imageGeneration = useRef(0);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    if (!ownerId) return;
+    let active = true;
+    void captureJournal.load(ownerId).then(async saved => {
+      if (!active) return;
+      if (saved) {
+        const uri = await restoreCaptureImage(ownerId, saved.imageRef);
+        if (!active) return;
+        captureRef.current = { id: saved.id, imageRef: saved.imageRef };
+        explicitDate.current = saved.explicitDate;
+        setImageUri(uri); setTitle(saved.title); setAmount(saved.amount);
+        setPurchasedAt(saved.purchasedAt); setAttachReceipt(saved.attachReceipt);
+        setProvider(saved.provider); setLocalConfidence(saved.localConfidence);
+        setNeedsFallback(saved.needsFallback); setRawText(saved.rawText);
+        setLineItems(saved.lineItems); setFallbackStoragePath(saved.fallbackStoragePath);
+        setMessage("Đã khôi phục bản nháp trên thiết bị. Bạn có thể tiếp tục chỉnh sửa.");
+      } else {
+        captureRef.current = null; setImageUri(null); setTitle(""); setAmount("");
+        setRawText(null); setLineItems([]); setAttachReceipt(true);
+        setFallbackStoragePath(null); setProvider("manual"); setNeedsFallback(false); setLocalConfidence(0);
+      }
+      setHydratedOwner(ownerId);
+    }).catch(() => { if (active) setRestoreError(true); });
+    return () => { active = false; };
+  }, [ownerId, restoreRevision]);
+
+  useEffect(() => {
+    if (!hydrated || !ownerId || !imageUri || !captureRef.current || isRecognizing || isQueueingFallback) return;
+    const snapshot: CaptureSnapshot = {
+      version: 1, ...captureRef.current, title, amount, purchasedAt,
+      explicitDate: explicitDate.current, attachReceipt, provider,
+      localConfidence, needsFallback, rawText, lineItems, fallbackStoragePath,
+    };
+    void captureJournal.save(ownerId, snapshot).catch(() => {
+      if (mounted.current) setMessage("Chưa lưu được thay đổi bản nháp. Giữ màn hình này và thử lại trước khi thoát.");
+    });
+  }, [hydrated, ownerId, imageUri, title, amount, purchasedAt, attachReceipt, provider, localConfidence, needsFallback, rawText, lineItems, fallbackStoragePath, isRecognizing, isQueueingFallback]);
 
   useEffect(
-    () => () => {
+    () => { mounted.current = true; return () => {
+      mounted.current = false;
       pollingController.current?.abort();
-    },
+    }; },
     [],
   );
 
-  async function runOcr(uri: string) {
+  async function acceptImage(uri: string) {
+    if (!ownerId) return;
+    const generation = ++imageGeneration.current;
+    pollingController.current?.abort();
+    setIsQueueingFallback(false);
+    setIsRecognizing(true);
+    try {
+      const managed = await persistCaptureImage(ownerId, uri);
+      if (!mounted.current || generation !== imageGeneration.current) return;
+      await captureJournal.save(ownerId, {
+        version: 1, ...managed, title: "", amount: "",
+        purchasedAt: receiptCaptureDate(explicitDate.current, null), explicitDate: explicitDate.current,
+        attachReceipt: true, provider: "manual", localConfidence: 0,
+        needsFallback: false, rawText: null, lineItems: [], fallbackStoragePath: null,
+      });
+      if (!mounted.current || generation !== imageGeneration.current) return;
+      captureRef.current = managed;
+      setImageUri(uri); setCameraOpen(false); setAttachReceipt(true);
+      setFallbackStatus(null); setFallbackStoragePath(null);
+      await runOcr(uri, generation);
+    } catch {
+      if (mounted.current && generation === imageGeneration.current) setMessage("Chưa lưu được ảnh bản nháp. Ảnh cũ vẫn được giữ; hãy thử lại.");
+    } finally {
+      if (mounted.current && generation === imageGeneration.current) setIsRecognizing(false);
+    }
+  }
+
+  async function runOcr(uri: string, generation: number) {
     setIsRecognizing(true);
     setMessage("Đang nhận diện trực tiếp trên điện thoại…");
     setOcrDurationMs(null);
@@ -70,18 +151,19 @@ export default function CaptureReceiptScreen() {
     setLocalConfidence(0);
     setRawText(null);
     setLineItems([]);
-    setPurchasedAt(null);
+    setPurchasedAt(receiptCaptureDate(explicitDate.current, null));
     setProvider("manual");
 
     try {
       const result = await recognizeReceipt(uri);
+      if (!mounted.current || generation !== imageGeneration.current) return;
       const { draft } = result;
       setOcrDurationMs(result.durationMs);
       setNeedsFallback(draft.needsReview);
       setLocalConfidence(draft.amountConfidence ?? 0);
       setRawText(draft.rawText || null);
       setLineItems(draft.lineItems);
-      setPurchasedAt(draft.date);
+      setPurchasedAt(receiptCaptureDate(explicitDate.current, draft.date));
       setProvider("ml-kit");
       if (draft.merchant) setTitle(draft.merchant);
       if (draft.amount) setAmount(String(draft.amount));
@@ -91,15 +173,17 @@ export default function CaptureReceiptScreen() {
           : `Đã nhận diện ${draft.recognizedLineCount} dòng. Hãy kiểm tra lại trước khi lưu.`,
       );
     } catch {
+      if (!mounted.current || generation !== imageGeneration.current) return;
       setMessage(
         "Chưa đọc được hóa đơn. Hãy thử ảnh khác hoặc nhập thông tin bên dưới.",
       );
     } finally {
-      setIsRecognizing(false);
+      if (mounted.current && generation === imageGeneration.current) setIsRecognizing(false);
     }
   }
 
   async function choose(source: "camera" | "library") {
+    // Keep the current draft intact until a new image was actually selected.
     try {
       // Keep the native picker lazy so a stale development-client rebuild never
       // prevents login, finance, or offline data from starting.
@@ -129,14 +213,7 @@ export default function CaptureReceiptScreen() {
         setMessage("Không đọc được ảnh đã chọn.");
         return;
       }
-      pollingController.current?.abort();
-      setMessage(null);
-      setFallbackStatus(null);
-      setFallbackStoragePath(null);
-      setAttachReceipt(true);
-      setLineItems([]);
-      setImageUri(uri);
-      await runOcr(uri);
+      await acceptImage(uri);
     } catch {
       setMessage(
         "Chưa mở được camera. Bạn có thể chọn ảnh từ thư viện hoặc thử lại.",
@@ -161,11 +238,7 @@ export default function CaptureReceiptScreen() {
         format: SaveFormat.JPEG,
       });
 
-      setImageUri(rotated.uri);
-      setFallbackStatus(null);
-      setFallbackStoragePath(null);
-      setAttachReceipt(false);
-      await runOcr(rotated.uri);
+      await acceptImage(rotated.uri);
     } catch {
       setMessage(
         "Chưa xoay được ảnh. Hãy thử lại hoặc chọn ảnh khác.",
@@ -180,6 +253,8 @@ export default function CaptureReceiptScreen() {
       setMessage("Bạn cần đăng nhập và chọn ảnh trước khi dùng OCR nâng cao.");
       return;
     }
+    const generation = imageGeneration.current;
+    const current = () => mounted.current && generation === imageGeneration.current;
     Alert.alert(
       "Gửi ảnh để nhận diện nâng cao?",
       "Ảnh sẽ được tải vào vùng riêng tư của tài khoản và đưa vào hàng đợi OCR máy chủ.",
@@ -197,6 +272,7 @@ export default function CaptureReceiptScreen() {
               localConfidence,
             })
               .then(async (job) => {
+                if (!current()) return;
                 setFallbackStoragePath(job.storagePath);
                 setFallbackStatus(job.status);
                 setMessage(
@@ -208,15 +284,16 @@ export default function CaptureReceiptScreen() {
                   accessToken: session.access_token,
                   jobId: job.id,
                   signal: controller.signal,
-                  onStatus: (current) => setFallbackStatus(current.status),
+                  onStatus: (jobStatus) => { if (current()) setFallbackStatus(jobStatus.status); },
                 });
+                if (!current()) return;
                 if (completed.status === "completed" && completed.result) {
                   const parsed = parseServerOcrResult(completed.result);
                   if (parsed.merchant) setTitle(parsed.merchant);
                   if (parsed.amount) setAmount(String(parsed.amount));
                   setRawText(parsed.rawText || null);
                   setLineItems(parsed.lineItems);
-                  setPurchasedAt(parsed.date);
+                  setPurchasedAt(receiptCaptureDate(explicitDate.current, parsed.date));
                   setProvider("pp-ocr");
                   setLocalConfidence(parsed.confidence ?? 0);
                   setNeedsFallback(parsed.needsReview);
@@ -238,12 +315,14 @@ export default function CaptureReceiptScreen() {
                 }
               })
               .catch((error: unknown) => {
+                if (!current()) return;
                 if (error instanceof Error && error.name === "AbortError") {
                   return;
                 }
                 setMessage("Chưa nhận diện được. Hãy thử lại khi có kết nối hoặc nhập thông tin bên dưới.");
               })
               .finally(() => {
+                if (!current()) return;
                 pollingController.current = null;
                 setIsQueueingFallback(false);
               });
@@ -273,7 +352,7 @@ export default function CaptureReceiptScreen() {
       if (!attachReceipt && !localMode) {
         router.push({
           pathname: "/transactions/new",
-          params: { title: title.trim(), amount: String(parsedAmount) },
+          params: { title: title.trim(), amount: String(parsedAmount), occurredAt: purchasedAt, fromCapture: "1", captureDraftId: captureRef.current?.id },
         });
         return;
       }
@@ -297,6 +376,7 @@ export default function CaptureReceiptScreen() {
           title: title.trim(),
           amount: String(parsedAmount),
           receiptDraftId: draft.id,
+          captureDraftId: captureRef.current?.id,
         },
       });
     } catch {
@@ -306,7 +386,9 @@ export default function CaptureReceiptScreen() {
     }
   }
 
-  if (!imageUri) return <ReceiptCamera onCancel={() => router.back()} onLibrary={() => void choose("library")} onManual={() => router.push("/transactions/new")} onCapture={(uri) => { setImageUri(uri); setAttachReceipt(false); void runOcr(uri); }} />;
+  if (!hydrated) return <SafeAreaView style={styles.safe}><View style={styles.content}><TopAppBar title="Quét hóa đơn" />{restoreError ? <><Text style={styles.message}>Chưa mở được bản nháp. Dữ liệu cũ chưa bị xóa.</Text><Pressable accessibilityRole="button" onPress={() => setRestoreRevision(value => value + 1)} style={styles.secondary}><Text style={styles.secondaryText}>Thử mở lại bản nháp</Text></Pressable></> : <ActivityIndicator accessibilityLabel="Đang mở bản nháp hóa đơn" color={colors.mauve} />}</View></SafeAreaView>;
+  if (isRecognizing && (!imageUri || cameraOpen)) return <SafeAreaView style={styles.safe}><ActivityIndicator accessibilityLabel="Đang lưu ảnh bản nháp" color={colors.mauve} /></SafeAreaView>;
+  if (!imageUri || cameraOpen) return <ReceiptCamera onCancel={() => { if (imageUri) setCameraOpen(false); else router.back(); }} onLibrary={() => void choose("library")} onManual={() => router.replace("/transactions/new")} onCapture={(uri) => { void acceptImage(uri); }} />;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -341,7 +423,7 @@ export default function CaptureReceiptScreen() {
             accessibilityRole="button"
             accessibilityState={{ disabled: isRecognizing }}
             disabled={isRecognizing}
-            onPress={() => { pollingController.current?.abort(); setImageUri(null); }}
+            onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
             style={[styles.primary, isRecognizing && styles.disabled]}
           >
             <AppIcon name="camera-outline" color={colors.white} /><Text style={styles.primaryText}>Chụp ảnh</Text>
@@ -383,6 +465,8 @@ export default function CaptureReceiptScreen() {
           </View>
         )}
 
+        <Text style={styles.label}>Ngày hóa đơn</Text>
+        <TextInput date accessibilityLabel="Ngày hóa đơn" value={calendarReceiptDay({ purchasedAt }) ?? ""} onChangeText={(day) => { explicitDate.current = receiptCalendarDate(day); setPurchasedAt(receiptCaptureDate(day, null)); }} style={styles.input} />
         <Text style={styles.label}>Tên cửa hàng / nội dung</Text>
         <TextInput
           accessibilityLabel="Tên cửa hàng hoặc nội dung hóa đơn"

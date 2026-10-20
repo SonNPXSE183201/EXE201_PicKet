@@ -1,5 +1,5 @@
 import { colors, radii } from "@picket/design-tokens";
-import type { TransactionKind } from "@picket/domain";
+import { MAX_MONEY, type TransactionKind } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -34,6 +34,9 @@ import { guestOwnerId } from "@/core/local/guest-finance";
 import { makeGuestReceipt } from "@/core/receipts/guest-receipt-model";
 import { saveGuestReceipt } from "@/core/receipts/guest-receipt-store";
 import { fromByteArray } from "base64-js";
+import { finishReceiptFlow } from "@/core/ui/receipt-flow-policy";
+import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
+import { captureJournal } from "@/core/ocr/capture-storage";
 
 type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
 
@@ -45,6 +48,9 @@ export default function NewTransactionScreen() {
     title?: string;
     amount?: string;
     receiptDraftId?: string;
+    occurredAt?: string;
+    fromCapture?: string;
+    captureDraftId?: string;
   }>();
   const [kind, setKind] = useState<BasicTransactionKind>("expense");
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
@@ -93,12 +99,13 @@ export default function NewTransactionScreen() {
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
   async function submit() {
-    if (loadingDraft) return;
+    if (loadingDraft || busy) return;
+    if (params.receiptDraftId && !receiptDraft) return setMessage("Không đọc được bản nháp ảnh. Hãy quay lại bước quét; giao dịch chưa được tạo.");
     const parsedAmount = Number.parseInt(amount, 10);
     if (!selectedAccountId) return setMessage("Hãy tạo hoặc chọn một tài khoản.");
     if (!title.trim()) return setMessage("Hãy nhập nội dung giao dịch.");
-    if (!/^\d+$/.test(amount) || parsedAmount <= 0) {
-      return setMessage("Số tiền phải là số nguyên lớn hơn 0.");
+    if (!/^\d+$/.test(amount) || !Number.isSafeInteger(parsedAmount) || parsedAmount <= 0 || parsedAmount > MAX_MONEY) {
+      return setMessage("Số tiền phải là số nguyên từ 1 đến 9.000.000.000.000 VND.");
     }
     setBusy(true);
     setMessage(null);
@@ -109,12 +116,13 @@ export default function NewTransactionScreen() {
         categoryId: selectedCategoryId || null,
         kind,
         note: note.trim(),
-        occurredAt: receiptDraft?.purchasedAt ?? new Date().toISOString(),
+        occurredAt: receiptDraft?.purchasedAt ?? (params.occurredAt && Number.isFinite(Date.parse(params.occurredAt)) ? params.occurredAt : new Date().toISOString()),
         title: title.trim(),
       };
       if (!receiptDraft) {
         await create(request);
-        router.replace(routes.transactions);
+        if (params.captureDraftId) await captureJournal.complete(session?.user.id ?? guestOwnerId, params.captureDraftId).catch(() => undefined);
+        router.dismissTo(params.fromCapture ? routes.home : routes.transactions);
         return;
       }
       if (localMode) {
@@ -129,7 +137,8 @@ export default function NewTransactionScreen() {
         const image = await inspectReceiptImage(draft.imageUri);
         await saveGuestReceipt(makeGuestReceipt({ transactionId: draft.transactionId!, imageBase64: fromByteArray(new Uint8Array(image.bytes)), contentType: image.contentType, merchant: title.trim(), amount: parsedAmount, purchasedAt: draft.purchasedAt, rawText: draft.rawText, lineItems: draft.lineItems }));
         await removePendingReceiptDraft(draft);
-        router.replace(routes.transaction(draft.transactionId!));
+        if (params.captureDraftId) await captureJournal.complete(guestOwnerId, params.captureDraftId).catch(() => undefined);
+        finishReceiptFlow(router, { transactionId: draft.transactionId!, month: calendarReceiptDay({ purchasedAt: draft.purchasedAt }, request.occurredAt)!.slice(0, 7) });
         return;
       }
       if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
@@ -160,6 +169,7 @@ export default function NewTransactionScreen() {
                 onPress: () => {
                   resolve(false);
                   if (exact) void removePendingReceiptDraft(receiptDraft);
+                  router.dismissTo(routes.home);
                   router.push(routes.receipt(duplicate.id));
                 },
               },
@@ -210,8 +220,9 @@ export default function NewTransactionScreen() {
         lineItems: draft.lineItems,
       });
       await removePendingReceiptDraft(draft);
+      if (params.captureDraftId) await captureJournal.complete(session.user.id, params.captureDraftId).catch(() => undefined);
       await refresh();
-      router.replace(routes.receipt(receipt.receipt.id));
+      finishReceiptFlow(router, { receiptId: receipt.receipt.id, transactionId: draft.transactionId!, month: calendarReceiptDay({ purchasedAt: draft.purchasedAt }, request.occurredAt)!.slice(0, 7) });
     } catch (error) {
       if (isOfflineQueuedError(error)) {
         router.replace(routes.transactions);

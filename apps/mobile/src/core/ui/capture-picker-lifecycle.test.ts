@@ -7,7 +7,10 @@ test("cancelling the image picker preserves the existing OCR draft and fallback 
   const choose = source.slice(source.indexOf("async function choose("), source.indexOf("async function rotateImage("));
   const cancelled = choose.indexOf("if (result.canceled) return;");
   assert.ok(cancelled >= 0);
-  for (const reset of ["pollingController.current?.abort()", "setFallbackStatus(null)", "setFallbackStoragePath(null)", "setLineItems([])"]) {
-    assert.ok(choose.indexOf(reset) > cancelled, `${reset} must happen only after a successful selection`);
-  }
+  assert.ok(choose.indexOf("await acceptImage(uri)") > cancelled);
+  for (const reset of ["pollingController.current?.abort()", "setFallbackStatus(null)", "setFallbackStoragePath(null)", "setLineItems([])"]) assert.equal(choose.includes(reset), false, `${reset} belongs in the successful image-commit path, not before picker completion`);
+  const accepted = source.slice(source.indexOf("async function acceptImage("), source.indexOf("async function runOcr("));
+  assert.ok(accepted.indexOf("await captureJournal.save") > accepted.indexOf("await persistCaptureImage"));
+  assert.ok(accepted.indexOf("setImageUri(uri)") > accepted.indexOf("await captureJournal.save"));
+  assert.match(accepted, /await runOcr\(uri, generation\)/);
 });
