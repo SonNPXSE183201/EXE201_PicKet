@@ -7,6 +7,13 @@ export type CaptureSnapshot = {
   needsFallback: boolean; rawText: string | null; lineItems: ReceiptDraftLine[];
   fallbackStoragePath: string | null;
 };
+
+/** A damaged image must not make the intact text and date inaccessible. */
+export async function restoreCaptureSnapshot(owner: string, snapshot: CaptureSnapshot,
+  restoreImage: (owner: string, imageRef: string) => Promise<string>) {
+  try { return { snapshot, imageUri: await restoreImage(owner, snapshot.imageRef), imageUnavailable: false }; }
+  catch { return { snapshot, imageUri: null, imageUnavailable: true }; }
+}
 function validate(value: unknown): CaptureSnapshot {
   const d = value as CaptureSnapshot;
   if (!d || d.version !== 1 || !d.id || typeof d.id !== "string" || typeof d.imageRef !== "string" || !d.imageRef

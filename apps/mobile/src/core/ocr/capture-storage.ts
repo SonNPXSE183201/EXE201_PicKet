@@ -35,7 +35,9 @@ export const captureJournal = createCaptureJournal({
     const db = await database();
     const previous = await read(owner);
     if (value) {
-      if (!imageFile(owner, value.imageRef).exists) throw new Error("Capture image is missing");
+      // Editing text on an existing damaged draft must remain durable. A new
+      // image reference still cannot commit until its file exists.
+      if (!imageFile(owner, value.imageRef).exists && previous?.imageRef !== value.imageRef) throw new Error("Capture image is missing");
       const payload = await encryptLocalPayload(value, `capture-draft:${owner}`);
       await db.runAsync("INSERT INTO capture_drafts(owner_id,payload) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET payload=excluded.payload", owner, payload);
     } else await db.runAsync("DELETE FROM capture_drafts WHERE owner_id=?", owner);

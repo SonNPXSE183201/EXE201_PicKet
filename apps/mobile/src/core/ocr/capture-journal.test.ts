@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { createCaptureJournal, type CaptureSnapshot } from "./capture-journal";
+import { createCaptureJournal, restoreCaptureSnapshot, type CaptureSnapshot } from "./capture-journal";
 
 const draft = { version: 1, id: "draft-one", imageRef: "file:///owned/image.enc", title: "Edited shop", amount: "123456", purchasedAt: "2026-10-19T12:00:00.000Z", explicitDate: "2026-10-19", attachReceipt: false, provider: "manual", localConfidence: 0, needsFallback: false, rawText: null, lineItems: [], fallbackStoragePath: null } as CaptureSnapshot;
 function fixture() {
@@ -64,5 +64,17 @@ test("camera hydrates before autosave and completed transaction only clears its 
 test("a missing draft photo does not prevent restoring editable receipt metadata", () => {
   const capture = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
   assert.match(capture, /restoreCaptureSnapshot\(ownerId, saved, restoreCaptureImage\)/);
-  assert.match(capture, /!imageUri && !captureRef\.current/);
+  assert.match(capture, /!imageUri && !hasDraft/);
+});
+
+test("photo recovery preserves all metadata and never writes on missing, corrupt or full-disk decode", async () => {
+  for (const reason of ["missing", "corrupt", "disk full"]) {
+    const restored = await restoreCaptureSnapshot("A", draft, async (owner, ref) => {
+      assert.equal(owner, "A"); assert.equal(ref, draft.imageRef); throw new Error(reason);
+    });
+    assert.deepEqual(restored, { snapshot: draft, imageUri: null, imageUnavailable: true });
+  }
+  assert.deepEqual(await restoreCaptureSnapshot("A", draft, async () => "file:///decoded.jpg"), {
+    snapshot: draft, imageUri: "file:///decoded.jpg", imageUnavailable: false,
+  });
 });

@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { captureJournal, persistCaptureImage, restoreCaptureImage } from "@/core/ocr/capture-storage";
-import type { CaptureSnapshot } from "@/core/ocr/capture-journal";
+import { restoreCaptureSnapshot, type CaptureSnapshot } from "@/core/ocr/capture-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
 import { ReceiptCamera } from "@/core/ui/receipt-camera";
@@ -64,6 +64,7 @@ export default function CaptureReceiptScreen() {
   const [restoreError, setRestoreError] = useState(false);
   const [restoreRevision, setRestoreRevision] = useState(0);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
   const captureRef = useRef<{ id: string; imageRef: string } | null>(null);
   const imageGeneration = useRef(0);
   const mounted = useRef(true);
@@ -74,18 +75,22 @@ export default function CaptureReceiptScreen() {
     void captureJournal.load(ownerId).then(async saved => {
       if (!active) return;
       if (saved) {
-        const uri = await restoreCaptureImage(ownerId, saved.imageRef);
+        const restored = await restoreCaptureSnapshot(ownerId, saved, restoreCaptureImage);
         if (!active) return;
         captureRef.current = { id: saved.id, imageRef: saved.imageRef };
+        setHasDraft(true);
         explicitDate.current = saved.explicitDate;
-        setImageUri(uri); setTitle(saved.title); setAmount(saved.amount);
+        setImageUri(restored.imageUri); setTitle(saved.title); setAmount(saved.amount);
         setPurchasedAt(saved.purchasedAt); setAttachReceipt(saved.attachReceipt);
         setProvider(saved.provider); setLocalConfidence(saved.localConfidence);
         setNeedsFallback(saved.needsFallback); setRawText(saved.rawText);
         setLineItems(saved.lineItems); setFallbackStoragePath(saved.fallbackStoragePath);
-        setMessage("Đã khôi phục bản nháp trên thiết bị. Bạn có thể tiếp tục chỉnh sửa.");
+        setMessage(restored.imageUnavailable
+          ? "Không mở được ảnh bản nháp. Nội dung và ngày vẫn được giữ. Hãy chụp lại hoặc chọn ảnh khác trước khi tiếp tục."
+          : "Đã khôi phục bản nháp trên thiết bị. Bạn có thể tiếp tục chỉnh sửa.");
       } else {
         captureRef.current = null; setImageUri(null); setTitle(""); setAmount("");
+        setHasDraft(false);
         setRawText(null); setLineItems([]); setAttachReceipt(true);
         setFallbackStoragePath(null); setProvider("manual"); setNeedsFallback(false); setLocalConfidence(0);
       }
@@ -95,7 +100,7 @@ export default function CaptureReceiptScreen() {
   }, [ownerId, restoreRevision]);
 
   useEffect(() => {
-    if (!hydrated || !ownerId || !imageUri || !captureRef.current || isRecognizing || isQueueingFallback) return;
+    if (!hydrated || !ownerId || !captureRef.current || isRecognizing || isQueueingFallback) return;
     const snapshot: CaptureSnapshot = {
       version: 1, ...captureRef.current, title, amount, purchasedAt,
       explicitDate: explicitDate.current, attachReceipt, provider,
@@ -131,6 +136,7 @@ export default function CaptureReceiptScreen() {
       });
       if (!mounted.current || generation !== imageGeneration.current) return;
       captureRef.current = managed;
+      setHasDraft(true);
       setImageUri(uri); setCameraOpen(false); setAttachReceipt(true);
       setFallbackStatus(null); setFallbackStoragePath(null);
       await runOcr(uri, generation);
@@ -388,7 +394,7 @@ export default function CaptureReceiptScreen() {
 
   if (!hydrated) return <SafeAreaView style={styles.safe}><View style={styles.content}><TopAppBar title="Quét hóa đơn" />{restoreError ? <><Text style={styles.message}>Chưa mở được bản nháp. Dữ liệu cũ chưa bị xóa.</Text><Pressable accessibilityRole="button" onPress={() => setRestoreRevision(value => value + 1)} style={styles.secondary}><Text style={styles.secondaryText}>Thử mở lại bản nháp</Text></Pressable></> : <ActivityIndicator accessibilityLabel="Đang mở bản nháp hóa đơn" color={colors.mauve} />}</View></SafeAreaView>;
   if (isRecognizing && (!imageUri || cameraOpen)) return <SafeAreaView style={styles.safe}><ActivityIndicator accessibilityLabel="Đang lưu ảnh bản nháp" color={colors.mauve} /></SafeAreaView>;
-  if (!imageUri || cameraOpen) return <ReceiptCamera onCancel={() => { if (imageUri) setCameraOpen(false); else router.back(); }} onLibrary={() => void choose("library")} onManual={() => router.replace("/transactions/new")} onCapture={(uri) => { void acceptImage(uri); }} />;
+  if ((!imageUri && !hasDraft) || cameraOpen) return <ReceiptCamera onCancel={() => { if (hasDraft) setCameraOpen(false); else router.back(); }} onLibrary={() => void choose("library")} onManual={() => router.replace("/transactions/new")} onCapture={(uri) => { void acceptImage(uri); }} />;
 
   return (
     <SafeAreaView style={styles.safe}>
