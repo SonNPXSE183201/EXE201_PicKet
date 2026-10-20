@@ -84,7 +84,11 @@ test("installed SDK removes a fresh local session on a stalled logout without de
       setItem: (key, value) => { storage.set(key, value); },
       removeItem: key => { storage.delete(key); },
     } },
-    global: { fetch: createAuthFetch(async () => new Promise<Response>(() => undefined), "https://project.supabase.co/auth/v1", 10) },
+    global: { fetch: createAuthFetch(async input => {
+      if (String(input).includes('/logout')) return new Promise<Response>(() => undefined);
+      return new Response(JSON.stringify({ access_token: 'qa-b-jwt', refresh_token: 'qa-b-refresh', token_type: 'bearer', expires_in: 3600,
+        user: { id: 'qa-owner-b', aud: 'authenticated', app_metadata: {}, user_metadata: {}, created_at: '2026-10-20T00:00:00Z' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }, "https://project.supabase.co/auth/v1", 10) },
   });
   assert.equal((await client.auth.getSession()).data.session?.user.id, 'qa-owner');
   const events: string[] = [];
@@ -96,5 +100,9 @@ test("installed SDK removes a fresh local session on a stalled logout without de
     assert.equal(storage.has('qa-session'), false);
     assert.equal(storage.get('app-queue'), 'retained-owner-work');
     assert.ok(events.includes('SIGNED_OUT'));
+    const next = await client.auth.signInWithPassword({ email: 'qa-b@example.com', password: 'generated-qa-only' });
+    assert.equal(next.error, null);
+    assert.equal(next.data.session?.user.id, 'qa-owner-b');
+    assert.equal((await client.auth.getSession()).data.session?.user.id, 'qa-owner-b');
   } finally { data.subscription.unsubscribe(); }
 });
