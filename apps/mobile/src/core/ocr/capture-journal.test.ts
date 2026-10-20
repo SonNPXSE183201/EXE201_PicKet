@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import { createCaptureJournal, type CaptureSnapshot } from "./capture-journal";
 
 const draft = { version: 1, id: "draft-one", imageRef: "file:///owned/image.enc", title: "Edited shop", amount: "123456", purchasedAt: "2026-10-19T12:00:00.000Z", explicitDate: "2026-10-19", attachReceipt: false, provider: "manual", localConfidence: 0, needsFallback: false, rawText: null, lineItems: [], fallbackStoragePath: null } as CaptureSnapshot;
@@ -47,4 +48,15 @@ test("failed write preserves prior draft and does not poison following saves", a
 test("malformed saved data fails visibly rather than becoming an empty replacement", async () => {
   const journal = createCaptureJournal({ read: async () => ({ version: 99 }), write: async () => undefined });
   await assert.rejects(journal.load("A"), /Invalid capture draft/);
+});
+test("camera hydrates before autosave and completed transaction only clears its capture", () => {
+  const capture = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
+  assert.match(capture, /captureJournal\.load/);
+  assert.match(capture, /!hydrated \|\| !ownerId/);
+  assert.match(capture, /persistCaptureImage/);
+  assert.match(capture, /generation !== imageGeneration\.current/);
+  assert.match(capture, /captureDraftId:/);
+  const transaction = readFileSync(new URL("../../app/transactions/new.tsx", import.meta.url), "utf8");
+  assert.match(transaction, /captureJournal\.complete/);
+  assert.match(transaction, /params\.captureDraftId/);
 });
