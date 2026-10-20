@@ -18,6 +18,7 @@
     },
     "plugins": [
       "./plugins/with-android-release-signing",
+      "./plugins/with-network-pool-guard",
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",
