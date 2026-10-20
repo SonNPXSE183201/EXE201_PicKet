@@ -62,27 +62,63 @@ function extensionOf(uri: string) {
   return (match?.[1] ?? "jpg").toLowerCase().replace("jpeg", "jpg");
 }
 
-export async function savePendingReceiptDraft(input: Omit<PendingReceiptDraft, "id" | "imageUri" | "createdAt"> & { imageUri: string }) {
-  const id = Crypto.randomUUID();
+type PendingReceiptInput = Omit<PendingReceiptDraft, "id" | "imageUri" | "createdAt"> & { imageUri: string; id?: string };
+const handoffs = new Map<string, Promise<PendingReceiptDraft>>();
+
+export function savePendingReceiptDraft(input: PendingReceiptInput) {
+  const id = input.id ?? Crypto.randomUUID();
+  if (!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id)) return Promise.reject(new Error("Invalid pending receipt identity"));
+  const operation = (handoffs.get(id) ?? Promise.resolve()).catch(() => undefined)
+    .then(() => persistPendingReceiptDraft({ ...input, id }));
+  handoffs.set(id, operation);
+  void operation.finally(() => { if (handoffs.get(id) === operation) handoffs.delete(id); }).catch(() => undefined);
+  return operation;
+}
+
+async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: string }) {
+  const { id } = input;
+  const db = await database();
+  const claimed = await db.getFirstAsync<{ user_id: string }>("SELECT user_id FROM pending_receipt_drafts WHERE id=?", id);
+  if (claimed && claimed.user_id !== input.userId) throw new Error("Pending receipt owner mismatch");
+  const existing = claimed ? await getPendingReceiptDraft(id, input.userId) : null;
+  // Keep the original image/payload once upload or transaction submission has
+  // made progress. A retry must not acquire a new idempotency identity.
+  if (existing?.storagePath || existing?.transactionId) return existing;
   const folder = new Directory(Paths.document, "receipt-drafts");
   folder.create({ idempotent: true, intermediates: true });
-  const destination = new File(folder, `${id}.${extensionOf(input.imageUri)}`);
-  await new File(input.imageUri).copy(destination);
+  const destination = existing ? new File(existing.imageUri) : new File(folder, `${id}.${extensionOf(input.imageUri)}`);
+  const createdImage = !existing;
+  if (createdImage) {
+    const temp = new File(folder, `${id}-${Crypto.randomUUID()}.tmp`);
+    try {
+      await new File(input.imageUri).copy(temp);
+      // A prior process may have died before committing this unreferenced ID.
+      if (destination.exists) destination.delete();
+      temp.move(destination);
+    } finally { if (temp.exists) temp.delete(); }
+  }
 
   const draft: PendingReceiptDraft = {
     ...input,
     id,
     imageUri: destination.uri,
-    createdAt: new Date().toISOString(),
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
   };
-  const db = await database();
   try {
     await db.runAsync(
       `INSERT INTO pending_receipt_drafts
        (id, user_id, image_uri, merchant, amount, purchased_at, confidence,
         provider, review_required, raw_text, line_items_json, storage_path,
         transaction_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         merchant=excluded.merchant, amount=excluded.amount,
+         purchased_at=excluded.purchased_at, confidence=excluded.confidence,
+         provider=excluded.provider, review_required=excluded.review_required,
+         raw_text=excluded.raw_text, line_items_json=excluded.line_items_json
+       WHERE pending_receipt_drafts.user_id=excluded.user_id
+         AND pending_receipt_drafts.transaction_id IS NULL
+         AND pending_receipt_drafts.storage_path IS NULL`,
       draft.id,
       draft.userId,
       draft.imageUri,
@@ -98,9 +134,15 @@ export async function savePendingReceiptDraft(input: Omit<PendingReceiptDraft, "
       draft.transactionId,
       draft.createdAt,
     );
-    return draft;
+    const persisted = await getPendingReceiptDraft(id, input.userId);
+    if (!persisted) throw new Error("Pending receipt was not persisted");
+    return persisted;
   } catch (error) {
-    if (destination.exists) destination.delete();
+    // An ambiguous local write must not delete an image referenced by a row
+    // that actually committed. Keep the file if even the readback fails.
+    if (createdImage) {
+      try { if (!await getPendingReceiptDraft(id, input.userId) && destination.exists) destination.delete(); } catch { /* Safe orphan cleanup can retry later. */ }
+    }
     throw error;
   }
 }

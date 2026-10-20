@@ -363,6 +363,7 @@ export default function CaptureReceiptScreen() {
         return;
       }
       const draft = await savePendingReceiptDraft({
+        id: captureRef.current?.id,
         userId: session?.user.id ?? guestOwnerId,
         imageUri,
         merchant: title.trim(),
