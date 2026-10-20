@@ -60,3 +60,9 @@ test("camera hydrates before autosave and completed transaction only clears its 
   assert.match(transaction, /captureJournal\.complete/);
   assert.match(transaction, /params\.captureDraftId/);
 });
+
+test("a missing draft photo does not prevent restoring editable receipt metadata", () => {
+  const capture = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
+  assert.match(capture, /restoreCaptureSnapshot\(ownerId, saved, restoreCaptureImage\)/);
+  assert.match(capture, /!imageUri && !captureRef\.current/);
+});
