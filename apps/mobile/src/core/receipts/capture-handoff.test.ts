@@ -64,3 +64,10 @@ test("moving an Expo File must not let temp cleanup delete the destination", () 
   const source=readFileSync(new URL("./pending-receipt.ts",import.meta.url),"utf8");
   assert.match(source,/temp\.uri === tempUri && temp\.exists/);
 });
+
+test("durable media writers await Expo asynchronous moves before publishing references", () => {
+  for (const path of ["./pending-receipt.ts", "../ocr/capture-storage.ts", "../../features/keepsakes/keepsake-photo-storage.ts"]) {
+    const source=readFileSync(new URL(path,import.meta.url),"utf8");
+    assert.match(source,/await temp\.move\(destination\)/,path);
+  }
+});
