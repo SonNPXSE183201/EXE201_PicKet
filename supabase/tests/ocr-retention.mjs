@@ -18,6 +18,12 @@ export async function validateOcrRetention(db) {
   const archived = await image("archived", { referenced: true, archived: true });
   const unused = await image("unused");
   const live = await image("live", { live: true });
+  await db.query(`insert into public.ocr_fallback_jobs(user_id,storage_path,local_confidence,idempotency_key,expires_at)
+    select $1::uuid,$1::text||'/ocr/aaa-protected-'||n||'.jpg',0.4,gen_random_uuid(),now()-interval '1 hour'
+    from generate_series(1,101) n`, [owner]);
+  await db.query(`insert into public.receipts(user_id,storage_path)
+    select user_id,storage_path from public.ocr_fallback_jobs
+    where user_id=$1 and storage_path like '%/aaa-protected-%'`, [owner]);
   const paths = (await db.query("select * from public.expire_ocr_fallback_jobs()")).rows.map(row => row.storage_path);
   assert.ok(!paths.includes(active), "Active receipt image must not be selected for deletion");
   assert.ok(!paths.includes(archived), "Archived receipt image must remain restorable");
