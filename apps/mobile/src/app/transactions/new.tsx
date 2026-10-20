@@ -214,6 +214,8 @@ export default function NewTransactionScreen() {
       if (!durableReceiptStoragePath(session.user.id, draft.storagePath)) {
         const storagePath = await uploadReceiptImage({
           userId: session.user.id,
+          receiptId: draft.id,
+          sha256: image.sha256,
           image: image.bytes,
           extension: image.extension,
           contentType: image.contentType,
