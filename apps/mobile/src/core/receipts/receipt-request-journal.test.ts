@@ -51,3 +51,9 @@ test("normalization retains all canonical fields and does not persist unknown pr
     ...request,categoryId:null,note:"",
   });
 });
+
+test("known server text limits reject invalid requests before they become immutable", () => {
+  assert.throws(()=>parseReceiptRequest({...request,title:"a".repeat(161)}),/Invalid receipt request/);
+  assert.throws(()=>parseReceiptRequest({...request,note:"a".repeat(2001)}),/Invalid receipt request/);
+  assert.equal(parseReceiptRequest({...request,title:"🧾".repeat(160),note:"a".repeat(2000)}).amount,request.amount);
+});
