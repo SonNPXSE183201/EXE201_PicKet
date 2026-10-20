@@ -15,6 +15,8 @@ export interface GuestFinance {
   planningMethod: BudgetMethod;
   planningPeriods: Record<string, number>;
   planningCloses: Record<string, PlanningMonthClose>;
+  /** Durable receipt creation tombstones; absent in older device backups. */
+  receiptCreateIds?: string[];
 }
 
 export type GuestMutation =
@@ -44,7 +46,7 @@ export function emptyGuestFinance(): GuestFinance {
   return {
     profile: { id: guestOwnerId, displayName: "bạn", avatarUrl: null, onboardingCompleted: true, locale: "vi", timezone: "Asia/Ho_Chi_Minh", persona: "", goal: "", currencyCode: "VND", hideBalance: false },
     accounts: [], categories: [], transactions: [], splits: {}, budgets: [], bills: [], subscriptions: [],
-    planningMethod: "simple", planningPeriods: {}, planningCloses: {},
+    planningMethod: "simple", planningPeriods: {}, planningCloses: {}, receiptCreateIds: [],
   };
 }
 
@@ -84,8 +86,10 @@ export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation)
       }
       return state;
     }
+    if (state.receiptCreateIds?.includes(candidate.id)) throw new Error("Giao dịch của hóa đơn đã bị xóa; không tạo lại khi thử lại bản nháp.");
     if (!state.accounts.some(item => item.id === candidate.accountId && !item.deletedAt && !item.archived)) throw new Error("Hãy tạo hoặc chọn ví đang hoạt động trước khi ghi giao dịch.");
-    return applyGuestMutation(state, { type: "transaction.upsert", value: candidate });
+    const created = applyGuestMutation(state, { type: "transaction.upsert", value: candidate });
+    return { ...created, receiptCreateIds: [...(state.receiptCreateIds ?? []), candidate.id] };
   }
   if (mutation.type === "transaction.upsert") {
     const previous = state.transactions.find((item) => item.id === mutation.value.id);

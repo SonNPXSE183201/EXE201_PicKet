@@ -22,6 +22,10 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
       !Array.isArray(finance.bills) || !Array.isArray(finance.subscriptions) ||
       !object(finance.splits) || !object(finance.planningPeriods) || !object(finance.planningCloses) ||
       typeof finance.planningMethod !== "string") throw new Error("Dữ liệu tài chính trong bản sao không hợp lệ.");
+  const receiptIds = finance.receiptCreateIds;
+  if (receiptIds !== undefined && (!Array.isArray(receiptIds) || receiptIds.length > 50_000 ||
+      !receiptIds.every(id => typeof id === "string" && id.length > 0 && id.length <= 200) ||
+      new Set(receiptIds).size !== receiptIds.length)) throw new Error("Lịch sử tạo hóa đơn trong bản sao không hợp lệ.");
   for (const key of ["accounts", "categories", "transactions", "budgets", "bills", "subscriptions"] as const) {
     if (!(finance[key] as unknown[]).every(hasId)) throw new Error("Danh sách tài chính trong bản sao không hợp lệ.");
   }
