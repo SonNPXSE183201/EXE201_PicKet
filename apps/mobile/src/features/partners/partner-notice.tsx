@@ -7,31 +7,37 @@ import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { Surface } from "@/core/ui/picket-ui";
-import { isSafeHttpsUrl, type PartnerAd } from "@/features/admin/admin-mobile";
+import { safePartnerUrl, selectPartnerAd, visiblePartnerNotice, type PartnerNoticeSnapshot } from "./partner-notice-policy";
 import { useAuth } from "@/features/auth/auth-context";
 
 export function PartnerNotice() {
   const { session } = useAuth();
-  const [notice, setNotice] = useState("");
-  const [ad, setAd] = useState<PartnerAd | null>(null);
+  const owner = session?.user.id;
+  const [snapshot, setSnapshot] = useState<PartnerNoticeSnapshot | null>(null);
+  const visible = visiblePartnerNotice(owner, snapshot);
+  const notice = visible?.notice ?? "";
+  const ad = visible?.ad ?? null;
   useFocusEffect(useCallback(() => {
-    if (!session || !supabase) return;
+    if (!session || !supabase) { setSnapshot(null); return; }
     let active = true;
+    const isCurrent = () => active;
     void Promise.all([
       supabase.from("app_settings").select("notice").eq("id", true).single(),
       supabase.from("partner_ads").select("id,title,body,url,active,created_at").eq("active", true).order("created_at", { ascending:false }).limit(1),
       picketApi?.currentEntitlements(session.access_token).catch(() => null) ?? Promise.resolve(null),
     ]).then(([settings, ads, entitlement]) => {
-      if (!active) return;
-      setNotice(typeof settings.data?.notice === "string" ? settings.data.notice : "");
-      setAd(entitlement?.tier === "free" && ads.data?.[0] ? ads.data[0] as PartnerAd : null);
-    }).catch(() => undefined);
+      if (!isCurrent()) return;
+      setSnapshot({ owner: session.user.id,
+        notice: typeof settings.data?.notice === "string" ? settings.data.notice : "",
+        ad: selectPartnerAd(entitlement?.tier, ads.error ? [] : ads.data ?? []),
+      });
+    }).catch(() => { if (isCurrent()) setSnapshot(null); });
     return () => { active = false; };
   }, [session]));
   if (!notice && !ad) return null;
   return <>
     {notice ? <Surface peach><Text style={styles.label}>THÔNG BÁO TỪ PICKET</Text><Text style={styles.copy}>{notice}</Text></Surface> : null}
-    {ad && isSafeHttpsUrl(ad.url) ? <Pressable accessibilityLabel={`Nội dung đối tác: ${ad.title}. Mở liên kết.`} accessibilityRole="link" onPress={() => void Linking.openURL(ad.url)}><Surface><Text style={styles.label}>NỘI DUNG ĐỐI TÁC</Text><Text style={styles.title}>{ad.title}</Text><Text style={styles.copy}>{ad.body}</Text><Text style={styles.link}>Tìm hiểu thêm ↗</Text></Surface></Pressable> : null}
+    {ad && safePartnerUrl(ad.url) ? <Pressable accessibilityLabel={`Nội dung đối tác: ${ad.title}. Mở liên kết.`} accessibilityRole="link" onPress={() => void Linking.openURL(ad.url).catch(() => undefined)}><Surface><Text style={styles.label}>NỘI DUNG ĐỐI TÁC</Text><Text style={styles.title}>{ad.title}</Text><Text style={styles.copy}>{ad.body}</Text><Text style={styles.link}>Tìm hiểu thêm ↗</Text></Surface></Pressable> : null}
   </>;
 }
 
