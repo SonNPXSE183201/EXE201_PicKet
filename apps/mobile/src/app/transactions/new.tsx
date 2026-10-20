@@ -15,6 +15,7 @@ import {
 import { routes } from "@/core/navigation/routes";
 import { completeDuplicateCapture } from "@/core/receipts/duplicate-capture-completion";
 import { receiptRequestTextError } from "@/core/receipts/receipt-request-journal";
+import { durableReceiptStoragePath } from "@/core/receipts/receipt-storage-policy";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { picketApi } from "@/core/api/client";
@@ -209,7 +210,8 @@ export default function NewTransactionScreen() {
       let draft: PendingReceiptDraft = await pinPendingReceiptRequest(receiptDraft, request);
       request = draft.transactionRequest!;
       setReceiptDraft(draft);
-      if (!draft.storagePath) {
+      // Repair legacy pending drafts which referenced a temporary OCR object.
+      if (!durableReceiptStoragePath(session.user.id, draft.storagePath)) {
         const storagePath = await uploadReceiptImage({
           userId: session.user.id,
           image: image.bytes,

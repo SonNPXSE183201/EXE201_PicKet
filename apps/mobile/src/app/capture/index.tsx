@@ -393,7 +393,9 @@ export default function CaptureReceiptScreen() {
         reviewRequired: needsFallback,
         rawText,
         lineItems,
-        storagePath: fallbackStoragePath,
+        // Server OCR objects expire after processing. The transaction flow
+        // uploads its own durable receipt image from this local original.
+        storagePath: null,
         transactionId: null,
       });
       if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
