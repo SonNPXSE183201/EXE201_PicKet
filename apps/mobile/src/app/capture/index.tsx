@@ -201,6 +201,7 @@ export default function CaptureReceiptScreen() {
   }
 
   async function choose(source: "camera" | "library") {
+    if (isContinuing || isRecognizing || isQueueingFallback) return;
     const generation = imageGeneration.current;
     // Keep the current draft intact until a new image was actually selected.
     try {
@@ -244,7 +245,7 @@ export default function CaptureReceiptScreen() {
   }
 
   async function rotateImage() {
-    if (!imageUri || isRecognizing || isQueueingFallback) return;
+    if (!imageUri || isRecognizing || isQueueingFallback || isContinuing) return;
     const generation = imageGeneration.current;
     pollingController.current?.abort();
     setIsRecognizing(true);
@@ -264,16 +265,17 @@ export default function CaptureReceiptScreen() {
       if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       await acceptImage(rotated.uri);
     } catch {
-      if (activeOwner.current !== ownerId) return;
+      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       setMessage(
         "Chưa xoay được ảnh. Hãy thử lại hoặc chọn ảnh khác.",
       );
     } finally {
-      if (activeOwner.current === ownerId) setIsRecognizing(false);
+      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setIsRecognizing(false);
     }
   }
 
   function confirmServerFallback() {
+    if (isContinuing || isRecognizing || isQueueingFallback) return;
     const capture = captureRef.current;
     if (!imageUri || !session || !capture) {
       setMessage("Bạn cần đăng nhập và chọn ảnh trước khi dùng OCR nâng cao.");
@@ -367,6 +369,7 @@ export default function CaptureReceiptScreen() {
   }
 
   async function continueToTransaction() {
+    if (isContinuing || isRecognizing || isQueueingFallback) return;
     const generation = imageGeneration.current;
     if (!imageUri) {
       setMessage("Hãy chụp hoặc chọn ảnh hóa đơn trước.");
@@ -419,9 +422,9 @@ export default function CaptureReceiptScreen() {
         },
       });
     } catch {
-      if (activeOwner.current === ownerId) setMessage("Không lưu được bản nháp hóa đơn trên thiết bị. Hãy thử lại.");
+      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setMessage("Không lưu được bản nháp hóa đơn trên thiết bị. Hãy thử lại.");
     } finally {
-      if (activeOwner.current === ownerId) setIsContinuing(false);
+      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setIsContinuing(false);
     }
   }
 
@@ -460,19 +463,19 @@ export default function CaptureReceiptScreen() {
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: isRecognizing }}
-            disabled={isRecognizing}
+            accessibilityState={{ disabled: isRecognizing || isContinuing || isQueueingFallback }}
+            disabled={isRecognizing || isContinuing || isQueueingFallback}
             onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
-            style={[styles.primary, isRecognizing && styles.disabled]}
+            style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
           >
             <AppIcon name="camera-outline" color={colors.white} /><Text style={styles.primaryText}>Chụp ảnh</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: isRecognizing }}
-            disabled={isRecognizing}
+            accessibilityState={{ disabled: isRecognizing || isContinuing || isQueueingFallback }}
+            disabled={isRecognizing || isContinuing || isQueueingFallback}
             onPress={() => void choose("library")}
-            style={[styles.secondary, isRecognizing && styles.disabled]}
+            style={[styles.secondary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
           >
             <AppIcon name="image-outline" /><Text style={styles.secondaryText}>Chọn từ thư viện</Text>
           </Pressable>
@@ -483,14 +486,14 @@ export default function CaptureReceiptScreen() {
             accessibilityLabel="Xoay ảnh hóa đơn 90 độ sang phải và nhận diện lại"
             accessibilityRole="button"
             accessibilityState={{
-              busy: isRecognizing || isQueueingFallback,
-              disabled: isRecognizing || isQueueingFallback,
+              busy: isRecognizing || isQueueingFallback || isContinuing,
+              disabled: isRecognizing || isQueueingFallback || isContinuing,
             }}
-            disabled={isRecognizing || isQueueingFallback}
+            disabled={isRecognizing || isQueueingFallback || isContinuing}
             onPress={() => void rotateImage()}
             style={[
               styles.secondary,
-              (isRecognizing || isQueueingFallback) && styles.disabled,
+              (isRecognizing || isQueueingFallback || isContinuing) && styles.disabled,
             ]}
           >
             <Text style={styles.secondaryText}>Xoay ảnh 90° sang phải</Text>
@@ -580,10 +583,10 @@ export default function CaptureReceiptScreen() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ busy: isContinuing, disabled: isRecognizing || isContinuing }}
-          disabled={isRecognizing || isContinuing}
+          accessibilityState={{ busy: isContinuing, disabled: isRecognizing || isContinuing || isQueueingFallback }}
+          disabled={isRecognizing || isContinuing || isQueueingFallback}
           onPress={() => void continueToTransaction()}
-          style={[styles.primary, (isRecognizing || isContinuing) && styles.disabled]}
+          style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
         >
           {isContinuing ? (
             <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.white} />
