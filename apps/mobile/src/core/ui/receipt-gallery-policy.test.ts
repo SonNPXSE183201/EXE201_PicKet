@@ -12,6 +12,15 @@ test("same owner-scoped storage path reuses cached image across receipt IDs, nev
   assert.equal(images.get("A/replaced.png"), undefined);
 });
 
+test("shared storage objects consume cache budget once, retaining room for distinct photos", () => {
+  const items = [
+    { id: "one", path: "A/shared", dataUri: "1234", usedAt: 3 },
+    { id: "two", path: "A/shared", dataUri: "1234", usedAt: 2 },
+    { id: "three", path: "A/other", dataUri: "abcd", usedAt: 1 },
+  ];
+  assert.deepEqual(trimReceiptImages(items, new Set(["one", "two", "three"]), 8).map(i => i.path), ["A/shared", "A/other"]);
+});
+
 test("persists fresh metadata and uses only the requested owner's cached gallery offline", async () => {
   const writes: string[] = [];
   const fresh = await loadReceiptGallery("A", { remote: async () => ["new"], cached: async () => ["old"], save: async (owner, rows) => { writes.push(owner + rows[0]); } });
