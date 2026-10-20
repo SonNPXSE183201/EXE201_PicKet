@@ -92,7 +92,10 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
   const folder = new Directory(Paths.document, "receipt-drafts");
   folder.create({ idempotent: true, intermediates: true });
   const destination = existing ? new File(existing.imageUri) : new File(folder, `${id}.${extensionOf(input.imageUri)}`);
-  const createdImage = !existing;
+  // A process interrupted before submission may have left metadata without
+  // its copy. The intact capture can repair it, but never replace an image
+  // once a canonical request or remote progress has been pinned above.
+  const createdImage = !existing || !destination.exists;
   if (createdImage) {
     const temp = new File(folder, `${id}-${Crypto.randomUUID()}.tmp`);
     const tempUri = temp.uri;
