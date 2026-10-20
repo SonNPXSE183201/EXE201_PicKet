@@ -1,10 +1,10 @@
-import { gcm } from "@noble/ciphers/aes.js";
 import { fromByteArray, toByteArray } from "base64-js";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
+import { cacheCipher } from "./cache-cipher";
 
-export type CachedResource = "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "reconciliation-requests";
+export type CachedResource = "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "reconciliation-requests" | "spending-splits";
 type CacheRow = { nonce: string; ciphertext: string; updated_at: string };
 const keyName = "picket_offline_cache_key_v1";
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -42,8 +42,8 @@ async function deviceKey() {
 export async function encryptLocalPayload(value: unknown, owner: string): Promise<string> {
   const nonce = await Crypto.getRandomBytesAsync(12);
   const plain = new TextEncoder().encode(JSON.stringify(value));
-  const ciphertext = gcm(await deviceKey(), nonce, new TextEncoder().encode(owner)).encrypt(plain);
-  return `enc-v1:${fromByteArray(nonce)}:${fromByteArray(ciphertext)}`;
+  const ciphertext = await cacheCipher.seal(await deviceKey(), nonce, plain, new TextEncoder().encode(owner));
+  return `enc-v1:${fromByteArray(nonce)}:${ciphertext}`;
 }
 
 export async function decryptLocalPayload<T>(payload: string, owner: string): Promise<T> {
@@ -54,7 +54,7 @@ export async function decryptLocalPayload<T>(payload: string, owner: string): Pr
   if (parts.length !== 3) throw new Error("Invalid encrypted local payload.");
   const nonce = toByteArray(parts[1]);
   if (nonce.length !== 12) throw new Error("Invalid encrypted local nonce.");
-  const bytes = gcm(await deviceKey(), nonce, new TextEncoder().encode(owner)).decrypt(toByteArray(parts[2]));
+  const bytes = await cacheCipher.open(await deviceKey(), parts[1], parts[2], new TextEncoder().encode(owner));
   return JSON.parse(new TextDecoder().decode(bytes)) as T;
 }
 
@@ -66,20 +66,20 @@ export async function readOfflineCache<T>(userId: string, resource: CachedResour
   if (!row) return null;
   const nonce = toByteArray(row.nonce);
   if (nonce.length !== 12) throw new Error("Offline cache nonce is invalid.");
-  const plain = gcm(await deviceKey(), nonce).decrypt(toByteArray(row.ciphertext));
+  const plain = await cacheCipher.open(await deviceKey(), row.nonce, row.ciphertext);
   return { value: JSON.parse(new TextDecoder().decode(plain)) as T, updatedAt: row.updated_at };
 }
 
 async function persist<T>(userId: string, resource: CachedResource, value: T) {
   const nonce = await Crypto.getRandomBytesAsync(12);
   const plain = new TextEncoder().encode(JSON.stringify(value));
-  const ciphertext = gcm(await deviceKey(), nonce).encrypt(plain);
+  const ciphertext = await cacheCipher.seal(await deviceKey(), nonce, plain);
   const db = await database();
   await db.runAsync(
     `INSERT INTO cached_resources (user_id, resource, nonce, ciphertext, updated_at) VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(user_id, resource) DO UPDATE SET nonce = excluded.nonce,
        ciphertext = excluded.ciphertext, updated_at = excluded.updated_at`,
-    userId, resource, fromByteArray(nonce), fromByteArray(ciphertext), new Date().toISOString(),
+    userId, resource, fromByteArray(nonce), ciphertext, new Date().toISOString(),
   );
 }
 
