@@ -21,6 +21,14 @@ test("shared storage objects consume cache budget once, retaining room for disti
   assert.deepEqual(trimReceiptImages(items, new Set(["one", "two", "three"]), 8).map(i => i.path), ["A/shared", "A/other"]);
 });
 
+test("path-based pruning retains a shared photo after its original receipt is deleted", () => {
+  const items = [
+    { id: "deleted", path: "A/shared", dataUri: "1234", usedAt: 3 },
+    { id: "survivor", path: "A/replaced", dataUri: "abcd", usedAt: 1 },
+  ];
+  assert.deepEqual(trimReceiptImages(items, new Set(["survivor"]), 8, new Set(["A/shared", "A/new"])).map(i => i.path), ["A/shared"]);
+});
+
 test("persists fresh metadata and uses only the requested owner's cached gallery offline", async () => {
   const writes: string[] = [];
   const fresh = await loadReceiptGallery("A", { remote: async () => ["new"], cached: async () => ["old"], save: async (owner, rows) => { writes.push(owner + rows[0]); } });

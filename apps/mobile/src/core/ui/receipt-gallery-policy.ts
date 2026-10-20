@@ -23,11 +23,13 @@ export async function loadReceiptGallery<T>(owner: string, loader: { remote(): P
 }
 
 /** Budget is base64 character count (~20 MiB maximum before encryption). */
-export function trimReceiptImages(items: ReceiptImageCacheEntry[], validIds: Set<string>, budget = 20 * 1024 * 1024): ReceiptImageCacheEntry[] {
+export function trimReceiptImages(items: ReceiptImageCacheEntry[], validIds: Set<string>, budget = 20 * 1024 * 1024, validPaths?: Set<string>): ReceiptImageCacheEntry[] {
   let used = 0;
   const seen = new Set<string>();
+  const paths = new Set<string>();
   return [...items].sort((a, b) => b.usedAt - a.usedAt).filter((item) => {
-    if (!validIds.has(item.id) || seen.has(item.id) || item.dataUri.length > budget - used) return false;
-    seen.add(item.id); used += item.dataUri.length; return true;
+    const referenced = validPaths ? validPaths.has(item.path) : validIds.has(item.id);
+    if (!referenced || seen.has(item.id) || paths.has(item.path) || item.dataUri.length > budget - used) return false;
+    seen.add(item.id); paths.add(item.path); used += item.dataUri.length; return true;
   });
 }

@@ -25,11 +25,13 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
   publish(result.rows, result.stale);
   let images = (await readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images").catch(() => null))?.value ?? [];
   const validIds = new Set(result.rows.map((r) => r.id));
-  images = trimReceiptImages(images, validIds);
+  const validPaths = new Set(result.rows.flatMap(row => row.path ? [row.path] : []));
+  const originalImageCount = images.length;
+  images = trimReceiptImages(images, validIds, undefined, validPaths);
   const imagePaths = indexReceiptImagePaths(images);
   const rows = result.rows.map((r) => ({ ...r, uri: r.path ? imagePaths.get(r.path) : undefined }));
   publish(rows, result.stale);
-  let downloaded = false;
+  let cacheChanged = images.length !== originalImageCount;
   for (const row of rows.filter((r) => r.day.startsWith(month))) {
     if (signal.aborted) throw new Error("aborted");
     if (!row.uri && row.path) row.uri = imagePaths.get(row.path);
@@ -46,15 +48,15 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
       if (!bytes.length || bytes.length > 10 * 1024 * 1024 || signal.aborted) continue;
       const mime = response.headers.get("content-type")!.split(";")[0];
       const dataUri = `data:${mime};base64,${fromByteArray(bytes)}`;
-      images = trimReceiptImages([...images, { id: row.id, path: row.path, dataUri, usedAt: Date.now() }], validIds);
+      images = trimReceiptImages([...images, { id: row.id, path: row.path, dataUri, usedAt: Date.now() }], validIds, undefined, validPaths);
       row.uri = dataUri;
       imagePaths.set(row.path, dataUri);
-      downloaded = true;
+      cacheChanged = true;
       publish(rows, result.stale);
     } catch { /* Keep the signed image or cached gallery usable when download fails. */ }
   }
   if (signal.aborted) throw new Error("aborted");
-  if (downloaded) {
+  if (cacheChanged) {
     try { await writeOfflineCache(owner, "receipt-images", images); } catch { /* Images remain available for this session. */ }
   }
   return { rows, stale: result.stale };
