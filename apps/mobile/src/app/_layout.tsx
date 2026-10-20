@@ -1,6 +1,11 @@
 import { Stack } from "expo-router";
+import { useEffect } from "react";
+import { bootstrapIntentGate } from "@/core/navigation/bootstrap-intent";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ActivityIndicator, View } from "react-native";
+import { colors } from "@picket/design-tokens";
+import { canMountSessionRoutes } from "@/features/auth/session-route-policy";
 
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
 import { AccountsProvider } from "@/features/accounts/accounts-context";
@@ -35,6 +40,21 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
+        <SessionReadyTree />
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function SessionReadyTree() {
+  const { loading } = useAuth();
+  // Effects run after the ready render commits its Stack. Do not signal from
+  // auth recovery itself, where a nested navigator may not exist yet.
+  useEffect(() => { if (!loading) bootstrapIntentGate.ready(); }, [loading]);
+  if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream }}>
+    <ActivityIndicator accessibilityLabel="Đang khôi phục phiên Picket" color={colors.mauve} />
+  </View>;
+  return (
         <DeviceLockProvider>
           <SessionProviders>
             <StatusBar style="dark" />
@@ -42,7 +62,5 @@ export default function RootLayout() {
             <NavigationShell />
           </SessionProviders>
         </DeviceLockProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
   );
 }
