@@ -3,6 +3,29 @@ import test from "node:test";
 import { createClient } from "@supabase/supabase-js";
 import { createAuthFetch } from "./auth-fetch";
 
+test("auth deadline identifies request vs body stalls without recording request data", async () => {
+  const request = createAuthFetch(async () => new Promise<Response>(() => undefined), "https://project.supabase.co/auth/v1", 10);
+  await assert.rejects(request("https://project.supabase.co/auth/v1/token?private=synthetic"), error => {
+    assert.equal((error as Error & { authPhase: string }).authPhase, "request");
+    assert.equal((error as Error & { authFailureReason: string }).authFailureReason, "deadline");
+    assert.equal(String(error).includes("synthetic"), false); return true;
+  });
+  const body = createAuthFetch(async () => new Response(new ReadableStream({ start() {} })), "https://project.supabase.co/auth/v1", 10);
+  await assert.rejects(body("https://project.supabase.co/auth/v1/token"), error => {
+    assert.equal((error as Error & { authPhase: string }).authPhase, "body"); return true;
+  });
+});
+
+test("caller cancellation is distinct from deadline and does not poison a later request", async () => {
+  let calls = 0;
+  const fetcher = createAuthFetch(async () => ++calls === 1 ? new Promise<Response>(() => undefined) : new Response('{"ok":true}'), "https://project.supabase.co/auth/v1", 100);
+  const controller = new AbortController();
+  const pending = fetcher("https://project.supabase.co/auth/v1/token", { signal: controller.signal });
+  controller.abort();
+  await assert.rejects(pending, error => { assert.equal((error as Error & { authFailureReason: string }).authFailureReason, "caller"); return true; });
+  assert.deepEqual(await (await fetcher("https://project.supabase.co/auth/v1/token")).json(), { ok: true });
+});
+
 test("auth can use a dedicated native transport without rerouting storage", async () => {
   const calls: string[] = [];
   const shared: typeof fetch = async () => { calls.push("shared"); throw new TypeError("Shared transport unavailable"); };
