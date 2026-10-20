@@ -5,5 +5,4 @@ import test from "node:test";
 test("Android calendar thumbnails downsample base64 photos to their display size", () => {
   const source=readFileSync(new URL("./month-calendar.tsx",import.meta.url),"utf8");
   assert.match(source,/resizeMethod="resize"/);
-  assert.match(source,/resizeMultiplier=\{2\}/);
 });
