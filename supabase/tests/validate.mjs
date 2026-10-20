@@ -1,6 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
+import { validateOcrRetention } from "./ocr-retention.mjs";
 const db = new PGlite();
 await db.exec(
   `create role anon; create role authenticated; create role service_role bypassrls;
@@ -51,6 +52,7 @@ for (
     "202610170003_wallet_reconciliation.sql",
     "202610180001_budget_planning_split_rollover.sql",
     "202610180002_purge_closed_month_data.sql",
+    "202610210001_ocr_receipt_image_retention.sql",
   ]
 ) {
   await db.exec(
@@ -679,6 +681,7 @@ assert.equal(
 );
 assert.equal((await db.query("select * from public.profiles")).rows.length, 0);
 assert.equal((await db.query("select * from public.wallets")).rows.length, 0);
+await validateOcrRetention(db);
 await db.close();
 console.log(
   "SQL validation passed: migrations, ownership, media isolation, OCR worker permissions, conflicts, invalid payloads, staff permissions, maintenance, cascade deletion.",

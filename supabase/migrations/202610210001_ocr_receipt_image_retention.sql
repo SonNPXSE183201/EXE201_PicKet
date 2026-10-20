@@ -1,0 +1,1 @@
+-- TDD checkpoint: durable OCR deletion claims and receipt reference protection.
