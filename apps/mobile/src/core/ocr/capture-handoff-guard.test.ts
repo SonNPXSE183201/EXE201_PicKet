@@ -13,3 +13,9 @@ test("camera handoff rejects parallel submission and stale generation finalizers
   const choose = source.slice(source.indexOf('async function choose('), source.indexOf('async function rotateImage()'));
   assert.match(choose, /if \(isContinuing \|\| isRecognizing \|\| isQueueingFallback\) return/);
 });
+
+test("a late server OCR result must not re-enable an attachment the user opted out of", () => {
+  const source = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
+  const completion = source.slice(source.indexOf('if (completed.status === "completed"'), source.indexOf('completed.status === "failed"'));
+  assert.doesNotMatch(completion, /setAttachReceipt\(true\)/);
+});
