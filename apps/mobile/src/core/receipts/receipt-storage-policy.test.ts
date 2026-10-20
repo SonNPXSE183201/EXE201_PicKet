@@ -25,3 +25,12 @@ test("saving a legacy draft reuploads OCR images into the durable receipt namesp
   const source = readFileSync(new URL("../../app/transactions/new.tsx", import.meta.url), "utf8");
   assert.match(source, /durableReceiptStoragePath\(session.user.id, draft.storagePath\)/);
 });
+
+test("receipt upload uses the durable draft identity and verifies ambiguous upload acknowledgements", () => {
+  const upload = readFileSync(new URL("./receipt-upload.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(upload, /Crypto.randomUUID/);
+  assert.match(upload, /uploadVerifiedFallbackImage/);
+  assert.match(upload, /input.receiptId/);
+  const source = readFileSync(new URL("../../app/transactions/new.tsx", import.meta.url), "utf8");
+  assert.match(source, /receiptId: draft.id/);
+});
