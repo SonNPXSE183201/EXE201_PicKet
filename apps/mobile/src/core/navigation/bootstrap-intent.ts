@@ -1,7 +1,8 @@
 /** Initial URLs mount the app; later intents must wait for its nested Stack. */
-export function latestInitialNativeIntent(path: string, activityUrl: string | null, nativeUrl: string | null) {
-  // A launcher start has no VIEW data. Never reuse a previous activity's URL.
-  return activityUrl ? nativeUrl ?? path : path;
+export function latestInitialNativeIntent(path: string, activityUrl: string | null) {
+  // The prebuild plugin retains the newest Activity Intent, including launcher
+  // intents without VIEW data. Expo's process-static URL can predate recreation.
+  return activityUrl ?? path;
 }
 
 export function createBootstrapIntentGate() {

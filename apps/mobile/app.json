@@ -20,6 +20,7 @@
       "./plugins/with-android-release-signing",
       "./plugins/with-network-pool-guard",
       "expo-router",
+      "./plugins/with-current-activity-intent",
       "expo-status-bar",
       "expo-secure-store",
       "expo-local-authentication",

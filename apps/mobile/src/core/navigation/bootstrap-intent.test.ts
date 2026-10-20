@@ -8,7 +8,7 @@ test("native linking waits for the mounted session stack, without intercepting i
   const layout = readFileSync(new URL("../../app/_layout.tsx", import.meta.url), "utf8");
   assert.match(intent, /redirectSystemPath/);
   assert.match(intent, /bootstrapIntentGate\.redirect/);
-  assert.match(intent, /Linking\.getLinkingURL\(\)/);
+  assert.match(intent, /Linking\.getInitialURL\(\)/);
   assert.match(layout, /bootstrapIntentGate\.ready\(\)/);
 });
 
@@ -17,10 +17,10 @@ test("initial URL never waits for the provider it must first mount", () => {
   assert.equal(gate.redirect({ path: "com.picket.mobile://capture?date=2026-10-19", initial: true }), "com.picket.mobile://capture?date=2026-10-19");
 });
 
-test("native initial URL catches pre-listener VIEW intents but never replays an old launcher URL", () => {
-  assert.equal(latestInitialNativeIntent("home", "com.picket.mobile://", "com.picket.mobile://keepsakes"), "com.picket.mobile://keepsakes");
-  assert.equal(latestInitialNativeIntent("home", null, "com.picket.mobile://keepsakes"), "home");
-  assert.equal(latestInitialNativeIntent("original", "com.picket.mobile://", null), "original");
+test("current Activity URL wins; a launcher without VIEW data keeps its root path", () => {
+  assert.equal(latestInitialNativeIntent("home", "com.picket.mobile://keepsakes"), "com.picket.mobile://keepsakes");
+  assert.equal(latestInitialNativeIntent("home", null), "home");
+  assert.equal(latestInitialNativeIntent("original", "com.picket.mobile://"), "com.picket.mobile://");
 });
 
 test("warm intent during bootstrap waits for stack commit; only newest pending intent wins", async () => {

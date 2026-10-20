@@ -5,8 +5,10 @@ import test from "node:test";
 import { latestInitialNativeIntent } from "./bootstrap-intent";
 
 test("latest Activity VIEW cannot be overwritten by stale Expo cache after recreation", () => {
-  assert.equal(latestInitialNativeIntent("original","com.picket.mobile://transactions/bulk","com.picket.mobile://"),"com.picket.mobile://transactions/bulk");
-  assert.equal(latestInitialNativeIntent("launcher",null,"com.picket.mobile://transactions/bulk"),"launcher");
+  assert.equal(latestInitialNativeIntent("com.picket.mobile://","com.picket.mobile://transactions/bulk"),"com.picket.mobile://transactions/bulk");
+  assert.equal(latestInitialNativeIntent("launcher",null),"launcher");
+  const source=readFileSync(new URL("../../app/+native-intent.ts",import.meta.url),"utf8");
+  assert.doesNotMatch(source,/getLinkingURL/);
 });
 test("current Activity intent fix is registered and idempotent across prebuild", () => {
   const config=JSON.parse(readFileSync(new URL("../../../app.json",import.meta.url),"utf8"));

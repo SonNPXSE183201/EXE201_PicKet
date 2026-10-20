@@ -4,10 +4,10 @@ import { bootstrapIntentGate, latestInitialNativeIntent } from "@/core/navigatio
 
 export function redirectSystemPath(intent: { path: string; initial: boolean }) {
   if (intent.initial && Platform.OS === "android") {
-    // RN's Activity intent can still contain the first VIEW URL, whereas Expo
-    // records onNewIntent even before JS listeners exist. This awaits native
-    // linking only, never AuthProvider or the navigator it is about to mount.
-    return Linking.getInitialURL().then(activityUrl => latestInitialNativeIntent(intent.path, activityUrl, Linking.getLinkingURL())).catch(() => intent.path);
+    // MainActivity retains its newest Intent through the prebuild plugin.
+    // Do not prefer Expo's older process-static URL after configuration changes.
+    // This awaits native linking only, never auth or the not-yet-mounted Stack.
+    return Linking.getInitialURL().then(activityUrl => latestInitialNativeIntent(intent.path, activityUrl)).catch(() => intent.path);
   }
   return bootstrapIntentGate.redirect(intent);
 }
