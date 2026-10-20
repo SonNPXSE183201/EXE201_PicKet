@@ -1,7 +1,6 @@
 import { colors } from "@picket/design-tokens";
-import * as Notifications from "expo-notifications";
 import { Redirect, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
@@ -20,11 +19,17 @@ import { useTransactionHistory } from "@/features/transactions/use-transaction-h
 import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { useReminderPeriods } from "@/features/notifications/use-reminder-periods";
 
-Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner:true, shouldShowList:true, shouldPlaySound:false, shouldSetBadge:false }) });
 
 export default function NotificationsScreen() {
   const { session, localMode } = useAuth();
   const ownerId = session?.user.id ?? (localMode ? guestOwnerId : null);
+  const deliveryScope = useRef({ ownerId, active: true });
+  useEffect(() => {
+    const scope = deliveryScope.current;
+    scope.ownerId = ownerId; scope.active = true;
+    return () => { scope.active = false; };
+  }, [ownerId]);
+  const isCurrentOwner = () => deliveryScope.current.active && deliveryScope.current.ownerId === ownerId;
   const { bills } = useBills();
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
@@ -34,6 +39,7 @@ export default function NotificationsScreen() {
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
   const [enabled, setEnabled] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
   const [read, setRead] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -42,6 +48,7 @@ export default function NotificationsScreen() {
   const dueSoon = reminders.filter((item) => item.notifyAt === null || new Date(item.dueAt).getTime() <= now + 7 * 86400000);
   useFocusEffect(useCallback(() => {
     if (!ownerId) return;
+    setSettingsLoading(true);
     setNow(Date.now());
     let active = true;
     void Promise.all([
@@ -56,7 +63,8 @@ export default function NotificationsScreen() {
       readReminderIds(ownerId),
     ])
       .then(([items, setting, ids]) => { if (active) { setKeepsakes(items); setEnabled(setting); setRead(ids); } })
-      .catch(() => { if (active) setMessage("Không tải được cài đặt thông báo trên thiết bị."); });
+      .catch(() => { if (active) setMessage("Không tải được cài đặt thông báo trên thiết bị."); })
+      .finally(() => { if (active) setSettingsLoading(false); });
     return () => { active = false; };
   }, [localMode, ownerId, session?.access_token]));
   if (!ownerId) return <Redirect href={routes.login} />;
@@ -66,7 +74,7 @@ export default function NotificationsScreen() {
       const saved = await setRemindersEnabled(ownerId!, value);
       if (!saved) { setMessage("Quyền thông báo chưa được cấp trong cài đặt Android."); return; }
       setEnabled(value);
-      if (value) await scheduleUserReminders(ownerId!, reminders);
+      if (value) await scheduleUserReminders(ownerId!, reminders, isCurrentOwner);
     } catch { setMessage("Không cập nhật được lịch nhắc. Hãy thử lại."); }
     finally { setBusy(false); }
   }
@@ -76,14 +84,14 @@ export default function NotificationsScreen() {
   }
   async function reschedule() {
     setBusy(true); setMessage(null);
-    try { await scheduleUserReminders(ownerId!, reminders); setMessage("Đã cập nhật lịch nhắc trên thiết bị."); }
+    try { await scheduleUserReminders(ownerId!, reminders, isCurrentOwner); setMessage("Đã cập nhật lịch nhắc trên thiết bị."); }
     catch { setMessage("Không cập nhật được lịch nhắc."); }
     finally { setBusy(false); }
   }
   return <PicketScreen>
     <TopAppBar title="Thông báo" />
     <Text style={styles.subtitle}>Các hạn thanh toán, món đồ và ngân sách cần chú ý.</Text>
-    <Surface><View style={styles.setting}><View style={styles.copy}><Text style={styles.title}>Nhắc trên điện thoại</Text><Text style={styles.hint}>Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.</Text></View><Switch accessibilityLabel="Nhắc trên điện thoại" disabled={busy} hitSlop={12} onValueChange={(value) => void toggle(value)} value={enabled} /></View></Surface>
+    <Surface><View style={styles.setting}><View style={styles.copy}><Text style={styles.title}>Nhắc trên điện thoại</Text><Text style={styles.hint}>Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.</Text></View><Switch accessibilityLabel="Nhắc trên điện thoại" disabled={busy || settingsLoading} hitSlop={12} onValueChange={(value) => void toggle(value)} value={enabled} /></View></Surface>
     {enabled && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void reschedule()} style={styles.linkButton}><Text style={styles.link}>Cập nhật lịch nhắc</Text></Pressable>}
     {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>}
     {dueSoon.length === 0 ? <EmptyState title="Chưa có thông báo mới" description="Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý." /> :

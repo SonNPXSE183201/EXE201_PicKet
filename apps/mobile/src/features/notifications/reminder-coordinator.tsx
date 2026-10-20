@@ -45,12 +45,16 @@ export function ReminderCoordinator() {
     reload();
     const unsubscribe = onKeepsakesChanged((owner) => { if (owner === userId) reload(); });
     const unsubscribeCloud = onCloudKeepsakesChanged((owner) => { if (owner === userId) reload(); });
-    return () => { active = false; unsubscribe(); unsubscribeCloud(); void cancelUserReminders(userId); };
+    return () => { active = false; unsubscribe(); unsubscribeCloud(); };
   }, [session]);
+  const userId = session?.user.id;
+  useEffect(() => () => { if (userId) void cancelUserReminders(userId, true).catch(() => undefined); }, [userId]);
   useEffect(() => { if (session) void refreshHistory().catch(() => undefined); }, [session, bills, budgets, subscriptions, keepsakes, refreshHistory]);
   const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits, splits }), [bills, budgets, subscriptions, history, historyLoading, historyError, splitLoading, splitError, periodsReady, keepsakes, periodLimits, splits]);
   useEffect(() => {
-    if (session) void scheduleUserReminders(session.user.id, items).catch(() => undefined);
+    let active = true;
+    if (session) void scheduleUserReminders(session.user.id, items, () => active).catch(() => undefined);
+    return () => { active = false; };
   }, [session, items]);
   return null;
 }

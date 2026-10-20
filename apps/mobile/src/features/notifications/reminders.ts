@@ -4,6 +4,9 @@ import * as SecureStore from "expo-secure-store";
 
 import type { Keepsake } from "@/features/keepsakes/keepsake-store";
 import { budgetWarnings } from "./budget-warnings";
+import { createBudgetNoticeDelivery } from "./budget-notice-delivery";
+
+Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
 
 export interface ReminderItem {
   id: string;
@@ -15,6 +18,24 @@ export interface ReminderItem {
 const settingsKey = (userId: string) => `picket_reminders_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
 const readKey = (userId: string) => `picket_reminder_read_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
 const prefix = (userId: string) => `picket-${userId}-`;
+const deliveredKey = (userId: string) => `picket_budget_delivered_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+const budgetNoticeDelivery = createBudgetNoticeDelivery({
+  read: async userId => {
+    const raw = await SecureStore.getItemAsync(deliveredKey(userId));
+    const value: unknown = JSON.parse(raw ?? "[]");
+    if (!Array.isArray(value) || value.some(id => typeof id !== "string")) throw new Error("Invalid budget delivery ledger.");
+    return value;
+  },
+  save: (userId, ids) => SecureStore.setItemAsync(deliveredKey(userId), JSON.stringify(ids)),
+  show: async (userId, id, isCurrent) => {
+    const identifier = `${prefix(userId)}${id}`;
+    await Notifications.scheduleNotificationAsync({ identifier,
+      content: { title: "Picket · Ngân sách", body: "Một ngân sách đã chạm ngưỡng cảnh báo. Mở Picket để kiểm tra." },
+      trigger: { channelId: "picket-reminders" },
+    });
+    if (!isCurrent()) await Notifications.dismissNotificationAsync(identifier);
+  },
+});
 
 export async function remindersEnabled(userId: string) {
   return (await SecureStore.getItemAsync(settingsKey(userId))) === "enabled";
@@ -30,7 +51,7 @@ export async function setRemindersEnabled(userId: string, enabled: boolean) {
     await SecureStore.setItemAsync(settingsKey(userId), "enabled");
   } else {
     await SecureStore.deleteItemAsync(settingsKey(userId));
-    await cancelUserReminders(userId);
+    await cancelUserReminders(userId, true);
   }
   return true;
 }
@@ -79,29 +100,37 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
   return notices;
 }
 
-export async function cancelUserReminders(userId: string) {
+export async function cancelUserReminders(userId: string, dismissPresented = false) {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   for (const item of scheduled) if (item.identifier.startsWith(prefix(userId))) await Notifications.cancelScheduledNotificationAsync(item.identifier);
+  if (dismissPresented) {
+    for (const item of await Notifications.getPresentedNotificationsAsync()) {
+      if (item.request.identifier.startsWith(prefix(userId))) await Notifications.dismissNotificationAsync(item.request.identifier);
+    }
+  }
 }
 
 let scheduling: Promise<void> = Promise.resolve();
-export function scheduleUserReminders(userId: string, items: ReminderItem[]) {
-  const operation = scheduling.catch(() => undefined).then(() => scheduleNow(userId, items));
+export function scheduleUserReminders(userId: string, items: ReminderItem[], isCurrent = () => true) {
+  const operation = scheduling.catch(() => undefined).then(() => scheduleNow(userId, items, isCurrent));
   scheduling = operation;
   return operation;
 }
-async function scheduleNow(userId: string, items: ReminderItem[]) {
+async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () => boolean) {
+  if (!isCurrent()) return;
   await cancelUserReminders(userId);
-  if (!(await remindersEnabled(userId))) return;
+  if (!(await remindersEnabled(userId)) || !isCurrent()) return;
   await Notifications.setNotificationChannelAsync("picket-reminders", {
     name: "Nhắc việc Picket", importance: Notifications.AndroidImportance.DEFAULT,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
   });
   for (const item of items.filter((entry) => entry.notifyAt !== null && entry.notifyAt > new Date()).slice(0, 50)) {
+    if (!isCurrent()) return;
     await Notifications.scheduleNotificationAsync({
       identifier: `${prefix(userId)}${item.id}`,
       content: { title: "Picket · Nhắc việc", body: "Bạn có khoản thanh toán hoặc hạn món đồ cần xem. Mở Picket để kiểm tra." },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.notifyAt!, channelId: "picket-reminders" },
     });
   }
+  await budgetNoticeDelivery.deliver(userId, items.map(item => item.id), isCurrent);
 }
