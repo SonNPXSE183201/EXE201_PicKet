@@ -5,7 +5,7 @@ import {
   subscribeToFinanceChanges,
   type FinanceRealtimeConnection,
 } from "@/core/sync/finance-realtime";
-import { shouldRefreshFromRealtime } from "@/core/sync/finance-realtime-policy";
+import { createQueueWakeup, shouldRefreshFromRealtime } from "@/core/sync/finance-realtime-policy";
 import { refreshFinanceSlices } from "@/core/sync/refresh-finance-slices";
 import { flushPendingMutations } from "@/core/sync/mutation-executor";
 import { mutationConflictCount, pendingMutationCount, subscribeToMutationQueue } from "@/core/sync/mutation-queue";
@@ -36,7 +36,7 @@ export function SyncProvider({ children }: PropsWithChildren) {
   const syncingRef = useRef(false);
   const pendingCountRef = useRef(0);
   const refreshingRemoteRef = useRef(false);
-  const refreshRemote = useCallback(async () => {
+  const refreshRemote = useCallback(async (tables?: readonly string[]) => {
     if (!session || !picketApi || refreshingRemoteRef.current) return;
     refreshingRemoteRef.current = true;
     try {
@@ -50,7 +50,7 @@ export function SyncProvider({ children }: PropsWithChildren) {
         budgets: refreshBudgets,
         bills: refreshBills,
         subscriptions: refreshSubscriptions,
-      });
+      }, tables);
     } finally {
       refreshingRemoteRef.current = false;
     }
@@ -81,6 +81,8 @@ export function SyncProvider({ children }: PropsWithChildren) {
   }, [pendingCount]);
   useEffect(() => {
     if (!session) return;
+    let active = true;
+    const queueWake = createQueueWakeup(() => { void flush().catch(() => undefined); });
     void Promise.all([
       pendingMutationCount(session.user.id),
       mutationConflictCount(session.user.id),
@@ -89,8 +91,13 @@ export function SyncProvider({ children }: PropsWithChildren) {
       setConflictCount(conflicts);
     });
     const unsubscribe = subscribeToMutationQueue(() => {
-      void pendingMutationCount(session.user.id).then(setPendingCount);
-      void mutationConflictCount(session.user.id).then(setConflictCount);
+      const notifiedDuringFlush = syncingRef.current;
+      void pendingMutationCount(session.user.id).then((pending) => {
+        if (!active) return;
+        setPendingCount(pending);
+        queueWake.request(pending, notifiedDuringFlush || syncingRef.current);
+      }).catch(() => undefined);
+      void mutationConflictCount(session.user.id).then((count) => { if (active) setConflictCount(count); }).catch(() => undefined);
     });
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
@@ -100,22 +107,29 @@ export function SyncProvider({ children }: PropsWithChildren) {
     });
     const unsubscribeRealtime = subscribeToFinanceChanges({
       userId: session.user.id,
-      onChange() {
+      onChange(tables) {
         if (shouldRefreshFromRealtime({
           pendingCount: pendingCountRef.current,
           syncing: syncingRef.current,
         })) {
-          void refreshRemote();
+          void refreshRemote(tables);
         }
       },
-      onConnectionChange: setRealtimeConnection,
+      onConnectionChange(connection) {
+        if (!active) return;
+        setRealtimeConnection(connection);
+        if (connection === "connected") queueWake.request(pendingCountRef.current, syncingRef.current);
+      },
     });
     const initialTimer = setTimeout(() => {
       void flush();
       void refreshRemote();
     }, 0);
-    const remotePoll = setInterval(() => void refreshRemote(), 60_000);
-    return () => { clearTimeout(initialTimer); clearInterval(remotePoll); subscription.remove(); unsubscribeRealtime(); unsubscribe(); };
+    const remotePoll = setInterval(() => {
+      void flush().catch(() => undefined);
+      void refreshRemote();
+    }, 30_000);
+    return () => { active = false; queueWake.dispose(); clearTimeout(initialTimer); clearInterval(remotePoll); subscription.remove(); unsubscribeRealtime(); unsubscribe(); };
   }, [session, flush, refreshRemote]);
   const value = useMemo(() => ({ pendingCount, conflictCount, syncing, realtimeConnection, lastSyncedAt, refreshRemote, flush }), [pendingCount, conflictCount, syncing, realtimeConnection, lastSyncedAt, refreshRemote, flush]);
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
