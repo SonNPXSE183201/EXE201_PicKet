@@ -7,5 +7,6 @@ test("capture invalidates in-flight work on owner change and gates image accepta
   assert.match(source, /activeOwner\.current = ownerId;\s*imageGeneration\.current\+\+;/);
   assert.match(source, /async function acceptImage\(uri: string\) \{\s*if \(!ownerId \|\| activeOwner\.current !== ownerId\) return;/);
   assert.match(source, /const current = \(\) => mounted\.current && activeOwner\.current === ownerId && generation === imageGeneration\.current/);
-  assert.match(source, /if \(activeOwner\.current !== ownerId\) return;\s*router\.push/);
+  assert.match(source, /if \(activeOwner\.current !== ownerId \|\| generation !== imageGeneration\.current\) return;\s*router\.push/);
+  assert.match(source, /async function choose[\s\S]*?const generation = imageGeneration\.current;[\s\S]*?await picker\(receiptImagePickerOptions\);\s*if \(activeOwner\.current !== ownerId \|\| generation !== imageGeneration\.current\) return;/);
 });

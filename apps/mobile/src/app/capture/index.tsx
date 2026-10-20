@@ -68,12 +68,22 @@ export default function CaptureReceiptScreen() {
   const captureRef = useRef<{ id: string; imageRef: string } | null>(null);
   const imageGeneration = useRef(0);
   const mounted = useRef(true);
+  const activeOwner = useRef(ownerId);
 
   useEffect(() => {
+    activeOwner.current = ownerId;
+    imageGeneration.current++;
+    pollingController.current?.abort();
     if (!ownerId) return;
     let active = true;
     void captureJournal.load(ownerId).then(async saved => {
       if (!active) return;
+      setIsRecognizing(false);
+      setIsQueueingFallback(false);
+      setIsContinuing(false);
+      setFallbackStatus(null);
+      setCameraOpen(false);
+      setRestoreError(false);
       if (saved) {
         const restored = await restoreCaptureSnapshot(ownerId, saved, restoreCaptureImage);
         if (!active) return;
@@ -107,7 +117,7 @@ export default function CaptureReceiptScreen() {
       localConfidence, needsFallback, rawText, lineItems, fallbackStoragePath,
     };
     void captureJournal.save(ownerId, snapshot).catch(() => {
-      if (mounted.current) setMessage("Chưa lưu được thay đổi bản nháp. Giữ màn hình này và thử lại trước khi thoát.");
+      if (mounted.current && activeOwner.current === ownerId) setMessage("Chưa lưu được thay đổi bản nháp. Giữ màn hình này và thử lại trước khi thoát.");
     });
   }, [hydrated, ownerId, imageUri, title, amount, purchasedAt, attachReceipt, provider, localConfidence, needsFallback, rawText, lineItems, fallbackStoragePath, isRecognizing, isQueueingFallback]);
 
@@ -120,30 +130,30 @@ export default function CaptureReceiptScreen() {
   );
 
   async function acceptImage(uri: string) {
-    if (!ownerId) return;
+    if (!ownerId || activeOwner.current !== ownerId) return;
     const generation = ++imageGeneration.current;
     pollingController.current?.abort();
     setIsQueueingFallback(false);
     setIsRecognizing(true);
     try {
       const managed = await persistCaptureImage(ownerId, uri);
-      if (!mounted.current || generation !== imageGeneration.current) return;
+      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       await captureJournal.save(ownerId, {
         version: 1, ...managed, title: "", amount: "",
         purchasedAt: receiptCaptureDate(explicitDate.current, null), explicitDate: explicitDate.current,
         attachReceipt: true, provider: "manual", localConfidence: 0,
         needsFallback: false, rawText: null, lineItems: [], fallbackStoragePath: null,
       });
-      if (!mounted.current || generation !== imageGeneration.current) return;
+      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       captureRef.current = managed;
       setHasDraft(true);
       setImageUri(uri); setCameraOpen(false); setAttachReceipt(true);
       setFallbackStatus(null); setFallbackStoragePath(null);
       await runOcr(uri, generation);
     } catch {
-      if (mounted.current && generation === imageGeneration.current) setMessage("Chưa lưu được ảnh bản nháp. Ảnh cũ vẫn được giữ; hãy thử lại.");
+      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setMessage("Chưa lưu được ảnh bản nháp. Ảnh cũ vẫn được giữ; hãy thử lại.");
     } finally {
-      if (mounted.current && generation === imageGeneration.current) setIsRecognizing(false);
+      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setIsRecognizing(false);
     }
   }
 
@@ -162,7 +172,7 @@ export default function CaptureReceiptScreen() {
 
     try {
       const result = await recognizeReceipt(uri);
-      if (!mounted.current || generation !== imageGeneration.current) return;
+      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       const { draft } = result;
       setOcrDurationMs(result.durationMs);
       setNeedsFallback(draft.needsReview);
@@ -179,16 +189,17 @@ export default function CaptureReceiptScreen() {
           : `Đã nhận diện ${draft.recognizedLineCount} dòng. Hãy kiểm tra lại trước khi lưu.`,
       );
     } catch {
-      if (!mounted.current || generation !== imageGeneration.current) return;
+      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       setMessage(
         "Chưa đọc được hóa đơn. Hãy thử ảnh khác hoặc nhập thông tin bên dưới.",
       );
     } finally {
-      if (mounted.current && generation === imageGeneration.current) setIsRecognizing(false);
+      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setIsRecognizing(false);
     }
   }
 
   async function choose(source: "camera" | "library") {
+    const generation = imageGeneration.current;
     // Keep the current draft intact until a new image was actually selected.
     try {
       // Keep the native picker lazy so a stale development-client rebuild never
@@ -198,6 +209,7 @@ export default function CaptureReceiptScreen() {
         source === "camera"
           ? await ImagePicker.requestCameraPermissionsAsync()
           : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       if (!permission.granted) {
         setMessage(
           source === "camera"
@@ -212,6 +224,7 @@ export default function CaptureReceiptScreen() {
           ? ImagePicker.launchCameraAsync
           : ImagePicker.launchImageLibraryAsync;
       const result = await picker(receiptImagePickerOptions);
+      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       if (result.canceled) return;
 
       const uri = result.assets[0]?.uri;
@@ -221,6 +234,7 @@ export default function CaptureReceiptScreen() {
       }
       await acceptImage(uri);
     } catch {
+      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       setMessage(
         "Chưa mở được camera. Bạn có thể chọn ảnh từ thư viện hoặc thử lại.",
       );
@@ -229,6 +243,7 @@ export default function CaptureReceiptScreen() {
 
   async function rotateImage() {
     if (!imageUri || isRecognizing || isQueueingFallback) return;
+    const generation = imageGeneration.current;
     pollingController.current?.abort();
     setIsRecognizing(true);
     setMessage("Đang xoay ảnh sang phải…");
@@ -244,13 +259,15 @@ export default function CaptureReceiptScreen() {
         format: SaveFormat.JPEG,
       });
 
+      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       await acceptImage(rotated.uri);
     } catch {
+      if (activeOwner.current !== ownerId) return;
       setMessage(
         "Chưa xoay được ảnh. Hãy thử lại hoặc chọn ảnh khác.",
       );
     } finally {
-      setIsRecognizing(false);
+      if (activeOwner.current === ownerId) setIsRecognizing(false);
     }
   }
 
@@ -260,7 +277,7 @@ export default function CaptureReceiptScreen() {
       return;
     }
     const generation = imageGeneration.current;
-    const current = () => mounted.current && generation === imageGeneration.current;
+    const current = () => mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current;
     Alert.alert(
       "Gửi ảnh để nhận diện nâng cao?",
       "Ảnh sẽ được tải vào vùng riêng tư của tài khoản và đưa vào hàng đợi OCR máy chủ.",
@@ -269,6 +286,7 @@ export default function CaptureReceiptScreen() {
         {
           text: "Đồng ý tải ảnh",
           onPress: () => {
+            if (!current()) return;
             setIsQueueingFallback(true);
             setMessage("Đang tải ảnh hóa đơn lên vùng riêng tư…");
             void queueServerOcrFallback({
@@ -339,6 +357,7 @@ export default function CaptureReceiptScreen() {
   }
 
   async function continueToTransaction() {
+    const generation = imageGeneration.current;
     if (!imageUri) {
       setMessage("Hãy chụp hoặc chọn ảnh hóa đơn trước.");
       return;
@@ -377,6 +396,7 @@ export default function CaptureReceiptScreen() {
         storagePath: fallbackStoragePath,
         transactionId: null,
       });
+      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       router.push({
         pathname: "/transactions/new",
         params: {
@@ -387,9 +407,9 @@ export default function CaptureReceiptScreen() {
         },
       });
     } catch {
-      setMessage("Không lưu được bản nháp hóa đơn trên thiết bị. Hãy thử lại.");
+      if (activeOwner.current === ownerId) setMessage("Không lưu được bản nháp hóa đơn trên thiết bị. Hãy thử lại.");
     } finally {
-      setIsContinuing(false);
+      if (activeOwner.current === ownerId) setIsContinuing(false);
     }
   }
 
