@@ -41,3 +41,12 @@ test("new guest receipt still validates wallet, amount and closed month", () => 
   closed.planningCloses["2026-10"]={month:"2026-10",closedAt:"2026-11-01",income:0,expense:0,note:"",rollover:false};
   assert.throws(()=>createOnce(closed));
 });
+
+test("a receipt transaction intentionally deleted during the progress crash window cannot resurrect", () => {
+  const saved=createOnce(initial());
+  const archived=applyGuestMutation(saved,{type:"transaction.archive",id:row.id});
+  const restarted=JSON.parse(JSON.stringify(archived)) as GuestFinance;
+  assert.equal(restarted.transactions.length,0);
+  assert.throws(()=>createOnce(restarted));
+  assert.equal(restarted.transactions.length,0);
+});
