@@ -58,6 +58,11 @@ begin
   for candidate_path in
     select distinct job.storage_path from public.ocr_fallback_jobs job
     where job.status = 'expired' and job.storage_deleted_at is null
+      and not exists (select 1 from public.receipts receipt
+        where receipt.storage_path = job.storage_path)
+      and not exists (select 1 from public.ocr_fallback_jobs live_job
+        where live_job.storage_path = job.storage_path
+          and live_job.status not in ('expired', 'cancelled'))
     order by job.storage_path limit 100
   loop
     perform pg_catalog.pg_advisory_xact_lock(
