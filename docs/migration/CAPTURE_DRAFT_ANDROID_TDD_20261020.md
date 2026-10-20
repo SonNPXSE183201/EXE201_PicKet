@@ -50,7 +50,25 @@ Artifacts: `.artifacts/roadmap-qa/capture-durability/results.json`, `rotation-di
 
 Early harness attempts were not counted as acceptance: one left an encrypted image without a metadata row; its precise cause was not isolated. Another install was attempted before a build had finished and correctly failed APK parsing. Later harness iterations sent a deep-link before auth bootstrap finished or waited for an off-screen field without scrolling. The accepted follow-up waited for the correct owner and scrolled to fields. Failed-write/crash orphan cleanup still needs broader native testing; no claim is made that these early failures establish a fixed storage fault.
 
-The accepted native exercise did **not** submit a transaction. Completion/error/idempotency after handoff is covered only by the named journal tests and source wiring here, not a new native end-to-end acceptance. Still open: replacing from library/cancelling picker with edits, Android activity destruction inside the picker (`getPendingResultAsync`), killing during image/OCR/metadata write, guest and A–B media switching, pending fallback job recovery, missing/corrupt image recovery, and bounded cleanup of image/cache orphans. The journal stores fallback storage references but does not resume an unfinished server job after restart.
+### Native handoff follow-up
+
+The restored QA A draft was subsequently submitted on the same clean QA APK:
+
+- Open Android's library picker and cancel: edited title and amount remain unchanged.
+- Rename the fixture `QA CAPTURE HANDOFF 20261020`, continue to the transaction form and save: the native completion screen appears.
+- Authenticated server readback finds exactly one transaction with that title, amount **123456**, and exactly one linked receipt dated **2026-10-19** with an owner-scoped storage reference. This checks metadata/linkage, not an independent download/hash audit of the uploaded bytes.
+- Choose **Xem hóa đơn**: the receipt opens with the expected merchant title. Android Back returns directly to Dashboard, not to the old capture/form stack.
+- A local SQLite snapshot has zero capture rows for A after completion. Cold restart, wait for A's home and reopen capture: the camera appears, without resurrecting the completed image draft.
+
+Artifacts: `.artifacts/roadmap-qa/capture-handoff/result.json`, its SQLite/WAL snapshot, and `emulator-5556-handoff-*.xml` / `before-picker.xml` / `after-picker.xml`. The synthetic QA transaction/receipt remains as a reproducible fixture; no real-user financial data was changed.
+
+### Library replacement follow-up — 2026-10-21
+
+On the QA-only Android package, select one library thumbnail and then a different thumbnail. Edit the replacement title to `QA LIBRARY REPLACED` and amount to `789012`; cold restart and reopen capture retains the replacement image reference/ciphertext hash and edited values. The previously managed image is no longer present after replacement commits. Opening the library again, force-stopping the app before selecting, and reopening also preserves the same prior draft/image. No transaction submitted in this matrix.
+
+Artifact: `.artifacts/roadmap-qa/capture-library/result.json` and `emulator-5556-library-*.xml`. These are lifecycle assertions over two different native picker selections, not OCR accuracy or an independent decoded-image visual comparison. Early runs exposed misordered amount entry and were not counted as PASS; the shared input fix and accepted native evidence are in [NATIVE_MONEY_INPUT_TDD_20261021.md](NATIVE_MONEY_INPUT_TDD_20261021.md).
+
+Force-stop-before-selection is **not** Android Activity destruction followed by return of a selected pending result. Still open: that `getPendingResultAsync` scenario, killing during image/OCR/metadata write, guest and A–B media switching, pending fallback job recovery, missing/corrupt image recovery, and bounded cleanup of image/cache orphans. The successful single submission does not prove lost-response/idempotent retry or completion-storage failure recovery. The journal stores fallback storage references but does not resume an unfinished server job after restart.
 
 ## Verification and release status
 
