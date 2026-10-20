@@ -31,6 +31,8 @@ export async function validateOcrRetention(db) {
   assert.ok(paths.includes(unused), "Unreferenced expired image should be claimed");
   const claimed = (await db.query("select storage_deletion_claimed_at from public.ocr_fallback_jobs where storage_path=$1", [unused])).rows[0];
   assert.ok(claimed.storage_deletion_claimed_at);
+  assert.equal((await db.query("select public.acknowledge_ocr_storage_deletion($1) as n", [[active, archived]])).rows[0].n, 0,
+    "ACK must not mark a referenced unclaimed image as deleted");
   await assert.rejects(db.query("insert into public.receipts(user_id,storage_path) values($1,$2)", [owner, unused]), /OCR_IMAGE_DELETION_CLAIMED/);
   // A delayed/failed Storage DELETE must not make the claim disappear.
   assert.ok((await db.query("select * from public.expire_ocr_fallback_jobs()")).rows.some(row => row.storage_path === unused));
@@ -39,6 +41,10 @@ export async function validateOcrRetention(db) {
   await assert.rejects(db.query("insert into public.receipts(user_id,storage_path) values($1,$2)", [owner, unused]), /OCR_IMAGE_DELETION_CLAIMED/);
   // Table trigger, not just the create RPC: import/restore cannot bypass it.
   await assert.rejects(db.query("update public.receipts set storage_path=$1 where user_id=$2 and storage_path=$3", [unused, owner, active]), /OCR_IMAGE_DELETION_CLAIMED/);
+  await assert.rejects(db.query("insert into public.receipts(user_id,storage_path) values($1,$2)", ["11111111-1111-4111-8111-111111111111", active]), /OCR_IMAGE_OWNER_MISMATCH/);
+  const alreadyDeleted = await image("legacy-deleted");
+  await db.query("update public.ocr_fallback_jobs set storage_deleted_at=now() where storage_path=$1", [alreadyDeleted]);
+  await assert.rejects(db.query("insert into public.receipts(user_id,storage_path) values($1,$2)", [owner, alreadyDeleted]), /OCR_IMAGE_DELETION_CLAIMED/);
   // A second still-live job sharing a path prevents cleanup of that path.
   const shared = await image("shared");
   await db.query(`insert into public.ocr_fallback_jobs(user_id,storage_path,local_confidence,idempotency_key,expires_at)
