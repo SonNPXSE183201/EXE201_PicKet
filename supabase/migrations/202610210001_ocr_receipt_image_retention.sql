@@ -2,6 +2,8 @@
 -- closes that gap; receipt/job writes and cleanup share the same path lock.
 alter table public.ocr_fallback_jobs
   add column storage_deletion_claimed_at timestamptz;
+create index receipts_storage_reference_idx on public.receipts(storage_path);
+create index ocr_fallback_storage_reference_idx on public.ocr_fallback_jobs(storage_path);
 
 create function public.protect_claimed_ocr_image()
 returns trigger
