@@ -9,6 +9,8 @@ import { listKeepsakes, onKeepsakesChanged, type Keepsake } from "@/features/kee
 import { cancelUserReminders, collectReminders, scheduleUserReminders } from "@/features/notifications/reminders";
 import { useSubscriptions } from "@/features/subscriptions/subscriptions-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
+import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
+import { useReminderPeriods } from "./use-reminder-periods";
 
 export function ReminderCoordinator() {
   const { session } = useAuth();
@@ -16,7 +18,9 @@ export function ReminderCoordinator() {
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
   const { transactions: history, loading: historyLoading, error: historyError, refresh: refreshHistory } = useTransactionHistory();
-  const [periodLimits, setPeriodLimits] = useState<Record<string, number>>({});
+  const month = new Date().toISOString().slice(0, 7);
+  const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(history, month);
+  const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
   useEffect(() => {
     if (!session) return;
@@ -43,18 +47,8 @@ export function ReminderCoordinator() {
     const unsubscribeCloud = onCloudKeepsakesChanged((owner) => { if (owner === userId) reload(); });
     return () => { active = false; unsubscribe(); unsubscribeCloud(); void cancelUserReminders(userId); };
   }, [session]);
-  useEffect(() => {
-    if (!session || !picketApi) return;
-    let active = true;
-    const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-    void picketApi.getPlanning(session.access_token, month).then((planning) => {
-      if (active) setPeriodLimits(Object.fromEntries(planning.periods.map((period) => [period.budgetId, period.limit])));
-    }).catch(() => { if (active) setPeriodLimits({}); });
-    return () => { active = false; };
-  }, [session, budgets]);
   useEffect(() => { if (session) void refreshHistory().catch(() => undefined); }, [session, bills, budgets, subscriptions, keepsakes, refreshHistory]);
-  const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits }), [bills, budgets, subscriptions, history, historyLoading, historyError, keepsakes, periodLimits]);
+  const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits, splits }), [bills, budgets, subscriptions, history, historyLoading, historyError, splitLoading, splitError, periodsReady, keepsakes, periodLimits, splits]);
   useEffect(() => {
     if (session) void scheduleUserReminders(session.user.id, items).catch(() => undefined);
   }, [session, items]);

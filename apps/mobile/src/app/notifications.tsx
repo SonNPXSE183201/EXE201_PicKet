@@ -1,6 +1,6 @@
 import { colors } from "@picket/design-tokens";
 import * as Notifications from "expo-notifications";
-import { Redirect, router, useFocusEffect } from "expo-router";
+import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 
@@ -16,7 +16,9 @@ import { listKeepsakes, type Keepsake } from "@/features/keepsakes/keepsake-stor
 import { loadReminderKeepsakes } from "@/features/notifications/keepsake-source";
 import { collectReminders, markReminderRead, readReminderIds, remindersEnabled, scheduleUserReminders, setRemindersEnabled } from "@/features/notifications/reminders";
 import { useSubscriptions } from "@/features/subscriptions/subscriptions-context";
-import { useTransactions } from "@/features/transactions/transactions-context";
+import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
+import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
+import { useReminderPeriods } from "@/features/notifications/use-reminder-periods";
 
 Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner:true, shouldShowList:true, shouldPlaySound:false, shouldSetBadge:false }) });
 
@@ -26,14 +28,17 @@ export default function NotificationsScreen() {
   const { bills } = useBills();
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
-  const { transactions } = useTransactions();
+  const { transactions, loading: historyLoading, error: historyError } = useTransactionHistory();
+  const month = new Date().toISOString().slice(0, 7);
+  const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, month);
+  const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
   const [enabled, setEnabled] = useState(false);
   const [read, setRead] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets, transactions }), [bills, subscriptions, keepsakes, budgets, transactions]);
+  const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, transactions, splits, periodLimits }), [bills, subscriptions, keepsakes, budgets, transactions, splits, periodLimits, periodsReady, historyLoading, historyError, splitLoading, splitError]);
   const dueSoon = reminders.filter((item) => item.notifyAt === null || new Date(item.dueAt).getTime() <= now + 7 * 86400000);
   useFocusEffect(useCallback(() => {
     if (!ownerId) return;

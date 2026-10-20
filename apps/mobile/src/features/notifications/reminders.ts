@@ -1,8 +1,9 @@
-import type { Bill, Budget, FinanceSubscription, Transaction } from "@picket/domain";
+import type { Bill, Budget, FinanceSubscription, Transaction, TransactionSplit } from "@picket/domain";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 
 import type { Keepsake } from "@/features/keepsakes/keepsake-store";
+import { budgetWarnings } from "./budget-warnings";
 
 export interface ReminderItem {
   id: string;
@@ -51,7 +52,7 @@ function notifyDate(iso: string, daysBefore: number): Date | null {
   return date > new Date() ? date : null;
 }
 
-export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceSubscription[]; keepsakes: Keepsake[]; budgets: Budget[]; transactions: Transaction[]; periodLimits?: Record<string, number> }): ReminderItem[] {
+export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceSubscription[]; keepsakes: Keepsake[]; budgets: Budget[]; transactions: Transaction[]; periodLimits?: Record<string, number>; splits?: TransactionSplit[] }): ReminderItem[] {
   const notices: ReminderItem[] = [];
   const now = Date.now();
   for (const bill of input.bills) {
@@ -72,11 +73,8 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
     }
   }
   const month = new Date().toISOString().slice(0, 7);
-  for (const budget of input.budgets) {
-    if (!budget.active) continue;
-    const spent = input.transactions.filter((item) => item.kind === "expense" && item.categoryId === budget.categoryId && item.occurredAt.slice(0, 7) === month).reduce((sum, item) => sum + item.amount, 0);
-    const limit = input.periodLimits?.[budget.id] ?? budget.defaultLimit;
-    if (limit > 0 && spent >= limit * budget.alertPercent / 100) notices.push({ id:`budget:${budget.id}:${month}`, label:`${budget.name} đã chạm ngưỡng cảnh báo`, dueAt:new Date().toISOString(), notifyAt:null });
+  for (const budget of budgetWarnings({ ...input, month })) {
+    notices.push({ id:`budget:${budget.id}:${month}`, label:`${budget.name} đã chạm ngưỡng cảnh báo`, dueAt:new Date().toISOString(), notifyAt:null });
   }
   return notices;
 }
