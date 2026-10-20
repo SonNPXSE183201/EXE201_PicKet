@@ -1,5 +1,12 @@
 export interface ReceiptImageCacheEntry { id: string; path: string; dataUri: string; usedAt: number }
 
+/** Build only from the current owner's decrypted cache; paths are the image identity. */
+export function indexReceiptImagePaths(items: ReceiptImageCacheEntry[]) {
+  const paths = new Map<string, string>();
+  for (const image of [...items].sort((a, b) => a.usedAt - b.usedAt)) paths.set(image.path, image.dataUri);
+  return paths;
+}
+
 export async function loadReceiptGallery<T>(owner: string, loader: { remote(): Promise<T[]>; cached(owner: string): Promise<T[] | null>; save(owner: string, rows: T[]): Promise<void>; onCached?(rows: T[]): void }) {
   // Cache-first metadata makes the calendar usable while network/media work
   // continues. Cache corruption must never prevent a successful remote read.

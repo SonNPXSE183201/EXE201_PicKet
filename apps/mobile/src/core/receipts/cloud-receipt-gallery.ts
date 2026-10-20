@@ -2,7 +2,7 @@ import { fromByteArray } from "base64-js";
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
-import { loadReceiptGallery, trimReceiptImages, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
+import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 
 export type GalleryEntry = { id: string; day: string; title: string; uri?: string; path?: string; transactionId?: string | null };
@@ -26,11 +26,13 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
   let images = (await readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images").catch(() => null))?.value ?? [];
   const validIds = new Set(result.rows.map((r) => r.id));
   images = trimReceiptImages(images, validIds);
-  const rows = result.rows.map((r) => ({ ...r, uri: images.find((image) => image.id === r.id && image.path === r.path)?.dataUri }));
+  const imagePaths = indexReceiptImagePaths(images);
+  const rows = result.rows.map((r) => ({ ...r, uri: r.path ? imagePaths.get(r.path) : undefined }));
   publish(rows, result.stale);
   let downloaded = false;
   for (const row of rows.filter((r) => r.day.startsWith(month))) {
     if (signal.aborted) throw new Error("aborted");
+    if (!row.uri && row.path) row.uri = imagePaths.get(row.path);
     if (row.uri || result.stale || !row.path || !supabase) continue;
     try {
       const signed = await supabase.storage.from("picket-media").createSignedUrl(row.path, 300);
@@ -46,6 +48,7 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
       const dataUri = `data:${mime};base64,${fromByteArray(bytes)}`;
       images = trimReceiptImages([...images, { id: row.id, path: row.path, dataUri, usedAt: Date.now() }], validIds);
       row.uri = dataUri;
+      imagePaths.set(row.path, dataUri);
       downloaded = true;
       publish(rows, result.stale);
     } catch { /* Keep the signed image or cached gallery usable when download fails. */ }

@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { loadReceiptGallery, trimReceiptImages } from "./receipt-gallery-policy";
+import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths } from "./receipt-gallery-policy";
+
+test("same owner-scoped storage path reuses cached image across receipt IDs, never across changed paths", () => {
+  const images = indexReceiptImagePaths([
+    { id: "one", path: "A/shared.png", dataUri: "old", usedAt: 1 },
+    { id: "two", path: "A/shared.png", dataUri: "fresh", usedAt: 2 },
+  ]);
+  assert.equal(images.get("A/shared.png"), "fresh");
+  assert.equal(images.get("B/shared.png"), undefined);
+  assert.equal(images.get("A/replaced.png"), undefined);
+});
 
 test("persists fresh metadata and uses only the requested owner's cached gallery offline", async () => {
   const writes: string[] = [];
