@@ -4,6 +4,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { readPublicConfig } from "@/core/config/public-config";
 import { secureAuthStorage } from "@/core/storage/secure-auth-storage";
+import { createAuthFetch } from "@/features/auth/auth-fetch";
 
 const config = readPublicConfig();
 // Same namespace as the SDK default; preserve existing installed sessions.
@@ -13,6 +14,7 @@ export const authStorageKey = config
 
 export const supabase: SupabaseClient | null = config
   ? createClient(config.supabaseUrl, config.supabasePublishableKey, {
+      global: { fetch: createAuthFetch(globalThis.fetch.bind(globalThis), `${config.supabaseUrl.replace(/\/$/, "")}/auth/v1`) },
       auth: {
         storageKey: authStorageKey!,
         storage: secureAuthStorage,
