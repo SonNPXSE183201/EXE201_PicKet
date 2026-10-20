@@ -21,6 +21,54 @@ Map<String, dynamic> transaction({bool archived = true}) => {
 };
 
 void main() {
+  for (final scenario in ['success', 'auth-error', 'write-error']) {
+    test('archive $scenario never starts a fallback read', () async {
+      var writes = 0;
+      final gateway = SupabaseGateway(
+        ApiConfig(
+          supabaseUrl: Uri.parse('https://project.supabase.co'),
+          supabasePublishableKey: 'publishable-key',
+        ),
+        client: MockClient((request) async {
+          if (request.url.path == '/auth/v1/user') {
+            return http.Response(
+              jsonEncode({'id': 'owner-id'}),
+              scenario == 'auth-error' ? 401 : 200,
+            );
+          }
+          expect(request.method, 'PATCH');
+          writes++;
+          return http.Response(
+            jsonEncode([transaction()]),
+            scenario == 'write-error' ? 403 : 200,
+          );
+        }),
+      );
+      addTearDown(gateway.close);
+      if (scenario == 'success') {
+        expect(
+          (await gateway.archiveTransaction(
+            'user-jwt',
+            'transaction-id',
+            1,
+          )).deletedAt,
+          isNotNull,
+        );
+      } else {
+        await expectLater(
+          gateway.archiveTransaction('user-jwt', 'transaction-id', 1),
+          throwsA(
+            isA<GatewayException>().having(
+              (error) => error.statusCode,
+              'status',
+              scenario == 'auth-error' ? 401 : 403,
+            ),
+          ),
+        );
+      }
+      expect(writes, scenario == 'auth-error' ? 0 : 1);
+    });
+  }
   for (final scenario in ['archived', 'active', 'hidden', 'read-error']) {
     test('archive retry handles $scenario without another mutation', () async {
       var writes = 0;

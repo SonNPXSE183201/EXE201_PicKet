@@ -1248,6 +1248,26 @@ class SupabaseGateway {
         )
         .timeout(const Duration(seconds: 20));
     _ensureSuccess(response);
+    final archived = _transactionList(response.body);
+    if (archived.isNotEmpty) return archived.single;
+
+    // A previous attempt may have committed before its response was lost.
+    // Read with the same user JWT so RLS still hides other owners' records.
+    final existingResponse = await _client
+        .get(
+          _uri('/rest/v1/transactions', {
+            'id': 'eq.$transactionId',
+            'select': _transactionColumns,
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(existingResponse);
+    final existing = _transactionList(existingResponse.body);
+    if (existing.length == 1 && existing.single.deletedAt != null) {
+      return existing.single;
+    }
+    // Active rows with a newer version remain genuine edit conflicts.
     return _singleTransaction(response.body, conflictOnEmpty: true);
   }
 
