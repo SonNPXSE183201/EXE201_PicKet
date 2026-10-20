@@ -44,3 +44,18 @@ test("a colliding foreign owner cannot overwrite a pending receipt", () => {
     assert.equal(row.user_id,"A");assert.equal(row.merchant,"A-private");
   } finally { db.close(); }
 });
+
+test("canonical request SQL pins the first encrypted value only for its owner", () => {
+  const {db,save}=fixture();
+  try {
+    save("A","original");
+    const source=readFileSync(new URL("./pending-receipt.ts",import.meta.url),"utf8");
+    const sql=source.match(/"UPDATE pending_receipt_drafts SET transaction_request_payload=COALESCE[^"\n]+"/)![0].slice(1,-1);
+    db.prepare(sql).run("enc-v1:first","capture-one","A");
+    db.prepare(sql).run("enc-v1:changed","capture-one","A");
+    db.prepare(sql).run("enc-v1:foreign","capture-one","B");
+    assert.equal(db.prepare("SELECT transaction_request_payload FROM pending_receipt_drafts").get()!.transaction_request_payload,"enc-v1:first");
+    save("A","edited after pin");
+    assert.equal(db.prepare("SELECT merchant FROM pending_receipt_drafts").get()!.merchant,"original");
+  } finally {db.close();}
+});

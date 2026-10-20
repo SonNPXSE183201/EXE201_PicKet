@@ -1,7 +1,9 @@
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as SQLite from "expo-sqlite";
-import type { ReceiptLineItemInput } from "@picket/domain";
+import type { CreateTransactionRequest, ReceiptLineItemInput } from "@picket/domain";
+import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
+import { createReceiptRequestJournal, parseReceiptRequest } from "./receipt-request-journal";
 
 export type PendingReceiptDraft = {
   id: string;
@@ -18,6 +20,7 @@ export type PendingReceiptDraft = {
   storagePath: string | null;
   transactionId: string | null;
   createdAt: string;
+  transactionRequest: CreateTransactionRequest | null;
 };
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -39,6 +42,7 @@ async function database() {
         line_items_json TEXT NOT NULL DEFAULT '[]',
         storage_path TEXT,
         transaction_id TEXT,
+        transaction_request_payload TEXT,
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS pending_receipt_drafts_owner_idx
@@ -52,6 +56,7 @@ async function database() {
         "ALTER TABLE pending_receipt_drafts ADD COLUMN line_items_json TEXT NOT NULL DEFAULT '[]'",
       );
     }
+    if (!columns.some((column) => column.name === "transaction_request_payload")) await db.execAsync("ALTER TABLE pending_receipt_drafts ADD COLUMN transaction_request_payload TEXT");
     return db;
   });
   return databasePromise;
@@ -62,7 +67,7 @@ function extensionOf(uri: string) {
   return (match?.[1] ?? "jpg").toLowerCase().replace("jpeg", "jpg");
 }
 
-type PendingReceiptInput = Omit<PendingReceiptDraft, "id" | "imageUri" | "createdAt"> & { imageUri: string; id?: string };
+type PendingReceiptInput = Omit<PendingReceiptDraft, "id" | "imageUri" | "createdAt" | "transactionRequest"> & { imageUri: string; id?: string };
 const handoffs = new Map<string, Promise<PendingReceiptDraft>>();
 
 export function savePendingReceiptDraft(input: PendingReceiptInput) {
@@ -83,7 +88,7 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
   const existing = claimed ? await getPendingReceiptDraft(id, input.userId) : null;
   // Keep the original image/payload once upload or transaction submission has
   // made progress. A retry must not acquire a new idempotency identity.
-  if (existing?.storagePath || existing?.transactionId) return existing;
+  if (existing?.storagePath || existing?.transactionId || existing?.transactionRequest) return existing;
   const folder = new Directory(Paths.document, "receipt-drafts");
   folder.create({ idempotent: true, intermediates: true });
   const destination = existing ? new File(existing.imageUri) : new File(folder, `${id}.${extensionOf(input.imageUri)}`);
@@ -103,6 +108,7 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
     id,
     imageUri: destination.uri,
     createdAt: existing?.createdAt ?? new Date().toISOString(),
+    transactionRequest: null,
   };
   try {
     await db.runAsync(
@@ -118,7 +124,8 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
          raw_text=excluded.raw_text, line_items_json=excluded.line_items_json
        WHERE pending_receipt_drafts.user_id=excluded.user_id
          AND pending_receipt_drafts.transaction_id IS NULL
-         AND pending_receipt_drafts.storage_path IS NULL`,
+         AND pending_receipt_drafts.storage_path IS NULL
+         AND pending_receipt_drafts.transaction_request_payload IS NULL`,
       draft.id,
       draft.userId,
       draft.imageUri,
@@ -164,10 +171,11 @@ export async function getPendingReceiptDraft(id: string, userId: string) {
     storage_path: string | null;
     transaction_id: string | null;
     created_at: string;
+    transaction_request_payload: string | null;
   }>(
     `SELECT id, user_id, image_uri, merchant, amount, purchased_at, confidence,
             provider, review_required, raw_text, line_items_json, storage_path,
-            transaction_id, created_at
+            transaction_id, created_at, transaction_request_payload
        FROM pending_receipt_drafts WHERE id = ? AND user_id = ?`,
     id,
     userId,
@@ -188,7 +196,20 @@ export async function getPendingReceiptDraft(id: string, userId: string) {
     storagePath: row.storage_path,
     transactionId: row.transaction_id,
     createdAt: row.created_at,
+    transactionRequest: row.transaction_request_payload === null ? null : parseReceiptRequest(await decryptLocalPayload(row.transaction_request_payload, `pending-receipt-request:${userId}:${id}`)),
   } satisfies PendingReceiptDraft;
+}
+
+const receiptRequestJournal = createReceiptRequestJournal({
+  read: async (owner,id) => (await getPendingReceiptDraft(id,owner))?.transactionRequest ?? null,
+  saveFirst: async (owner,id,request) => {
+    const payload = await encryptLocalPayload(request, `pending-receipt-request:${owner}:${id}`);
+    await (await database()).runAsync("UPDATE pending_receipt_drafts SET transaction_request_payload=COALESCE(transaction_request_payload,?) WHERE id=? AND user_id=?",payload,id,owner);
+  },
+});
+export async function pinPendingReceiptRequest(draft: PendingReceiptDraft, request: CreateTransactionRequest) {
+  const transactionRequest = await receiptRequestJournal.pin(draft.userId,draft.id,request);
+  return { ...draft, transactionRequest };
 }
 
 function parseLineItems(raw: string): ReceiptLineItemInput[] {

@@ -19,6 +19,7 @@ import { ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface, TopAppBar
 import { picketApi } from "@/core/api/client";
 import {
   getPendingReceiptDraft,
+  pinPendingReceiptRequest,
   removePendingReceiptDraft,
   updatePendingReceiptProgress,
   type PendingReceiptDraft,
@@ -43,6 +44,7 @@ type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
 
 export default function NewTransactionScreen() {
   const { session, localMode } = useAuth();
+  const owner = session?.user.id ?? (localMode ? guestOwnerId : null);
   const { accounts } = useAccounts();
   const { categories, create, refresh, transactions } = useTransactions();
   const params = useLocalSearchParams<{
@@ -65,12 +67,17 @@ export default function NewTransactionScreen() {
   const [loadingDraft, setLoadingDraft] = useState(Boolean(params.receiptDraftId));
 
   useEffect(() => {
-    if ((!session && !localMode) || !params.receiptDraftId) return;
+    if (!owner || !params.receiptDraftId) return;
     let active = true;
-    void getPendingReceiptDraft(params.receiptDraftId, session?.user.id ?? guestOwnerId)
+    void getPendingReceiptDraft(params.receiptDraftId, owner)
       .then((draft) => {
         if (!active) return;
         setReceiptDraft(draft);
+        if (draft) {
+          const original = draft.transactionRequest;
+          setTitle(original?.title ?? draft.merchant); setAmount(String(original?.amount ?? draft.amount));
+          if (original) { setKind(original.kind); setAccountId(original.accountId); setCategoryId(original.categoryId ?? ""); setNote(original.note ?? ""); }
+        }
         if (!draft) setMessage("Bản nháp hóa đơn không còn trên thiết bị.");
       })
       .catch(() => {
@@ -82,7 +89,7 @@ export default function NewTransactionScreen() {
     return () => {
       active = false;
     };
-  }, [localMode, params.receiptDraftId, session]);
+  }, [owner, params.receiptDraftId]);
 
   const availableCategories = useMemo(
     () => categories.filter((item) => item.kind === kind || item.kind === "both"),
@@ -103,7 +110,7 @@ export default function NewTransactionScreen() {
     if (loadingDraft || busy) return;
     if (params.receiptDraftId && !receiptDraft) return setMessage("Không đọc được bản nháp ảnh. Hãy quay lại bước quét; giao dịch chưa được tạo.");
     const parsedAmount = Number.parseInt(amount, 10);
-    if (!selectedAccountId) return setMessage("Hãy tạo hoặc chọn một tài khoản.");
+    if (!selectedAccountId && !receiptDraft?.transactionRequest) return setMessage("Hãy tạo hoặc chọn một tài khoản.");
     if (!title.trim()) return setMessage("Hãy nhập nội dung giao dịch.");
     if (!/^\d+$/.test(amount) || !Number.isSafeInteger(parsedAmount) || parsedAmount <= 0 || parsedAmount > MAX_MONEY) {
       return setMessage("Số tiền phải là số nguyên từ 1 đến 9.000.000.000.000 VND.");
@@ -111,7 +118,7 @@ export default function NewTransactionScreen() {
     setBusy(true);
     setMessage(null);
     try {
-      const request = {
+      let request = receiptDraft?.transactionRequest ?? {
         accountId: selectedAccountId,
         amount: parsedAmount,
         categoryId: selectedCategoryId || null,
@@ -149,9 +156,9 @@ export default function NewTransactionScreen() {
         session.access_token,
         {
           imageSha256: image.sha256,
-          merchant: title.trim(),
+          merchant: request.title,
           purchasedAt: receiptDraft.purchasedAt,
-          total: parsedAmount,
+          total: request.amount,
         },
       );
       if (duplicateResult.duplicates.length > 0) {
@@ -193,7 +200,9 @@ export default function NewTransactionScreen() {
         if (!shouldContinue) return;
       }
 
-      let draft = receiptDraft;
+      let draft: PendingReceiptDraft = await pinPendingReceiptRequest(receiptDraft, request);
+      request = draft.transactionRequest!;
+      setReceiptDraft(draft);
       if (!draft.storagePath) {
         const storagePath = await uploadReceiptImage({
           userId: session.user.id,
@@ -218,9 +227,9 @@ export default function NewTransactionScreen() {
       const receipt = await picketApi.createReceipt(session.access_token, {
         transactionId: draft.transactionId,
         storagePath: draft.storagePath!,
-        merchant: title.trim(),
-        detectedTotal: parsedAmount,
-        purchasedAt: draft.purchasedAt,
+        merchant: request.title,
+        detectedTotal: request.amount,
+        purchasedAt: request.occurredAt,
         currencyCode: "VND",
         confidence: draft.confidence,
         ocrProvider: draft.provider,
@@ -264,7 +273,7 @@ export default function NewTransactionScreen() {
             </View>
           </View>
         )}
-        <View accessibilityRole="radiogroup" style={styles.segment}>
+        {!receiptDraft?.transactionRequest && <View accessibilityRole="radiogroup" style={styles.segment}>
           {(["expense", "income"] as const).map((value) => (
             <Pressable accessibilityRole="radio" accessibilityState={{ checked: kind === value }} key={value} onPress={() => { setKind(value); setCategoryId(""); }} style={[styles.segmentItem, kind === value && styles.segmentSelected]}>
               <Text style={[styles.segmentText, kind === value && styles.segmentTextSelected]}>
@@ -272,9 +281,18 @@ export default function NewTransactionScreen() {
               </Text>
             </Pressable>
           ))}
-        </View>
+        </View>}
 
         <Surface style={styles.form}>
+        {receiptDraft?.transactionRequest ? <View>
+          <Text style={styles.label}>Yêu cầu gốc đã được lưu an toàn</Text>
+          <Text style={styles.receiptHint}>Thử lại sẽ giữ nguyên ví, danh mục, thời gian và số tiền để không tạo giao dịch trùng. Hoàn tất yêu cầu này trước khi sửa giao dịch.</Text>
+          <Text style={styles.label}>{receiptDraft.transactionRequest.title}</Text>
+          <Text style={styles.amountInput}>{receiptDraft.transactionRequest.amount.toLocaleString("vi-VN")} ₫</Text>
+          <Text style={styles.receiptHint}>{accounts.find(account => account.id === receiptDraft.transactionRequest?.accountId)?.name ?? "Ví của yêu cầu gốc"} · {receiptDraft.transactionRequest.kind === "expense" ? "Khoản chi" : "Khoản thu"}</Text>
+          <Text style={styles.receiptHint}>{new Date(receiptDraft.transactionRequest.occurredAt).toLocaleString("vi-VN")}</Text>
+          {receiptDraft.transactionRequest.note ? <Text style={styles.receiptHint}>{receiptDraft.transactionRequest.note}</Text> : null}
+        </View> : <>
         <FieldLabel>Số tiền</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel="Số tiền giao dịch" keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>VND</Text></View>
         <FieldLabel>Nội dung</FieldLabel><TextInput accessibilityLabel="Nội dung giao dịch" placeholder="Ví dụ: Ăn trưa" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
 
@@ -294,8 +312,9 @@ export default function NewTransactionScreen() {
         </View>
 
         <FieldLabel>Ghi chú</FieldLabel><TextInput accessibilityLabel="Ghi chú giao dịch, không bắt buộc" multiline numberOfLines={3} placeholder="Không bắt buộc" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
+        </>}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
-        <PrimaryAction busy={busy} disabled={loadingDraft} label="Lưu giao dịch" onPress={() => void submit()} />
+        <PrimaryAction busy={busy} disabled={loadingDraft} label={receiptDraft?.transactionRequest ? "Thử lại yêu cầu cũ" : "Lưu giao dịch"} onPress={() => void submit()} />
         </Surface>
     </PicketScreen>
   );
