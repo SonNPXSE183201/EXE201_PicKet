@@ -110,7 +110,9 @@ export default function CaptureReceiptScreen() {
   }, [ownerId, restoreRevision]);
 
   useEffect(() => {
-    if (!hydrated || !ownerId || !captureRef.current || isRecognizing || isQueueingFallback) return;
+    // Fallback requests have their own journal. Keep manual edits durable even
+    // while a remote job is pending or polling; process death must not lose them.
+    if (!hydrated || !ownerId || !captureRef.current || isRecognizing) return;
     const snapshot: CaptureSnapshot = {
       version: 1, ...captureRef.current, title, amount, purchasedAt,
       explicitDate: explicitDate.current, attachReceipt, provider,
@@ -272,7 +274,8 @@ export default function CaptureReceiptScreen() {
   }
 
   function confirmServerFallback() {
-    if (!imageUri || !session) {
+    const capture = captureRef.current;
+    if (!imageUri || !session || !capture) {
       setMessage("Bạn cần đăng nhập và chọn ảnh trước khi dùng OCR nâng cao.");
       return;
     }
@@ -289,21 +292,25 @@ export default function CaptureReceiptScreen() {
             if (!current()) return;
             setIsQueueingFallback(true);
             setMessage("Đang tải ảnh hóa đơn lên vùng riêng tư…");
-            void queueServerOcrFallback({
+            const controller = new AbortController();
+            pollingController.current = controller;
+            void restoreCaptureImage(session.user.id, capture.imageRef).then(restoredImage => queueServerOcrFallback({
               accessToken: session.access_token,
               userId: session.user.id,
-              imageUri,
+              imageUri: restoredImage,
               localConfidence,
-            })
-              .then(async (job) => {
+              captureId: capture.id,
+              imageRef: capture.imageRef,
+              baseline: { title, amount, purchasedAt },
+              signal: controller.signal,
+            }))
+              .then(async ({ job, baseline }) => {
                 if (!current()) return;
                 setFallbackStoragePath(job.storagePath);
                 setFallbackStatus(job.status);
                 setMessage(
                   "Ảnh đã vào hàng đợi OCR nâng cao. Đang chờ kết quả…",
                 );
-                const controller = new AbortController();
-                pollingController.current = controller;
                 const completed = await pollServerOcrFallback({
                   accessToken: session.access_token,
                   jobId: job.id,
@@ -313,11 +320,14 @@ export default function CaptureReceiptScreen() {
                 if (!current()) return;
                 if (completed.status === "completed" && completed.result) {
                   const parsed = parseServerOcrResult(completed.result);
-                  if (parsed.merchant) setTitle(parsed.merchant);
-                  if (parsed.amount) setAmount(String(parsed.amount));
+                  // A late server result is a suggestion, not permission to
+                  // overwrite edits made during polling or after restart.
+                  if (parsed.merchant) setTitle(current => current === baseline.title ? parsed.merchant! : current);
+                  if (parsed.amount) setAmount(current => current === baseline.amount ? String(parsed.amount) : current);
                   setRawText(parsed.rawText || null);
                   setLineItems(parsed.lineItems);
-                  setPurchasedAt(receiptCaptureDate(explicitDate.current, parsed.date));
+                  setPurchasedAt(current => current === baseline.purchasedAt
+                    ? receiptCaptureDate(explicitDate.current, parsed.date) : current);
                   setProvider("pp-ocr");
                   setLocalConfidence(parsed.confidence ?? 0);
                   setNeedsFallback(parsed.needsReview);
@@ -527,7 +537,7 @@ export default function CaptureReceiptScreen() {
           </Text>
         )}
 
-        {serverFallbackEnabled && !localMode && needsFallback && fallbackStatus === null && (
+        {serverFallbackEnabled && !localMode && needsFallback && !["completed", "failed", "cancelled", "expired"].includes(fallbackStatus ?? "") && (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ busy: isQueueingFallback, disabled: isRecognizing || isQueueingFallback }}

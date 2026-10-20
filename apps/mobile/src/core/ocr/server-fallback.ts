@@ -3,6 +3,8 @@ import * as Crypto from "expo-crypto";
 
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
+import { fallbackOutbox, readFallbackIntent } from "./fallback-storage";
+import { uploadVerifiedFallbackImage } from "./fallback-upload";
 
 const supportedExtension = /\.(jpe?g|png|webp)(?:\?.*)?$/i;
 
@@ -17,42 +19,71 @@ function imageMetadata(imageUri: string) {
 
 /**
  * Uploads only after explicit user consent, then queues the private image for
- * server OCR. If job creation fails, the just-uploaded object is removed.
+ * server OCR. Submitted requests are ambiguous on transport failure: retain
+ * the private object and retry the durable key instead of deleting job input.
  */
 export async function queueServerOcrFallback(input: {
   accessToken: string;
   userId: string;
   imageUri: string;
   localConfidence: number;
-}): Promise<OcrFallbackJob> {
+  captureId: string;
+  imageRef: string;
+  baseline: { title: string; amount: string; purchasedAt: string };
+  signal?: AbortSignal;
+}): Promise<{ job: OcrFallbackJob; baseline: typeof input.baseline }> {
   if (!supabase || !picketApi) {
     throw new Error("Cấu hình OCR máy chủ chưa sẵn sàng.");
   }
-  const { extension, contentType } = imageMetadata(input.imageUri);
-  const idempotencyKey = Crypto.randomUUID();
-  const storagePath = `${input.userId}/ocr/${idempotencyKey}.${extension}`;
-  const response = await fetch(input.imageUri);
-  if (!response.ok) throw new Error("Không đọc được ảnh hóa đơn.");
-  const image = await response.arrayBuffer();
-  if (image.byteLength === 0 || image.byteLength > 10 * 1024 * 1024) {
-    throw new Error("Ảnh hóa đơn phải nhỏ hơn 10 MB.");
+  const api = picketApi, storage = supabase.storage.from("picket-media");
+  const existing = await readFallbackIntent(input.userId, input.captureId);
+  const { extension } = imageMetadata(input.imageUri);
+  let image: ArrayBuffer | null = null;
+  const digest = async (bytes: ArrayBuffer) => Array.from(new Uint8Array(await Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, bytes)), byte => byte.toString(16).padStart(2, "0")).join("");
+  async function readImage() {
+    if (image) return image;
+    const response = await fetch(input.imageUri);
+    if (!response.ok) throw new Error("Không đọc được ảnh hóa đơn.");
+    image = await response.arrayBuffer();
+    if (image.byteLength === 0 || image.byteLength > 10 * 1024 * 1024) throw new Error("Ảnh hóa đơn phải nhỏ hơn 10 MB.");
+    return image;
   }
-  const upload = await supabase.storage
-    .from("picket-media")
-    .upload(storagePath, image, { contentType, upsert: false });
-  if (upload.error) throw upload.error;
-
-  try {
-    const result = await picketApi.createOcrFallbackJob(input.accessToken, {
-      storagePath,
-      localConfidence: Math.max(0, Math.min(1, input.localConfidence)),
-      idempotencyKey,
-    });
-    return result.job;
-  } catch (error) {
-    await supabase.storage.from("picket-media").remove([storagePath]);
-    throw error;
-  }
+  const sha256 = existing?.sha256 ?? await digest(await readImage());
+  const job = await fallbackOutbox.run({
+    owner: input.userId, captureId: input.captureId, imageRef: input.imageRef,
+    extension: existing?.extension ?? extension, sha256,
+    localConfidence: input.localConfidence, baseline: input.baseline,
+  }, {
+    isActive: () => !input.signal?.aborted,
+    upload: async intent => {
+      const bytes = await readImage();
+      await uploadVerifiedFallbackImage(bytes, intent.sha256, {
+        digest,
+        upload: async () => {
+          if (input.signal?.aborted) { const error = new Error("OCR attempt aborted"); error.name = "AbortError"; throw error; }
+          const result = await storage.upload(intent.storagePath, bytes, {
+            contentType: intent.extension === "jpg" ? "image/jpeg" : `image/${intent.extension}`, upsert: false,
+          });
+          if (result.error) throw result.error;
+        },
+        readExisting: async () => {
+          if (input.signal?.aborted) throw new Error("OCR attempt aborted");
+          const signed = await storage.createSignedUrl(intent.storagePath, 60);
+          if (signed.error || !signed.data?.signedUrl) throw new Error("Cannot verify OCR image");
+          const remote = await fetch(signed.data.signedUrl, { signal: input.signal });
+          if (!remote.ok || Number(remote.headers.get("content-length")) > 10 * 1024 * 1024) throw new Error("Cannot verify OCR image");
+          return remote.arrayBuffer();
+        },
+      });
+    },
+    create: async intent => (await api.createOcrFallbackJob(input.accessToken, {
+      storagePath: intent.storagePath, localConfidence: intent.localConfidence, idempotencyKey: intent.captureId,
+    })).job,
+    get: async intent => (await api.getOcrFallbackJob(input.accessToken, intent.jobId!)).job,
+  });
+  const persisted = await readFallbackIntent(input.userId, input.captureId);
+  if (!persisted?.baseline) throw new Error("Không mở được nội dung OCR gốc.");
+  return { job, baseline: persisted.baseline };
 }
 
 const terminalStatuses = new Set([

@@ -77,3 +77,22 @@ test("lost local acknowledgement after job ID persistence recovers through GET",
   await createFallbackOutbox(io).run(input, f.effects);
   assert.deepEqual(f.events, ["upload", "create", "get"]);
 });
+
+test("switching owner during upload stops job creation, while an already committed job remains recoverable", async () => {
+  const f = fixture(); let active = true;
+  await assert.rejects(createFallbackOutbox(f.io).run(input, { ...f.effects, isActive: () => active,
+    upload: async intent => { await f.effects.upload(intent); active = false; },
+  }), { name: "AbortError" });
+  assert.deepEqual(f.events, ["upload"]);
+  assert.equal(f.rows.get(input.owner + ":" + input.captureId)?.phase, "submitted");
+  await createFallbackOutbox(f.io).run(input, f.effects);
+  assert.deepEqual(f.events, ["upload", "create"]);
+});
+
+test("the original manual-edit baseline survives retry rather than adopting later edits", async () => {
+  const f = fixture();
+  const baseline = { title: "original", amount: "123", purchasedAt: "2026-10-21T00:00:00Z" };
+  await createFallbackOutbox(f.io).run({ ...input, baseline }, f.effects);
+  await createFallbackOutbox(f.io).run({ ...input, baseline: { ...baseline, title: "edited" } }, f.effects);
+  assert.deepEqual(f.rows.get(input.owner + ":" + input.captureId)?.baseline, baseline);
+});
