@@ -100,12 +100,6 @@ export default function CaptureReceiptScreen() {
   }
 
   async function choose(source: "camera" | "library") {
-    pollingController.current?.abort();
-    setMessage(null);
-    setFallbackStatus(null);
-    setFallbackStoragePath(null);
-    setAttachReceipt(false);
-    setLineItems([]);
     try {
       // Keep the native picker lazy so a stale development-client rebuild never
       // prevents login, finance, or offline data from starting.
@@ -135,6 +129,12 @@ export default function CaptureReceiptScreen() {
         setMessage("Không đọc được ảnh đã chọn.");
         return;
       }
+      pollingController.current?.abort();
+      setMessage(null);
+      setFallbackStatus(null);
+      setFallbackStoragePath(null);
+      setAttachReceipt(true);
+      setLineItems([]);
       setImageUri(uri);
       await runOcr(uri);
     } catch {
