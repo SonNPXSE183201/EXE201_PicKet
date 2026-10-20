@@ -59,3 +59,8 @@ test("canonical request SQL pins the first encrypted value only for its owner", 
     assert.equal(db.prepare("SELECT merchant FROM pending_receipt_drafts").get()!.merchant,"original");
   } finally {db.close();}
 });
+
+test("moving an Expo File must not let temp cleanup delete the destination", () => {
+  const source=readFileSync(new URL("./pending-receipt.ts",import.meta.url),"utf8");
+  assert.match(source,/temp\.uri === tempUri && temp\.exists/);
+});
