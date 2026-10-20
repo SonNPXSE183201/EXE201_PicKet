@@ -333,7 +333,8 @@ export default function CaptureReceiptScreen() {
                   setProvider("pp-ocr");
                   setLocalConfidence(parsed.confidence ?? 0);
                   setNeedsFallback(parsed.needsReview);
-                  setAttachReceipt(true);
+                  // OCR consent is separate from attaching an image to a
+                  // transaction. Keep the user's current attachment choice.
                   setMessage(
                     "OCR nâng cao đã hoàn tất. Hãy kiểm tra kết quả trước khi lưu.",
                   );
