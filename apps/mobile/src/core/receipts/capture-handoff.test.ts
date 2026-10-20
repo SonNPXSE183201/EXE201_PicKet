@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+
+test("an unsubmitted draft with a missing copied image can be repaired from its intact capture", () => {
+  const source = readFileSync(new URL("./pending-receipt.ts", import.meta.url), "utf8");
+  assert.match(source, /const createdImage = !existing \|\| !destination.exists/);
+  assert.ok(source.indexOf("existing?.transactionRequest") < source.indexOf("const createdImage"));
+});
 import { DatabaseSync } from "node:sqlite";
 
 test("reopening one capture uses the same pending receipt and transaction idempotency identity", () => {
