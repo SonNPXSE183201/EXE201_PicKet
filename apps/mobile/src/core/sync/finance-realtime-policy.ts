@@ -20,3 +20,20 @@ let financeChannelSequence = 0;
 export function nextFinanceChannelName(userId: string): string {
   return `finance-sync-${userId}-${++financeChannelSequence}`;
 }
+
+/** Debounce new work, never self-retry in a tight loop after an offline failure. */
+export function createQueueWakeup(run: () => void) {
+  let active = true;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return {
+    request(pending: number, syncing: boolean) {
+      if (!active || pending <= 0 || syncing) return;
+      if (timer !== undefined) clearTimeout(timer);
+      timer = setTimeout(() => { timer = undefined; if (active) run(); }, 350);
+    },
+    dispose() {
+      active = false;
+      if (timer !== undefined) clearTimeout(timer);
+    },
+  };
+}
