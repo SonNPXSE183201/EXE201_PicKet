@@ -1,4 +1,5 @@
 import type { Bill, Budget, BudgetMethod, Category, CurrentProfile, FinanceSubscription, FinancialAccount, PlanningMonthClose, Transaction, TransactionSplit } from "@picket/domain";
+import { MAX_MONEY } from "@picket/domain";
 
 export type GuestCollection = "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions";
 
@@ -23,6 +24,7 @@ export type GuestMutation =
   | { type: "category.upsert"; value: Category }
   | { type: "category.archive"; id: string }
   | { type: "transaction.upsert"; value: Transaction }
+  | { type: "transaction.createOnce"; value: Transaction }
   | { type: "transaction.archive"; id: string }
   | { type: "split.replace"; transactionId: string; values: TransactionSplit[] }
   | { type: "budget.upsert"; value: Budget }
@@ -70,6 +72,21 @@ export function guestBudgetSpent(state: GuestFinance, budget: Budget, month: str
 
 export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation): GuestFinance {
   if (mutation.type === "profile.replace") return { ...state, profile: mutation.value };
+  if (mutation.type === "transaction.createOnce") {
+    const candidate = mutation.value;
+    if (!Number.isSafeInteger(candidate.amount) || candidate.amount <= 0 || candidate.amount > MAX_MONEY) throw new Error("Số tiền hóa đơn không hợp lệ.");
+    if (candidate.deletedAt || candidate.destinationAccountId || candidate.refundOfTransactionId || !["income", "expense"].includes(candidate.kind)) throw new Error("Giao dịch hóa đơn không hợp lệ.");
+    const previous = state.transactions.find(item => item.id === candidate.id);
+    if (previous) {
+      const fields = ["title", "amount", "kind", "accountId", "categoryId", "occurredAt", "note", "destinationAccountId", "refundOfTransactionId"] as const;
+      if (previous.deletedAt || candidate.deletedAt || fields.some(field => (previous[field] ?? null) !== (candidate[field] ?? null))) {
+        throw new Error("Giao dịch của bản nháp đã thay đổi; không thể ghi đè khi thử lại.");
+      }
+      return state;
+    }
+    if (!state.accounts.some(item => item.id === candidate.accountId && !item.deletedAt && !item.archived)) throw new Error("Hãy tạo hoặc chọn ví đang hoạt động trước khi ghi giao dịch.");
+    return applyGuestMutation(state, { type: "transaction.upsert", value: candidate });
+  }
   if (mutation.type === "transaction.upsert") {
     const previous = state.transactions.find((item) => item.id === mutation.value.id);
     if (state.planningCloses[mutation.value.occurredAt.slice(0, 7)] || (previous && state.planningCloses[previous.occurredAt.slice(0, 7)])) throw new Error("Không thể sửa giao dịch của tháng đã chốt.");

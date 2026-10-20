@@ -45,7 +45,7 @@ interface TransactionsContextValue {
   createCategory(request: CreateCategoryRequest): Promise<Category>;
   updateCategory(id: string, request: UpdateCategoryRequest): Promise<Category>;
   archiveCategory(id: string, expectedVersion: number): Promise<void>;
-  create(request: CreateTransactionRequest): Promise<Transaction>;
+  create(request: CreateTransactionRequest, guestReceiptId?: string): Promise<Transaction>;
   createTransfer(request: CreateTransferRequest): Promise<Transaction>;
   createRefund(id: string, request: CreateRefundRequest): Promise<Transaction>;
   update(id: string, request: UpdateTransactionRequest): Promise<Transaction>;
@@ -194,13 +194,17 @@ export function TransactionsProvider({ children }: PropsWithChildren) {
           throw new OfflineQueuedError("category.archive");
         }
       },
-      async create(request) {
+      async create(request, guestReceiptId) {
         if (localMode) {
-          if (!guest.data.accounts.some((item) => item.id === request.accountId)) throw new Error("Hãy tạo ví trước khi ghi giao dịch.");
+          if (!guestReceiptId && !guest.data.accounts.some((item) => item.id === request.accountId)) throw new Error("Hãy tạo ví trước khi ghi giao dịch.");
           const now = new Date().toISOString();
-          const transaction: Transaction = { id: Crypto.randomUUID(), title: request.title, amount: request.amount, kind: request.kind, accountId: request.accountId, destinationAccountId: null, categoryId: request.categoryId ?? null, occurredAt: request.occurredAt, note: request.note ?? "", refundOfTransactionId: null, version: 1, createdAt: now, updatedAt: now, deletedAt: null };
-          await guest.commit({ type: "transaction.upsert", value: transaction });
-          return transaction;
+          const transaction: Transaction = { id: guestReceiptId ?? Crypto.randomUUID(), title: request.title, amount: request.amount, kind: request.kind, accountId: request.accountId, destinationAccountId: null, categoryId: request.categoryId ?? null, occurredAt: request.occurredAt, note: request.note ?? "", refundOfTransactionId: null, version: 1, createdAt: now, updatedAt: now, deletedAt: null };
+          let accepted = transaction;
+          await guest.commit(current => {
+            if (guestReceiptId) accepted = current.transactions.find(item => item.id === guestReceiptId) ?? transaction;
+            return { type: guestReceiptId ? "transaction.createOnce" : "transaction.upsert", value: transaction };
+          });
+          return accepted;
         }
         if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
         const idempotencyKey = makeIdempotencyKey(session.user.id);

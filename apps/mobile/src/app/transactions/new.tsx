@@ -137,16 +137,19 @@ export default function NewTransactionScreen() {
         return;
       }
       if (localMode) {
-        let draft = receiptDraft;
-        if (!draft.transactionId) {
-          const created = await create(request);
-          draft = await updatePendingReceiptProgress(draft, { transactionId: created.id });
-          setReceiptDraft(draft);
-        } else if (!transactions.some((item) => item.id === draft.transactionId)) {
+        let draft: PendingReceiptDraft = await pinPendingReceiptRequest(receiptDraft, request);
+        request = draft.transactionRequest!;
+        setReceiptDraft(draft);
+        const image = await inspectReceiptImage(draft.imageUri);
+        if (draft.transactionId && !transactions.some((item) => item.id === draft.transactionId)) {
           throw new Error("Không tìm thấy giao dịch của bản nháp hóa đơn.");
         }
-        const image = await inspectReceiptImage(draft.imageUri);
-        await saveGuestReceipt(makeGuestReceipt({ transactionId: draft.transactionId!, imageBase64: fromByteArray(new Uint8Array(image.bytes)), contentType: image.contentType, merchant: title.trim(), amount: parsedAmount, purchasedAt: draft.purchasedAt, rawText: draft.rawText, lineItems: draft.lineItems }));
+        const created = await create(request, draft.transactionId ?? draft.id);
+        if (!draft.transactionId) {
+          draft = await updatePendingReceiptProgress(draft, { transactionId: created.id });
+          setReceiptDraft(draft);
+        }
+        await saveGuestReceipt(makeGuestReceipt({ transactionId: draft.transactionId!, imageBase64: fromByteArray(new Uint8Array(image.bytes)), contentType: image.contentType, merchant: request.title, amount: request.amount, purchasedAt: request.occurredAt, rawText: draft.rawText, lineItems: draft.lineItems }));
         await removePendingReceiptDraft(draft);
         if (params.captureDraftId) await captureJournal.complete(guestOwnerId, params.captureDraftId).catch(() => undefined);
         finishReceiptFlow(router, { transactionId: draft.transactionId!, month: calendarReceiptDay({ purchasedAt: draft.purchasedAt }, request.occurredAt)!.slice(0, 7) });
