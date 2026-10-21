@@ -35,6 +35,7 @@ RUN addgroup --system --gid 1001 nodejs \
 
 COPY --from=build --chown=nextjs:nodejs /workspace/web/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /workspace/web/.next/static ./web/.next/static
+COPY --from=build --chown=nextjs:nodejs /workspace/web/public ./web/public
 
 USER nextjs
 EXPOSE 3000
