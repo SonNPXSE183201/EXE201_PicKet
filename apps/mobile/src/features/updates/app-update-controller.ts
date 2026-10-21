@@ -1,5 +1,5 @@
 import type { AppRelease, AppUpdateResult } from "./app-update-policy";
-export type UpdatePhase = "idle" | "checking" | "available" | "current" | "unsupported" | "play-store" | "downloading" | "ready" | "permission" | "installer-opened" | "error";
+export type UpdatePhase = "idle" | "checking" | "available" | "current" | "unsupported" | "play-store" | "downloading" | "ready" | "permission" | "opening-installer" | "installer-opened" | "error";
 export type UpdateSnapshot = { phase: UpdatePhase; progress: number; release?: AppRelease; file?: string };
 type Dependencies = {
   check(): Promise<AppUpdateResult>;
@@ -12,9 +12,10 @@ export function createAppUpdateController(deps: Dependencies, changed: (state: U
   let active = true, generation = 0;
   let abort: AbortController | null = null;
   const publish = (next: UpdateSnapshot) => { if (active) { state = next; changed(next); } };
-  const busy = () => ["checking", "downloading"].includes(state.phase);
+  const busy = () => ["checking", "downloading", "opening-installer"].includes(state.phase);
   return {
     snapshot: () => state,
+    activate() { active = true; },
     async check() {
       if (!active || busy()) return;
       const current = ++generation;
@@ -42,7 +43,9 @@ export function createAppUpdateController(deps: Dependencies, changed: (state: U
       if (!active || !["ready", "permission", "installer-opened"].includes(state.phase) || !state.file || !state.release) return;
       if (!deps.canInstall()) { publish({ ...state, phase: "permission" }); return; }
       const current = ++generation;
-      try { await deps.openInstaller(state.file, state.release); if (active && generation === current) publish({ ...state, phase: "installer-opened" }); }
+      const file = state.file, release = state.release;
+      publish({ ...state, phase: "opening-installer" });
+      try { await deps.openInstaller(file, release); if (active && generation === current) publish({ ...state, phase: "installer-opened" }); }
       catch { if (active && generation === current) publish({ ...state, phase: "error" }); }
     },
     async openSettings() { if (!active || state.phase !== "permission") return; try { await deps.openSettings(); } catch { publish({ ...state, phase: "error" }); } },
