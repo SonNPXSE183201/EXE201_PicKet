@@ -1,6 +1,6 @@
 import { colors } from "@picket/design-tokens";
 import { formatVnd, type BudgetMethod, type PlanningResponse } from "@picket/domain";
-import { Redirect, router } from "expo-router";
+import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { Alert, StyleSheet, Switch, Text, View } from "react-native";
@@ -14,6 +14,8 @@ import { TopAppBar, ChoiceChip, EmptyState, PicketScreen, PrimaryAction, Section
 import { useAuth } from "@/features/auth/auth-context";
 import { useBudgets } from "@/features/budgets/budgets-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
+import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
+import { budgetOverview } from "@/core/local/budget-overview";
 
 const methods: [BudgetMethod, string][] = [["simple","Đơn giản"],["envelope","Phong bì"],["zero_based","Zero-based"],["fifty_thirty_twenty","50/30/20"],["event","Sự kiện"]];
 const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -34,6 +36,7 @@ export default function PlanningScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const selectedMonth = monthKey(month);
+  const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, selectedMonth);
   const planning: PlanningResponse | null = localMode ? {
     method: guest.data.planningMethod,
     periods: budgets.map((budget) => ({ budgetId: budget.id, month: selectedMonth, limit: guest.data.planningPeriods[`${selectedMonth}:${budget.id}`] ?? budget.defaultLimit, carriedAmount: 0 })),
@@ -41,7 +44,9 @@ export default function PlanningScreen() {
   } : cloudPlanning;
   const monthly = transactions.filter((item) => item.occurredAt.slice(0, 7) === selectedMonth);
   const income = monthly.filter((item) => item.kind === "income").reduce((sum, item) => sum + item.amount, 0);
-  const expense = monthly.filter((item) => item.kind === "expense").reduce((sum, item) => sum + item.amount, 0);
+  const grossExpense = monthly.filter((item) => item.kind === "expense").reduce((sum, item) => sum + item.amount, 0);
+  const refunds = monthly.filter((item) => item.kind === "refund").reduce((sum, item) => sum + item.amount, 0);
+  const expense = grossExpense - refunds;
   useEffect(() => {
     if (!session || !picketApi) return;
     let active = true;
@@ -70,7 +75,7 @@ export default function PlanningScreen() {
     finally { setBusy(false); }
   }
   function confirmClose() {
-    if (planning?.close || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || historyError) return;
+    if (planning?.close || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || historyError || splitLoading || splitError) return;
     Alert.alert("Chốt tháng?", "Sau khi chốt, giao dịch của tháng này không thể thay đổi. Hãy kiểm tra kỹ trước khi xác nhận.", [
       { text:"Hủy", style:"cancel" },
       { text:"Chốt tháng", onPress:() => void closeMonth() },
@@ -104,10 +109,10 @@ export default function PlanningScreen() {
     <Surface><View style={styles.monthRow}><Pressable accessibilityLabel="Tháng trước" accessibilityRole="button" onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><Text style={styles.arrow}>‹</Text></Pressable><Text style={styles.month}>Tháng {month.getMonth()+1}/{month.getFullYear()}</Text><Pressable accessibilityLabel="Tháng sau" accessibilityRole="button" onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><Text style={styles.arrow}>›</Text></Pressable></View></Surface>
     <SectionTitle title="Thu chi và ngân sách tháng" />
     <Surface><Text style={styles.title}>Thu {formatVnd(income)} · Chi {formatVnd(expense)}</Text>
-      {historyLoading && <Text style={styles.hint}>Đang tải toàn bộ giao dịch để tính chi tiêu…</Text>}
       {historyError && <Text style={styles.message}>{historyError}</Text>}
-      {budgets.map((budget) => { const spent = localMode ? guestBudgetSpent(guest.data, budget, selectedMonth) : monthly.filter((item) => item.kind === "expense" && item.categoryId === budget.categoryId).reduce((sum, item) => sum + item.amount, 0);
-        return <View key={budget.id}><Text style={styles.label}>{budget.name}</Text><Text style={styles.hint}>Kế hoạch {formatVnd(limitOf(budget.id))} · Thực tế {formatVnd(spent)}</Text>
+      {splitError && <Text style={styles.message}>{splitError}</Text>}
+      {budgets.map((budget) => { const spent = localMode ? guestBudgetSpent(guest.data, budget, selectedMonth) : budgetOverview(budget, selectedMonth, transactions, null, splits).spent;
+        return <View key={budget.id}><Text style={styles.label}>{budget.name}</Text><Text style={styles.hint}>Kế hoạch {formatVnd(limitOf(budget.id))} · Thực tế {splitLoading || splitError ? "—" : formatVnd(spent)}</Text>
           <Text style={styles.hint}>Nhắc khi đã dùng {budget.alertPercent}%</Text><View style={styles.chips}>{[50,80,90,100].map((percent) => <ChoiceChip checked={budget.alertPercent === percent} key={percent} label={`${percent}%`} onPress={() => void changeThreshold(budget.id,percent)} />)}</View></View>; })}
     </Surface>
     {planning?.close && <Surface peach><Text style={styles.title}>Tháng đã chốt</Text><Text style={styles.hint}>Thu {formatVnd(planning.close.income)} · Chi {formatVnd(planning.close.expense)}</Text></Surface>}
@@ -119,7 +124,7 @@ export default function PlanningScreen() {
       <PrimaryAction busy={busy} disabled={guest.loading && localMode || Boolean(planning?.close) || !planning} label="Chuyển hạn mức" onPress={() => void transfer()} />
     </Surface>}
     <SectionTitle title="Chốt tháng và chuyển phần dư" />
-    <Surface><View style={styles.monthRow}><Text style={styles.title}>Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví</Text><Switch accessibilityLabel="Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví" hitSlop={12} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>Chuyển dư sang tháng sau</Text><Switch accessibilityLabel="Chuyển dư sang tháng sau" hitSlop={12} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>Ghi chú chốt tháng</Text><TextInput accessibilityLabel="Ghi chú chốt tháng" onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError)} label="Chốt tháng" onPress={confirmClose} /></Surface>
+    <Surface><View style={styles.monthRow}><Text style={styles.title}>Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví</Text><Switch accessibilityLabel="Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví" hitSlop={12} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>Chuyển dư sang tháng sau</Text><Switch accessibilityLabel="Chuyển dư sang tháng sau" hitSlop={12} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>Ghi chú chốt tháng</Text><TextInput accessibilityLabel="Ghi chú chốt tháng" onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label="Chốt tháng" onPress={confirmClose} /></Surface>
   </PicketScreen>;
 }
 
