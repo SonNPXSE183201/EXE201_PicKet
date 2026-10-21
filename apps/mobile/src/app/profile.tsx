@@ -43,7 +43,8 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const [persona, setPersona] = useState(profile.persona);
   const [goal, setGoal] = useState(profile.goal);
   const [currencyCode, setCurrencyCode] = useState(profile.currencyCode);
-  const [hideBalance, setHideBalance] = useState(profile.hideBalance);
+  const [visibilityDraft, setVisibilityDraft] = useState<boolean | null>(null);
+  const hideBalance = visibilityDraft ?? profile.hideBalance;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
@@ -51,6 +52,14 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const [backupPassword, setBackupPassword] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+
+  async function changeVisibility(next: boolean) {
+    if (visibilityDraft !== null) return;
+    setVisibilityDraft(next); setMessage(null);
+    try { await updatePreferences({ hide_balance: next }); }
+    catch { setMessage("Chưa lưu được tùy chọn ẩn số dư. Hãy thử lại."); }
+    finally { setVisibilityDraft(null); }
+  }
 
   useEffect(() => {
     if (!session || !picketApi) return;
@@ -160,7 +169,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang lưu hồ sơ" color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}</Pressable>
         </Surface>}
         <SectionTitle title="Tùy chọn và bảo mật" />
-        <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>Ẩn số dư</Text><Text style={styles.switchDescription}>Che số tiền trên màn hình tổng quan.</Text></View><Switch accessibilityLabel="Ẩn số dư" hitSlop={12} onValueChange={setHideBalance} thumbColor={colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={hideBalance} /></View>
+        <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>Ẩn số dư</Text><Text style={styles.switchDescription}>Che số tiền trên màn hình tổng quan.</Text></View><Switch accessibilityLabel="Ẩn số dư" disabled={visibilityDraft !== null} hitSlop={12} onValueChange={(next) => void changeVisibility(next)} thumbColor={colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={hideBalance} /></View>
         <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>Khóa ứng dụng</Text><Text style={styles.switchDescription}>Yêu cầu sinh trắc học hoặc mã khóa thiết bị khi mở lại Picket.</Text></View><Switch accessibilityLabel="Khóa ứng dụng" disabled={deviceLock.busy} hitSlop={12} onValueChange={(next) => void deviceLock.setEnabled(next).then((saved) => { if (!saved) setMessage("Chưa thể đổi khóa. Hãy thiết lập mã khóa thiết bị rồi thử lại."); })} thumbColor={colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={deviceLock.enabled} /></View>
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()}><Text style={styles.back}>Lưu tùy chọn</Text></Pressable>
         {entitlements && <View style={styles.planCard}><Text style={styles.planTitle}>Picket {entitlements.tier.toUpperCase()}</Text><Text style={styles.planText}>Còn {entitlements.ocrFallbackRemaining}/{entitlements.ocrFallbackDailyLimit} lượt nhận diện nâng cao trong 24 giờ.</Text></View>}
