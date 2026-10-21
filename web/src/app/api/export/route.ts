@@ -12,6 +12,8 @@ export async function GET() {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const {data:staff,error:roleError}=await supabase.rpc('is_staff');
+  if(roleError || staff !== false) return Response.json({error:'User workspace required'},{status:403});
 
   try {
     const api = new PicketApiClient(apiBaseUrl);

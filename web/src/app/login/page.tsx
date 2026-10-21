@@ -11,7 +11,7 @@ interface LoginPageProps {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  if (data?.claims) redirect("/dashboard");
+  if (data?.claims) redirect("/session");
 
   const params = await searchParams;
   const initialError = params.error

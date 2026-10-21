@@ -45,7 +45,7 @@ export async function performAdminAction(data: FormData) {
     redirect(`/admin?page=${currentPage}&error=confirmation`);
   }
   try {
-    const { accessToken, api } = await requireApiSession();
+    const { accessToken, api } = await requireApiSession('admin');
     await api.adminUserAction(accessToken, targetUser, request);
   } catch {
     redirect(`/admin?page=${currentPage}&error=action_failed`);

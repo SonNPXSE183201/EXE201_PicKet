@@ -33,7 +33,7 @@ export function LoginForm({ initialError }: LoginFormProps) {
       return;
     }
 
-    router.replace("/dashboard");
+    router.replace("/session");
     router.refresh();
   }
 

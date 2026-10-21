@@ -11,6 +11,8 @@ async function authenticatedApi() {
   if (!claimsData?.claims) return null;
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
+  const {data:staff,error:roleError}=await supabase.rpc('is_staff');
+  if(roleError || staff !== false) return null;
   return token ? { api: new PicketApiClient(apiBaseUrl), token } : null;
 }
 

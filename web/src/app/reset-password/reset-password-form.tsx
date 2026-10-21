@@ -29,7 +29,7 @@ export function ResetPasswordForm() {
       setBusy(false);
       return;
     }
-    router.replace("/dashboard");
+    router.replace("/session");
     router.refresh();
   }
 
