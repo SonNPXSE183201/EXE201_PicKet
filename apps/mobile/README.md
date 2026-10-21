@@ -1,5 +1,9 @@
 # Picket Expo mobile
 
+Hiện trạng phát hành và ca nghiệm thu còn mở: [PROJECT_STATUS.md](../../docs/PROJECT_STATUS.md). Landing public là **1.0.4/code 5 ARM64**. Không dùng APK QA có proxy/fixture cho điện thoại người dùng hoặc landing. [Checklist Android thật](../../docs/ANDROID_REAL_DEVICE_CHECKLIST.md) và [cấu hình Play](../../docs/GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md) là nghiệm thu riêng, chưa suy đạt từ emulator.
+
+[Checklist phần 1 máy ảo](../../docs/migration/PART1_ACCEPTANCE_20261022.md) đã đạt ngày 22/10; 415 mobile tests PASS. Đo hiệu năng dùng QA không debug riêng; APK QA debug phục vụ fault/run-as không phải số đo production. Cả hai đều không phải bản ARM64 công khai.
+
 Đây là Android client chính thức của Picket. Dự án không còn duy trì Flutter
 hoặc iOS trong repository này.
 
@@ -30,9 +34,13 @@ npm install
 npx expo run:android
 ```
 
-Ứng dụng dùng native secure storage và sẽ dùng native ML Kit ở giai đoạn OCR,
+Ứng dụng dùng native secure storage, ML Kit OCR, mã hóa backup và trình xác minh APK,
 vì vậy development build là luồng chuẩn; không dùng Expo Go làm tiêu chí release.
 `expo-iap` cũng là native module nên màn thanh toán không hoạt động trong Expo Go.
+
+## Cập nhật trong app
+
+Cá nhân → Ứng dụng → Kiểm tra cập nhật. Footer lấy versionName/versionCode thực từ Android, không lấy phiên bản server. APK được kiểm tra hash, kích thước, package, phiên bản và chữ ký trước khi mở xác nhận Android. Không cần gỡ app; bản trước 1.0.3 cần một lần cài đè bootstrap. Google Play và sideload là hai kênh riêng; cài qua ADB không chứng nhận luồng cập nhật qua UI đã nghiệm thu.
 
 ## Google Play Billing
 
