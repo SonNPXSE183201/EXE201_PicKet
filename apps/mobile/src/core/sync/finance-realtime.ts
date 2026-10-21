@@ -5,7 +5,7 @@ export type FinanceRealtimeConnection = "connected" | "disconnected";
 
 export function subscribeToFinanceChanges(input: {
   userId: string;
-  onChange(): void;
+  onChange(tables: string[]): void;
   onConnectionChange?(connection: FinanceRealtimeConnection): void;
 }) {
   const client = supabase;
@@ -13,10 +13,17 @@ export function subscribeToFinanceChanges(input: {
 
   let refreshTimer: ReturnType<typeof setTimeout> | null = null;
   let active = true;
-  const scheduleRefresh = () => {
+  const pendingTables = new Set<string>();
+  const scheduleRefresh = (table: string) => {
     if (!active) return;
+    pendingTables.add(table);
     if (refreshTimer !== null) clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => { if (active) input.onChange(); }, 350);
+    refreshTimer = setTimeout(() => {
+      if (!active) return;
+      const tables = [...pendingTables];
+      pendingTables.clear();
+      input.onChange(tables);
+    }, 350);
   };
   let channel = client.channel(nextFinanceChannelName(input.userId));
 
@@ -29,7 +36,7 @@ export function subscribeToFinanceChanges(input: {
         table: subscription.table,
         filter: `${subscription.ownerColumn}=eq.${input.userId}`,
       },
-      scheduleRefresh,
+      () => scheduleRefresh(subscription.table),
     );
   }
 
