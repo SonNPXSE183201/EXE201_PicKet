@@ -19,7 +19,34 @@ When a version-guarded archive updates no rows, the API reads that transaction u
 
 ## Remaining acceptance
 
-The API fix has not been deployed to the VPS. Repeat the mixed bulk Android test against the updated API and verify no redundant archive conflict remains before accepting this scenario. The current production APK/API must not be described as containing this fix.
+The user explicitly approved an API-only deployment on 2026-10-20. The fix is deployed and the targeted mixed bulk Android rerun passed as recorded below. This does not complete the other roadmap matrices or imply that a new public APK has been released.
+
+## API-only deployment and live regression
+
+- Reran `dart analyze`: no issues. Reran `dart test`: **79/79 passed**.
+- Compared 70 deployed source/build-input hashes. Kept the deployed API source tree and replaced only `lib/src/supabase_gateway.dart`; its differences are the archive retry fix and formatting. Did not copy other locally changed API files.
+- Preserved old source at `/opt/picket/deploy/rollback-api-20261020-archive/supabase_gateway.dart` and old image as `picket-api:rollback-20261020-archive` (image ID `sha256:2e34ba291a011460afa5153a88ab476591eeacf87dfb88f3fe75499ffc7ac4a4`).
+- Built `picket-api:archive-retry-20261020`, image ID `sha256:f3a083db06c3af9b1717d546f060aee4df5d7054ef4d5b33e90b3bf101dbc326`; retagged `picket-api:latest` and recreated **only** `api` with `--no-deps --no-build` using the existing production environment file.
+- Public `/health` returned HTTP 200 with `status: ok`. Caddy, web, OCR worker and OCR provider container IDs remained unchanged. No migration, secret change, landing update or database-wide operation was run.
+- Live authenticated QA test: archive version 1 returned version 2; repeating the original version-1 DELETE returned the same version 2 and identical `deletedAt`. The same transaction remained hidden from QA owner B (409); no extra mutation or cross-owner disclosure. Evidence: `.artifacts/roadmap-qa/api-archive-deployed-results.json`.
+
+### Android rerun controls
+
+The first fixture-creation attempt stopped on an upstream 504 before UI acceptance. A subsequent run returned 7 successes/1 genuine conflict but did not exercise offline queueing: ADB localhost forwarding remained reachable after Wi-Fi was disabled. That run is not accepted as the three-outcome scenario. The QA-only harness was moved to the emulator host alias with a narrowly scoped QA cleartext exception; production network security configuration was not changed. A third nominal UI summary alone will not suffice: the rerun must also inspect persisted queue/conflict metadata for all fixture entity IDs.
+
+### Accepted Android rerun
+
+- Clean QA x86_64 APK built successfully (42 seconds) and installed without clearing app data. Used only the generated QA owner A on `emulator-5556`, package `com.picket.mobile.qa`; the real production account/package was not modified.
+- One bulk request selected eight generated transactions. A server version advance caused one genuine conflict; after the first successful archive, Wi-Fi/data were disabled. UI result: **1 completed + 6 queued + 1 failed**, with only the failed row still selected.
+- Restoring connectivity replayed queued rows. Only the version-conflict row remained active on the API.
+- Retrying the selection processed **1/1**, not all eight. API readback confirmed all eight fixture IDs were archived.
+- Force-stopped the QA app and inspected its persisted SQLite database/WAL snapshot. All eight entity keys had **zero rows in both `pending_mutations` and `mutation_conflicts`** for owner A. Existing conflicts from unrelated earlier QA exercises were not used to claim a clean global queue.
+- Evidence: `.artifacts/roadmap-qa/bulk-three-native-results.json` (`noFixturePendingOrConflictAfterRetry: true`, `apiArchiveRetryRelease: 20261020`) and the corresponding `bulk-after-deploy-*` SQLite snapshot. Network was restored in the harness finally block.
+- This accepts the targeted success/offline-queue/version-conflict/retry scenario against the deployed fix. It is not acceptance of every validation failure, prolonged network chaos or the separate auth A–B–A matrix.
+
+### Rollback
+
+From `/opt/picket`, tag `picket-api:rollback-20261020-archive` back to `picket-api:latest`, then run `docker compose --env-file deploy/.env.production -f compose.production.yml up -d --no-deps --no-build api`. Recheck `/health`. Restore the saved gateway source before a later rebuild if rolling back the source as well. No database rollback is necessary because this release has no schema/data migration.
 
 ## Accessibility acceptance
 
