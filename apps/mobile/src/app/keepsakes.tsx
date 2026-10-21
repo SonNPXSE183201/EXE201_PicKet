@@ -113,7 +113,7 @@ export default function KeepsakesScreen() {
       <PrimaryAction busy={busy} label="Lưu món đồ" onPress={() => void save()} />
       {editing !== "new" && <Pressable accessibilityRole="button" onPress={() => confirmDelete(editing)} style={styles.photoButton}><Text style={styles.delete}>Xóa món đồ</Text></Pressable>}
     </View> : <>
-      <TextInput accessibilityLabel="Tìm món đồ" onChangeText={setQuery} placeholder="Tìm món đồ, danh mục, ghi chú" style={styles.input} value={query} />
+      <TextInput accessibilityLabel="Tìm món đồ" onChangeText={setQuery} placeholder="Tìm món đồ" style={styles.input} value={query} />
       <PrimaryAction label="+ Thêm món đồ" onPress={() => open("new")} />
       {visible.length === 0 ? <EmptyState title="Góc kỷ niệm còn trống" description="Thêm món đồ hoặc câu chuyện đầu tiên." /> : <View style={styles.list}>{visible.map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => open(item)}><Surface>{item.photoUri && <Image accessibilityLabel={`Ảnh ${item.title}`} source={{ uri: item.photoUri }} style={styles.photo} />}<Text style={styles.itemTitle}>{item.title}</Text><Text style={styles.meta}>{formatVnd(item.amount)} · {new Date(item.date).toLocaleDateString("vi-VN")} · {item.category}</Text>{item.warrantyUntil && <Text style={styles.meta}>Bảo hành đến {item.warrantyUntil}</Text>}{item.returnUntil && <Text style={styles.meta}>Đổi trả đến {item.returnUntil}</Text>}</Surface></Pressable>)}</View>}
     </>}
