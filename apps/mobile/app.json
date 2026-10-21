@@ -3,13 +3,13 @@
     "name": "Picket",
     "slug": "picket",
     "scheme": "com.picket.mobile",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/picket-logo.png",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.picket.mobile",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#FFF8F0",
         "foregroundImage": "./assets/picket-logo.png"
