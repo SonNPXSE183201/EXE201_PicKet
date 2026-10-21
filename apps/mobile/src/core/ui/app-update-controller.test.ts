@@ -53,3 +53,16 @@ test("network failure reports an error and ignores a late check after disposal",
   const task = controller.check(); controller.dispose(); pending.resolve({ kind: "available", release }); await task;
   assert.notEqual(controller.snapshot().phase, "available");
 });
+test("installer double taps open only one Android confirmation", async () => {
+  const { controller, deps, allow } = await setup(); const pending = deferred<void>(); let calls = 0;
+  deps.openInstaller = async () => { calls++; return pending.promise; };
+  await controller.check(); await controller.download(); allow();
+  const first = controller.install(), second = controller.install();
+  try { assert.equal(calls, 1); }
+  finally { pending.resolve(); await Promise.all([first, second]); }
+  assert.equal(controller.snapshot().phase, "installer-opened");
+});
+test("effect reactivation supports React StrictMode without accepting disposed requests", async () => {
+  const { controller } = await setup(); controller.dispose(); controller.activate();
+  await controller.check(); assert.equal(controller.snapshot().phase, "available");
+});
