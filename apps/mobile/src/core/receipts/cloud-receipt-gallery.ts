@@ -23,6 +23,7 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
     cached: async (user) => (await readOfflineCache<GalleryEntry[]>(user, "receipt-gallery"))?.value ?? null,
     save: (user, rows) => writeOfflineCache(user, "receipt-gallery", rows),
     onCached: onSnapshot ? (rows) => publish(rows, true) : undefined,
+    onRemote: onSnapshot ? (rows) => publish(rows, false) : undefined,
     hydrateCached: onSnapshot ? async (_user, rows) => {
       const paths = indexReceiptImagePaths(await readCachedImages());
       return rows.map(row => ({ ...row, uri: row.path ? paths.get(row.path) : undefined }));

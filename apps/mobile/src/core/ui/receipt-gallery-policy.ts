@@ -7,7 +7,7 @@ export function indexReceiptImagePaths(items: ReceiptImageCacheEntry[]) {
   return paths;
 }
 
-export async function loadReceiptGallery<T>(owner: string, loader: { remote(): Promise<T[]>; cached(owner: string): Promise<T[] | null>; save(owner: string, rows: T[]): Promise<void>; onCached?(rows: T[]): void; hydrateCached?(owner: string, rows: T[]): Promise<T[]> }) {
+export async function loadReceiptGallery<T>(owner: string, loader: { remote(): Promise<T[]>; cached(owner: string): Promise<T[] | null>; save(owner: string, rows: T[]): Promise<void>; onCached?(rows: T[]): void; onRemote?(rows: T[]): void; hydrateCached?(owner: string, rows: T[]): Promise<T[]> }) {
   // Cache-first metadata makes the calendar usable while network/media work
   // continues. Cache corruption must never prevent a successful remote read.
   let snapshot: T[] | null = null;
@@ -26,6 +26,9 @@ export async function loadReceiptGallery<T>(owner: string, loader: { remote(): P
   let rows: T[];
   try { rows = await loader.remote(); remoteSettled = true; }
   catch (error) { remoteSettled = true; const cached = snapshot ?? await loader.cached(owner); if (cached !== null) return { rows: cached, stale: true }; throw error; }
+  // Metadata is useful immediately. Slow encryption/SQLite must not keep the
+  // calendar disabled after a successful authoritative response.
+  loader.onRemote?.(rows);
   try { await loader.save(owner, rows); } catch { /* A full disk must not hide fresh remote data. */ }
   return { rows, stale: false };
 }
