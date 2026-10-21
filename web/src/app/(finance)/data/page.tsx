@@ -3,14 +3,18 @@ import Link from "next/link";
 import { FinancePageHeader } from "../finance-ui";
 import { deleteAccount } from "./actions";
 import { RestoreForm } from "./restore-form";
+import { EncryptedBackup } from './encrypted-backup';
+import { requireApiSession } from '@/core/auth/require-api-session';
 
 interface PageProps { searchParams: Promise<{ error?: string }> }
 
 export default async function DataPage({ searchParams }: PageProps) {
   const { error } = await searchParams;
+  const {claims}=await requireApiSession();
   return (
     <>
       <FinancePageHeader title="Dữ liệu của bạn" description="Tải bản sao JSON có phiên bản để lưu trữ hoặc kiểm tra dữ liệu Picket của bạn." />
+      <EncryptedBackup owner={String(claims.sub)}/>
       <article className="operation-card">
         <div className="operation-summary">
           <strong>Export Picket JSON</strong>

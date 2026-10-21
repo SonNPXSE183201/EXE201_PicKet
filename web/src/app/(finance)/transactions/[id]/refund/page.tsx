@@ -2,6 +2,7 @@ import { formatVnd } from "@picket/domain";
 import Link from "next/link";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
+import { loadAllTransactions } from '@/core/finance/load-transactions';
 
 import { createRefund } from "../../../actions";
 import { FinancePageHeader, MutationError } from "../../../finance-ui";
@@ -14,7 +15,7 @@ interface PageProps {
 export default async function RefundPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const { accessToken, api } = await requireApiSession();
-  const { transactions } = await api.listTransactions(accessToken, { limit: 100 });
+  const transactions = await loadAllTransactions(api,accessToken);
   const original = transactions.find((item) => item.id === id);
   const refunded = transactions.filter((item) => item.kind === "refund" && item.refundOfTransactionId === id).reduce((sum, item) => sum + item.amount, 0);
   const remaining = Math.max(0, (original?.amount ?? 0) - refunded);

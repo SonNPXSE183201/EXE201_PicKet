@@ -1,5 +1,7 @@
 import { formatVnd } from "@picket/domain";
 import Link from "next/link";
+import { ReceiptCalendar } from '@/core/ui/receipt-calendar';
+import { vietnamDate } from '@/core/finance/overview';
 
 import { requireApiSession } from "@/core/auth/require-api-session";
 
@@ -16,17 +18,22 @@ function statusText(status: string) {
 export default async function ReceiptsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ duplicate?: string }>;
+  searchParams: Promise<{ duplicate?: string;day?:string }>;
 }) {
   const query = await searchParams;
   const { accessToken, api } = await requireApiSession();
   const { receipts } = await api.listReceipts(accessToken);
+  const day=/^\d{4}-\d{2}-\d{2}$/.test(query.day??'')?query.day:undefined;
+  const visible=day?receipts.filter(r=>r.purchasedAt&&vietnamDate(r.purchasedAt)===day):receipts;
   return (
     <>
       <FinancePageHeader
         title="Hóa đơn"
         description="Kiểm tra kết quả OCR và chỉnh lại từng sản phẩm trước khi dùng dữ liệu."
       />
+      <div className="finance-toolbar"><Link className="button primary" href="/capture">Chụp hoặc tải ảnh hóa đơn</Link></div>
+      <ReceiptCalendar dates={receipts.flatMap(r=>r.purchasedAt?[r.purchasedAt]:[])} initialMonth={day?.slice(0,7)??vietnamDate(new Date().toISOString()).slice(0,7)} selectedDay={day}/>
+      {day&&<div className="finance-toolbar"><h2>Hóa đơn ngày {day.split('-').reverse().join('/')}</h2><Link href="/receipts">Xem tất cả</Link></div>}
       <section className="finance-panel duplicate-check-panel" aria-labelledby="duplicate-check-title">
         <div>
           <p className="eyebrow">Chống ghi nhận trùng</p>
@@ -43,7 +50,7 @@ export default async function ReceiptsPage({
         </form>
       </section>
       <section className="finance-stack">
-        {receipts.map((receipt) => (
+        {visible.map((receipt) => (
           <article className="resource-card" key={receipt.id}>
             <div className="resource-summary">
               <div>
@@ -61,7 +68,7 @@ export default async function ReceiptsPage({
             </div>
           </article>
         ))}
-        {receipts.length === 0 && <p className="empty-state">Chưa có hóa đơn nào.</p>}
+        {visible.length === 0 && <p className="empty-state">{day?'Chưa có hóa đơn trong ngày này.':'Chưa có hóa đơn nào. Chụp hoặc tải ảnh đầu tiên để bắt đầu.'}</p>}
       </section>
     </>
   );

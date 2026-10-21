@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import './workspace.css';
 
 export const metadata: Metadata = {
   title: "Picket — Quản lý tài chính thông minh",
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="vi">
+    <html lang="vi" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );

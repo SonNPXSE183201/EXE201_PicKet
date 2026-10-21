@@ -40,7 +40,7 @@ export function OnboardingFlow() {
         openingBalance: Number.parseInt(openingBalance, 10),
       });
     } catch {
-      setMessage("Không hoàn tất được onboarding. Hãy kiểm tra Dart API và thử lại.");
+      setMessage("Chưa tạo được hồ sơ. Kiểm tra kết nối và thử lại.");
       setBusy(false);
     }
   }

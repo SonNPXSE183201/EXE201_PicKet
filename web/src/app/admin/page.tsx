@@ -1,7 +1,5 @@
-import { ApiError } from "@picket/api-client";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { performAdminAction } from "./actions";
@@ -30,29 +28,21 @@ function date(value: string): string {
 export default async function AdminPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const page = pageNumber(query.page);
-  const { accessToken, api } = await requireApiSession();
-  let overview;
-  try {
-    overview = await api.adminOverview(accessToken, page);
-  } catch (error) {
-    if (error instanceof ApiError && [401, 403].includes(error.status)) {
-      redirect("/dashboard");
-    }
-    throw error;
-  }
+  const { accessToken, api } = await requireApiSession('admin');
+  const overview = await api.adminOverview(accessToken, page);
 
   return (
     <main className="admin-shell shell" id="main-content">
       <header className="admin-header">
-        <div><p className="eyebrow">Picket Staff</p><h1 className="finance-title">Tổng quan quản trị</h1></div>
-        <Link className="button secondary" href="/dashboard">Về ứng dụng</Link>
+        <div><h1 className="finance-title">Tổng quan quản trị</h1><p>Quản lý tài khoản và cấu hình ứng dụng.</p></div>
+        <Link className="button secondary" href="/admin/settings">Cấu hình ứng dụng</Link>
       </header>
       {query.done === "1" && <p className="admin-success" role="status">Thao tác quản trị đã hoàn tất và được ghi audit.</p>}
       {query.error && <p className="mutation-error" role="alert">{query.error === "confirmation" ? "Chuỗi xác nhận không đúng." : "Không thể hoàn thành thao tác quản trị."}</p>}
       {overview.settings.maintenance && <p className="mutation-error" role="status">Hệ thống đang ở chế độ bảo trì. {overview.settings.notice}</p>}
       <section aria-label="Chỉ số hệ thống" className="admin-metrics">
         <article className="metric-card"><span>Người dùng</span><strong>{overview.totalUsers}</strong></article>
-        <article className="metric-card"><span>Sổ tài chính legacy</span><strong>{overview.totalLedgers}</strong></article>
+        <article className="metric-card"><span>Sổ tài chính</span><strong>{overview.totalLedgers}</strong></article>
         <article className="metric-card"><span>Trang hiện tại</span><strong>{page + 1}</strong></article>
       </section>
       <section className="admin-grid">

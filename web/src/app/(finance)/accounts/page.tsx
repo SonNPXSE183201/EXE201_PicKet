@@ -1,6 +1,8 @@
 import { formatVnd } from "@picket/domain";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
+import { loadAllTransactions } from '@/core/finance/load-transactions';
+import { walletBalances } from '@/core/finance/overview';
 
 import { archiveAccount, createAccount, updateAccount } from "../actions";
 import { FinancePageHeader, MutationError } from "../finance-ui";
@@ -9,11 +11,12 @@ interface PageProps { searchParams: Promise<{ error?: string }> }
 
 export default async function AccountsPage({ searchParams }: PageProps) {
   const { accessToken, api } = await requireApiSession();
-  const { accounts } = await api.listAccounts(accessToken);
+  const [{ accounts },transactions] = await Promise.all([api.listAccounts(accessToken),loadAllTransactions(api,accessToken)]);
+  const balances=walletBalances(accounts,transactions);
   const { error } = await searchParams;
   return (
     <>
-      <FinancePageHeader title="Tài khoản" description="Quản lý tiền mặt, ngân hàng và ví điện tử dùng chung với ứng dụng mobile." />
+      <FinancePageHeader title="Ví của bạn" description="Tiền mặt, ngân hàng và ví điện tử. Số dư được tính từ các giao dịch đang hoạt động." />
       <MutationError visible={Boolean(error)} />
       <section className="finance-columns">
         <article className="finance-panel">
@@ -29,7 +32,7 @@ export default async function AccountsPage({ searchParams }: PageProps) {
         <section className="finance-stack">
           {accounts.map((account) => (
             <article className="resource-card" key={account.id}>
-              <div className="resource-summary"><div><h2>{account.name}</h2><p>{account.kind} · {account.currencyCode} · phiên bản {account.version}</p></div><strong>{formatVnd(account.openingBalance)}</strong></div>
+              <div className="resource-summary"><div><h2>{account.name}</h2><p>{({cash:'Tiền mặt',bank:'Ngân hàng',ewallet:'Ví điện tử',other:'Khác'})[account.kind]} · {account.currencyCode}{account.archived?' · Đã lưu trữ':''}</p></div><strong>{account.currencyCode==='VND'?formatVnd(balances[account.id]??0):new Intl.NumberFormat('vi-VN',{style:'currency',currency:account.currencyCode}).format(balances[account.id]??0)}</strong></div>
               <details><summary>Chỉnh sửa</summary>
                 <form action={updateAccount} className="inline-form">
                   <input name="id" type="hidden" value={account.id} /><input name="version" type="hidden" value={account.version} />

@@ -3,7 +3,7 @@ import Link from "next/link";
 export function FinancePageHeader({ description, title }: { description: string; title: string }) {
   return (
     <div className="finance-page-heading">
-      <div><p className="eyebrow">Picket Finance</p><h1 className="finance-title">{title}</h1><p>{description}</p></div>
+      <div><h1 className="finance-title">{title}</h1><p>{description}</p></div>
       <Link className="button secondary" href="/dashboard">Về tổng quan</Link>
     </div>
   );

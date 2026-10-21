@@ -2,6 +2,7 @@ import { formatVnd } from "@picket/domain";
 import Link from "next/link";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
+import { loadAllTransactions } from '@/core/finance/load-transactions';
 
 import { setTransactionSplits } from "../../../actions";
 import { FinancePageHeader, MutationError } from "../../../finance-ui";
@@ -14,8 +15,8 @@ interface PageProps {
 export default async function SplitsPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const { accessToken, api } = await requireApiSession();
-  const [{ transactions }, { categories }, { splits }] = await Promise.all([
-    api.listTransactions(accessToken, { limit: 100 }),
+  const [transactions, { categories }, { splits }] = await Promise.all([
+    loadAllTransactions(api,accessToken),
     api.listCategories(accessToken),
     api.listTransactionSplits(accessToken, id),
   ]);

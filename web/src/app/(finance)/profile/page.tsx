@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from '@/core/ui/workspace-shell';
 
 import { requireApiSession } from "@/core/auth/require-api-session";
 
@@ -22,7 +23,8 @@ export default async function ProfilePage({ searchParams }: PageProps) {
 
   return (
     <>
-      <FinancePageHeader title="Hồ sơ và tùy chọn" description="Các thay đổi được dùng chung trên web và ứng dụng Expo." />
+      <FinancePageHeader title="Cá nhân" description="Tùy chỉnh Picket theo cách bạn quản lý tiền mỗi ngày." />
+      <nav className="feature-hub" aria-label="Tiện ích cá nhân">{[['/insights','Thống kê thu chi','chart'],['/planning','Lập kế hoạch tháng','calendar'],['/review-inbox','Các mục cần kiểm tra','receipt'],['/receipts','Hóa đơn của bạn','receipt'],['/keepsakes','Đồ dùng & bảo hành','shield'],['/bills','Kỳ thanh toán','calendar'],['/subscriptions','Khoản định kỳ','calendar'],['/categories','Quản lý danh mục','grid'],['/reconcile','Đối soát số dư ví','wallet'],['/notifications','Thông báo & nhắc việc','calendar'],['/billing','Gói sử dụng','shield'],['/data','Sao lưu & dữ liệu','shield'],['/help','Quyền riêng tư & trợ giúp','shield']].map(([href,label,icon])=><Link key={href} href={href}><Icon name={icon}/>{label}</Link>)}</nav>
       <MutationError visible={Boolean(error)} />
       <section className="settings-grid">
         <article className="finance-panel settings-panel">

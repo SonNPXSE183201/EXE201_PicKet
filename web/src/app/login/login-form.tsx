@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from 'next/image';
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/core/supabase/client";
@@ -59,13 +60,12 @@ export function LoginForm({ initialError }: LoginFormProps) {
   return (
     <div className="auth-card">
       <Link className="brand auth-brand" href="/" aria-label="Picket trang chủ">
-        <span className="brand-mark">P</span>
+        <Image src="/picket-logo.png" alt="" width={48} height={48}/>
         <span>Picket</span>
       </Link>
-      <p className="eyebrow">Đồng bộ cùng ứng dụng mobile</p>
       <h1 className="auth-title">Chào mừng trở lại</h1>
       <p className="auth-copy">
-        Dùng cùng tài khoản Supabase để xem dữ liệu Picket trên web và điện thoại.
+        Đăng nhập để tiếp tục quản lý thu chi trên web và điện thoại. Tài khoản quản trị sẽ vào không gian quản trị riêng.
       </p>
 
       <form className="auth-form" onSubmit={signIn}>

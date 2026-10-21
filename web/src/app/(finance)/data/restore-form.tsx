@@ -26,7 +26,7 @@ export function RestoreForm() {
       setExported(parsed);
       setValidation(await response.json() as Validation);
     } catch {
-      setMessage("File backup không hợp lệ hoặc Dart API chưa sẵn sàng.");
+      setMessage("File backup không hợp lệ hoặc chưa kết nối được máy chủ. Kiểm tra file và thử lại.");
     } finally { setBusy(false); }
   }
 
