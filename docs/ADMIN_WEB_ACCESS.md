@@ -1,5 +1,7 @@
 # Truy cập quản trị Picket trên web
 
+**Cập nhật production 22/10:** workspace admin riêng đã triển khai, source `6993560`. Login staff vào `/admin`, các URL tài chính user bị chuyển về admin; không đổi quyền mobile/API. [Bằng chứng và rollback](migration/WEB_PRODUCTION_20261022.md). Các dòng chưa deploy bên dưới thuộc checkpoint local trước đó.
+
 Cập nhật 22/10/2026. Không thay UI Next.js hoặc mobile trong lượt tạo tài khoản này.
 
 ## Tài khoản chủ sở hữu
