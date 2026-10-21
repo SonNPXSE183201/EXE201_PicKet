@@ -1073,6 +1073,39 @@ class SupabaseGateway {
     return _transactionList(response.body);
   }
 
+  Future<Map<String, dynamic>> resolveTransactionAttempt(
+    String accessToken,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/resolve_finance_transaction_attempt'),
+          headers: _headers(accessToken),
+          body: jsonEncode({'p_idempotency_key': idempotencyKey}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is Map<String, dynamic> && body['status'] == 'abandoned') {
+      return {'status': 'abandoned'};
+    }
+    if (body is Map<String, dynamic> &&
+        body['status'] == 'committed' &&
+        body['transaction'] is Map<String, dynamic>) {
+      return {
+        'status': 'committed',
+        'transaction': TransactionResource.fromDatabase(
+          body['transaction'] as Map<String, dynamic>,
+        ).toJson(),
+      };
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Invalid transaction attempt resolution',
+    );
+  }
+
   Future<TransactionResource> createTransaction(
     String accessToken,
     CreateTransactionRequest request,

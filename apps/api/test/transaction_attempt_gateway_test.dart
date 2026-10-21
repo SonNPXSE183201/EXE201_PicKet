@@ -15,8 +15,9 @@ void main() {
           supabasePublishableKey: 'public-key',
         ),
         client: MockClient((request) async {
-          if (request.url.path == '/auth/v1/user')
+          if (request.url.path == '/auth/v1/user') {
             return http.Response('{"id":"owner"}', 200);
+          }
           calls++;
           expect(
             request.url.path,
@@ -60,8 +61,9 @@ void main() {
           'receipt-attempt-0001',
         );
         expect(result['status'], status);
-        if (status == 'committed')
+        if (status == 'committed') {
           expect((result['transaction'] as Map)['accountId'], 'wallet-id');
+        }
       }
       expect(calls, 1);
     });

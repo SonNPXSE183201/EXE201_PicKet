@@ -486,6 +486,14 @@ export class PicketApiClient {
     });
   }
 
+  resolveTransactionAttempt(accessToken: string, idempotencyKey: string, signal?: AbortSignal): Promise<{ status: "abandoned" } | { status: "committed"; transaction: TransactionResponse["transaction"] }> {
+    if (idempotencyKey.length < 8 || idempotencyKey.length > 128) throw new ApiError("Invalid transaction attempt key",400);
+    return this.request("/v1/transaction-attempts/resolve", {
+      method: "POST", headers: this.jsonAuthHeaders(accessToken),
+      body: JSON.stringify({idempotencyKey}), signal,
+    });
+  }
+
   createTransaction(
     accessToken: string,
     request: CreateTransactionRequest,
