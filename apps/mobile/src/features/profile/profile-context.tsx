@@ -41,7 +41,6 @@ export function ProfileProvider({ children }: PropsWithChildren) {
 
   const refresh = useCallback(async () => {
     if (!session || !picketApi) return;
-    setLoading(true);
     setError(null);
     try {
       const result = await picketApi.currentProfile(session.access_token);
@@ -95,16 +94,20 @@ export function ProfileProvider({ children }: PropsWithChildren) {
         if (localMode) { await guest.commit((current) => ({ type: "profile.replace", value: { ...current.profile, displayName: patch.display_name ?? current.profile.displayName, avatarUrl: patch.avatar_url ?? current.profile.avatarUrl, locale: patch.locale ?? current.profile.locale, timezone: patch.timezone ?? current.profile.timezone } })); return; }
         if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
         await picketApi.updateProfile(session.access_token, patch);
-        await refresh();
+        setProfile(current => current ? { ...current, displayName: patch.display_name ?? current.displayName,
+          avatarUrl: patch.avatar_url === undefined ? current.avatarUrl : patch.avatar_url,
+          locale: patch.locale ?? current.locale, timezone: patch.timezone ?? current.timezone } : current);
       },
       async updatePreferences(patch) {
         if (localMode) { await guest.commit((current) => ({ type: "profile.replace", value: { ...current.profile, persona: patch.persona ?? current.profile.persona, goal: patch.goal ?? current.profile.goal, currencyCode: patch.currency_code ?? current.profile.currencyCode, hideBalance: patch.hide_balance ?? current.profile.hideBalance } })); return; }
         if (!session || !picketApi) throw new Error("Chưa thể hoàn tất. Hãy kiểm tra kết nối và thử lại.");
         await picketApi.updatePreferences(session.access_token, patch);
-        await refresh();
+        setProfile(current => current ? { ...current, persona: patch.persona ?? current.persona,
+          goal: patch.goal ?? current.goal, currencyCode: patch.currency_code ?? current.currencyCode,
+          hideBalance: patch.hide_balance ?? current.hideBalance } : current);
       },
     }),
-    [error, guest, loading, localMode, profile, refresh, session],
+    [error, guest, loading, localMode, profile, refresh, session, setProfile],
   );
 
   return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
