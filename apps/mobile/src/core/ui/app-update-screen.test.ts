@@ -7,6 +7,11 @@ test("profile exposes the updater and ends with the installed version", () => {
   assert.match(profile, /<AppUpdateSection\s*\/>/);
   assert.match(profile, /<InstalledVersion\s*\/>\s*<\/ScrollView>/);
 });
+test("profile loading and unavailable-cache states retain the installed version", () => {
+  const profile = readFileSync(file("../../app/profile.tsx"), "utf8");
+  const guards = profile.slice(profile.indexOf("if (loading"), profile.indexOf("return <ProfileForm"));
+  assert.equal((guards.match(/<InstalledVersion\s*\/>/g) ?? []).length, 2);
+});
 test("native updates declare scoped installer permission and a private provider", () => {
   const path = file("../../../modules/picket-app-updates/android/src/main/AndroidManifest.xml");
   assert.ok(existsSync(path), "Native update module must persist installer configuration across prebuild");
