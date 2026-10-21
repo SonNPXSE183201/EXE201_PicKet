@@ -1,6 +1,6 @@
 import { colors } from "@picket/design-tokens";
 import { formatVnd } from "@picket/domain";
-import { Redirect, router } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { routes } from "@/core/navigation/routes";
@@ -17,19 +17,25 @@ import { useSync } from "@/features/sync/sync-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function HomeScreen() {
+  const { receiptMonth } = useLocalSearchParams<{ receiptMonth?: string }>();
+  const initialMonth = typeof receiptMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(receiptMonth) ? receiptMonth : undefined;
+  return <HomeContent key={initialMonth ?? "current"} initialMonth={initialMonth} />;
+}
+
+function HomeContent({ initialMonth }: { initialMonth?: string }) {
   const { configured, loading: authLoading, localMode, session } = useAuth();
   const { error: profileError, loading: profileLoading, profile, refresh, updatePreferences } = useProfile();
   const { accounts, error: accountsError, loading: accountsLoading, refresh: refreshAccounts } = useAccounts();
   const { error: transactionsError, refresh: refreshTransactions, transactions } = useTransactions();
   const { conflictCount, flush, pendingCount, syncing } = useSync();
-  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [month, setMonth] = useState(() => initialMonth ? new Date(Number(initialMonth.slice(0, 4)), Number(initialMonth.slice(5)) - 1, 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const monthly = transactions.filter((item) => { const date = new Date(item.occurredAt); return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth(); });
   const visible = [...monthly].sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
   const balance = accounts.reduce((sum, item) => sum + item.openingBalance, 0) + transactions.reduce((sum, item) => sum + (item.kind === "expense" ? -item.amount : item.kind === "income" || item.kind === "refund" ? item.amount : 0), 0);
   const income = monthly.filter((item) => item.kind === "income").reduce((sum, item) => sum + item.amount, 0);
   const expense = Math.max(0, monthly.filter((item) => item.kind === "expense").reduce((sum, item) => sum + item.amount, 0) - monthly.filter((item) => item.kind === "refund").reduce((sum, item) => sum + item.amount, 0));
   const money = (value: number) => profile?.hideBalance ? "••••••" : formatVnd(value);
-  if (authLoading || ((session || localMode) && (profileLoading || accountsLoading))) return <View style={styles.loading}><ActivityIndicator accessibilityLabel="Đang tải tổng quan tài chính" color={colors.mauve} /></View>;
+  if (authLoading || ((session || localMode) && !profile && (profileLoading || accountsLoading))) return <View style={styles.loading}><ActivityIndicator accessibilityLabel="Đang tải tổng quan tài chính" color={colors.mauve} /></View>;
   if ((!configured || !session) && !localMode) return <Redirect href={routes.login} />;
   if (!profileError && !profile?.onboardingCompleted) return <Redirect href={routes.onboarding} />;
   return <View style={styles.root}><PicketScreen>
