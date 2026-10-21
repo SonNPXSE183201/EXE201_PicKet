@@ -1,6 +1,10 @@
 # Android priorities and budget delivery — 2026-10-21
 
+Final follow-up decision: [22 October Part 1 emulator acceptance](PART1_ACCEPTANCE_20261022.md) PASS within the named checklist. The failures/open states in this dated report are original checkpoint observations, not current unresolved cases.
+
 Source: `APP_COMPLETION_PLAN.md`, requested parts 1 and 2. This report does not mark either entire part complete. Generated QA owner A/B only, `com.picket.mobile.qa` on `emulator-5556`; no real-user finances changed, backend deployed, push or public APK update.
+
+Current status: [project index](../PROJECT_STATUS.md) and [Part 1 execution](PART1_CURRENT_EXECUTION_20261021.md). This checkpoint's open/failing observations below are historical: subsequent ban/reconnect A–B–A, independent natural expiry/revocation/offline A–B–A and configured real Google cold callback passed. Source now has 415 mobile tests and 82 API tests PASS. Consult the current acceptance matrix; old failures are retained as evidence, not current status.
 
 ## Cold-start links: named native cases passed
 
