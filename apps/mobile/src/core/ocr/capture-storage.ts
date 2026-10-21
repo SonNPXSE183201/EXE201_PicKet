@@ -3,7 +3,7 @@ import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as SQLite from "expo-sqlite";
 import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
-import { MAX_PHOTO_BYTES, validatePhoto } from "@/features/keepsakes/keepsake-photo-vault";
+import { MAX_PHOTO_BYTES, requirePhotoWriteSpace, validatePhoto } from "@/features/keepsakes/keepsake-photo-vault";
 import { createCaptureJournal, createPickerRecoveryStore, type CaptureSnapshot } from "./capture-journal";
 import { capturePhotoLeases, collectCapturePhotoOrphans } from "./capture-photo-cleanup";
 import { fallbackImageReferences } from "./fallback-storage";
@@ -54,6 +54,7 @@ export function persistCaptureImage(owner: string, uri: string) {
 async function persistCaptureImageWithLease(owner: string, uri: string) {
   const source = new File(uri);
   if (source.size <= 0 || source.size > MAX_PHOTO_BYTES) throw new Error("Ảnh vượt giới hạn 10 MB.");
+  requirePhotoWriteSpace(Paths.availableDiskSpace, source.size * 3);
   const bytes = await source.bytes();
   const mime = bytes[0] === 137 && bytes[1] === 80 ? "image/png" : bytes[0] === 0xff && bytes[1] === 0xd8 ? "image/jpeg" : "image/webp";
   const photo = validatePhoto({ mime, base64: fromByteArray(bytes) });
@@ -73,6 +74,7 @@ export function restoreCaptureImage(owner: string, imageRef: string) {
 async function restoreCaptureImageWithLease(owner: string, imageRef: string) {
   const file = imageFile(owner, imageRef);
   if (!file.exists || file.size > 30_000_000) throw new Error("Không đọc được ảnh bản nháp.");
+  requirePhotoWriteSpace(Paths.availableDiskSpace, file.size);
   const raw = await file.text();
   if (!raw.startsWith("enc-v1:")) throw new Error("Ảnh bản nháp bị hỏng.");
   const photo = validatePhoto(await decryptLocalPayload(raw, `capture-photo:${owner}`));

@@ -2,6 +2,16 @@ import { toByteArray } from "base64-js";
 
 export type PhotoPayload = { mime: string; base64: string };
 export const MAX_PHOTO_BYTES = 10_485_760;
+/** Preflight only: concurrent writes can still exhaust space and must be caught. */
+export function requirePhotoWriteSpace(available: number, requested: number): void {
+  const headroom = 1024 * 1024;
+  if (!Number.isSafeInteger(available) || available < 0
+    || !Number.isSafeInteger(requested) || requested < 0
+    || requested > Number.MAX_SAFE_INTEGER - headroom
+    || available - requested < headroom) {
+    throw Object.assign(new Error("Không đủ dung lượng để mở hoặc lưu ảnh. Hãy giải phóng dung lượng rồi thử lại."), { code: "ENOSPC" });
+  }
+}
 export function validatePhoto(value: unknown): PhotoPayload {
   const photo = value as PhotoPayload;
   if (!photo || !/^image\/(jpeg|png|webp)$/.test(photo.mime) || typeof photo.base64 !== "string"
