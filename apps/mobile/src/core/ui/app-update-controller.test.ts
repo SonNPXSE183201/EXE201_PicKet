@@ -66,3 +66,29 @@ test("effect reactivation supports React StrictMode without accepting disposed r
   const { controller } = await setup(); controller.dispose(); controller.activate();
   await controller.check(); assert.equal(controller.snapshot().phase, "available");
 });
+
+test("reactivation during a pending check allows retry and ignores the old response", async () => {
+  const { controller, deps } = await setup();
+  const stale = deferred<{ kind: string; release: typeof release }>();
+  deps.check = () => stale.promise;
+  const oldCheck = controller.check();
+  controller.dispose(); controller.activate();
+  deps.check = async () => ({ kind: "available", release });
+  await controller.check();
+  try { assert.equal(controller.snapshot().phase, "available"); }
+  finally { stale.reject(new Error("old request")); await oldCheck; }
+  assert.equal(controller.snapshot().phase, "available");
+});
+
+test("reactivation after download disposal offers a new download without stale success", async () => {
+  const { controller, deps } = await setup();
+  const stale = deferred<string>();
+  deps.download = () => stale.promise;
+  await controller.check(); const oldDownload = controller.download();
+  controller.dispose(); controller.activate();
+  try { assert.equal(controller.snapshot().phase, "available"); }
+  finally { stale.resolve("stale.apk"); await oldDownload; }
+  deps.download = async () => "new.apk";
+  await controller.download();
+  assert.equal(controller.snapshot().file, "new.apk");
+});
