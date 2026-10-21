@@ -1,5 +1,7 @@
 # Trạng thái hiện hành của Picket
 
+**Web/landing production 22/10:** đã triển khai source `6993560`, có nút Đăng nhập trên landing và workspace admin riêng. GitHub đã nhận nhánh `feat/picket-platform-ocr`; smoke HTTPS đạt, không đổi mobile/API/OCR/schema. [Triển khai và rollback](migration/WEB_PRODUCTION_20261022.md). Các dòng “chưa push/deploy” của checkpoint local bên dưới là lịch sử.
+
 Cập nhật ngày 22/10/2026 (Asia/Saigon). **Checklist phần 1 trên máy ảo đã nghiệm thu đạt** theo [báo cáo chốt](migration/PART1_ACCEPTANCE_20261022.md); [APK 1.0.4/code 5 đã lên landing](migration/ANDROID_RELEASE_1_0_4_20261022.md). Đây không phải tuyên bố hoàn tất toàn roadmap/thiết bị thật/Billing. Báo cáo theo ngày trong `docs/migration` là bằng chứng từng checkpoint, không phải trạng thái phát hành mới nhất.
 
 Source hiện tại: **415 mobile tests PASS**, không skip; typecheck đạt, lint 0 lỗi/24 cảnh báo hiện hữu; API **82 tests PASS**, analyzer không lỗi. [Dung lượng ảnh](migration/REAL_ENOSPC_ANDROID_20261021.md) đã đạt hai ca native ENOSPC thật: mở lạnh khi đầy ổ và hết dung lượng đúng lúc restore; dùng số byte khả dụng không tính reserved blocks. [Cache preview lịch](migration/CALENDAR_PREVIEW_CACHE_TDD_20261021.md), [picker bị ngắt](migration/PICKER_INTERRUPTION_TDD_20261021.md) và [race reminder qua đổi owner](migration/REMINDER_OWNER_RACE_TDD_20261021.md) đều có bằng chứng native riêng. Độ mượt và các ca mở được ghi cụ thể ở bảng dưới; số test thấp hơn trong báo cáo theo ngày là checkpoint lịch sử.
