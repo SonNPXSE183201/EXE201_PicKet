@@ -1,0 +1,55 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createClient, processLock } from "@supabase/supabase-js";
+import { createAuthMutationQueue, signOutDeviceSession } from "./device-sign-out";
+
+test("expired offline logout clears only the auth record, emits SIGNED_OUT and permits B", async () => {
+  const storageKey = "qa-expired-offline-session";
+  const records = new Map<string, string>([["owner-A-queue", "retained"], [storageKey, JSON.stringify({
+    access_token: "synthetic-a", refresh_token: "synthetic-refresh-a", token_type: "bearer",
+    expires_at: Math.floor(Date.now() / 1000) - 3600,
+    user: { id: "owner-A", aud: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-10-20T00:00:00Z" },
+  })]]);
+  const storage = {
+    async getItem(key: string) { return records.get(key) ?? null; },
+    async setItem(key: string, value: string) { records.set(key, value); },
+    async removeItem(key: string) { records.delete(key); },
+  };
+  let online = false;
+  const client = createClient("https://project.supabase.co", "public-key", {
+    auth: { storageKey, storage, lock: processLock, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: async () => {
+      if (!online) throw new TypeError("Synthetic offline transport");
+      return new Response(JSON.stringify({ access_token: "synthetic-b", refresh_token: "synthetic-refresh-b", token_type: "bearer", expires_in: 3600,
+        user: { id: "owner-B", aud: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-10-20T00:00:00Z" } }), { headers: { "content-type": "application/json" } });
+    } },
+  });
+  const events: string[] = [];
+  const subscription = client.auth.onAuthStateChange(event => { events.push(event); });
+  try {
+    await signOutDeviceSession({ auth: client.auth, storageKey, storage });
+    assert.equal(records.has(storageKey), false);
+    assert.equal((await client.auth.getSession()).data.session, null);
+    assert.ok(events.includes("SIGNED_OUT"));
+    assert.equal(records.get("owner-A-queue"), "retained");
+    online = true;
+    const next = await client.auth.signInWithPassword({ email: "synthetic-b@example.com", password: "synthetic-only" });
+    assert.equal(next.error, null);
+    assert.equal((await client.auth.getSession()).data.session?.user.id, "owner-B");
+  } finally { subscription.data.subscription.unsubscribe(); }
+});
+
+test("auth mutation queue fences account changes and recovers after a failed operation", async () => {
+  const run = createAuthMutationQueue();
+  const events: string[] = [];
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const first = run(async () => { events.push("A-start"); await held; events.push("A-end"); throw new Error("expected"); });
+  const failed = assert.rejects(first, /expected/);
+  const second = run(async () => { events.push("B"); return 2; });
+  await Promise.resolve();
+  assert.deepEqual(events, ["A-start"]);
+  release(); await failed;
+  assert.equal(await second, 2);
+  assert.deepEqual(events, ["A-start", "A-end", "B"]);
+});
