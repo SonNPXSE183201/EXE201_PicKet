@@ -1,3 +1,4 @@
+import "@/core/export/native-backup-key";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { bootstrapIntentGate } from "@/core/navigation/bootstrap-intent";
