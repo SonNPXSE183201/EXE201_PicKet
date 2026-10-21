@@ -42,7 +42,7 @@ export default function NewBillScreen() {
     <Surface style={styles.form}>
       <FieldLabel>Tên hóa đơn</FieldLabel><TextInput accessibilityLabel="Tên hóa đơn" maxLength={160} onChangeText={setTitle} placeholder="Tiền điện" placeholderTextColor={colors.muted} style={styles.input} value={title} />
       <FieldLabel>Số tiền</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel="Số tiền hóa đơn" keyboardType="number-pad" onChangeText={setAmount} placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} /><Text style={styles.currency}>VND</Text></View>
-      <FieldLabel>Ngày đến hạn</FieldLabel><TextInput accessibilityHint="Nhập theo định dạng năm-tháng-ngày" accessibilityLabel="Ngày đến hạn" keyboardType="numbers-and-punctuation" maxLength={10} onChangeText={setDueDate} placeholder="YYYY-MM-DD" placeholderTextColor={colors.muted} style={styles.input} value={dueDate} />
+      <FieldLabel>Ngày đến hạn</FieldLabel><TextInput date accessibilityLabel="Ngày đến hạn" onChangeText={setDueDate} style={styles.input} value={dueDate} />
       {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
       <PrimaryAction busy={busy} label="Tạo hóa đơn" onPress={() => void submit()} />
     </Surface>
