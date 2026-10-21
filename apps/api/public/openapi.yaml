@@ -6,6 +6,42 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /v1/transaction-attempts/resolve:
+    post:
+      operationId: resolveTransactionAttempt
+      summary: Resolve a committed transaction or permanently fence an unused attempt
+      description: Owner-scoped and repeatable. Acknowledged abandonment permits a new attempt key; a committed result must complete its existing receipt. A lost response never permits editing until resolution is retried. Abandoned keys are not reusable.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idempotencyKey]
+              properties:
+                idempotencyKey: {type: string, minLength: 8, maxLength: 128}
+      responses:
+        '200':
+          description: Committed transaction or permanent abandonment confirmation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required: [status]
+                    properties:
+                      status: {const: abandoned}
+                  - type: object
+                    required: [status, transaction]
+                    properties:
+                      status: {const: committed}
+                      transaction: {$ref: '#/components/schemas/Transaction'}
+        '400': {description: Invalid attempt key}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '409': {description: Existing idempotency resource is unavailable}
+        '504': {description: Resolution timed out; retry the same key before editing}
   /v1/admin/overview:
     get:
       operationId: getAdminOverview
