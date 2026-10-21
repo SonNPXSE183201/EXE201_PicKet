@@ -1,5 +1,38 @@
 import type { ReceiptDraftLine } from "./receipt-parser";
 
+/** Only an interruption marker, never a pending photo/result to adopt. */
+export function createPickerRecoveryStore(open: () => Promise<{
+  execAsync(sql: string): Promise<void>;
+  runAsync(sql: string, ...values: string[]): Promise<unknown>;
+  getFirstAsync<T>(sql: string, ...values: string[]): Promise<T | null>;
+}>) {
+  let ready: ReturnType<typeof open> | null = null;
+  function database() {
+    ready ??= open().then(async db => {
+      await db.execAsync("CREATE TABLE IF NOT EXISTS capture_picker_attempts (owner_id TEXT PRIMARY KEY NOT NULL, operation_id TEXT NOT NULL)");
+      return db;
+    }).catch(error => { ready = null; throw error; });
+    return ready;
+  }
+  function validate(value: string) {
+    if (!/^[A-Za-z0-9_-]{1,200}$/.test(value)) throw new Error("Invalid picker recovery identity");
+  }
+  return {
+    async begin(owner: string, operation: string) {
+      validate(owner); validate(operation);
+      await (await database()).runAsync("INSERT INTO capture_picker_attempts(owner_id,operation_id) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET operation_id=excluded.operation_id", owner, operation);
+    },
+    async pending(owner: string) {
+      validate(owner);
+      return (await (await database()).getFirstAsync<{ operation_id: string }>("SELECT operation_id FROM capture_picker_attempts WHERE owner_id=?", owner)) !== null;
+    },
+    async complete(owner: string, operation: string) {
+      validate(owner); validate(operation);
+      await (await database()).runAsync("DELETE FROM capture_picker_attempts WHERE owner_id=? AND operation_id=?", owner, operation);
+    },
+  };
+}
+
 export type CaptureSnapshot = {
   version: 1; id: string; imageRef: string; title: string; amount: string;
   purchasedAt: string; explicitDate: string | null; attachReceipt: boolean;

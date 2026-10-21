@@ -1,4 +1,5 @@
 import { colors, radii } from "@picket/design-tokens";
+import * as Crypto from "expo-crypto";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -15,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
-import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptureImage } from "@/core/ocr/capture-storage";
+import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptureImage, pickerRecovery } from "@/core/ocr/capture-storage";
 import { restoreCaptureSnapshot, type CaptureSnapshot } from "@/core/ocr/capture-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
@@ -78,6 +79,8 @@ export default function CaptureReceiptScreen() {
     let active = true;
     void captureJournal.load(ownerId).then(async saved => {
       if (!active) return;
+      const interruptedPicker = await pickerRecovery.pending(ownerId);
+      if (!active) return;
       setIsRecognizing(false);
       setIsQueueingFallback(false);
       setIsContinuing(false);
@@ -97,12 +100,15 @@ export default function CaptureReceiptScreen() {
         setLineItems(saved.lineItems); setFallbackStoragePath(saved.fallbackStoragePath);
         setMessage(restored.imageUnavailable
           ? "Không mở được ảnh bản nháp. Nội dung và ngày vẫn được giữ. Hãy chụp lại hoặc chọn ảnh khác trước khi tiếp tục."
-          : "Đã khôi phục bản nháp trên thiết bị. Bạn có thể tiếp tục chỉnh sửa.");
+          : interruptedPicker
+            ? "Lần chọn ảnh trước bị gián đoạn. Bản nháp đã lưu được giữ nguyên. Hãy chọn lại ảnh nếu cần."
+            : "Đã khôi phục bản nháp trên thiết bị. Bạn có thể tiếp tục chỉnh sửa.");
       } else {
         captureRef.current = null; setImageUri(null); setTitle(""); setAmount("");
         setHasDraft(false);
         setRawText(null); setLineItems([]); setAttachReceipt(true);
         setFallbackStoragePath(null); setProvider("manual"); setNeedsFallback(false); setLocalConfidence(0);
+        setMessage(interruptedPicker ? "Lần chọn ảnh trước bị gián đoạn. Chưa nhận được ảnh; hãy chọn lại từ thư viện hoặc chụp ảnh mới." : null);
       }
       setHydratedOwner(ownerId);
       void cleanupCaptureImages(ownerId).catch(() => undefined);
@@ -204,6 +210,7 @@ export default function CaptureReceiptScreen() {
   async function choose(source: "camera" | "library") {
     if (isContinuing || isRecognizing || isQueueingFallback) return;
     const generation = imageGeneration.current;
+    let pickerOperation: string | null = null;
     // Keep the current draft intact until a new image was actually selected.
     try {
       // Keep the native picker lazy so a stale development-client rebuild never
@@ -227,6 +234,10 @@ export default function CaptureReceiptScreen() {
         source === "camera"
           ? ImagePicker.launchCameraAsync
           : ImagePicker.launchImageLibraryAsync;
+      if (!ownerId) return;
+      pickerOperation = Crypto.randomUUID();
+      await pickerRecovery.begin(ownerId, pickerOperation);
+      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       const result = await picker(receiptImagePickerOptions);
       if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       if (result.canceled) return;
@@ -242,6 +253,8 @@ export default function CaptureReceiptScreen() {
       setMessage(
         "Chưa mở được camera. Bạn có thể chọn ảnh từ thư viện hoặc thử lại.",
       );
+    } finally {
+      if (ownerId && pickerOperation) await pickerRecovery.complete(ownerId, pickerOperation).catch(() => undefined);
     }
   }
 

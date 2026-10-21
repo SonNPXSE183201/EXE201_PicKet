@@ -4,7 +4,7 @@ import { Directory, File, Paths } from "expo-file-system";
 import * as SQLite from "expo-sqlite";
 import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
 import { MAX_PHOTO_BYTES, validatePhoto } from "@/features/keepsakes/keepsake-photo-vault";
-import { createCaptureJournal, type CaptureSnapshot } from "./capture-journal";
+import { createCaptureJournal, createPickerRecoveryStore, type CaptureSnapshot } from "./capture-journal";
 import { capturePhotoLeases, collectCapturePhotoOrphans } from "./capture-photo-cleanup";
 import { fallbackImageReferences } from "./fallback-storage";
 
@@ -20,6 +20,7 @@ function folder(owner: string, cache = false) {
   if (!/^[A-Za-z0-9_-]+$/.test(owner)) throw new Error("Invalid capture owner");
   return new Directory(cache ? Paths.cache : Paths.document, "capture-drafts", owner);
 }
+export const pickerRecovery = createPickerRecoveryStore(database);
 function imageFile(owner: string, uri: string) {
   const prefix = folder(owner).uri.replace(/\/$/, "") + "/";
   if (!uri.startsWith(prefix) || !/^[A-Za-z0-9_-]+\.enc$/.test(uri.slice(prefix.length))) throw new Error("Invalid owned capture image");
