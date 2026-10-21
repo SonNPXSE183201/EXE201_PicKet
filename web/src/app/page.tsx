@@ -1,121 +1,121 @@
-"use client";
-
-import { PicketApiClient } from "@picket/api-client";
-import { useEffect, useMemo, useState } from "react";
-
-type ApiState = "checking" | "online" | "offline";
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
-  const [apiState, setApiState] = useState<ApiState>("checking");
-  const client = useMemo(
-    () =>
-      new PicketApiClient(apiBaseUrl),
-    [],
-  );
-
-  useEffect(() => {
-    const controller = new AbortController();
-    client
-      .health(controller.signal)
-      .then(() => setApiState("online"))
-      .catch((error: unknown) => {
-        if (!(error instanceof Error && error.name === "AbortError")) {
-          setApiState("offline");
-        }
-      });
-    return () => controller.abort();
-  }, [client]);
-
-  const statusText = {
-    checking: "Đang kiểm tra API",
-    online: "Dart API đang hoạt động",
-    offline: "Dart API chưa được khởi động",
-  }[apiState];
-
   return (
-    <main>
+    <main className="web-home">
+      <a className="skip-link" href="#home-content">
+        Đến nội dung chính
+      </a>
       <nav className="nav shell" aria-label="Điều hướng chính">
-        <a className="brand" href="#top" aria-label="Picket trang chủ">
-          <span className="brand-mark">P</span>
+        <Link className="brand" href="/" aria-label="Picket, trang chủ">
+          <Image
+            src="/picket-logo.png"
+            alt=""
+            width={48}
+            height={48}
+            priority
+          />
           <span>Picket</span>
-        </a>
-        <span className={`api-status ${apiState}`}>
-          <span className="status-dot" aria-hidden="true" />
-          {statusText}
-        </span>
+        </Link>
+        <Link className="button secondary" href="/login">
+          Đăng nhập
+        </Link>
       </nav>
-
-      <section className="hero shell" id="top">
+      <section
+        className="hero shell"
+        id="home-content"
+        aria-labelledby="home-title"
+      >
         <div className="hero-copy">
-          <p className="eyebrow">Tài chính rõ ràng, mỗi ngày</p>
-          <h1>Biến từng hóa đơn thành một quyết định tốt hơn.</h1>
+          <p className="eyebrow">Picket trên trình duyệt</p>
+          <h1 id="home-title">
+            Mang thu chi
+            <br />
+            về một chỗ.
+          </h1>
           <p className="lead">
-            Picket gom mọi khoản thu chi vào một nơi. Quét hóa đơn nhanh trên
-            thiết bị, đồng bộ an toàn và theo dõi kế hoạch trên web hoặc mobile.
+            Ghi một khoản chi, giữ một hóa đơn, xem lại kế hoạch của tháng. Tiếp
+            tục với tài khoản Picket của bạn trên máy tính hoặc điện thoại.
           </p>
           <div className="actions">
-            <a className="button primary" href="/login">
-              Đăng nhập Picket
-            </a>
-            <a className="button secondary" href={`${apiBaseUrl}/openapi.yaml`}>
-              Xem API contract
-            </a>
+            <Link className="button primary" href="/login">
+              Mở Picket của bạn
+            </Link>
+            <Link className="button secondary" href="/register">
+              Tạo tài khoản
+            </Link>
           </div>
+          <p className="home-note">
+            Bản web cần kết nối mạng. Dữ liệu tài khoản dùng chung với ứng dụng
+            Android.
+          </p>
         </div>
-
-        <div className="overview-card" aria-label="Bản xem trước tổng quan">
-          <div className="card-heading">
-            <div>
-              <span>Số dư tháng này</span>
-              <strong>18.420.000 ₫</strong>
-            </div>
-            <span className="trend">+8,4%</span>
+        <aside
+          className="home-preview"
+          aria-label="Minh họa cách ghi thu chi, không phải dữ liệu tài khoản"
+        >
+          <div className="home-preview-heading">
+            <Image src="/picket-logo.png" alt="" width={40} height={40} />
+            <span>Mỗi khoản nhỏ đều được nhớ</span>
           </div>
-          <div className="chart" aria-hidden="true">
-            {[38, 52, 47, 68, 60, 82, 74, 92].map((height, index) => (
-              <span key={index} style={{ height: `${height}%` }} />
-            ))}
-          </div>
-          <div className="summary-row">
+          <p className="eyebrow">Ví dụ minh họa</p>
+          <h2>Một ngày của bạn</h2>
+          <dl className="home-ledger">
             <div>
-              <span>Thu nhập</span>
-              <strong className="income">24.800.000 ₫</strong>
+              <dt>
+                Cà phê sáng<small>Ăn uống</small>
+              </dt>
+              <dd className="expense">−35.000 ₫</dd>
             </div>
             <div>
-              <span>Chi tiêu</span>
-              <strong className="expense">6.380.000 ₫</strong>
+              <dt>
+                Đi chợ<small>Sinh hoạt</small>
+              </dt>
+              <dd className="expense">−260.000 ₫</dd>
             </div>
-          </div>
-        </div>
+            <div>
+              <dt>
+                Khoản thu<small>Công việc</small>
+              </dt>
+              <dd className="income">+500.000 ₫</dd>
+            </div>
+          </dl>
+          <p className="home-note">
+            Ghi chép mỗi ngày, hiểu tiền của mình hơn.
+          </p>
+        </aside>
       </section>
-
-      <section className="features shell" id="architecture">
+      <section
+        className="features shell"
+        aria-label="Bạn có thể làm gì trên web"
+      >
         <article>
-          <span className="feature-number">01</span>
-          <h2>OCR ưu tiên thiết bị</h2>
+          <h2>Ví nào, khoản đó</h2>
           <p>
-            ML Kit xử lý nhanh, hoạt động ngoại tuyến. Ảnh khó mới chuyển sang
-            fallback để giữ trải nghiệm mượt trên Android cấu hình yếu.
+            Ghi thu chi và chuyển tiền giữa các ví. Tìm lại giao dịch theo ngày,
+            ví hoặc nội dung.
           </p>
         </article>
         <article>
-          <span className="feature-number">02</span>
-          <h2>Một hợp đồng API</h2>
+          <h2>Giữ lại hóa đơn</h2>
           <p>
-            Next.js và Expo dùng chung client TypeScript, giao tiếp với Dart Frog
-            qua REST/OpenAPI thay vì phụ thuộc trực tiếp vào dữ liệu nội bộ.
+            Chọn ảnh hoặc chụp bằng điện thoại. Xem lại kết quả nhận diện trước
+            khi lưu.
           </p>
         </article>
         <article>
-          <span className="feature-number">03</span>
-          <h2>Đồng bộ có kiểm soát</h2>
+          <h2>Có kế hoạch cho tháng</h2>
           <p>
-            Supabase tiếp tục đảm nhiệm xác thực và Postgres. JWT người dùng được
-            chuyển tiếp để mọi chính sách RLS vẫn được bảo toàn.
+            Xem ngân sách và thống kê chi tiêu. Theo dõi kỳ thanh toán cùng
+            những khoản định kỳ.
           </p>
         </article>
       </section>
+      <footer className="shell home-footer">
+        <span>Picket</span>
+        <Link href="/login">Đăng nhập để tiếp tục</Link>
+      </footer>
     </main>
   );
 }

@@ -2,7 +2,7 @@ import { requireApiSession } from "@/core/auth/require-api-session";
 import { FinancePageHeader } from "../finance-ui";
 import { ReconcileForm } from "./reconcile-form";
 import { loadAllTransactions } from "@/core/finance/load-transactions";
-import { latestStatementDay } from '@/core/finance/reconciliation-policy';
+import { latestStatementDay } from "@/core/finance/reconciliation-policy";
 export default async function ReconcilePage() {
   const { api, accessToken, claims } = await requireApiSession();
   const [{ accounts }, transactions] = await Promise.all([

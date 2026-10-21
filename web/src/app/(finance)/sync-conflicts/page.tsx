@@ -1,3 +1,37 @@
-import Link from 'next/link';
-import { FinancePageHeader } from '../finance-ui';
-export default function SyncConflicts(){return <><FinancePageHeader title="Kiểm tra đồng bộ" description="Giữ dữ liệu mới nhất khi dùng Picket trên nhiều thiết bị."/><article className="finance-panel"><h2>Khi một thay đổi bị từ chối</h2><p>Web không tự ghi đè phiên bản mới từ điện thoại. Mở lại bản ghi để lấy dữ liệu mới nhất, đối chiếu nội dung bạn định sửa rồi lưu lại. Không tự tạo lại giao dịch nếu chưa biết yêu cầu trước đã thành công hay chưa.</p><nav className="overview-actions"><Link className="button secondary" href="/transactions">Kiểm tra giao dịch</Link><Link className="button secondary" href="/review-inbox">Kiểm tra nghi trùng</Link><Link className="button secondary" href="/reconcile">Tiếp tục đối soát đang chờ</Link></nav><p>Các thay đổi offline đang chờ trong ứng dụng Android phải được xử lý trên điện thoại đó. Trang web không hiển thị hoặc xóa hàng đợi riêng của điện thoại.</p></article></>;}
+import Link from "next/link";
+import { FinancePageHeader } from "../finance-ui";
+export default function SyncConflicts() {
+  return (
+    <>
+      <FinancePageHeader
+        title="Kiểm tra đồng bộ"
+        description="Giữ dữ liệu mới nhất khi dùng Picket trên nhiều thiết bị."
+      />
+      <article className="finance-panel">
+        <h2>Khi một thay đổi bị từ chối</h2>
+        <p>
+          Web không tự ghi đè phiên bản mới từ điện thoại. Mở lại bản ghi để lấy
+          dữ liệu mới nhất, đối chiếu nội dung bạn định sửa rồi lưu lại. Không
+          tự tạo lại giao dịch nếu chưa biết yêu cầu trước đã thành công hay
+          chưa.
+        </p>
+        <nav className="overview-actions">
+          <Link className="button secondary" href="/transactions">
+            Kiểm tra giao dịch
+          </Link>
+          <Link className="button secondary" href="/review-inbox">
+            Kiểm tra nghi trùng
+          </Link>
+          <Link className="button secondary" href="/reconcile">
+            Tiếp tục đối soát đang chờ
+          </Link>
+        </nav>
+        <p>
+          Các thay đổi offline đang chờ trong ứng dụng Android phải được xử lý
+          trên điện thoại đó. Trang web không hiển thị hoặc xóa hàng đợi riêng
+          của điện thoại.
+        </p>
+      </article>
+    </>
+  );
+}

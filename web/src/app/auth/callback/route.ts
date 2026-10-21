@@ -13,9 +13,15 @@ function publicOrigin(request: Request): string {
     }
   }
 
-  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const forwardedHost = request.headers
+    .get("x-forwarded-host")
+    ?.split(",")[0]
+    ?.trim();
   const host = forwardedHost || request.headers.get("host");
-  const forwardedProtocol = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const forwardedProtocol = request.headers
+    .get("x-forwarded-proto")
+    ?.split(",")[0]
+    ?.trim();
   if (host) return `${forwardedProtocol || "https"}://${host}`;
   return new URL(request.url).origin;
 }

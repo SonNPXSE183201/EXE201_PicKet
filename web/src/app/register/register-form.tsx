@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
@@ -16,7 +17,9 @@ export function RegisterForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const email = String(form.get("email") ?? "")
+      .trim()
+      .toLowerCase();
     const password = String(form.get("password") ?? "");
     const confirmation = String(form.get("confirmation") ?? "");
 
@@ -34,7 +37,9 @@ export function RegisterForm() {
     });
 
     if (error) {
-      setMessage("Không thể tạo tài khoản. Email có thể đã được sử dụng hoặc bạn thao tác quá nhanh.");
+      setMessage(
+        "Không thể tạo tài khoản. Email có thể đã được sử dụng hoặc bạn thao tác quá nhanh.",
+      );
       setBusy(false);
       return;
     }
@@ -48,18 +53,50 @@ export function RegisterForm() {
 
   return (
     <div className="auth-card">
-      <Link className="brand auth-brand" href="/"><span className="brand-mark">P</span><span>Picket</span></Link>
+      <Link className="brand auth-brand" href="/">
+        <Image src="/picket-logo.png" alt="" width={48} height={48} />
+        <span>Picket</span>
+      </Link>
       <p className="eyebrow">Tạo tài khoản</p>
       <h1 className="auth-title">Bắt đầu với Picket</h1>
-      <p className="auth-copy">Tài khoản này dùng chung cho web và ứng dụng mobile.</p>
+      <p className="auth-copy">
+        Tài khoản này dùng chung cho web và ứng dụng mobile.
+      </p>
       <form className="auth-form" onSubmit={submit}>
-        <label>Email<input autoComplete="email" name="email" required type="email" /></label>
-        <label>Mật khẩu<input autoComplete="new-password" name="password" required type="password" /></label>
-        <label>Nhập lại mật khẩu<input autoComplete="new-password" name="confirmation" required type="password" /></label>
-        {message && <p className="form-message" role="alert">{message}</p>}
-        <button className="button primary" disabled={busy} type="submit">{busy ? "Đang tạo..." : "Đăng ký"}</button>
+        <label>
+          Email
+          <input autoComplete="email" name="email" required type="email" />
+        </label>
+        <label>
+          Mật khẩu
+          <input
+            autoComplete="new-password"
+            name="password"
+            required
+            type="password"
+          />
+        </label>
+        <label>
+          Nhập lại mật khẩu
+          <input
+            autoComplete="new-password"
+            name="confirmation"
+            required
+            type="password"
+          />
+        </label>
+        {message && (
+          <p className="form-message" role="alert">
+            {message}
+          </p>
+        )}
+        <button className="button primary" disabled={busy} type="submit">
+          {busy ? "Đang tạo..." : "Đăng ký"}
+        </button>
       </form>
-      <Link className="back-link" href="/login">Đã có tài khoản? Đăng nhập</Link>
+      <Link className="back-link" href="/login">
+        Đã có tài khoản? Đăng nhập
+      </Link>
     </div>
   );
 }

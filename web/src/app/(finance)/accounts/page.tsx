@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/core/ui/submit-button";
 import { formatVnd } from "@picket/domain";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
@@ -61,9 +62,9 @@ export default async function AccountsPage({ searchParams }: PageProps) {
                 required
               />
             </label>
-            <button className="button primary" type="submit">
+            <SubmitButton className="button primary">
               Tạo tài khoản
-            </button>
+            </SubmitButton>
           </form>
         </article>
         <section className="finance-stack">
@@ -126,18 +127,18 @@ export default async function AccountsPage({ searchParams }: PageProps) {
                       required
                     />
                   </label>
-                  <button className="small-button" type="submit">
+                  <SubmitButton className="small-button">
                     Lưu thay đổi
-                  </button>
+                  </SubmitButton>
                 </form>
               </details>
               {!account.archived && (
                 <form action={archiveAccount}>
                   <input name="id" type="hidden" value={account.id} />
                   <input name="version" type="hidden" value={account.version} />
-                  <button className="danger-link" type="submit">
+                  <SubmitButton className="danger-link">
                     Lưu trữ tài khoản
-                  </button>
+                  </SubmitButton>
                 </form>
               )}
             </article>

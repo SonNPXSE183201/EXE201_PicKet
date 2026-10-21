@@ -1,5 +1,8 @@
+import { SubmitButton } from "@/core/ui/submit-button";
 import { formatVnd } from "@picket/domain";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ApiError } from "@picket/api-client";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { createClient } from "@/core/supabase/server";
@@ -9,7 +12,11 @@ import { FinancePageHeader, MutationError } from "../../finance-ui";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ duplicate?: string; error?: string; updated?: string }>;
+  searchParams: Promise<{
+    duplicate?: string;
+    error?: string;
+    updated?: string;
+  }>;
 }
 
 function dateInput(value: string | null) {
@@ -19,7 +26,10 @@ function dateInput(value: string | null) {
 export default async function ReceiptPage({ params, searchParams }: PageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const { accessToken, api } = await requireApiSession();
-  const { receipt } = await api.getReceipt(accessToken, id);
+  const { receipt } = await api.getReceipt(accessToken, id).catch((error) => {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
+  });
   const supabase = await createClient();
   const signed = await supabase.storage
     .from("picket-media")
@@ -31,7 +41,12 @@ export default async function ReceiptPage({ params, searchParams }: PageProps) {
       unitPrice: item.unitPrice === null ? "" : String(item.unitPrice),
       total: String(item.total),
     })),
-    ...Array.from({ length: 3 }, () => ({ name: "", quantity: "1", unitPrice: "", total: "" })),
+    ...Array.from({ length: 3 }, () => ({
+      name: "",
+      quantity: "1",
+      unitPrice: "",
+      total: "",
+    })),
   ];
 
   return (
@@ -41,13 +56,20 @@ export default async function ReceiptPage({ params, searchParams }: PageProps) {
         description="Ảnh dùng URL riêng tư có hiệu lực 5 phút; mọi thay đổi được kiểm tra phiên bản trên máy chủ."
       />
       <MutationError visible={Boolean(query.error)} />
-      {query.updated === "1" && <p className="admin-success" role="status">Đã lưu kết quả kiểm tra hóa đơn.</p>}
+      {query.updated === "1" && (
+        <p className="admin-success" role="status">
+          Đã lưu kết quả kiểm tra hóa đơn.
+        </p>
+      )}
       {receipt.status === "review_required" ? (
         <p className="mutation-error" role="status">
-          Hóa đơn cần kiểm tra. Hãy đối chiếu ảnh, tổng tiền và sản phẩm trước khi xác nhận.
+          Hóa đơn cần kiểm tra. Hãy đối chiếu ảnh, tổng tiền và sản phẩm trước
+          khi xác nhận.
         </p>
       ) : receipt.status === "confirmed" ? (
-        <p className="admin-success" role="status">Hóa đơn đã được xác nhận.</p>
+        <p className="admin-success" role="status">
+          Hóa đơn đã được xác nhận.
+        </p>
       ) : null}
       {query.duplicate && (
         <p className="mutation-error" role="alert">
@@ -65,19 +87,56 @@ export default async function ReceiptPage({ params, searchParams }: PageProps) {
           ) : (
             <p className="empty-state">Không tải được ảnh xem trước.</p>
           )}
-          <p>{receipt.ocrProvider} · {receipt.confidence === null ? "Chưa có độ tin cậy" : `${Math.round(receipt.confidence * 100)}%`}</p>
-          <p>{receipt.detectedTotal === null ? "Chưa có tổng tiền" : formatVnd(receipt.detectedTotal)}</p>
-          <Link className="back-link" href="/receipts">← Danh sách hóa đơn</Link>
+          <p>
+            {receipt.ocrProvider} ·{" "}
+            {receipt.confidence === null
+              ? "Chưa có độ tin cậy"
+              : `${Math.round(receipt.confidence * 100)}%`}
+          </p>
+          <p>
+            {receipt.detectedTotal === null
+              ? "Chưa có tổng tiền"
+              : formatVnd(receipt.detectedTotal)}
+          </p>
+          <Link className="back-link" href="/receipts">
+            ← Danh sách hóa đơn
+          </Link>
         </aside>
 
-        <form action={updateReceipt} className="finance-panel receipt-review-form">
+        <form
+          action={updateReceipt}
+          className="finance-panel receipt-review-form"
+        >
           <input name="receiptId" type="hidden" value={receipt.id} />
           <input name="version" type="hidden" value={receipt.version} />
           <h2>Thông tin OCR</h2>
           <div className="finance-form receipt-metadata">
-            <label>Cửa hàng<input defaultValue={receipt.merchant ?? ""} maxLength={160} name="merchant" /></label>
-            <label>Tổng hóa đơn<input defaultValue={receipt.detectedTotal ?? ""} inputMode="numeric" min="1" name="detectedTotal" type="number" /></label>
-            <label>Ngày mua<input defaultValue={dateInput(receipt.purchasedAt)} name="purchasedAt" type="date" /></label>
+            <label>
+              Cửa hàng
+              <input
+                defaultValue={receipt.merchant ?? ""}
+                maxLength={160}
+                name="merchant"
+              />
+            </label>
+            <label>
+              Tổng hóa đơn
+              <input
+                defaultValue={receipt.detectedTotal ?? ""}
+                inputMode="numeric"
+                min="1"
+                name="detectedTotal"
+                type="number"
+              />
+            </label>
+            <label>
+              Ngày mua
+              <input
+                defaultValue={dateInput(receipt.purchasedAt)}
+                name="purchasedAt"
+                type="date"
+              />
+            </label>
           </div>
           <div className="receipt-section-heading">
             <h2>Sản phẩm</h2>
@@ -85,17 +144,61 @@ export default async function ReceiptPage({ params, searchParams }: PageProps) {
           </div>
           <div className="receipt-lines">
             {rows.map((row, index) => (
-              <fieldset className="receipt-line-editor" key={`${index}-${row.name}`}>
+              <fieldset
+                className="receipt-line-editor"
+                key={`${index}-${row.name}`}
+              >
                 <legend>Sản phẩm {index + 1}</legend>
-                <label>Tên<input defaultValue={row.name} maxLength={200} name={`lineName:${index}`} /></label>
-                <label>Số lượng<input defaultValue={row.quantity} min="0.000001" name={`lineQuantity:${index}`} step="any" type="number" /></label>
-                <label>Đơn giá<input defaultValue={row.unitPrice} inputMode="numeric" min="0" name={`lineUnitPrice:${index}`} type="number" /></label>
-                <label>Thành tiền<input defaultValue={row.total} inputMode="numeric" min="1" name={`lineTotal:${index}`} type="number" /></label>
-                {index < receipt.lineItems.length && <label className="checkbox-label receipt-delete"><input name={`lineDelete:${index}`} type="checkbox" /> Xóa dòng này</label>}
+                <label>
+                  Tên
+                  <input
+                    defaultValue={row.name}
+                    maxLength={200}
+                    name={`lineName:${index}`}
+                  />
+                </label>
+                <label>
+                  Số lượng
+                  <input
+                    defaultValue={row.quantity}
+                    min="0.000001"
+                    name={`lineQuantity:${index}`}
+                    step="any"
+                    type="number"
+                  />
+                </label>
+                <label>
+                  Đơn giá
+                  <input
+                    defaultValue={row.unitPrice}
+                    inputMode="numeric"
+                    min="0"
+                    name={`lineUnitPrice:${index}`}
+                    type="number"
+                  />
+                </label>
+                <label>
+                  Thành tiền
+                  <input
+                    defaultValue={row.total}
+                    inputMode="numeric"
+                    min="1"
+                    name={`lineTotal:${index}`}
+                    type="number"
+                  />
+                </label>
+                {index < receipt.lineItems.length && (
+                  <label className="checkbox-label receipt-delete">
+                    <input name={`lineDelete:${index}`} type="checkbox" /> Xóa
+                    dòng này
+                  </label>
+                )}
               </fieldset>
             ))}
           </div>
-          <button className="button primary" type="submit">Lưu kết quả kiểm tra</button>
+          <SubmitButton className="button primary">
+            Lưu kết quả kiểm tra
+          </SubmitButton>
         </form>
       </div>
       {receipt.rawText && (

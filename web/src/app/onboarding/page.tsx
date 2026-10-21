@@ -2,7 +2,7 @@ import { PicketApiClient } from "@picket/api-client";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/core/supabase/server";
-import { requireApiSession } from '@/core/auth/require-api-session';
+import { requireApiSession } from "@/core/auth/require-api-session";
 
 import { OnboardingFlow } from "./onboarding-flow";
 
@@ -20,5 +20,9 @@ export default async function OnboardingPage() {
   const api = new PicketApiClient(apiBaseUrl);
   const { profile } = await api.currentProfile(token);
   if (profile?.onboardingCompleted) redirect("/dashboard");
-  return <main className="auth-page"><OnboardingFlow /></main>;
+  return (
+    <main className="auth-page">
+      <OnboardingFlow />
+    </main>
+  );
 }

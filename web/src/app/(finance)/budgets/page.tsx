@@ -1,4 +1,5 @@
-import { formatVnd } from "@picket/domain";
+import { SubmitButton } from "@/core/ui/submit-button";
+import type { Budget } from "@picket/domain";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { loadAllTransactions } from "@/core/finance/load-transactions";
@@ -15,17 +16,34 @@ interface PageProps {
 export default async function BudgetsPage({ searchParams }: PageProps) {
   const { accessToken, api } = await requireApiSession();
   const month = vietnamDate(new Date().toISOString()).slice(0, 7);
-  const [{ budgets }, { categories }, rows, planning] = await Promise.all([
-    api.listBudgets(accessToken),
-    api.listCategories(accessToken),
-    loadAllTransactions(api, accessToken),
-    api.getPlanning(accessToken, month),
-  ]);
-  const spending = categorySpending(
-    rows,
-    month,
-    await loadSpendingSplits(api, accessToken, rows, month),
-  );
+  const [{ budgets }, { categories }, rows, planning, { accounts }] =
+    await Promise.all([
+      api.listBudgets(accessToken),
+      api.listCategories(accessToken),
+      loadAllTransactions(api, accessToken),
+      api.getPlanning(accessToken, month),
+      api.listAccounts(accessToken),
+    ]);
+  const splits = await loadSpendingSplits(api, accessToken, rows, month);
+  const spent = (budget: Budget) => {
+    const wallets = new Set(
+      accounts
+        .filter((a) => a.currencyCode === (budget.currencyCode ?? "VND"))
+        .map((a) => a.id),
+    );
+    return (
+      categorySpending(
+        rows.filter((t) => wallets.has(t.accountId)),
+        month,
+        splits,
+      ).find((s) => s.id === budget.categoryId)?.amount ?? 0
+    );
+  };
+  const money = (budget: Budget, amount: number) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: budget.currencyCode ?? "VND",
+    }).format(amount);
   const expenseCategories = categories.filter(
     (item) => item.kind === "expense" || item.kind === "both",
   );
@@ -70,13 +88,12 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                 type="number"
               />
             </label>
-            <button
+            <SubmitButton
               className="button primary"
               disabled={expenseCategories.length === 0}
-              type="submit"
             >
               Tạo ngân sách
-            </button>
+            </SubmitButton>
           </form>
         </article>
         <section className="finance-stack">
@@ -93,16 +110,12 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                       {budget.version}
                     </p>
                   </div>
-                  <strong>{formatVnd(budget.defaultLimit)}</strong>
+                  <strong>{money(budget, budget.defaultLimit)}</strong>
                 </div>
                 <p>
-                  Tháng {month}: đã chi{" "}
-                  {formatVnd(
-                    spending.find((s) => s.id === budget.categoryId)?.amount ??
-                      0,
-                  )}{" "}
-                  /{" "}
-                  {formatVnd(
+                  Tháng {month}: đã chi {money(budget, spent(budget))} /{" "}
+                  {money(
+                    budget,
                     planning.periods.find((p) => p.budgetId === budget.id)
                       ?.limit ?? budget.defaultLimit,
                   )}
@@ -115,11 +128,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                     planning.periods.find((p) => p.budgetId === budget.id)
                       ?.limit ?? budget.defaultLimit,
                   )}
-                  value={Math.max(
-                    0,
-                    spending.find((s) => s.id === budget.categoryId)?.amount ??
-                      0,
-                  )}
+                  value={Math.max(0, spent(budget))}
                   aria-label={"Mức sử dụng " + budget.name}
                 />
                 <details>
@@ -167,17 +176,17 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                       />{" "}
                       Đang hoạt động
                     </label>
-                    <button className="small-button" type="submit">
+                    <SubmitButton className="small-button">
                       Lưu thay đổi
-                    </button>
+                    </SubmitButton>
                   </form>
                 </details>
                 <form action={archiveBudget}>
                   <input name="id" type="hidden" value={budget.id} />
                   <input name="version" type="hidden" value={budget.version} />
-                  <button className="danger-link" type="submit">
+                  <SubmitButton className="danger-link">
                     Lưu trữ ngân sách
-                  </button>
+                  </SubmitButton>
                 </form>
               </article>
             ))}

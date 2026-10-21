@@ -1,12 +1,15 @@
+import { SubmitButton } from "@/core/ui/submit-button";
 import type { Keepsake } from "@picket/domain";
 import { formatVnd } from "@picket/domain";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { vietnamDate } from "@/core/finance/overview";
 import { FinancePageHeader, MutationError } from "../finance-ui";
 import { archiveKeepsake, saveKeepsake } from "./actions";
-import { KeepsakePhotoFields } from './photo-fields';
+import { KeepsakePhotoFields } from "./photo-fields";
+import Image from "next/image";
+import { createClient } from "@/core/supabase/server";
 
-function Fields({ item,owner }: { item?: Keepsake;owner:string }) {
+function Fields({ item, owner }: { item?: Keepsake; owner: string }) {
   return (
     <>
       <input name="id" type="hidden" value={item?.id ?? ""} />
@@ -46,7 +49,27 @@ function Fields({ item,owner }: { item?: Keepsake;owner:string }) {
       </label>
       <label>
         Nhóm đồ dùng
-        <input name="category" defaultValue={item?.category} maxLength={80} />
+        <select
+          name="category"
+          defaultValue={item?.category ?? "Khác"}
+          required
+        >
+          {[
+            "Khác",
+            "Công nghệ",
+            "Trang phục",
+            "Đồ dùng",
+            "Kỷ niệm",
+            ...(item?.category &&
+            !["Khác", "Công nghệ", "Trang phục", "Đồ dùng", "Kỷ niệm"].includes(
+              item.category,
+            )
+              ? [item.category]
+              : []),
+          ].map((c) => (
+            <option key={c}>{c}</option>
+          ))}
+        </select>
       </label>
       <label>
         Bảo hành đến
@@ -73,7 +96,11 @@ function Fields({ item,owner }: { item?: Keepsake;owner:string }) {
           rows={3}
         />
       </label>
-      <KeepsakePhotoFields owner={owner} path={item?.mediaPath} isEdit={!!item}/>
+      <KeepsakePhotoFields
+        owner={owner}
+        path={item?.mediaPath}
+        isEdit={!!item}
+      />
     </>
   );
 }
@@ -82,12 +109,30 @@ export default async function KeepsakesPage({
 }: {
   searchParams: Promise<{ error?: string; saved?: string }>;
 }) {
-  const { api, accessToken,claims } = await requireApiSession();
+  const { api, accessToken, claims } = await requireApiSession();
   const [{ keepsakes }, query] = await Promise.all([
     api.listKeepsakes(accessToken),
     searchParams,
   ]);
   const items = keepsakes.filter((i) => !i.deletedAt);
+  const client = await createClient();
+  const photos = new Map(
+    await Promise.all(
+      items
+        .filter((i) => i.mediaPath)
+        .map(
+          async (i) =>
+            [
+              i.id,
+              (
+                await client.storage
+                  .from("picket-media")
+                  .createSignedUrl(i.mediaPath!, 300)
+              ).data?.signedUrl,
+            ] as const,
+        ),
+    ),
+  );
   return (
     <>
       <FinancePageHeader
@@ -104,12 +149,22 @@ export default async function KeepsakesPage({
         <article className="finance-panel">
           <h2>Thêm đồ dùng</h2>
           <form action={saveKeepsake} className="finance-form">
-            <Fields owner={String(claims.sub)}/>
+            <Fields owner={String(claims.sub)} />
           </form>
         </article>
         <section className="finance-stack">
           {items.map((item) => (
             <article className="resource-card" key={item.id}>
+              {photos.get(item.id) && (
+                <Image
+                  unoptimized
+                  src={photos.get(item.id)!}
+                  alt={"Ảnh " + item.title}
+                  width={600}
+                  height={400}
+                  className="keepsake-photo"
+                />
+              )}
               <div className="resource-summary">
                 <div>
                   <h2>{item.title}</h2>
@@ -142,7 +197,7 @@ export default async function KeepsakesPage({
               <details>
                 <summary>Chỉnh sửa đồ dùng</summary>
                 <form action={saveKeepsake} className="finance-form">
-                  <Fields item={item} owner={String(claims.sub)}/>
+                  <Fields item={item} owner={String(claims.sub)} />
                 </form>
               </details>
               <details>
@@ -159,9 +214,9 @@ export default async function KeepsakesPage({
                       autoComplete="off"
                     />
                   </label>
-                  <button className="danger-link" type="submit">
+                  <SubmitButton className="danger-link">
                     Xác nhận lưu trữ
-                  </button>
+                  </SubmitButton>
                 </form>
               </details>
             </article>

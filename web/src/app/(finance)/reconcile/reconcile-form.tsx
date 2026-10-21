@@ -2,6 +2,10 @@
 import { useEffect, useState } from "react";
 import type { FinancialAccount, Transaction } from "@picket/domain";
 import { reconcile } from "./reconcile-action";
+import {
+  clearedBalance,
+  statementCandidates,
+} from "@/core/finance/reconciliation-policy";
 type Pending = {
   requestId: string;
   accountId: string;
@@ -22,12 +26,37 @@ export function ReconcileForm({
   transactions: Transaction[];
   requestId: string;
   owner: string;
-  maxDate:string;
+  maxDate: string;
 }) {
   const [state, setState] = useState({ message: "", done: false }),
     [pending, setPending] = useState(false),
     [saved, setSaved] = useState<Pending | null>(null),
-    [wallet, setWallet] = useState(accounts[0]?.id ?? "");
+    [wallet, setWallet] = useState(accounts[0]?.id ?? ""),
+    [day, setDay] = useState(maxDate),
+    [target, setTarget] = useState(""),
+    [selectedByWallet, setSelectedByWallet] = useState<
+      Record<string, string[]>
+    >({});
+  const eligible = statementCandidates(transactions, wallet, day),
+    account = accounts.find((a) => a.id === wallet);
+  const selected =
+    selectedByWallet[wallet] ??
+    transactions
+      .filter((t) => t.reconciledAccountIds?.includes(wallet))
+      .map((t) => t.id);
+  const selectedRows = eligible.filter((t) => selected.includes(t.id));
+  const cleared = clearedBalance(
+    account?.openingBalance ?? 0,
+    wallet,
+    eligible,
+    selected,
+  );
+  const difference = /^-?\d+$/.test(target) ? Number(target) - cleared : null;
+  const money = (n: number) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: account?.currencyCode ?? "VND",
+    }).format(n);
   const key = "picket-web.reconcile." + owner;
   useEffect(() => {
     Promise.resolve().then(() => {
@@ -77,7 +106,7 @@ export function ReconcileForm({
       }
       const result = await reconcile(state, data);
       setState(result);
-      if (result.done || result.retryable===false) {
+      if (result.done || result.retryable === false) {
         localStorage.removeItem(key);
         setSaved(null);
       }
@@ -131,7 +160,8 @@ export function ReconcileForm({
               type="date"
               name="statementDate"
               required
-              defaultValue={maxDate}
+              value={day}
+              onChange={(e) => setDay(e.target.value)}
               max={maxDate}
             />
           </label>
@@ -143,33 +173,80 @@ export function ReconcileForm({
               inputMode="numeric"
               name="statementBalance"
               required
+              value={target}
+              onChange={(e) => setTarget(e.target.value)}
             />
           </label>
           <label>
             Lý do
-            <textarea name="reason" required maxLength={1000} rows={3} />
+            <textarea
+              name="reason"
+              required={difference !== 0}
+              maxLength={1000}
+              rows={3}
+            />
           </label>
-          <details>
-            <summary>Chọn giao dịch đã khớp sao kê</summary>
-            {transactions
-              .filter(
-                (t) =>
-                  !t.deletedAt &&
-                  (t.accountId === wallet ||
-                    t.destinationAccountId === wallet) &&
-                  !t.reconciledAccountIds?.includes(wallet),
-              )
-              .map((t) => (
-                <label className="checkbox-label" key={t.id}>
-                  <input
-                    type="checkbox"
-                    name="selectedTransactionIds"
-                    value={t.id}
-                  />
-                  {t.title} · {t.amount.toLocaleString("vi-VN")}
-                </label>
-              ))}
-          </details>
+          <section className="capture-status" aria-label="Xem trước đối soát">
+            <p>
+              Số dư từ các khoản đã chọn: <strong>{money(cleared)}</strong>
+            </p>
+            {difference !== null && (
+              <p>
+                Chênh lệch sẽ điều chỉnh: <strong>{money(difference)}</strong>
+              </p>
+            )}
+            <p>
+              Chỉ số dư ban đầu và các khoản bạn chọn được tính. Các khoản chưa
+              chọn không được tính vào số dư sao kê.
+            </p>
+          </section>
+          <fieldset>
+            <legend>
+              Giao dịch đã khớp sao kê · {selectedRows.length}/{eligible.length}
+            </legend>
+            <div className="overview-actions">
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() =>
+                  setSelectedByWallet((s) => ({
+                    ...s,
+                    [wallet]: eligible.map((t) => t.id),
+                  }))
+                }
+              >
+                Chọn tất cả
+              </button>
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() =>
+                  setSelectedByWallet((s) => ({ ...s, [wallet]: [] }))
+                }
+              >
+                Bỏ chọn
+              </button>
+            </div>
+            {eligible.map((t) => (
+              <label className="checkbox-label" key={t.id}>
+                <input
+                  type="checkbox"
+                  name="selectedTransactionIds"
+                  value={t.id}
+                  checked={selected.includes(t.id)}
+                  onChange={(e) =>
+                    setSelectedByWallet((s) => ({
+                      ...s,
+                      [wallet]: e.target.checked
+                        ? [...selected, t.id]
+                        : selected.filter((id) => id !== t.id),
+                    }))
+                  }
+                />
+                {t.title} · {t.amount.toLocaleString("vi-VN")}
+              </label>
+            ))}
+          </fieldset>
           <p>
             Thao tác có thể tạo giao dịch điều chỉnh. Yêu cầu chờ được lưu tạm
             trong trình duyệt theo tài khoản để thử lại với cùng mã và nội dung.

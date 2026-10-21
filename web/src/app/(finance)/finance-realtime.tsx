@@ -28,8 +28,7 @@ const connectionLabels: Record<ConnectionState, string> = {
 
 export function FinanceRealtime({ userId }: { userId: string }) {
   const router = useRouter();
-  const [connection, setConnection] =
-    useState<ConnectionState>("connecting");
+  const [connection, setConnection] = useState<ConnectionState>("connecting");
 
   useEffect(() => {
     const supabase = createClient();

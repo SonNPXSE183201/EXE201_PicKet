@@ -11,8 +11,8 @@ async function authenticatedApi() {
   if (!claimsData?.claims) return null;
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
-  const {data:staff,error:roleError}=await supabase.rpc('is_staff');
-  if(roleError || staff !== false) return null;
+  const { data: staff, error: roleError } = await supabase.rpc("is_staff");
+  if (roleError || staff !== false) return null;
   return token ? { api: new PicketApiClient(apiBaseUrl), token } : null;
 }
 
@@ -33,7 +33,10 @@ export async function POST(request: Request) {
     const exported = await body(request);
     const summary = await auth.api.validateFinanceImport(auth.token, exported);
     const current = await auth.api.loadFinanceSnapshot(auth.token);
-    return Response.json({ ...summary, currentRevision: current.revision }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json(
+      { ...summary, currentRevision: current.revision },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (error) {
     const status = error instanceof ApiError ? error.status : 400;
     return Response.json({ error: "Invalid backup file" }, { status });
@@ -49,6 +52,12 @@ export async function PUT(request: Request) {
     return Response.json(result, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const status = error instanceof ApiError ? error.status : 400;
-    return Response.json({ error: status === 409 ? "Data changed; validate again" : "Restore failed" }, { status });
+    return Response.json(
+      {
+        error:
+          status === 409 ? "Data changed; validate again" : "Restore failed",
+      },
+      { status },
+    );
   }
 }

@@ -1,0 +1,35 @@
+{
+  "source": "Read-only reference: apps/mobile/src/core/ui. Web overrides only.",
+  "color": {
+    "cream": "#FFF8F0",
+    "peach": "#FFD6BA",
+    "coral": "#FFB4A2",
+    "mauve": "#96606D",
+    "ink": "#4A2C2A",
+    "muted": "#806268",
+    "income": "#147D62",
+    "expense": "#BD3152",
+    "surface": "#FFFFFF",
+    "line": "#F2E7DF",
+    "inputBorder": "#9F7B84"
+  },
+  "type": {
+    "family": "system-ui, -apple-system, Segoe UI, sans-serif",
+    "title": 32,
+    "section": 20,
+    "body": 15,
+    "caption": 13,
+    "amount": 38
+  },
+  "spacing": [6, 10, 16, 20, 24, 32],
+  "radius": {
+    "input": 12,
+    "compact": 18,
+    "surface": 24,
+    "hero": 28,
+    "button": 999
+  },
+  "touch": { "minimum": 44, "primary": 48 },
+  "breakpoints": { "phone": 760, "compactWorkspace": 1100 },
+  "motion": { "interactionMs": 120, "reducedMotion": true }
+}

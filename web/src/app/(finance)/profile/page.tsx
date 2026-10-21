@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/core/ui/submit-button";
 import Link from "next/link";
 import { Icon } from "@/core/ui/workspace-shell";
 
@@ -85,9 +86,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
                 <option value="UTC">UTC</option>
               </select>
             </label>
-            <button className="button primary" type="submit">
-              Lưu hồ sơ
-            </button>
+            <SubmitButton className="button primary">Lưu hồ sơ</SubmitButton>
           </form>
         </article>
         <article className="finance-panel settings-panel">
@@ -124,9 +123,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
               />
               Ẩn số tiền trên tổng quan
             </label>
-            <button className="button primary" type="submit">
-              Lưu tùy chọn
-            </button>
+            <SubmitButton className="button primary">Lưu tùy chọn</SubmitButton>
           </form>
         </article>
         <article

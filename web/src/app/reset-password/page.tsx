@@ -8,5 +8,9 @@ export default async function ResetPasswordPage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) redirect("/forgot-password");
-  return <main className="auth-page"><ResetPasswordForm /></main>;
+  return (
+    <main className="auth-page">
+      <ResetPasswordForm />
+    </main>
+  );
 }

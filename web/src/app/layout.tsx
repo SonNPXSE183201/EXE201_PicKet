@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import './workspace.css';
+import "./workspace.css";
 
 export const metadata: Metadata = {
   title: "Picket — Quản lý tài chính thông minh",

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="vi">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>Picket · Bảng mẫu giao diện web</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #fff8f0;
+      color: #4a2c2a;
+      font:
+        15px/1.6 system-ui,
+        sans-serif;
+    }
+    header,
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 24px;
+    }
+    h1 {
+      font-size: 32px;
+      line-height: 1.2;
+    }
+    h2 {
+      font-size: 20px;
+    }
+    button,
+    select,
+    input {
+      font: inherit;
+      min-height: 48px;
+      border-radius: 12px;
+      padding: 10px 18px;
+      border: 1px solid #9f7b84;
+    }
+    button {
+      cursor: pointer;
+      border-radius: 999px;
+      color: #96606d;
+      background: white;
+    }
+    button.primary {
+      background: #96606d;
+      color: white;
+      border: 0;
+    }
+    :focus-visible {
+      outline: 3px solid #96606d;
+      outline-offset: 3px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    #preview {
+      margin: auto;
+      max-width: 100%;
+      transition: width 120ms ease;
+    }
+    .balance {
+      background: #ffd6ba;
+      border-radius: 28px;
+      padding: 24px;
+    }
+    .amount {
+      font-size: 38px;
+      font-weight: 800;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin: 24px 0;
+    }
+    article {
+      padding: 24px;
+      border-radius: 24px;
+      background: white;
+    }
+    .income {
+      color: #147d62;
+    }
+    .expense {
+      color: #bd3152;
+    }
+    .swatch {
+      height: 50px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+    p {
+      max-width: 65ch;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .note {
+      font-size: 13px;
+      color: #806268;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+      }
+    }
+  </style>
+  <header>
+    <h1>Picket web</h1>
+    <p>Bảng mẫu để kiểm tra thành phần. Số liệu dưới đây chỉ minh họa.</p>
+    <div class="controls">
+      <label
+        >Không gian
+        <select id="role">
+          <option value="user">Người dùng</option>
+          <option value="admin">Quản trị</option>
+        </select></label
+      ><button id="phone">Khung điện thoại</button
+      ><button id="desktop">Khung máy tính</button>
+    </div>
+  </header>
+  <main>
+    <div id="preview">
+      <section id="user">
+        <div class="balance">
+          <p>Tổng số dư · dữ liệu minh họa</p>
+          <div class="amount">1.250.000 ₫</div>
+        </div>
+        <div class="cards">
+          <article>
+            <h2>Thu nhập</h2>
+            <strong class="income">+2.000.000 ₫</strong>
+          </article>
+          <article>
+            <h2>Chi tiêu</h2>
+            <strong class="expense">−750.000 ₫</strong>
+          </article>
+        </div>
+      </section>
+      <section id="admin" class="hidden">
+        <h2>Không gian quản trị</h2>
+        <p>
+          Điều hướng quản lý người dùng, nhận diện, đối tác, cấu hình và nhật
+          ký. Không có điều hướng tài chính cá nhân.
+        </p>
+      </section>
+      <article>
+        <h2>Thành phần biểu mẫu</h2>
+        <label class="field"
+          >Tên ví<input value="Tiền mặt" maxlength="80"
+        /></label>
+        <p class="note">
+          Nhãn luôn hiển thị; không dùng placeholder thay cho nhãn.
+        </p>
+        <div class="controls">
+          <button class="primary" id="save">Lưu thay đổi</button
+          ><button>Hủy</button>
+        </div>
+        <p id="status" role="status"></p>
+      </article>
+      <section class="cards" aria-label="Màu nhận diện">
+        <article>
+          <div class="swatch" style="background: #ffd6ba"></div>
+          Peach #FFD6BA
+        </article>
+        <article>
+          <div class="swatch" style="background: #96606d"></div>
+          Mauve #96606D
+        </article>
+        <article>
+          <div class="swatch" style="background: #4a2c2a"></div>
+          Ink #4A2C2A
+        </article>
+      </section>
+    </div>
+  </main>
+  <script>
+    const preview = document.querySelector("#preview");
+    document.querySelector("#phone").onclick = () =>
+      (preview.style.width = "390px");
+    document.querySelector("#desktop").onclick = () =>
+      (preview.style.width = "100%");
+    document.querySelector("#role").onchange = (e) => {
+      document
+        .querySelector("#user")
+        .classList.toggle("hidden", e.target.value === "admin");
+      document
+        .querySelector("#admin")
+        .classList.toggle("hidden", e.target.value !== "admin");
+    };
+    document.querySelector("#save").onclick = () =>
+      (document.querySelector("#status").textContent =
+        "Ví dụ phản hồi: Đã lưu thay đổi. Không ghi dữ liệu thật.");
+  </script>
+</html>

@@ -4,10 +4,7 @@ export function safeNext(value: string | null): string {
 
   try {
     const decoded = decodeURIComponent(value);
-    if (
-      decoded.startsWith("//") ||
-      /[\\\u0000-\u001f\u007f]/.test(decoded)
-    ) {
+    if (decoded.startsWith("//") || /[\\\u0000-\u001f\u007f]/.test(decoded)) {
       return "/dashboard";
     }
   } catch {

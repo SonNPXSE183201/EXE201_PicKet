@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { FormEvent, useMemo, useState } from "react";
 
 import { createClient } from "@/core/supabase/client";
@@ -35,14 +36,39 @@ export function ResetPasswordForm() {
 
   return (
     <div className="auth-card">
-      <div className="brand auth-brand"><span className="brand-mark">P</span><span>Picket</span></div>
+      <div className="brand auth-brand">
+        <Image src="/picket-logo.png" alt="" width={48} height={48} />
+        <span>Picket</span>
+      </div>
       <p className="eyebrow">Bảo mật tài khoản</p>
       <h1 className="auth-title">Đặt mật khẩu mới</h1>
       <form className="auth-form" onSubmit={submit}>
-        <label>Mật khẩu mới<input autoComplete="new-password" name="password" required type="password" /></label>
-        <label>Nhập lại mật khẩu<input autoComplete="new-password" name="confirmation" required type="password" /></label>
-        {message && <p className="form-message" role="alert">{message}</p>}
-        <button className="button primary" disabled={busy} type="submit">{busy ? "Đang lưu..." : "Cập nhật mật khẩu"}</button>
+        <label>
+          Mật khẩu mới
+          <input
+            autoComplete="new-password"
+            name="password"
+            required
+            type="password"
+          />
+        </label>
+        <label>
+          Nhập lại mật khẩu
+          <input
+            autoComplete="new-password"
+            name="confirmation"
+            required
+            type="password"
+          />
+        </label>
+        {message && (
+          <p className="form-message" role="alert">
+            {message}
+          </p>
+        )}
+        <button className="button primary" disabled={busy} type="submit">
+          {busy ? "Đang lưu..." : "Cập nhật mật khẩu"}
+        </button>
       </form>
     </div>
   );
