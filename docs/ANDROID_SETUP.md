@@ -1,5 +1,7 @@
 # Picket Android — Expo/React Native
 
+Trạng thái hiện hành: [PROJECT_STATUS.md](PROJECT_STATUS.md). Public APK là **1.0.4 (5) ARM64**; máy ảo x86_64 dùng APK đúng ABI/package, cài đè bằng `adb install -r`, không gỡ hoặc xóa dữ liệu. [Checklist điện thoại thật](ANDROID_REAL_DEVICE_CHECKLIST.md), [Play sandbox](GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md). Các đường dẫn artifact ngày 20/10 bên dưới là lịch sử, không phải chỉ dẫn chọn APK mới nhất.
+
 Picket Android được triển khai tại `apps/mobile` bằng Expo SDK 57 và React
 Native. Repository không còn Flutter hoặc iOS. Backend nghiệp vụ nằm tại
 `apps/api` và dùng Supabase cho Auth, PostgreSQL/RLS và Storage.
@@ -15,7 +17,7 @@ Native. Repository không còn Flutter hoặc iOS. Backend nghiệp vụ nằm t
 Không đưa service-role key, OCR worker secret, keystore password hoặc database
 password vào biến `EXPO_PUBLIC_*`.
 
-Ma trận mới nhất: [Android extended acceptance](migration/ANDROID_EXTENDED_MATRIX_20261020.md)
+Ma trận hiện hành: [nghiệm thu phần 1–2](migration/PART12_ACCEPTANCE_MATRIX_20261021.md). Báo cáo checkpoint trước: [Android extended acceptance](migration/ANDROID_EXTENDED_MATRIX_20261020.md)
 ghi kết quả backup guest mã hóa có ảnh, camera permissions/lifecycle, owner isolation,
 queue/WAL/thiếu dung lượng, Review Inbox và bulk/chốt tháng. Các thử nghiệm lỗi chỉ
 nhắm package QA riêng; không thử phá storage hay đổi giờ khi app tài khoản thật đang chạy.
