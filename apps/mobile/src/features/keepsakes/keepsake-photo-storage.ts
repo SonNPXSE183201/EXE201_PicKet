@@ -1,6 +1,7 @@
 import { fromByteArray, toByteArray } from "base64-js";
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
+import { getFreeDiskStorageAsync } from "expo-file-system/legacy";
 import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
 import { createPhotoLeaseGate, createPhotoVault, MAX_PHOTO_BYTES, requirePhotoWriteSpace, selectPhotoOrphans, type PhotoPayload } from "./keepsake-photo-vault";
 
@@ -31,7 +32,7 @@ export function keepsakePhotoMime(bytes: Uint8Array): string {
 export function writeKeepsakePhoto(owner: string, bytes: Uint8Array, cacheName?: string): Promise<string> {
   return leases.use(owner, async () => {
     const mime = keepsakePhotoMime(bytes);
-    requirePhotoWriteSpace(Paths.availableDiskSpace, bytes.length * 3);
+    requirePhotoWriteSpace(await getFreeDiskStorageAsync(), bytes.length * 3);
     const dir = directories(owner)[cacheName ? 1 : 0];
     dir.create({ intermediates: true, idempotent: true });
     const destination = new File(dir, cacheName ? `${cacheName}.enc` : `${Crypto.randomUUID()}.enc`);
