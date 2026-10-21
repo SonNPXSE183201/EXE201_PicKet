@@ -22,6 +22,7 @@ grant select,insert on public.transactions,public.idempotency_keys to authentica
 grant select on public.wallets,public.categories to authenticated;
 """)
 sql(Path('supabase/migrations/202610210003_transaction_attempt_recovery.sql').read_text())
+sql(Path('supabase/migrations/202610210004_transaction_attempt_conflict_code.sql').read_text())
 sql(f"insert into auth.users values('{owner}');insert into public.wallets(id,user_id) values('{wallet}','{owner}');")
 prefix=f"set request.jwt.claim.sub='{owner}';set role authenticated;"
 def create(key):return f"select (public.create_finance_transaction('{key}','{wallet}',null,'QA',1000,'expense',now(),'')).id;"

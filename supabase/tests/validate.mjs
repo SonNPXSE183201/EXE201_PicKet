@@ -57,6 +57,7 @@ for (
     "202610210001_ocr_receipt_image_retention.sql",
     "202610210002_partner_effective_period.sql",
     "202610210003_transaction_attempt_recovery.sql",
+    "202610210004_transaction_attempt_conflict_code.sql",
   ]
 ) {
   await db.exec(
