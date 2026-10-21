@@ -15,7 +15,15 @@ export function createAppUpdateController(deps: Dependencies, changed: (state: U
   const busy = () => ["checking", "downloading", "opening-installer"].includes(state.phase);
   return {
     snapshot: () => state,
-    activate() { active = true; },
+    activate() {
+      if (active) return;
+      active = true;
+      // Disposal invalidates the in-flight operation. Never retain a busy
+      // phase that can no longer settle after effect setup runs again.
+      if (state.phase === "checking") publish({ phase: "idle", progress: 0 });
+      else if (state.phase === "downloading") publish({ phase: "available", release: state.release, progress: 0 });
+      else if (state.phase === "opening-installer") publish({ ...state, phase: "ready" });
+    },
     async check() {
       if (!active || busy()) return;
       const current = ++generation;
