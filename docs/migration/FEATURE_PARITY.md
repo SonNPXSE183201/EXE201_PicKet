@@ -1,5 +1,9 @@
 # Picket delivery and release parity
 
+Trạng thái phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../PROJECT_STATUS.md). Phát hành mới nhất **1.0.4/code 5**, [release report](ANDROID_RELEASE_1_0_4_20261022.md); Google callback lạnh đã đạt lượt mới. Các nhánh thiết bị/Play chưa đủ bằng chứng không được suy là hoàn tất từ trạng thái chức năng cơ bản. [Staff report](STAFF_ADMIN_ACCEPTANCE_20261022.md) ghi 18 kiểm tra đạt và các giới hạn, không chứng nhận toàn bộ global settings/email.
+
+Ngày 22/10: [checklist phần 1 máy ảo đã đạt](PART1_ACCEPTANCE_20261022.md), gồm natural expiry/revoke/A–B–A, media race/disk-full, picker fallback, thông báo, chữ lớn và đo lịch nondebug. Không suy thành đã nghiệm thu điện thoại thật, Play sandbox, staff hay file backup Flutter lịch sử. Các checkpoint bên dưới giữ số test/phạm vi tại thời điểm cũ.
+
 Đây là nguồn theo dõi chính cho stack Next.js + Expo Android + Dart. Flutter và
 iOS không còn nằm trong phạm vi repository. Giá trị hợp lệ:
 `not-started`, `in-progress`, `implemented`, `verified`, `blocked`.
@@ -60,7 +64,7 @@ Follow-up 2026-10-18: Review Inbox Expo đã bổ sung hóa đơn cần kiểm t
 | Entitlement/quota | P1 | verified | verified | verified | Server-authoritative enforcement |
 | User dashboard | P1 | partial | verified | verified | Dữ liệu thật, không hard-code |
 | Admin portal | P1 | verified | n/a | verified | Staff/non-staff RBAC, action lifecycle và audit production pass |
-| Accessibility | P0 | n/a | in-progress | in-progress | Screen reader, scale và touch target pass |
+| Accessibility | P0 | n/a | verified | in-progress | Expo: 35 màn ở 150%/200%, footer/auth/onboarding/dialog được rà; TalkBack người dùng xác nhận. Bằng chứng và phạm vi ở ma trận phần 1–2; không suy thành Next đã đạt hoặc mọi màn bổ sung tương lai |
 
 ## Quy tắc cập nhật
 
