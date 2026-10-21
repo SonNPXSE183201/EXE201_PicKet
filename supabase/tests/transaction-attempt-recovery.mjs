@@ -5,6 +5,7 @@ export async function validateTransactionAttemptRecovery(db) {
   const other = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
   await db.exec("reset role");
   await db.query("insert into auth.users(id,email) values($1,'attempt-a@example.test'),($2,'attempt-b@example.test')", [owner,other]);
+  await db.query("insert into public.wallets(user_id,name,opening_balance,currency_code) values($1,'QA attempt wallet',0,'VND')",[owner]);
   async function asUser(id) {
     await db.exec("reset role");
     await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);
