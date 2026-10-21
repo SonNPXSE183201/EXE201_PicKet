@@ -47,15 +47,17 @@ export function AuthField(props: TextInputProps) {
 
 export function PrimaryButton({
   busy,
+  disabled,
   label,
   onPress,
 }: {
   busy?: boolean;
+  disabled?: boolean;
   label: string;
   onPress(): void;
 }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={onPress} style={[styles.primary, label.includes("Google") && styles.google, busy && styles.disabled]}>
+      <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ busy, disabled: busy || disabled }} disabled={busy || disabled} onPress={onPress} style={[styles.primary, label.includes("Google") && styles.google, (busy || disabled) && styles.disabled]}>
       {busy ? <ActivityIndicator accessibilityLabel={`Đang xử lý ${label}`} color={label.includes("Google") ? colors.mauve : colors.white} /> : <>{label.includes("Google") && <AppIcon name="google" color={colors.ink} size={20} />}<Text style={[styles.primaryText, label.includes("Google") && { color: colors.ink }]}>{label}</Text></>}
     </Pressable>
   );
