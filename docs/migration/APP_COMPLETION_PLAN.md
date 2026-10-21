@@ -1,8 +1,22 @@
 # Kế hoạch hoàn thiện Expo Android
 
-Ngày rà soát: 2026-10-21. Phạm vi: Expo Android + Dart API hiện có; không khôi phục Flutter, không làm iOS. Các mục dưới đây phân biệt code đã có với bằng chứng kiểm thử còn thiếu. Không tự nâng `verified` từ unit test hoặc từ route tồn tại.
+Ngày rà soát: 2026-10-22. Phạm vi: Expo Android + Dart API hiện có; không khôi phục Flutter, không làm iOS. Các mục dưới đây phân biệt code đã có với bằng chứng kiểm thử còn thiếu. Không tự nâng `verified` từ unit test hoặc từ route tồn tại.
 
 ## Trạng thái hiện hành — đọc trước các ghi chép lịch sử
+
+- **Đã chốt checklist phần 1 trên máy ảo**: [nghiệm thu 22/10](PART1_ACCEPTANCE_20261022.md), có kết quả từng ca và các lượt lỗi lịch sử. Không đồng nghĩa toàn ứng dụng/roadmap/điện thoại thật đã hoàn tất. Các điều kiện Flutter-export thật, Play sandbox, staff và thiết bị ARM64 vẫn được ghi riêng.
+
+- Source hiện tại **415 mobile tests PASS**, không skip; typecheck đạt, lint 0 lỗi/24 cảnh báo hiện hữu. Các số 414/409/405/401/396 trong báo cáo theo ngày là checkpoint lịch sử. [Bảo vệ dung lượng ảnh](REAL_ENOSPC_ANDROID_20261021.md) dùng số byte khả dụng không tính Android reserved blocks; hai ca Android ENOSPC thật (mở lạnh và restore tại 0 byte) đã đạt giữ metadata/ảnh và phục hồi sau giải phóng dung lượng. ANR cũ và các probe thất bại vẫn được ghi riêng.
+
+- [Cache preview lịch/lazy viewer](CALENDAR_PREVIEW_CACHE_TDD_20261021.md): 50 preview nhỏ, ảnh offline đạt. Bản không debug/API HTTPS thật: 5 cold run 1,914–3,310 giây; P95 cuộn 18–26ms, không frame >100ms trong 358 frame; lần đầu sau reboot 16,185 giây gồm UI dump/cuộn, dưới bound 20 giây và mở đúng ngày. Không tuyên bố mọi renderer đạt 60fps. Reminder owner race và picker fallback/A–B–A cũng đạt native riêng.
+
+- **Chỉ mục hiện hành:** [PROJECT_STATUS.md](../PROJECT_STATUS.md), [bằng chứng phần 1](PART1_CURRENT_EXECUTION_20261021.md), [ma trận nghiệm thu](PART12_ACCEPTANCE_MATRIX_20261021.md). [Landing đã lên 1.0.4/code 5](ANDROID_RELEASE_1_0_4_20261022.md), chứa follow-up. API **82 test**, analyzer không lỗi; migration `003`/`004` và API phục hồi hóa đơn đã triển khai theo phê duyệt riêng. Các phụ thuộc ngoài phạm vi vẫn chưa nghiệm thu.
+
+- **Việc tiếp theo:** người dùng chạy [checklist Android thật](../ANDROID_REAL_DEVICE_CHECKLIST.md) và [đăng ký Play → sandbox](../GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md) (chưa có Console). [Staff acceptance](STAFF_ADMIN_ACCEPTANCE_20261022.md) đã đạt 18 kiểm tra bằng tài khoản mới, không sửa tài khoản khác; còn reset email trên inbox test, mutation settings ở staging và SQL owner cleanup đúng hai fixture ẩn. Không ghi tất cả admin/Billing đã production verified.
+
+### Nhật ký checkpoint lịch sử
+
+Các đoạn bên dưới giữ kết quả tại thời điểm thực thi. Trạng thái hiện hành ở chỉ mục phía trên và ma trận nghiệm thu; không đọc các dòng “chưa triển khai/đang chạy” cũ như trạng thái hiện tại.
 
 - Phát hành theo yêu cầu ngày 21/10: landing đã chuyển sang **1.0.2/code 3, ARM64, 70.246.540 byte**, SHA-256 `0a1edd1780c54507e27afd7ec6365b2da28d624f73d10085c71992985c305599`; khóa ký khớp bản trước, không debuggable, bundle dùng API HTTPS production và không chứa proxy QA. Tải đầy đủ qua HTTPS/checksum/Range/login/API health đã đạt, không restart container. Xem [báo cáo phát hành](ANDROID_RELEASE_1_0_2_20261021.md). Việc phát hành không đóng các ca còn mở. Ca natural-expiry mới đã quan sát server từ chối token sau hạn rồi thu hồi phiên thật, nhưng dừng ở bước xác minh UI logout; toàn chu kỳ A–B–A vẫn chưa đạt.
 
@@ -57,7 +71,11 @@ Ngày rà soát: 2026-10-21. Phạm vi: Expo Android + Dart API hiện có; khô
 - Increment media 19/10 chỉ ở working tree, **không commit/push** theo yêu cầu. Đã sửa xóa ảnh khi mutation mất phản hồi; đường dẫn ảnh ổn định theo owner/item/hash, giữ ID khi chuyển sang outbox và nhận diện server đã lưu đúng payload để không replay trùng. APK x86_64 mới build/cài đạt; ARM64 trên landing **chưa chứa** increment này. Xem [KEEPSAKE_MEDIA_RETRY_TDD.md](KEEPSAKE_MEDIA_RETRY_TDD.md).
 - Ngày 19/10 đã mở AVD, người dùng đăng nhập Google, cài cập nhật giữ phiên/số dư. Fixture kỷ vật 0 ₫ qua lưu offline→restart có ảnh→reconnect→PATCH 200→restart offline vẫn ảnh/ghi chú; đã archive fixture bằng Android, DELETE 200/version 2. Bộ mobile khi đó 159/159; audit object/outbox, mất PATCH response và một ca media A–B–A đã bổ sung ngày 20/10 ở trên, không nâng toàn bộ media thành verified.
 
-| Luồng | Đã có bằng chứng | Phần thực sự còn lại |
+### Bảng checkpoint lịch sử 20/10 — không phải backlog hiện hành
+
+Các khoảng trống trong bảng này là tại checkpoint cũ. Dùng ma trận phần 1–2 và chỉ mục hiện hành ở đầu tài liệu để biết ca nào đã được đóng sau đó; không dùng bảng lịch sử để yêu cầu lặp lại ca đã nghiệm thu.
+
+| Luồng | Bằng chứng tại checkpoint | Khoảng trống tại checkpoint |
 | --- | --- | --- |
 | Đối soát mất phản hồi | Android + server thật, restart/retry cùng request ID, đúng một adjustment | Chaos lặp lại; không ghi lại ca chính là chưa đạt |
 | Bulk archive một phần | Android 1/2 với 409 qua proxy và conflict version thật; retry chỉ dòng lỗi 1/1 | Mixed validation/network và tập lớn |
