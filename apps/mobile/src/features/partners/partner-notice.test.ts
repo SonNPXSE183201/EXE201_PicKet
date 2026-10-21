@@ -5,8 +5,10 @@ import { safePartnerUrl, selectPartnerAd, visiblePartnerNotice } from "./partner
 
 test("partner notice rendering and link opening are scoped to the current owner", () => {
   const source = readFileSync(new URL("./partner-notice.tsx", import.meta.url), "utf8");
-  assert.match(source, /visiblePartnerNotice\(owner, snapshot\)/);
-  assert.match(source, /isCurrent\(\)/);
+  assert.match(source, /visiblePartnerNotice\(owner, snapshot, now\)/);
+  assert.match(source, /isCurrent\(request\)/);
+  assert.match(source, /request === revision/);
+  assert.match(source, /clearInterval\(timer\)/);
   assert.match(source, /setSnapshot\(null\)/);
   assert.doesNotMatch(source, /useState<PartnerAd \| null>/);
 });

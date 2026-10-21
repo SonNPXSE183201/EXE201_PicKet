@@ -1,6 +1,6 @@
 import { colors } from "@picket/design-tokens";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Linking, StyleSheet, Text } from "react-native";
 
 import { picketApi } from "@/core/api/client";
@@ -14,25 +14,43 @@ export function PartnerNotice() {
   const { session } = useAuth();
   const owner = session?.user.id;
   const [snapshot, setSnapshot] = useState<PartnerNoticeSnapshot | null>(null);
-  const visible = visiblePartnerNotice(owner, snapshot);
+  const [now, setNow] = useState(Date.now);
+  const visible = visiblePartnerNotice(owner, snapshot, now);
   const notice = visible?.notice ?? "";
   const ad = visible?.ad ?? null;
+  useEffect(() => {
+    const end = snapshot?.ad?.ends_at;
+    if (!end) return;
+    const delay = Date.parse(end) - Date.now();
+    if (!Number.isFinite(delay) || delay <= 0) return;
+    const timer = setTimeout(() => setNow(Date.now()), Math.min(delay + 1, 2_147_483_647));
+    return () => clearTimeout(timer);
+  }, [now, snapshot]);
   useFocusEffect(useCallback(() => {
     if (!session || !supabase) { setSnapshot(null); return; }
+    const client = supabase;
     let active = true;
-    const isCurrent = () => active;
-    void Promise.all([
-      supabase.from("app_settings").select("notice").eq("id", true).single(),
-      supabase.from("partner_ads").select("id,title,body,url,active,created_at").eq("active", true).order("created_at", { ascending:false }).limit(1),
+    let revision = 0;
+    const isCurrent = (request: number) => active && request === revision;
+    const load = () => {
+      const request = ++revision;
+      void Promise.all([
+      client.from("app_settings").select("notice").eq("id", true).single(),
+      // '*' remains compatible with deployments predating optional period columns.
+      client.from("partner_ads").select("*").eq("active", true).order("created_at", { ascending:false }).limit(50),
       picketApi?.currentEntitlements(session.access_token).catch(() => null) ?? Promise.resolve(null),
     ]).then(([settings, ads, entitlement]) => {
-      if (!isCurrent()) return;
+      if (!isCurrent(request)) return;
+      setNow(Date.now());
       setSnapshot({ owner: session.user.id,
         notice: typeof settings.data?.notice === "string" ? settings.data.notice : "",
         ad: selectPartnerAd(entitlement?.tier, ads.error ? [] : ads.data ?? []),
       });
-    }).catch(() => { if (isCurrent()) setSnapshot(null); });
-    return () => { active = false; };
+    }).catch(() => { if (isCurrent(request)) setSnapshot(null); });
+    };
+    load();
+    const timer = setInterval(load, 60_000);
+    return () => { active = false; clearInterval(timer); };
   }, [session]));
   if (!notice && !ad) return null;
   return <>
