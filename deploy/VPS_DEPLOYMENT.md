@@ -1,5 +1,9 @@
 # Triển khai Picket trên một VPS
 
+Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing static đang phục vụ Android **1.0.4/code 5**; [triển khai/checksum/rollback](../docs/migration/ANDROID_RELEASE_1_0_4_20261022.md). Đợt này chỉ đổi landing/download/manifest, không recreate container API/web/OCR. Các số audit và phiên bản ghi theo ngày phía dưới là checkpoint lịch sử, không phải chứng nhận bảo mật hiện tại; cần audit lại theo lockfile trước một đợt triển khai mới.
+
+Increment API riêng ngày 21/10: migrations `202610210003`/`202610210004` và image `picket-api:transaction-attempt-20261021` đã triển khai theo phê duyệt. Source dùng để build giữ ở `/opt/picket/releases/transaction-attempt-20261021`, không ghi đè cây `/opt/picket/apps/api`; không rebuild cây cũ khi triển khai tiếp. Image rollback được giữ, nhưng không tháo SQL fence sau khi đã xác nhận bỏ yêu cầu. Xem [báo cáo rollout/rollback](../docs/migration/RECEIPT_ATTEMPT_RECOVERY_TDD_20261021.md).
+
 Stack production gồm Caddy (HTTPS), Next.js, Dart Frog, OCR worker và
 PP-OCRv5 mobile chạy CPU. Supabase/Postgres/Auth/Storage vẫn là managed service,
 không chạy trên VPS này.
