@@ -18,6 +18,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { isStaff } from "@/features/admin/admin-mobile";
 import { useProfile } from "@/features/profile/profile-context";
 import { useDeviceLock } from "@/features/security/device-lock";
+import { AppUpdateSection, InstalledVersion } from "@/features/updates/app-update-section";
 
 const personas = ["Đi làm", "Sinh viên", "Tự do", "Gia đình"] as const;
 const goals = ["Hiểu chi tiêu", "Tiết kiệm", "Quản lý hóa đơn"] as const;
@@ -198,8 +199,10 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         <Pressable accessibilityRole="button" disabled={busy || backupPassword.length < 12 || (localMode && guest.loading)} onPress={() => void (localMode ? exportLocalBackup() : exportExtra("picket"))} style={styles.secondary}><Text style={styles.secondaryText}>Tạo bản sao .picket có ảnh</Text></Pressable>
         <Text style={styles.sensitive}>Bản export chứa dữ liệu tài chính nhạy cảm. Chỉ lưu ở nơi bạn tin cậy.</Text>
         </Surface>}
+        <AppUpdateSection />
         <Pressable accessibilityRole="button" disabled={busy} onPress={confirmSignOut} style={styles.signOut}><Text style={styles.signOutText}>{localMode ? "Thoát chế độ trên máy" : "Đăng xuất"}</Text></Pressable>
         {!localMode && <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push(routes.deleteAccount)} style={styles.deleteLink}><Text style={styles.deleteText}>Xóa tài khoản</Text></Pressable>}
+        <InstalledVersion />
       </ScrollView>
     </SafeAreaView>
   );
