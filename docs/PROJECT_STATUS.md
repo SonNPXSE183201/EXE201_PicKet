@@ -40,7 +40,7 @@ Các gate source hiện hành và liên kết báo cáo ở đầu tài liệu. 
 
 Tiến độ backup/admin và tiêu chí đóng từng ca: [theo dõi 22/10](migration/BACKUP_ADMIN_EXTERNAL_ACCEPTANCE_20261022.md). Email tới inbox thật đã được người dùng xác nhận; DB local không thay thế Android/API staging. [Audit Flutter](migration/FLUTTER_SOURCE_AUDIT_20261022.md): không còn Flutter runtime, không xóa Dart backend hoặc TypeScript backup của Expo.
 
-Chủ sở hữu đã tự đặt lại mật khẩu tài khoản admin riêng và xác nhận vào `/admin` thành công trong hội thoại ngày 22/10. Theo yêu cầu tiếp theo, **source web local** đã có workspace admin riêng, login theo role và UI responsive đồng bộ màu Expo. Đã kiểm tra 152 tổ hợp trang/viewport và 49 unit test; chưa push/deploy. Mobile/API/Supabase không thay đổi. Guest/offline web chưa xây mới, đang xác nhận phạm vi; không tuyên bố parity toàn bộ native. [Báo cáo và giới hạn](migration/WEB_REDESIGN_20261022.md).
+Chủ sở hữu đã tự đặt lại mật khẩu tài khoản admin riêng và xác nhận vào `/admin` thành công trong hội thoại ngày 22/10. Theo yêu cầu tiếp theo, **source web local** đã hoàn tất UI/UX responsive cloud và workspace admin riêng, login theo role, đồng bộ màu Expo. Đã kiểm tra 152 tổ hợp trang/viewport và 49 unit test; chưa push/deploy. Mobile/API/Supabase không thay đổi. Chủ sở hữu đã xác nhận giữ web cloud, không bổ sung guest/offline; không tuyên bố parity toàn bộ native hoặc production đã nghiệm thu. [Báo cáo và giới hạn](migration/WEB_REDESIGN_20261022.md).
 
 ## Nguồn bằng chứng
 

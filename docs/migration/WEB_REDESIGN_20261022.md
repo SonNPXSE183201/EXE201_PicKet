@@ -6,7 +6,7 @@ Thực hiện theo yêu cầu chỉ sửa Next.js. Thay đổi runtime nằm tro
 
 Thiết kế dùng màu cream `#FFF8F0`, peach `#FFD6BA`, mauve `#96606D`, ink `#4A2C2A` của mobile; logo hiện hữu, kiểu nút pill, trường nhập bo góc, trạng thái rõ ràng. Desktop dùng sidebar, điện thoại dùng 5 tab và menu toàn bộ chức năng. Bảng quản trị chuyển thành các thẻ có nhãn trên màn hình nhỏ. Có loading, lỗi, trống, thành công và trang không tìm thấy.
 
-Đây là bản web tài khoản cloud. Không đánh dấu đã có guest/offline giống Expo: chưa có kho dữ liệu guest, hàng đợi mutation offline hoặc bộ giải quyết xung đột offline trong trình duyệt. Đã hỏi chủ sở hữu để xác nhận có mở rộng phần xây mới này hay giữ phạm vi cloud/UI. Các hàng đợi Android vẫn riêng trên điện thoại. Không gọi đây là hoàn tất parity toàn bộ native.
+Chủ sở hữu đã xác nhận: **giữ web cloud, hoàn thiện UI/UX và admin; không bổ sung guest/offline trên web**. Phần triển khai UI/UX và admin local trong phạm vi này đã hoàn tất, qua các gate bên dưới. Kho guest, hàng đợi mutation offline và giải quyết xung đột offline của trình duyệt không thuộc phạm vi đã duyệt. Các hàng đợi Android vẫn riêng trên điện thoại. Không gọi đây là parity toàn bộ native hay nghiệm thu production.
 
 ## Ma trận màn hình
 
@@ -69,7 +69,7 @@ Thiết kế dùng màu cream `#FFF8F0`, peach `#FFD6BA`, mauve `#96606D`, ink `
 
 ## Giới hạn phải giữ rõ
 
-- Bản web cần mạng. Guest/offline/browser outbox chưa xây mới; chờ quyết định phạm vi, không sửa mobile để bù.
+- Bản web cần mạng. Guest/offline/browser outbox không thuộc phạm vi theo xác nhận của chủ sở hữu; không sửa mobile để bù.
 - ML Kit offline, sinh trắc học, thông báo nền OS và cài/cập nhật APK là native. Web có OCR cloud có consent, nhắc việc trong ứng dụng, và dẫn quản lý Google Play; không có checkout web.
 - `.picket` hiện là định dạng tài chính cloud đang dùng, không phải bản sao đầy đủ mọi bảng/metadata. Ảnh hóa đơn chưa gắn vào giao dịch, kết quả OCR chi tiết và bản ghi lưu trữ không nằm trong định dạng. Restore thay thế dữ liệu và bộ sưu tập receipt; web đã cảnh báo rõ trước thao tác. Không tuyên bố đã chuyển đổi mọi dữ liệu guest/lịch sử Flutter.
 - Camera thật, provider OCR E2E, assistive-tech audit đầy đủ, global settings E2E trên staging và triển khai production chưa nghiệm thu. Không đổi thông báo bảo trì/dữ liệu người dùng thật để làm đẹp báo cáo.
