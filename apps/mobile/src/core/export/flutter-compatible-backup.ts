@@ -11,6 +11,8 @@ import { guestOwnerId, type GuestFinance } from "@/core/local/guest-finance";
 import { supabase } from "@/core/supabase/client";
 import { listKeepsakes, replaceKeepsakesForOwner } from "@/features/keepsakes/keepsake-store";
 import { listGuestReceipts, replaceGuestReceipts } from "@/core/receipts/guest-receipt-store";
+import { restoreWithUploadedMedia } from "./restore-media-policy";
+import { readKeepsakePhoto, withKeepsakePhotoLease, writeKeepsakePhoto } from "@/features/keepsakes/keepsake-photo-storage";
 
 const MAX_MEDIA_BYTES = 50_000_000;
 const MAX_SINGLE_IMAGE_BYTES = 10_485_760;
@@ -113,9 +115,10 @@ function imageType(bytes: Uint8Array) {
 export async function restoreEncryptedBackup(token: string, userId: string, currentRevision: number, backup: DecryptedBackup) {
   const { api, storage } = requireCloud();
   const payload = JSON.parse(JSON.stringify(backup.data)) as FinancePayload;
-  const uploaded: string[] = [];
-  let committed = false;
-  try {
+  const envelope: FinanceExportEnvelope = { format:"picket-export-v1", schemaVersion:1,
+    exportedAt:new Date().toISOString(), revision:currentRevision, data:payload };
+  return restoreWithUploadedMedia({
+    prepare: async uploaded => {
     for (const { item, field } of mediaSlots(payload)) {
       const reference = item[field];
       if (reference === null || reference === undefined) continue;
@@ -130,21 +133,18 @@ export async function restoreEncryptedBackup(token: string, userId: string, curr
       uploaded.push(path);
       item[field] = path;
     }
-    const envelope: FinanceExportEnvelope = { format:"picket-export-v1", schemaVersion:1,
-      exportedAt:new Date().toISOString(), revision:currentRevision, data:payload };
-    await api.validateFinanceImport(token, envelope);
-    const result = await api.restoreFinance(token, { confirmation:"RESTORE", expectedRevision:currentRevision, export:envelope });
-    committed = true;
-    return result;
-  } finally {
-    if (!committed && uploaded.length) {
-      try { await storage.remove(uploaded); } catch { /* Preserve the original restore error. */ }
-    }
-  }
+    },
+    validate: () => api.validateFinanceImport(token, envelope),
+    commit: () => api.restoreFinance(token, { confirmation:"RESTORE", expectedRevision:currentRevision, export:envelope }),
+    remove: paths => storage.remove(paths),
+  });
 }
 
 /** Device-only backups use the same AES-GCM/PBKDF2 envelope, but a distinct payload contract. */
 export async function exportGuestBackup(finance: GuestFinance, password: string) {
+  return withKeepsakePhotoLease(guestOwnerId, () => exportGuestBackupWithLease(finance, password));
+}
+async function exportGuestBackupWithLease(finance: GuestFinance, password: string) {
   if (password.length < 12) throw new Error("Mật khẩu bản sao cần ít nhất 12 ký tự.");
   const keepsakes = await listKeepsakes(guestOwnerId);
   const receipts = await listGuestReceipts();
@@ -155,7 +155,7 @@ export async function exportGuestBackup(finance: GuestFinance, password: string)
   for (const item of copies) {
     if (!item.photoUri) continue;
     if (!FileSystem.documentDirectory || !item.photoUri.startsWith(allowedDirectory) || item.photoUri.includes("..")) throw new Error("Ảnh kỷ vật nằm ngoài vùng lưu trữ của ứng dụng.");
-    const encoded = await FileSystem.readAsStringAsync(item.photoUri, { encoding: FileSystem.EncodingType.Base64 });
+    const encoded = (await readKeepsakePhoto(guestOwnerId, item.photoUri)).base64;
     const bytes = toByteArray(encoded);
     totalBytes += bytes.length;
     if (bytes.length > MAX_SINGLE_IMAGE_BYTES || totalBytes > MAX_MEDIA_BYTES) throw new Error("Ảnh vượt giới hạn sao lưu 50 MB.");
@@ -190,6 +190,9 @@ export async function decryptGuestBackup(encoded: string, password: string): Pro
 }
 
 export async function restoreGuestBackup(backup: GuestBackupPayload, replaceFinance: (value: GuestFinance) => Promise<void>) {
+  return withKeepsakePhotoLease(guestOwnerId, () => restoreGuestBackupWithLease(backup, replaceFinance));
+}
+async function restoreGuestBackupWithLease(backup: GuestBackupPayload, replaceFinance: (value: GuestFinance) => Promise<void>) {
   validateGuestBackupPayload(backup);
   if (!FileSystem.documentDirectory) throw new Error("Không tìm được vùng lưu trữ trên thiết bị.");
   const oldKeepsakes = await listKeepsakes(guestOwnerId);
@@ -204,9 +207,7 @@ export async function restoreGuestBackup(backup: GuestBackupPayload, replaceFina
     for (const item of restored) {
       if (!item.photoUri) continue;
       const encoded = backup.media[item.photoUri];
-      const extension = imageType(toByteArray(encoded)).extension;
-      const uri = `${directory}${Crypto.randomUUID()}.${extension}`;
-      await FileSystem.writeAsStringAsync(uri, encoded, { encoding:FileSystem.EncodingType.Base64 });
+      const uri = await writeKeepsakePhoto(guestOwnerId, toByteArray(encoded));
       created.push(uri);
       item.photoUri = uri;
     }
@@ -226,7 +227,6 @@ export async function restoreGuestBackup(backup: GuestBackupPayload, replaceFina
     for (const uri of created) await FileSystem.deleteAsync(uri, { idempotent:true }).catch(() => undefined);
     throw error;
   }
-  for (const item of oldKeepsakes) {
-    if (item.photoUri?.startsWith(directory)) await FileSystem.deleteAsync(item.photoUri, { idempotent:true }).catch(() => undefined);
-  }
+  // Older cache/readers can still reference these files. Bounded orphan cleanup
+  // uses queue/cache references and an age grace period after successful restore.
 }
