@@ -4,7 +4,7 @@ import * as SecureStore from "expo-secure-store";
 
 import type { Keepsake } from "@/features/keepsakes/keepsake-store";
 import { budgetWarnings } from "./budget-warnings";
-import { createBudgetNoticeDelivery } from "./budget-notice-delivery";
+import { createBudgetNoticeDelivery, scheduleOwnedReminder } from "./budget-notice-delivery";
 
 Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
 
@@ -126,11 +126,16 @@ async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () 
   });
   for (const item of items.filter((entry) => entry.notifyAt !== null && entry.notifyAt > new Date()).slice(0, 50)) {
     if (!isCurrent()) return;
-    await Notifications.scheduleNotificationAsync({
-      identifier: `${prefix(userId)}${item.id}`,
-      content: { title: "Picket · Nhắc việc", body: "Bạn có khoản thanh toán hoặc hạn món đồ cần xem. Mở Picket để kiểm tra." },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.notifyAt!, channelId: "picket-reminders" },
+    const scheduled = await scheduleOwnedReminder(`${prefix(userId)}${item.id}`, isCurrent, {
+      schedule: async identifier => {
+        await Notifications.scheduleNotificationAsync({ identifier,
+          content: { title: "Picket · Nhắc việc", body: "Bạn có khoản thanh toán hoặc hạn món đồ cần xem. Mở Picket để kiểm tra." },
+          trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.notifyAt!, channelId: "picket-reminders" },
+        });
+      },
+      cancel: identifier => Notifications.cancelScheduledNotificationAsync(identifier),
     });
+    if (!scheduled) return;
   }
   await budgetNoticeDelivery.deliver(userId, items.map(item => item.id), isCurrent);
 }

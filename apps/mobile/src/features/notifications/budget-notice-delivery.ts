@@ -4,6 +4,20 @@ type DeliveryIO = {
   show(owner: string, id: string, isCurrent: () => boolean): Promise<void>;
 };
 
+/** Logout may finish cancellation before an in-flight OS schedule resolves. */
+export async function scheduleOwnedReminder(identifier: string, isCurrent: () => boolean, io: {
+  schedule(identifier: string): Promise<void>;
+  cancel(identifier: string): Promise<void>;
+}): Promise<boolean> {
+  if (!isCurrent()) return false;
+  await io.schedule(identifier);
+  if (!isCurrent()) {
+    await io.cancel(identifier);
+    return false;
+  }
+  return true;
+}
+
 /** Serialized owner/month ledger; a successful OS request is not repeated on recalculation. */
 export function createBudgetNoticeDelivery(io: DeliveryIO) {
   let pending = Promise.resolve();
