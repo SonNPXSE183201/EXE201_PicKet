@@ -24,3 +24,22 @@ test('Caddy serves only landing paths statically and preserves existing Next rou
   assert.match(caddy, /@revalidated not path \/downloads\/\*\.apk/);
   assert.match(caddy, /header @revalidated Cache-Control "no-cache"/);
 });
+
+test('landing exposes same-origin web login in header, hero and footer without downloading or opening another tab', async () => {
+  const html = await readFile(new URL('site/index.html', root), 'utf8');
+  for (const [name, pattern] of [
+    ['header', /<header\b[\s\S]*?<\/header>/],
+    ['hero', /<div class="hero-actions">[\s\S]*?<\/div>/],
+    ['footer', /<footer\b[\s\S]*?<\/footer>/],
+  ]) {
+    const section = html.match(pattern)?.[0] ?? '';
+    const link = section.match(/<a\b[^>]*href="\/login"[^>]*>Đăng nhập web<\/a>/)?.[0];
+    assert.ok(link, `${name} must expose web login`);
+    assert.doesNotMatch(link, /\b(download|target)=?/);
+  }
+});
+
+test('landing distinguishes web account requirement from Android guest usage', async () => {
+  const html = await readFile(new URL('site/index.html', root), 'utf8');
+  assert.match(html, /Bản web cần đăng nhập và kết nối mạng/);
+});
