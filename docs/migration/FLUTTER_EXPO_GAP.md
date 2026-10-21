@@ -1,5 +1,7 @@
 # Flutter → Expo Android: các luồng còn thiếu
 
+Audit source mới nhất 22/10: [báo cáo kiểm kê](FLUTTER_SOURCE_AUDIT_20261022.md). Source hiện tại không còn Flutter runtime; 94 file Dart đều thuộc backend. Đối chiếu 63 file Dart lịch sử/nhóm màn hình với đích Expo không phát hiện thêm nhóm chỉ còn ở Flutter. Không xóa TypeScript backup đang dùng. Người dùng không có file Flutter lịch sử và đã bỏ nghiệm thu đầu vào đó khỏi MVP; không biến thành PASS. Các bảng thiếu sót/checkpoint bên dưới là lịch sử, không phải danh sách tính năng hiện đang chưa chuyển.
+
 Nghiệm thu cập nhật 22/10: [checklist phần 1 máy ảo đã đạt](PART1_ACCEPTANCE_20261022.md). Không phát sinh chức năng Flutter mới còn phải chuyển từ các ca này; đầu vào file xuất Flutter thật vẫn là kiểm chứng tương thích lịch sử riêng, chưa được thay thế bằng fixture tổng hợp.
 
 **Đọc trước:** [PROJECT_STATUS.md](../PROJECT_STATUS.md) tổng hợp hiện trạng ngày 22/10: public **1.0.4/code 5**, source 415 test và API 82 test. Các đoạn theo ngày bên dưới là lịch sử; không đọc “chưa push/1.0.1/241 test” thành hiện trạng. Chuyển đổi code không đồng nghĩa mọi nhánh nghiệm thu thiết bị thật/Play đã đạt.
