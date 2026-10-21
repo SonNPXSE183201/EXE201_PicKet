@@ -18,7 +18,7 @@ export async function validateTransactionAttemptRecovery(db) {
   assert.deepEqual(await resolve(key),{status:"abandoned"},"Lost resolution response must be repeatable");
   const wallet=(await db.query("select id from public.wallets where user_id=$1 limit 1",[owner])).rows[0].id;
   const create=async (value)=>db.query("select (public.create_finance_transaction($1,$2,null,'Recovered receipt',12000,'expense','2026-10-21','')).id as id",[value,wallet]);
-  await assert.rejects(create(key),/TRANSACTION_ATTEMPT_ABANDONED/);
+  await assert.rejects(create(key),error=>error.code==="23505" && /TRANSACTION_ATTEMPT_ABANDONED/.test(error.message),"A fenced attempt must use a non-retryable conflict SQLSTATE, not serialization_failure");
   const fresh="receipt-attempt-new-0002";
   const id=(await create(fresh)).rows[0].id;
   const committed=await resolve(fresh);
