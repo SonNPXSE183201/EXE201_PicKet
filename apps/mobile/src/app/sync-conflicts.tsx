@@ -6,10 +6,11 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-nat
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routes";
-import { listMutationConflicts, removeMutationConflict, retryMutationConflict, type MutationConflict } from "@/core/sync/mutation-queue";
+import { listMutationConflicts, removeMutationConflict, retryMutationConflict, subscribeToMutationQueue, type MutationConflict } from "@/core/sync/mutation-queue";
 import { parseEditedConflictPayload } from "@/core/sync/conflict-resolution";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { useAuth } from "@/features/auth/auth-context";
+import { TransactionMergeEditor } from "@/features/sync/transaction-merge-editor";
 
 const labels: Record<string, string> = {
   "account.create": "Tạo tài khoản",
@@ -36,10 +37,17 @@ export default function SyncConflictsScreen() {
   useEffect(() => {
     if (!session) return;
     let active = true;
-    void listMutationConflicts(session.user.id)
-      .then((conflicts) => { if (active) setItems(conflicts); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    let revision = 0;
+    const reload = () => {
+      const request = ++revision;
+      void listMutationConflicts(session.user.id)
+        .then(conflicts => { if (active && request === revision) setItems(conflicts); })
+        .catch(() => { if (active && request === revision) setMessage("Chưa tải được các bản sửa đang chờ. Hãy mở lại màn hình để thử lại."); })
+        .finally(() => { if (active && request === revision) setLoading(false); });
+    };
+    const unsubscribe = subscribeToMutationQueue(reload);
+    reload();
+    return () => { active = false; unsubscribe(); };
   }, [session]);
   if (!session) return <Redirect href={routes.login} />;
 
@@ -79,7 +87,12 @@ export default function SyncConflictsScreen() {
               setDrafts((current) => ({ ...current, [item.id]: current[item.id] ?? JSON.stringify(item.payload, null, 2) }));
               setEditingId((current) => current === item.id ? null : item.id);
             }} style={styles.button}><Text style={styles.buttonText}>{editingId === item.id ? "Đóng chỉnh sửa" : "Sửa và gửi lại"}</Text></Pressable>
-            {editingId === item.id && <>
+            {editingId === item.id && item.kind === "transaction.update" && <TransactionMergeEditor conflict={item} onQueued={() => {
+              setItems(current => current.filter(candidate => candidate.id !== item.id));
+              setEditingId(null);
+              setMessage("Đã đưa bản đối chiếu vào hàng đợi. Nếu máy chủ đổi tiếp, Picket sẽ giữ xung đột để bạn kiểm tra lại.");
+            }} />}
+            {editingId === item.id && item.kind !== "transaction.update" && <>
               <Text style={styles.help}>Chỉ sửa các trường nghiệp vụ hoặc `expectedVersion` sau khi đối chiếu dữ liệu mới nhất trên server.</Text>
               <TextInput accessibilityLabel={`Payload xung đột ${labels[item.kind] ?? item.kind}`} multiline onChangeText={(value) => setDrafts((current) => ({ ...current, [item.id]:value }))} style={styles.editor} value={drafts[item.id] ?? ""} />
               <Pressable onPress={() => void retry(item)} style={styles.retry}><Text style={styles.retryText}>Đưa vào hàng đợi đồng bộ</Text></Pressable>
