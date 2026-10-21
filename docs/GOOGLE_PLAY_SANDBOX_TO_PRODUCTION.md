@@ -1,6 +1,10 @@
-# Google Play: từ chưa có Console đến sandbox và production
+# Google Play: hoàn tất xác minh, sandbox và production
 
-Ngày đối chiếu tài liệu chính thức: **22/10/2026**. Người dùng xác nhận **chưa có Play Console**. Tài liệu này là hướng dẫn cấu hình/nghiệm thu, **không xác nhận Billing sandbox đã chạy hoặc thanh toán production đã bật**. Chưa có thao tác mua thật hay đăng ký dịch vụ trả phí được thực hiện thay người dùng.
+Ngày đối chiếu tài liệu chính thức: **22/10/2026**. Theo ảnh người dùng cung cấp, **đã đăng ký Play Console cá nhân, đang chờ Google xét duyệt danh tính**. Ảnh Google Payments có dòng phí đăng ký 25 USD; không phải bằng chứng app được duyệt phát hành. Console yêu cầu hoàn tất xác minh danh tính trước khi xác minh số điện thoại. Thẻ xác minh website đã triển khai và commit `2c73b44`, nhưng chưa nhận bằng chứng Google xác minh thành công. Tài liệu này **không xác nhận Billing sandbox đã chạy hoặc thanh toán production đã bật**. Chưa có thao tác mua thật hay đăng ký dịch vụ trả phí được thực hiện thay người dùng.
+
+Các bước đăng ký dưới đây được giữ làm hướng dẫn tham khảo, không yêu cầu đăng ký hoặc trả phí lần nữa. Việc tiếp theo là theo dõi email xét duyệt, hoàn thành xác minh còn lại và chuẩn bị app/track/sandbox. Điện thoại thật chưa được ADB nhận theo kết quả gần nhất; các ca trong checklist thiết bị thật vẫn chưa nghiệm thu. Không bật Cloud Billing hoặc nạp 250.000đ chỉ để xóa cảnh báo: ảnh Billing hiện có cho thấy các tài khoản Closed và project Billing disabled; ảnh tài khoản đã mở có số dư 0đ/No balance due, không chứng minh số dư của mọi tài khoản.
+
+Bản Play cần rà soát loại bỏ cơ chế tải/cài APK cập nhật ngoài Play và dùng cơ chế cập nhật của Play; không coi APK landing là AAB đã đủ điều kiện upload. Xem [chính sách Device and Network Abuse](https://support.google.com/googleplay/android-developer/answer/16559646).
 
 ## 1. Việc bạn thực hiện trước
 
