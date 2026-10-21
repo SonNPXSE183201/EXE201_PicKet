@@ -4,7 +4,7 @@ Ngày rà soát: 2026-10-22. Phạm vi: Expo Android + Dart API hiện có; khô
 
 ## Trạng thái hiện hành — đọc trước các ghi chép lịch sử
 
-- **Đã chốt checklist phần 1 trên máy ảo**: [nghiệm thu 22/10](PART1_ACCEPTANCE_20261022.md), có kết quả từng ca và các lượt lỗi lịch sử. Không đồng nghĩa toàn ứng dụng/roadmap/điện thoại thật đã hoàn tất. Các điều kiện Flutter-export thật, Play sandbox, staff và thiết bị ARM64 vẫn được ghi riêng.
+- **Đã chốt checklist phần 1 trên máy ảo**: [nghiệm thu 22/10](PART1_ACCEPTANCE_20261022.md), có kết quả từng ca và các lượt lỗi lịch sử. Không đồng nghĩa toàn ứng dụng/roadmap/điện thoại thật đã hoàn tất. Người dùng xác nhận không có file Flutter lịch sử và tập trung Expo/Next/Dart; bỏ ca nhập file Flutter thật khỏi MVP, không đánh dấu PASS hoặc xóa bộ import. Play sandbox, staff staging và thiết bị ARM64 vẫn được ghi riêng.
 
 - Source hiện tại **415 mobile tests PASS**, không skip; typecheck đạt, lint 0 lỗi/24 cảnh báo hiện hữu. Các số 414/409/405/401/396 trong báo cáo theo ngày là checkpoint lịch sử. [Bảo vệ dung lượng ảnh](REAL_ENOSPC_ANDROID_20261021.md) dùng số byte khả dụng không tính Android reserved blocks; hai ca Android ENOSPC thật (mở lạnh và restore tại 0 byte) đã đạt giữ metadata/ảnh và phục hồi sau giải phóng dung lượng. ANR cũ và các probe thất bại vẫn được ghi riêng.
 
@@ -12,9 +12,11 @@ Ngày rà soát: 2026-10-22. Phạm vi: Expo Android + Dart API hiện có; khô
 
 - **Chỉ mục hiện hành:** [PROJECT_STATUS.md](../PROJECT_STATUS.md), [bằng chứng phần 1](PART1_CURRENT_EXECUTION_20261021.md), [ma trận nghiệm thu](PART12_ACCEPTANCE_MATRIX_20261021.md). [Landing đã lên 1.0.4/code 5](ANDROID_RELEASE_1_0_4_20261022.md), chứa follow-up. API **82 test**, analyzer không lỗi; migration `003`/`004` và API phục hồi hóa đơn đã triển khai theo phê duyệt riêng. Các phụ thuộc ngoài phạm vi vẫn chưa nghiệm thu.
 
-- **Việc tiếp theo:** người dùng chạy [checklist Android thật](../ANDROID_REAL_DEVICE_CHECKLIST.md) và [đăng ký Play → sandbox](../GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md) (chưa có Console). [Staff acceptance](STAFF_ADMIN_ACCEPTANCE_20261022.md) đã đạt 18 kiểm tra bằng tài khoản mới, không sửa tài khoản khác; còn reset email trên inbox test, mutation settings ở staging và SQL owner cleanup đúng hai fixture ẩn. Không ghi tất cả admin/Billing đã production verified.
+- **Việc tiếp theo:** người dùng chạy [checklist Android thật](../ANDROID_REAL_DEVICE_CHECKLIST.md) và [Play → sandbox](../GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md). Đã đăng ký Console cá nhân theo ảnh ngày 22/10, đang chờ Google duyệt danh tính; xác minh điện thoại và Billing sandbox chưa nghiệm thu. Thẻ website đã public/commit `2c73b44`, chưa xác nhận Google chấp nhận. [Staff acceptance](STAFF_ADMIN_ACCEPTANCE_20261022.md): 18 kiểm tra cũ đạt; follow-up API reset/inbox thật được người dùng xác nhận và đã xóa tài khoản test. Settings PostgreSQL 16 cô lập có 8 ca PASS; còn toàn luồng Android/API staging. Cleanup hai fixture đã chạy và SELECT xác nhận 0 rows. Tài khoản admin riêng đã tạo theo yêu cầu, chủ sở hữu tự đặt mật khẩu và xác nhận [web admin](../ADMIN_WEB_ACCESS.md). [Audit Flutter](FLUTTER_SOURCE_AUDIT_20261022.md) không phát hiện source runtime Flutter còn sót. [Theo dõi đầu vào và nghiệm thu](BACKUP_ADMIN_EXTERNAL_ACCEPTANCE_20261022.md). Không ghi tất cả admin/Billing đã production verified.
 
 ### Nhật ký checkpoint lịch sử
+
+Follow-up chủ sở hữu 22/10: đã tự reset mật khẩu và xác nhận truy cập `/admin` bằng alias admin riêng. Sau đó đã yêu cầu admin-only và redesign toàn web, không sửa mobile. Source Next.js local đã tách workspace/đổi điều hướng và thiết kế responsive; chưa deploy, chưa nhận đã hoàn tất guest/offline native parity. [Báo cáo web](WEB_REDESIGN_20261022.md).
 
 Các đoạn bên dưới giữ kết quả tại thời điểm thực thi. Trạng thái hiện hành ở chỉ mục phía trên và ma trận nghiệm thu; không đọc các dòng “chưa triển khai/đang chạy” cũ như trạng thái hiện tại.
 

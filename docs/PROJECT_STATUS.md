@@ -34,9 +34,13 @@ Các gate source hiện hành và liên kết báo cáo ở đầu tài liệu. 
 ## Đầu vào ngoài phần 1
 
 - Điện thoại ARM64 thật: camera, sinh trắc học, hiệu năng và cập nhật giữ dữ liệu; [từng bước và tiêu chí](ANDROID_REAL_DEVICE_CHECKLIST.md).
-- File `.picket` xuất từ Flutter thật: xác nhận tương thích lịch sử.
-- Play Console/Internal testing/license tester và sản phẩm: Billing sandbox; người dùng xác nhận chưa có Console. [Hướng dẫn từ đăng ký tới production](GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md), chưa kích hoạt thanh toán thật.
-- Staff/admin: 18 kiểm tra quyền/API/Android/audit đã đạt với tài khoản mới; đã thu hồi quyền/xóa tài khoản, không thay tài khoản khác. [Báo cáo giới hạn](migration/STAFF_ADMIN_ACCEPTANCE_20261022.md): reset email thật và mutation cài đặt toàn cục chưa chạy; hai fixture đối tác ẩn chờ SQL owner cleanup. Schema chỉ có một vai trò staff, không có hai cấp admin riêng.
+- File `.picket` Flutter thật: người dùng xác nhận không có file và tập trung Expo/Next/Dart; nghiệm thu dữ liệu Flutter lịch sử được loại khỏi phạm vi MVP, không đánh dấu PASS và không xóa bộ import tương thích. Bộ export local chạy lại 15/15 PASS; không thay thế file thật.
+- Play Console: đã đăng ký tài khoản cá nhân theo ảnh người dùng ngày 22/10; đang chờ Google duyệt danh tính, xác minh số điện thoại chưa hoàn tất. Thẻ xác minh website đã triển khai và commit `2c73b44`; chưa có bằng chứng Google xác minh website thành công. AAB/track/license tester/sản phẩm và Billing sandbox chưa nghiệm thu; chưa kích hoạt thanh toán production. [Hướng dẫn tới sandbox](GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md).
+- Staff/admin: 18 kiểm tra quyền/API/Android/audit đã đạt với tài khoản mới. Follow-up: API reset thật HTTP 200 và người dùng xác nhận nhận email ở inbox kiểm soát; đã xóa staff/target alias test, không đổi tài khoản chính. Settings có 8 ca PostgreSQL 16 cô lập PASS, nhưng toàn luồng Android/API staging chưa chạy. Người dùng đã chạy cleanup SQL thành công; SELECT staff xác minh độc lập còn 0 fixture. Đã tạo tài khoản admin riêng theo alias chủ sở hữu chấp thuận, API 403 trước cấp quyền/200 sau cấp quyền; chủ sở hữu tự đặt mật khẩu và xác nhận UI web theo [hướng dẫn admin](ADMIN_WEB_ACCESS.md). Không có hai cấp staff/super-admin; tài khoản admin mới này được giữ theo yêu cầu, khác các tài khoản QA đã xóa. [Báo cáo giới hạn](migration/STAFF_ADMIN_ACCEPTANCE_20261022.md).
+
+Tiến độ backup/admin và tiêu chí đóng từng ca: [theo dõi 22/10](migration/BACKUP_ADMIN_EXTERNAL_ACCEPTANCE_20261022.md). Email tới inbox thật đã được người dùng xác nhận; DB local không thay thế Android/API staging. [Audit Flutter](migration/FLUTTER_SOURCE_AUDIT_20261022.md): không còn Flutter runtime, không xóa Dart backend hoặc TypeScript backup của Expo.
+
+Chủ sở hữu đã tự đặt lại mật khẩu tài khoản admin riêng và xác nhận vào `/admin` thành công trong hội thoại ngày 22/10. Theo yêu cầu tiếp theo, **source web local** đã có workspace admin riêng, login theo role và UI responsive đồng bộ màu Expo. Đã kiểm tra 152 tổ hợp trang/viewport và 49 unit test; chưa push/deploy. Mobile/API/Supabase không thay đổi. Guest/offline web chưa xây mới, đang xác nhận phạm vi; không tuyên bố parity toàn bộ native. [Báo cáo và giới hạn](migration/WEB_REDESIGN_20261022.md).
 
 ## Nguồn bằng chứng
 
