@@ -1,13 +1,16 @@
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
+import { toByteArray } from "base64-js";
 import type { Keepsake as RemoteKeepsake } from "@picket/domain";
 
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
-import { deleteKeepsake, listKeepsakes, type Keepsake as LocalKeepsake } from "@/features/keepsakes/keepsake-store";
+import { acknowledgeKeepsake, acknowledgeKeepsakePhotoCleanup, deleteKeepsake, enqueueKeepsakePhotoCleanup, listKeepsakePhotoCleanup, listKeepsakes, saveKeepsake, type Keepsake as LocalKeepsake } from "@/features/keepsakes/keepsake-store";
 import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
 import { loadWithKeepsakeCache } from "@/features/keepsakes/keepsake-cache-policy";
 import { mergeKeepsakeOutbox, planKeepsakePhotoReplay, planKeepsakeReplay } from "@/features/keepsakes/keepsake-outbox-policy";
+import { canCleanupKeepsakePhoto, isKeepsakeReplayConfirmed, keepsakeCacheFileName, keepsakePhotoPath, persistKeepsakeReplay, saveWithKeepsakePhoto, saveDurableKeepsake, withKeepsakeOwnerLock } from "./keepsake-media-policy";
+import { readKeepsakePhoto, withKeepsakePhotoLease, writeKeepsakePhoto } from "./keepsake-photo-storage";
 
 export type DisplayKeepsake = LocalKeepsake & { version?: number; mediaPath?: string | null };
 const cloudListeners = new Set<(userId: string) => void>();
@@ -28,18 +31,24 @@ async function photoUrl(path: string | null) {
 async function toDisplay(item: RemoteKeepsake, userId: string): Promise<DisplayKeepsake> {
   let cachedPhotoUri: string | null = null;
   if (item.mediaPath) {
-    const extension = item.mediaPath.match(/\.([a-z0-9]+)$/i)?.[1] ?? "jpg";
     const directory = new Directory(Paths.document, "keepsake-cloud-cache", userId);
     directory.create({ idempotent: true, intermediates: true });
-    const destination = new File(directory, `${item.id}.${extension}`);
+    const name = keepsakeCacheFileName(item.id, item.mediaPath);
+    const destination = new File(directory, `${name}.enc`);
+    const legacy = new File(directory, name);
     try {
-      cachedPhotoUri = (await File.downloadFileAsync(
-        (await photoUrl(item.mediaPath))!,
-        destination,
-        { idempotent: true },
-      )).uri;
+      if (destination.exists) {
+        await readKeepsakePhoto(userId, destination.uri);
+        cachedPhotoUri = destination.uri;
+      } else if (legacy.exists) {
+        cachedPhotoUri = await writeKeepsakePhoto(userId, toByteArray((await readKeepsakePhoto(userId, legacy.uri)).base64), name);
+      } else {
+        const response = await fetch((await photoUrl(item.mediaPath))!);
+        if (!response.ok || Number(response.headers.get("content-length")) > 10_485_760) throw new Error("Photo unavailable");
+        cachedPhotoUri = await writeKeepsakePhoto(userId, new Uint8Array(await response.arrayBuffer()), name);
+      }
     } catch {
-      if (destination.exists) cachedPhotoUri = destination.uri;
+      if (legacy.exists) cachedPhotoUri = legacy.uri;
     }
   }
   return { id:item.id, userId, title:item.title, amount:item.amount, date:item.purchasedAt,
@@ -48,20 +57,26 @@ async function toDisplay(item: RemoteKeepsake, userId: string): Promise<DisplayK
     version:item.version, mediaPath:item.mediaPath, photoUploadRequired:false };
 }
 
-async function uploadPhoto(userId: string, uri: string) {
+async function uploadPhoto(userId: string, itemId: string, uri: string, previousPath?: string | null) {
   if (!supabase) throw new Error("Supabase chưa được cấu hình.");
-  const match = uri.match(/\.(jpe?g|png|webp)(?:\?|$)/i);
-  const extension = match?.[1]?.toLowerCase().replace("jpeg", "jpg") ?? "jpg";
-  const path = `${userId}/keepsakes/${Crypto.randomUUID()}.${extension}`;
-  const file = new File(uri);
-  const body = await file.arrayBuffer();
+  const photo = await readKeepsakePhoto(userId, uri);
+  const extension = photo.mime === "image/png" ? "png" : photo.mime === "image/webp" ? "webp" : "jpg";
+  const body = toByteArray(photo.base64);
+  const path = keepsakePhotoPath(userId, itemId, body, extension);
+  if (previousPath && previousPath !== path) await enqueueKeepsakePhotoCleanup(userId, {
+    itemId, obsoletePath: previousPath, replacementPath: path,
+  });
   const type = extension === "png" ? "image/png" : extension === "webp" ? "image/webp" : "image/jpeg";
-  const { error } = await supabase.storage.from("picket-media").upload(path, body, { contentType:type, upsert:false });
+  const { error } = await supabase.storage.from("picket-media").upload(path, body, { contentType:type, upsert:true });
   if (error) throw error;
   return path;
 }
 
-export async function loadKeepsakeCollection(token: string, userId: string): Promise<DisplayKeepsake[]> {
+export function loadKeepsakeCollection(token: string, userId: string): Promise<DisplayKeepsake[]> {
+  return withKeepsakePhotoLease(userId, () => withKeepsakeOwnerLock(userId, () => replayKeepsakeCollection(token, userId)));
+}
+
+async function replayKeepsakeCollection(token: string, userId: string): Promise<DisplayKeepsake[]> {
   if (!picketApi) throw new Error("Chưa thể thực hiện lúc này. Hãy thử lại sau.");
   const api = picketApi;
   const local = await listKeepsakes(userId);
@@ -81,57 +96,78 @@ export async function loadKeepsakeCollection(token: string, userId: string): Pro
   for (const item of local) {
     try {
       const photo = planKeepsakePhotoReplay(item);
-      const mediaPath = photo.uploadUri ? await uploadPhoto(userId, photo.uploadUri) : photo.mediaPath;
+      const mediaPath = photo.uploadUri ? await uploadPhoto(userId, item.id, photo.uploadUri, item.mediaPath) : photo.mediaPath;
       const replay = planKeepsakeReplay(item);
       const payload = { title:item.title, amount:item.amount, purchasedAt:item.date,
         note:item.note, category:item.category, warrantyUntil:item.warrantyUntil,
         returnUntil:item.returnUntil, mediaPath:mediaPath ?? item.mediaPath ?? null };
-      const result = replay.action === "update"
+      // A fresh matching row proves the prior mutation landed even when its
+      // response was lost. Cached rows cannot acknowledge a pending mutation.
+      const confirmed = !loaded.stale && remote.find(saved => isKeepsakeReplayConfirmed(item, saved, payload.mediaPath));
+      const result = confirmed ? null : replay.action === "update"
         ? await picketApi.updateKeepsake(token, item.id, { ...payload, expectedVersion:replay.expectedVersion })
         : await picketApi.createKeepsake(token, { ...payload, id:item.id });
-      const display = await toDisplay(result.keepsake, userId);
+      const display = confirmed || await toDisplay(result!.keepsake, userId);
+      await persistKeepsakeReplay({
+        persist: () => writeOfflineCache(userId, "keepsakes", mergeKeepsakeOutbox(remote, [...migrated, display])),
+        acknowledge: () => acknowledgeKeepsake(item),
+      });
       migrated.push(display);
-      // Metadata-only outbox entries may reference the same downloaded cache
-      // file as the fresh display row. Removing the queue must not delete it.
-      await deleteKeepsake(item.id, userId, display.photoUri);
     } catch {
       // Preserve the local item and photo on any upload or API failure.
     }
   }
   const cloud = mergeKeepsakeOutbox(remote, migrated);
-  if (migrated.length > 0) await writeOfflineCache(userId, "keepsakes", cloud);
-  const pending = local.filter((item) => !migrated.some((saved) => saved.id === item.id));
+  // A save may have replaced a pending row while the network request ran.
+  // Read the live queue instead of filtering the stale pre-request snapshot.
+  const pending = await listKeepsakes(userId);
+  // Never use stale cache as authority to delete an object. A failed removal
+  // retains its durable journal row for a later fresh collection load.
+  if (!loaded.stale && supabase) for (const task of await listKeepsakePhotoCleanup(userId)) {
+    if (!canCleanupKeepsakePhoto(userId, task, cloud, pending)) continue;
+    try {
+      const { error } = await supabase.storage.from("picket-media").remove([task.obsoletePath]);
+      if (error) throw error;
+      await acknowledgeKeepsakePhotoCleanup(userId, task);
+    } catch { /* Retain cleanup intent; confirmed saves remain successful. */ }
+  }
   return mergeKeepsakeOutbox(cloud, pending)
     .sort((left, right) => right.date.localeCompare(left.date));
 }
 
 export async function saveCloudKeepsake(token: string, userId: string, input: Omit<DisplayKeepsake, "id" | "userId" | "photoUri"> & { id?: string; photoUri?: string | null; pickedPhotoUri?: string | null }) {
   if (!picketApi || !supabase) throw new Error("Dịch vụ chưa được cấu hình.");
-  const uploadedPath = input.pickedPhotoUri ? await uploadPhoto(userId, input.pickedPhotoUri) : null;
-  let committed = false;
-  try {
-    const mediaPath = uploadedPath ?? input.mediaPath ?? null;
-    const result = input.id && input.version
-      ? await picketApi.updateKeepsake(token, input.id, { expectedVersion:input.version, title:input.title,
-        amount:input.amount, purchasedAt:input.date, note:input.note, category:input.category,
-        warrantyUntil:input.warrantyUntil, returnUntil:input.returnUntil, mediaPath })
-      : await picketApi.createKeepsake(token, { id:input.id ?? Crypto.randomUUID(), title:input.title,
-        amount:input.amount, purchasedAt:input.date, note:input.note, category:input.category,
-        warrantyUntil:input.warrantyUntil, returnUntil:input.returnUntil, mediaPath });
-    committed = true;
-    announceCloudChange(userId);
-    if (uploadedPath && input.mediaPath && input.mediaPath !== uploadedPath) {
-      try { await supabase.storage.from("picket-media").remove([input.mediaPath]); }
-      catch { /* The saved record owns the new image; old-image cleanup can be retried later. */ }
-    }
-    return toDisplay(result.keepsake, userId);
-  } catch (error) {
-    if (uploadedPath && !committed) {
-      try { await supabase.storage.from("picket-media").remove([uploadedPath]); }
-      catch { /* Keep the original API error. */ }
-    }
-    throw error;
-  }
+  const id = input.id ?? Crypto.randomUUID();
+  return withKeepsakePhotoLease(userId, () => withKeepsakeOwnerLock(userId, () => saveDurableKeepsake({
+    persist: () => saveKeepsake({ ...input, id, userId, photoUri: input.photoUri ?? null }),
+    send: async pending => {
+      const photo = planKeepsakePhotoReplay(pending);
+      const result = await saveWithKeepsakePhoto({
+        previousPath: pending.mediaPath,
+        upload: () => photo.uploadUri ? uploadPhoto(userId, id, photo.uploadUri, pending.mediaPath) : Promise.resolve(null),
+        mutate: (mediaPath) => pending.version
+        ? picketApi!.updateKeepsake(token, id, { expectedVersion:pending.version, title:pending.title,
+        amount:pending.amount, purchasedAt:pending.date, note:pending.note, category:pending.category,
+        warrantyUntil:pending.warrantyUntil, returnUntil:pending.returnUntil, mediaPath })
+      : picketApi!.createKeepsake(token, { id, title:pending.title,
+        amount:pending.amount, purchasedAt:pending.date, note:pending.note, category:pending.category,
+        warrantyUntil:pending.warrantyUntil, returnUntil:pending.returnUntil, mediaPath }),
+        // Cleanup is journaled before upload and drained only after fresh GET.
+        remove: async () => undefined,
+      });
+      const display = await toDisplay(result.keepsake, userId);
+      return { ...display, photoUri: display.photoUri ?? pending.photoUri };
+    },
+    cache: async display => {
+      const cached = (await readOfflineCache<DisplayKeepsake[]>(userId, "keepsakes"))?.value ?? [];
+      await writeOfflineCache(userId, "keepsakes", mergeKeepsakeOutbox(cached, [display]));
+    },
+    acknowledge: async pending => {
+      const removed = await acknowledgeKeepsake(pending);
+      announceCloudChange(userId);
+      return removed;
+    },
+  })));
 }
 
 export async function archiveCloudKeepsake(token: string, item: DisplayKeepsake) {
