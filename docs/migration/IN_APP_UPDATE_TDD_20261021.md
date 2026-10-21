@@ -59,3 +59,20 @@ For a future release, increase versionCode, sign the matching package with the e
 The current distribution is sideload APK. Before any Google Play submission, review/remove `REQUEST_INSTALL_PACKAGES` and use a dedicated Play build/update channel; detecting Play at runtime alone is not a Play policy approval.
 
 Primary references: [Android update identity/signing requirements](https://developer.android.com/google/play/app-updates), [Android alternative distribution and permission](https://developer.android.com/distribute/marketing-tools/alternative-distribution), [PackageManager install permission](https://developer.android.com/reference/android/content/pm/PackageManager#canRequestPackageInstalls()), [Expo asynchronous native modules](https://docs.expo.dev/modules/module-api/).
+
+## Authorized publication — 21 October 2026
+
+After the implementation checkpoint above, the owner explicitly requested committing/pushing and updating the landing page. The 12 feature commits through `ccd1b8b` were pushed to `origin/feat/picket-platform-ocr`; release metadata was committed separately as `a44adfa`. No APK binary, credentials or generated build directory is committed.
+
+The existing static landing was rebuilt against the exact production APK above. All 8 landing tests pass with 100% line/branch/function coverage of `src/release.mjs`. No page design, Next route or backend behavior was changed.
+
+Live publication and verification PASS:
+
+- Landing and `/release.json` advertise **1.0.3 / versionCode 4**.
+- Immutable public download: `https://picket.51-79-207-154.sslip.io/downloads/picket-1.0.3-20261021-83c4cb5c-arm64.apk`.
+- A complete HTTPS download matches **70,283,788 bytes** and SHA-256 `83c4cb5c90ae029c80204102beb58bf16f660698ba8d9a1f0362944817e0891e`.
+- APK attachment MIME/disposition and HTTP 206 byte ranges pass. `/login` responds 200; API health is `ok`.
+- Previous immutable APK remains available. Matching previous HTML/metadata backup is `/opt/picket/apps/landing/rollback/1.0.2-0a1edd17`.
+- No container restart/recreation, database migration or authentication configuration change.
+
+Evidence: `.artifacts/roadmap-qa/production-1.0.3-live-verification.json`. Existing implementation verification remains 374 mobile tests plus 6 native JVM tests, types PASS and lint zero errors/24 existing warnings. The focused update-source scan found no private-key blocks, secret-key pattern or console logging; this is not a full security audit. Physical ARM64 update installation remains unverified and is not implied by deployment success. Users on 1.0.2 still need the one-time in-place bootstrap installation described above.
