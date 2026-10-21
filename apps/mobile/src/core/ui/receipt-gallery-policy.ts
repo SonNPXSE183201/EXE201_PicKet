@@ -1,7 +1,11 @@
 export interface ReceiptImageCacheEntry { id: string; path: string; dataUri: string; thumbnailUri?: string; usedAt: number }
 
 export function indexReceiptThumbnailPaths(items: ReceiptImageCacheEntry[]) {
-  return indexReceiptImagePaths(items);
+  const paths = new Map<string, string>();
+  for (const image of [...items].sort((a, b) => a.usedAt - b.usedAt)) {
+    if (image.thumbnailUri && image.thumbnailUri.length <= 131_104) paths.set(image.path, image.thumbnailUri);
+  }
+  return paths;
 }
 
 /** Build only from the current owner's decrypted cache; paths are the image identity. */
@@ -44,7 +48,8 @@ export function trimReceiptImages(items: ReceiptImageCacheEntry[], validIds: Set
   const paths = new Set<string>();
   return [...items].sort((a, b) => b.usedAt - a.usedAt).filter((item) => {
     const referenced = validPaths ? validPaths.has(item.path) : validIds.has(item.id);
-    if (!referenced || seen.has(item.id) || paths.has(item.path) || item.dataUri.length > budget - used) return false;
-    seen.add(item.id); paths.add(item.path); used += item.dataUri.length; return true;
+    const length = item.dataUri.length + (item.thumbnailUri?.length ?? 0);
+    if (!referenced || seen.has(item.id) || paths.has(item.path) || length > budget - used) return false;
+    seen.add(item.id); paths.add(item.path); used += length; return true;
   });
 }

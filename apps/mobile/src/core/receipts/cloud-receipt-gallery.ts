@@ -2,10 +2,11 @@ import { fromByteArray } from "base64-js";
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
-import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
+import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths, indexReceiptThumbnailPaths, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
+import { createReceiptThumbnail } from "./receipt-thumbnail";
 
-export type GalleryEntry = { id: string; day: string; title: string; uri?: string; path?: string; transactionId?: string | null };
+export type GalleryEntry = { id: string; day: string; title: string; uri?: string; thumbnailUri?: string; path?: string; transactionId?: string | null };
 
 export async function loadCloudReceiptGallery(owner: string, accessToken: string, month: string, transactionDates: Map<string, string>, signal: AbortSignal, onSnapshot?: (result: { rows: GalleryEntry[]; stale: boolean }) => void) {
   let imageRead: Promise<ReceiptImageCacheEntry[]> | null = null;
@@ -25,8 +26,9 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
     onCached: onSnapshot ? (rows) => publish(rows, true) : undefined,
     onRemote: onSnapshot ? (rows) => publish(rows, false) : undefined,
     hydrateCached: onSnapshot ? async (_user, rows) => {
-      const paths = indexReceiptImagePaths(await readCachedImages());
-      return rows.map(row => ({ ...row, uri: row.path ? paths.get(row.path) : undefined }));
+      const cached = await readCachedImages();
+      const paths = indexReceiptImagePaths(cached), thumbnails = indexReceiptThumbnailPaths(cached);
+      return rows.map(row => ({ ...row, uri: row.path ? paths.get(row.path) : undefined, thumbnailUri: row.path ? thumbnails.get(row.path) : undefined }));
     } : undefined,
   });
   if (signal.aborted) throw new Error("aborted");
@@ -37,12 +39,25 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
   const originalImageCount = images.length;
   images = trimReceiptImages(images, validIds, undefined, validPaths);
   const imagePaths = indexReceiptImagePaths(images);
-  const rows = result.rows.map((r) => ({ ...r, uri: r.path ? imagePaths.get(r.path) : undefined }));
+  const thumbnailPaths = indexReceiptThumbnailPaths(images);
+  const rows = result.rows.map((r) => ({ ...r, uri: r.path ? imagePaths.get(r.path) : undefined, thumbnailUri: r.path ? thumbnailPaths.get(r.path) : undefined }));
   publish(rows, result.stale);
   let cacheChanged = images.length !== originalImageCount;
+  async function thumbnail(row: GalleryEntry) {
+    if (row.thumbnailUri || !row.path || !row.uri?.startsWith("data:image/") || signal.aborted) return;
+    try {
+      const uri = await createReceiptThumbnail(row.uri);
+      if (signal.aborted) return;
+      row.thumbnailUri = uri; thumbnailPaths.set(row.path, uri);
+      images = trimReceiptImages(images.map(image => image.path === row.path ? { ...image, thumbnailUri: uri } : image), validIds, undefined, validPaths);
+      cacheChanged = true; publish(rows, result.stale);
+    } catch { /* Preserve the full offline image even when its preview fails. */ }
+  }
   for (const row of rows.filter((r) => r.day.startsWith(month))) {
     if (signal.aborted) throw new Error("aborted");
     if (!row.uri && row.path) row.uri = imagePaths.get(row.path);
+    if (!row.thumbnailUri && row.path) row.thumbnailUri = thumbnailPaths.get(row.path);
+    await thumbnail(row);
     if (row.uri || result.stale || !row.path || !supabase) continue;
     try {
       const signed = await supabase.storage.from("picket-media").createSignedUrl(row.path, 300);
@@ -60,6 +75,7 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
       row.uri = dataUri;
       imagePaths.set(row.path, dataUri);
       cacheChanged = true;
+      await thumbnail(row);
       publish(rows, result.stale);
     } catch { /* Keep the signed image or cached gallery usable when download fails. */ }
   }

@@ -5,6 +5,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { loadCloudReceiptGallery, type GalleryEntry } from "@/core/receipts/cloud-receipt-gallery";
 import { listGuestReceipts } from "@/core/receipts/guest-receipt-store";
+import { createReceiptThumbnail } from "@/core/receipts/receipt-thumbnail";
 import { useAuth } from "@/features/auth/auth-context";
 import { routes } from "@/core/navigation/routes";
 import { MonthCalendar } from "./month-calendar";
@@ -47,6 +48,23 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
         const receipts = await listGuestReceipts();
         entries = receipts.flatMap((r) => { const day = calendarReceiptDay(r, transactionDates.get(r.transactionId)); return day ? [{ id: r.transactionId, transactionId: r.transactionId, day, title: r.merchant || "Hóa đơn", uri: `data:${r.contentType};base64,${r.imageBase64}` }] : []; });
         if (active) setStale(false);
+        const previous = snapshotRef.current.owner === owner ? snapshotRef.current.rows : [];
+        entries = entries.map(row => ({ ...row, thumbnailUri: previous.find(old => old.id === row.id && old.uri === row.uri)?.thumbnailUri }));
+        if (active) {
+          const next = { owner, month, rows: entries.map(row => ({ ...row })) };
+          snapshotRef.current = next; setData(next); setLoading(false);
+        }
+        // Guest images also use small previews. Publish metadata first and
+        // preserve full resolution only for the selected-day viewer.
+        for (const row of entries.filter(entry => entry.day.startsWith(month))) {
+          if (!active) return;
+          if (row.thumbnailUri || !row.uri) continue;
+          try { row.thumbnailUri = await createReceiptThumbnail(row.uri); } catch { /* Full image is still available. */ }
+          if (active) {
+            const next = { owner, month, rows: entries.map(entry => ({ ...entry })) };
+            snapshotRef.current = next; setData(next);
+          }
+        }
       } else {
         if (!owner || !token) throw new Error("unavailable");
         const result = await loadCloudReceiptGallery(owner, token, month, transactionDates, controller.signal, (snapshot) => {
@@ -54,7 +72,10 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
           // Keep existing image URIs while metadata refreshes; photo work is
           // incremental and must not blank or disable a usable calendar.
           const previous = snapshotRef.current.owner === owner ? snapshotRef.current.rows : [];
-          const rows = snapshot.rows.map((row) => ({ ...row, uri: row.uri ?? previous.find((old) => old.id === row.id && old.path === row.path)?.uri }));
+          const rows = snapshot.rows.map((row) => {
+            const old = previous.find((entry) => entry.id === row.id && entry.path === row.path);
+            return { ...row, uri: row.uri ?? old?.uri, thumbnailUri: row.thumbnailUri ?? old?.thumbnailUri };
+          });
           const next = { owner, month, rows };
           snapshotRef.current = next;
           setData(next); setStale(snapshot.stale); setLoading(false);
@@ -88,7 +109,7 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
     return () => { active = false; clearInterval(timer); controller.abort(); };
   }, [localMode, month, owner, retry, token, transactionDates]));
   const monthly = rows.filter((r) => r.day.startsWith(month));
-  const thumbnails = Object.fromEntries(monthly.filter((r) => r.uri).map((r) => [Number(r.day.slice(-2)), r.uri!]));
+  const thumbnails = Object.fromEntries(monthly.filter((r) => r.thumbnailUri).map((r) => [Number(r.day.slice(-2)), r.thumbnailUri!]));
   const dayRows = selected === null ? [] : monthly.filter((r) => Number(r.day.slice(-2)) === selected);
   function select(day: number | null) {
     const value = day ?? selected;
