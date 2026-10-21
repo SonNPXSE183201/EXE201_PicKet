@@ -92,6 +92,7 @@ export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation)
     return { ...created, receiptCreateIds: [...(state.receiptCreateIds ?? []), candidate.id] };
   }
   if (mutation.type === "transaction.upsert") {
+    if (!Number.isSafeInteger(mutation.value.amount) || mutation.value.amount <= 0 || mutation.value.amount > MAX_MONEY) throw new Error("Số tiền phải là số nguyên từ 1 đến 9.000.000.000.000 VND.");
     const previous = state.transactions.find((item) => item.id === mutation.value.id);
     if (state.planningCloses[mutation.value.occurredAt.slice(0, 7)] || (previous && state.planningCloses[previous.occurredAt.slice(0, 7)])) throw new Error("Không thể sửa giao dịch của tháng đã chốt.");
   }
