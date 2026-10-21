@@ -1,5 +1,16 @@
 # Kiến trúc Picket
 
+Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](PROJECT_STATUS.md). Landing APK là static site riêng (`apps/landing`), không thay Next.js; Android kiểm tra manifest HTTPS và xác minh APK native trước khi mở xác nhận cài đặt hệ thống.
+
+## Độ bền dữ liệu và ảnh trên Android
+
+- Draft/picker/outbox/cache được cách ly theo owner; khi OS không giao ảnh sau process death, khôi phục draft đã lưu và nhắc chọn lại, không nhận ảnh không xác định owner.
+- Calendar dùng cache preview mã hóa nhỏ riêng, chỉ đọc ảnh đầy đủ khi mở viewer; không giải mã toàn bộ cache ảnh để dựng lịch. Kiểm thử tải lạnh, cuộn và ảnh offline được đo riêng.
+- Trước ghi ảnh/preview, dùng dung lượng **khả dụng** của data partition (không tính reserved blocks), chừa headroom; đây là preflight, lỗi ghi cạnh tranh vẫn phải bảo toàn ảnh/metadata cũ.
+- Khóa attempt hóa đơn phía server dùng cùng advisory lock với mutation để client chỉ sửa sau xác nhận abandon hoặc hoàn tất transaction đã commit; mất phản hồi không cho phép tái sử dụng key cũ.
+
+Bằng chứng và giới hạn: [nghiệm thu phần 1 ngày 22/10](migration/PART1_ACCEPTANCE_20261022.md). Đây không phải thay đổi stack/backend ngoài các migration/API đã được phê duyệt riêng.
+
 ## Trạng thái hiện tại
 
 Giai đoạn nền móng đã tách giao diện mới khỏi dữ liệu bằng REST API:
