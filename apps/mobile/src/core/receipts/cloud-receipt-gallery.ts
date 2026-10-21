@@ -8,6 +8,9 @@ import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 export type GalleryEntry = { id: string; day: string; title: string; uri?: string; path?: string; transactionId?: string | null };
 
 export async function loadCloudReceiptGallery(owner: string, accessToken: string, month: string, transactionDates: Map<string, string>, signal: AbortSignal, onSnapshot?: (result: { rows: GalleryEntry[]; stale: boolean }) => void) {
+  let imageRead: Promise<ReceiptImageCacheEntry[]> | null = null;
+  const readCachedImages = () => imageRead ??= readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images")
+    .then(result => result?.value ?? []).catch(() => []);
   const publish = (rows: GalleryEntry[], stale: boolean) => {
     if (!signal.aborted) onSnapshot?.({ rows: rows.map((row) => ({ ...row })), stale });
   };
@@ -20,10 +23,14 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
     cached: async (user) => (await readOfflineCache<GalleryEntry[]>(user, "receipt-gallery"))?.value ?? null,
     save: (user, rows) => writeOfflineCache(user, "receipt-gallery", rows),
     onCached: onSnapshot ? (rows) => publish(rows, true) : undefined,
+    hydrateCached: onSnapshot ? async (_user, rows) => {
+      const paths = indexReceiptImagePaths(await readCachedImages());
+      return rows.map(row => ({ ...row, uri: row.path ? paths.get(row.path) : undefined }));
+    } : undefined,
   });
   if (signal.aborted) throw new Error("aborted");
   publish(result.rows, result.stale);
-  let images = (await readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images").catch(() => null))?.value ?? [];
+  let images = await readCachedImages();
   const validIds = new Set(result.rows.map((r) => r.id));
   const validPaths = new Set(result.rows.flatMap(row => row.path ? [row.path] : []));
   const originalImageCount = images.length;

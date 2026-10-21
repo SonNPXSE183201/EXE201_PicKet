@@ -50,3 +50,27 @@ test("no metadata cache means no stale media hydration", async () => {
     onCached: () => assert.fail("No cached rows"), hydrateCached: async () => { hydrated = true; return []; } };
   await loadReceiptGallery("A", loader); assert.equal(hydrated, false);
 });
+
+test("fresh metadata suppresses old photo hydration even while cache persistence is held", async () => {
+  const media = deferred<string[]>(); const save = deferred<void>(); const snapshots: string[][] = [];
+  const loader = { remote: async () => [], cached: async () => ["deleted receipt"], save: () => save.promise,
+    onCached: (rows: string[]) => snapshots.push(rows), hydrateCached: () => media.promise };
+  const result = loadReceiptGallery("A", loader); await tick();
+  media.resolve(["deleted receipt photo"]); await tick();
+  assert.deepEqual(snapshots, [["deleted receipt"]]);
+  save.resolve(); assert.deepEqual(await result, { rows: [], stale: false });
+});
+
+test("offline failure keeps the same owner's metadata and never replaces it with another invocation", async () => {
+  const remoteA = deferred<string[]>(); const remoteB = deferred<string[]>();
+  const mediaA = deferred<string[]>(); const mediaB = deferred<string[]>();
+  const seenA: string[][] = []; const seenB: string[][] = [];
+  const start = (owner: string, remote: ReturnType<typeof deferred<string[]>>, media: ReturnType<typeof deferred<string[]>>, seen: string[][]) =>
+    loadReceiptGallery(owner, { remote: () => remote.promise, cached: async () => [owner], save: async () => {},
+      onCached: rows => seen.push(rows), hydrateCached: async requested => { assert.equal(requested, owner); return media.promise; } });
+  const a = start("A", remoteA, mediaA, seenA); const b = start("B", remoteB, mediaB, seenB);
+  await tick(); mediaB.resolve(["B image"]); mediaA.resolve(["A image"]); await tick();
+  assert.deepEqual(seenA, [["A"], ["A image"]]); assert.deepEqual(seenB, [["B"], ["B image"]]);
+  remoteA.reject(new Error("offline")); remoteB.reject(new Error("offline"));
+  assert.deepEqual(await a, { rows: ["A"], stale: true }); assert.deepEqual(await b, { rows: ["B"], stale: true });
+});
