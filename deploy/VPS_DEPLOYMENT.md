@@ -1,5 +1,7 @@
 # Triển khai Picket trên một VPS
 
+**Web/landing 22/10/2026:** đã triển khai image `picket-web:web-20261022-6993560`, source/build context ở `/opt/picket/releases/web-20261022-6993560/source`. Compose production đã cập nhật riêng web; không rebuild API từ cây cũ hoặc chạy full-stack up/remove-orphans cho thay đổi web. [Bằng chứng, giới hạn và rollback](../docs/migration/WEB_PRODUCTION_20261022.md). Các mô tả landing-only ở checkpoint trước bên dưới không bao gồm đợt triển khai web mới này.
+
 Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing static đang phục vụ Android **1.0.4/code 5**; [triển khai/checksum/rollback](../docs/migration/ANDROID_RELEASE_1_0_4_20261022.md). Đợt này chỉ đổi landing/download/manifest, không recreate container API/web/OCR. Các số audit và phiên bản ghi theo ngày phía dưới là checkpoint lịch sử, không phải chứng nhận bảo mật hiện tại; cần audit lại theo lockfile trước một đợt triển khai mới.
 
 Increment API riêng ngày 21/10: migrations `202610210003`/`202610210004` và image `picket-api:transaction-attempt-20261021` đã triển khai theo phê duyệt. Source dùng để build giữ ở `/opt/picket/releases/transaction-attempt-20261021`, không ghi đè cây `/opt/picket/apps/api`; không rebuild cây cũ khi triển khai tiếp. Image rollback được giữ, nhưng không tháo SQL fence sau khi đã xác nhận bỏ yêu cầu. Xem [báo cáo rollout/rollback](../docs/migration/RECEIPT_ATTEMPT_RECOVERY_TDD_20261021.md).
