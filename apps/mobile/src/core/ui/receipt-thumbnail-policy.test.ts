@@ -12,7 +12,7 @@ test("calendar thumbnail index never sends full receipt data to all day cells", 
   assert.equal(indexReceiptImagePaths(items).get("A/two"), "full-two", "Legacy full images remain available offline for the viewer");
 });
 
-test("receipt image budget includes thumbnail bytes and never evicts another owner's cache", () => {
+test("receipt image budget includes thumbnail bytes without mutating the source cache", () => {
   const items = [{ id: "a", path: "A/one", dataUri: "1234", thumbnailUri: "5678", usedAt: 1 }];
   assert.equal(trimReceiptImages(items, new Set(["a"]), 7).length, 0);
   assert.equal(trimReceiptImages(items, new Set(["a"]), 8).length, 1);
