@@ -57,7 +57,7 @@ export default function BillDetailScreen() {
     <Surface>
       <FieldLabel>Tên hóa đơn</FieldLabel><TextInput accessibilityLabel="Tên hóa đơn" maxLength={160} onChangeText={setTitle} style={styles.input} value={currentTitle} />
       <FieldLabel>Số tiền</FieldLabel><TextInput money accessibilityLabel="Số tiền hóa đơn" keyboardType="number-pad" onChangeText={setAmount} style={styles.input} value={currentAmount} />
-      <FieldLabel>Ngày đến hạn</FieldLabel><TextInput accessibilityLabel="Ngày đến hạn" keyboardType="numbers-and-punctuation" maxLength={10} onChangeText={setDueDate} style={styles.input} value={currentDueDate} />
+      <FieldLabel>Ngày đến hạn</FieldLabel><TextInput date accessibilityLabel="Ngày đến hạn" onChangeText={setDueDate} style={styles.input} value={currentDueDate} />
       <FieldLabel>Trạng thái</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{statuses.map((item) => <ChoiceChip checked={currentStatus === item.value} key={item.value} label={item.label} onPress={() => setStatus(item.value)} />)}</View>
       {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
       <PrimaryAction busy={busy} label="Lưu thay đổi" onPress={() => void save()} /><DangerAction disabled={busy} label="Lưu trữ hóa đơn" onPress={confirmArchive} />
