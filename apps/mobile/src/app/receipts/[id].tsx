@@ -233,7 +233,7 @@ export default function ReceiptDetailScreen() {
                 <Text style={styles.fieldLabel}>Tổng hóa đơn</Text>
                 <TextInput money accessibilityLabel="Tổng hóa đơn" value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder="Tổng tiền" placeholderTextColor={colors.muted} style={styles.input} />
                 <Text style={styles.fieldLabel}>Ngày mua</Text>
-                <TextInput accessibilityLabel="Ngày mua theo định dạng năm tháng ngày" value={purchasedAt} onChangeText={setPurchasedAt} placeholder="YYYY-MM-DD" placeholderTextColor={colors.muted} style={styles.input} />
+                <TextInput date accessibilityLabel="Ngày mua" value={purchasedAt} onChangeText={setPurchasedAt} style={styles.input} />
               </View>
             ) : (
               <View style={styles.card}>
