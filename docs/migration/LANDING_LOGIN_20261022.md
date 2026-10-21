@@ -1,5 +1,7 @@
 # Landing → đăng nhập web — 22/10/2026
 
+**Đã lên production theo phê duyệt tiếp theo:** landing HTTPS có ba nút Đăng nhập, click mở login thật, APK cũ giữ nguyên. [Báo cáo và rollback](WEB_PRODUCTION_20261022.md). Trạng thái local/chưa publish bên dưới là checkpoint trước triển khai.
+
 Yêu cầu: thêm đường vào ứng dụng web từ landing, responsive; sau đó chủ sở hữu yêu cầu nhãn chỉ là **Đăng nhập**, bỏ chữ “web”. Không đổi mobile, API, cơ chế đăng nhập hoặc APK.
 
 ## Triển khai
