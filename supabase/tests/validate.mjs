@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { validateOcrRetention } from "./ocr-retention.mjs";
 import { validatePartnerEffectivePeriod } from "./partner-effective-period.mjs";
+import { validateTransactionAttemptRecovery } from "./transaction-attempt-recovery.mjs";
 const db = new PGlite();
 await db.exec(
   `create role anon; create role authenticated; create role service_role bypassrls;
@@ -685,6 +686,7 @@ assert.equal((await db.query("select * from public.profiles")).rows.length, 0);
 assert.equal((await db.query("select * from public.wallets")).rows.length, 0);
 await validateOcrRetention(db);
 await validatePartnerEffectivePeriod(db);
+await validateTransactionAttemptRecovery(db);
 await db.close();
 console.log(
   "SQL validation passed: migrations, ownership, media isolation, OCR worker permissions, conflicts, invalid payloads, staff permissions, maintenance, cascade deletion.",
