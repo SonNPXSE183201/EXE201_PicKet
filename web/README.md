@@ -1,5 +1,7 @@
 # Picket Next.js web
 
+Phát hành/nghiệm thu toàn dự án: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing tải APK là `apps/landing`, không phải giao diện Next.js được thiết kế lại. Các route web/auth hiện có vẫn được giữ.
+
 Web client dùng Next.js 16, Supabase Auth cookie SSR và Dart Frog API dùng
 chung với ứng dụng Expo.
 
