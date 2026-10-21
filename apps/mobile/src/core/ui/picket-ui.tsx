@@ -5,7 +5,7 @@ import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, Scr
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { AppIcon, type IconName } from "./app-icon";
-import { floatingActionBottom } from "./floating-action-layout";
+import { floatingActionBottom, floatingActionIconOnly } from "./floating-action-layout";
 
 import { AccessiblePressable as Pressable } from "./accessible-pressable";
 
@@ -43,7 +43,8 @@ export function ActionSheet({ title, visible, onClose, children }: PropsWithChil
 }
 
 export function FloatingAction({ label, icon = "plus", iconOnly = false, onPress }: { label: string; icon?: IconName; iconOnly?: boolean; onPress(): void }) {
-  const { fontScale } = useWindowDimensions();
+  const { fontScale, width } = useWindowDimensions();
+  const compact = floatingActionIconOnly(iconOnly, fontScale, width);
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   useEffect(() => {
@@ -52,7 +53,7 @@ export function FloatingAction({ label, icon = "plus", iconOnly = false, onPress
     return () => { show.remove(); hide.remove(); };
   }, []);
   if (keyboardVisible) return null;
-  return <Pressable accessibilityLabel={label} onPress={onPress} style={[styles.fab, { bottom: floatingActionBottom(fontScale, insets.bottom) }, iconOnly && { width: 56, height: 56, borderRadius: 18, paddingHorizontal: 0 }]}><AppIcon name={icon} size={26} color={colors.white} />{!iconOnly && <Text style={styles.fabLabel}>{label}</Text>}</Pressable>;
+  return <Pressable accessibilityLabel={label} onPress={onPress} style={[styles.fab, { bottom: floatingActionBottom(fontScale, insets.bottom) }, compact && { width: 56, height: 56, borderRadius: 18, paddingHorizontal: 0 }]}><AppIcon name={icon} size={26} color={colors.white} />{!compact && <Text style={styles.fabLabel}>{label}</Text>}</Pressable>;
 }
 
 export function Surface({ children, peach = false, style }: PropsWithChildren<{ peach?: boolean; style?: ViewStyle }>) {
