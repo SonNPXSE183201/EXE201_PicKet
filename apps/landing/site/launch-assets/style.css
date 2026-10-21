@@ -6,3 +6,10 @@
 @media(max-width:380px){.wrap{width:calc(100% - 32px)}h1{font-size:43px}.hero-actions{gap:8px}.hero-actions .text-link{min-height:44px}.preview-stage{min-height:530px;padding-inline:28px}.phone{width:210px;min-width:200px}.stage-caption{font-size:10px;max-width:75px}.stage-stamp{right:8px;bottom:26px;padding:13px;font-size:12px}.qr-row{gap:12px}.qr-row>img{width:95px;height:95px}.qr-row h3{font-size:16px}.qr-row p{font-size:13px}.release-panel{padding:18px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
 .site-header .button{min-height:48px}
+.header-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.button-secondary{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+.button-secondary:hover{background:var(--surface-container)}
+.web-note{font-size:13px;color:var(--muted);margin-top:16px;margin-bottom:0}
+.site-footer>a:not(.brand){display:inline-flex;align-items:center;min-height:48px;font-size:13px;color:var(--muted)}
+@media(max-width:1050px){.site-header{flex-wrap:wrap}.site-header nav{order:3;flex-basis:100%;justify-content:center}}
+@media(max-width:760px){.header-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:12px}.header-actions .button{padding-inline:12px}.hero-actions .button{flex:1 1 200px}.hero-actions .text-link{flex-basis:100%}}

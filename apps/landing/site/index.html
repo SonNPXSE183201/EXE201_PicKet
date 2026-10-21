@@ -18,7 +18,7 @@
   <header class="site-header wrap">
     <a class="brand" href="/" aria-label="Picket, trang chủ"><img src="/launch-assets/picket-logo.png" alt="" width="56" height="56"><span>Picket</span></a>
     <nav aria-label="Điều hướng chính"><a href="#inside">Khám phá app</a><a href="#install">Cách cài đặt</a></nav>
-    <a class="button button-small" href="#download">Tải cho Android <svg aria-hidden="true"><use href="#download-icon"/></svg></a>
+    <div class="header-actions"><a class="button button-secondary button-small" href="/login">Đăng nhập web</a><a class="button button-small" href="#download">Tải cho Android <svg aria-hidden="true"><use href="#download-icon"/></svg></a></div>
   </header>
 
   <main id="main">
@@ -27,7 +27,8 @@
         <p class="release-label"><span aria-hidden="true" class="release-dot"></span> Picket cho Android</p>
         <h1 id="hero-title">Mang thu chi<br>về một chỗ</h1>
         <p class="intro">Một khoản cà phê, một lần đi chợ, một hóa đơn cần giữ. Picket giúp bạn ghi lại và nhìn rõ tiền của mình mỗi ngày.</p>
-        <div class="hero-actions"><a class="button" href="{{DOWNLOAD_URL}}" download><svg aria-hidden="true"><use href="#download-icon"/></svg>Tải APK Android</a><a class="text-link" href="#inside">Xem bên trong app <span aria-hidden="true">↓</span></a></div>
+        <div class="hero-actions"><a class="button" href="{{DOWNLOAD_URL}}" download><svg aria-hidden="true"><use href="#download-icon"/></svg>Tải APK Android</a><a class="button button-secondary" href="/login">Đăng nhập web</a><a class="text-link" href="#inside">Xem bên trong app <span aria-hidden="true">↓</span></a></div>
+        <p class="web-note">Bản web cần đăng nhập và kết nối mạng.</p>
         <p class="download-meta">v{{VERSION}} · {{SIZE_MB}} MB · {{ANDROID_VERSION}}+ · ARM64</p>
         <div class="start-note"><svg aria-hidden="true"><use href="#phone-icon"/></svg><p>Bắt đầu ngay trên điện thoại.<br><strong>Không bắt buộc tạo tài khoản.</strong></p></div>
       </div>
@@ -62,7 +63,7 @@
     <section class="faq wrap section" aria-labelledby="faq-title"><h2 id="faq-title">Trước khi bắt đầu</h2><div class="faq-list"><details><summary>Tôi có cần đăng nhập không?</summary><p>Không. Bạn có thể dùng chế độ lưu riêng trên thiết bị. Đăng nhập nếu muốn sử dụng các tính năng cloud và đồng bộ được hỗ trợ. Nên sao lưu trước khi xóa ứng dụng hoặc đổi điện thoại.</p></details><details><summary>OCR có tự lưu giao dịch ngay không?</summary><p>Bạn cần xem lại số tiền, ngày và nội dung nhận diện trước khi xác nhận. OCR có thể đọc sai, nhất là hóa đơn mờ hoặc thiếu thông tin.</p></details><details><summary>Đây có phải bản hoàn thiện toàn bộ tính năng?</summary><p>Đây là bản MVP đang tiếp tục hoàn thiện. Một số luồng đồng bộ nâng cao và tính năng phụ thuộc thiết bị hoặc Google Play vẫn đang được kiểm thử. Không nên chỉ giữ một bản duy nhất của dữ liệu quan trọng trong app.</p></details><details><summary>Tôi đang dùng bản Picket cũ, cập nhật thế nào?</summary><p>Sao lưu dữ liệu trước, rồi cài APK mới lên bản có cùng mã gói và chữ ký. Nếu Android không cho cập nhật, đừng vội gỡ app vì có thể mất dữ liệu chỉ lưu trên thiết bị. Phiên bản, ngày phát hành và checksum ở trên giúp bạn xác định đúng file mới.</p></details></div></section>
   </main>
 
-  <footer class="wrap site-footer"><a class="brand" href="/" aria-label="Picket, trang chủ"><img src="/launch-assets/picket-logo.png" alt="" width="44" height="44"><span>Picket</span></a><p>Ghi chép mỗi ngày, hiểu tiền của mình hơn.</p><a href="/release.json">Thông tin bản phát hành</a></footer>
+  <footer class="wrap site-footer"><a class="brand" href="/" aria-label="Picket, trang chủ"><img src="/launch-assets/picket-logo.png" alt="" width="44" height="44"><span>Picket</span></a><p>Ghi chép mỗi ngày, hiểu tiền của mình hơn.</p><a href="/login">Đăng nhập web</a><a href="/release.json">Thông tin bản phát hành</a></footer>
 
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="download-icon" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
