@@ -1,6 +1,6 @@
 import { colors } from "@picket/design-tokens";
 import { formatVnd } from "@picket/domain";
-import { Redirect, router } from "expo-router";
+import { Redirect } from "expo-router";
 import { useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -11,6 +11,8 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useProfile } from "@/features/profile/profile-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
 import { useTransactions } from "@/features/transactions/transactions-context";
+import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
+import { categorySpending } from "@/core/ui/category-spending";
 
 export default function InsightsScreen() {
   const { session, localMode } = useAuth();
@@ -18,6 +20,8 @@ export default function InsightsScreen() {
   const { categories } = useTransactions();
   const { error, loading, refresh, transactions } = useTransactionHistory();
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const selectedMonth = `${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,"0")}`;
+  const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, selectedMonth);
   const summary = useMemo(() => {
     const selected = transactions.filter((item) => {
       const date = new Date(item.occurredAt);
@@ -26,24 +30,10 @@ export default function InsightsScreen() {
     const income = selected.filter((item) => item.kind === "income").reduce((sum, item) => sum + item.amount, 0);
     const expense = selected.filter((item) => item.kind === "expense").reduce((sum, item) => sum + item.amount, 0);
     const refunds = selected.filter((item) => item.kind === "refund").reduce((sum, item) => sum + item.amount, 0);
-    const byCategory = new Map<string, number>();
-    for (const item of selected) {
-      if (item.kind !== "expense") continue;
-      const key = item.categoryId ?? "uncategorized";
-      byCategory.set(key, (byCategory.get(key) ?? 0) + item.amount);
-    }
-    for (const item of selected) {
-      if (item.kind !== "refund" || !item.refundOfTransactionId) continue;
-      const original = transactions.find((candidate) => candidate.id === item.refundOfTransactionId);
-      if (!original || original.kind !== "expense") continue;
-      const key = original.categoryId ?? "uncategorized";
-      byCategory.set(key, Math.max(0, (byCategory.get(key) ?? 0) - item.amount));
-    }
     const categoryNames = new Map(categories.map((item) => [item.id, item.name]));
-    const breakdown = [...byCategory].filter(([, amount]) => amount > 0).map(([id, amount]) => ({ id, name: categoryNames.get(id) ?? "Chưa phân loại", amount }))
-      .sort((left, right) => right.amount - left.amount);
+    const breakdown = categorySpending(transactions, selectedMonth, splits).map(({id,amount}) => ({id,amount,name:categoryNames.get(id) ?? "Chưa phân loại"}));
     return { income, expense: Math.max(0, expense - refunds), breakdown };
-  }, [categories, month, transactions]);
+  }, [categories, month, transactions, selectedMonth, splits]);
   if (!session && !localMode) return <Redirect href={routes.login} />;
   const changeMonth = (offset: number) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
   return <PicketScreen>
@@ -62,7 +52,7 @@ export default function InsightsScreen() {
         <View style={styles.totals}><Text style={styles.label}>Thu nhập: {profile?.hideBalance ? "••••••" : formatVnd(summary.income)}</Text><Text style={styles.label}>Chi tiêu ròng: {profile?.hideBalance ? "••••••" : formatVnd(summary.expense)}</Text></View>
       </Surface>
       <SectionTitle title="Bạn đã chi cho điều gì?" />
-      {summary.breakdown.length === 0 ? <EmptyState title="Chưa có chi tiêu trong tháng" description="Phân bổ sẽ xuất hiện khi bạn ghi giao dịch." symbol="▥" /> :
+      {splitError ? <Text accessibilityLiveRegion="polite" style={styles.warning}>{splitError}</Text> : splitLoading ? null : summary.breakdown.length === 0 ? <EmptyState title="Chưa có chi tiêu trong tháng" description="Phân bổ sẽ xuất hiện khi bạn ghi giao dịch." symbol="▥" /> :
         <View style={styles.stack}>{summary.breakdown.map((item) => { const percent = summary.expense > 0 ? Math.round(item.amount / summary.expense * 100) : 0; return <Surface key={item.id}><View style={styles.categoryRow}><Text style={styles.categoryName}>{item.name}</Text><Text style={styles.categoryAmount}>{profile?.hideBalance ? "••••••" : formatVnd(item.amount)} · {percent}%</Text></View><View accessibilityLabel={`${item.name}: ${percent}% chi tiêu`} style={styles.progressTrack}><View style={[styles.progressFill,{width:`${Math.min(100,percent)}%`}]} /></View></Surface>; })}</View>}
     </>}
   </PicketScreen>;
