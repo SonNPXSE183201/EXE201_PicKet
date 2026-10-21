@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { applyGuestMutation, emptyGuestFinance, guestBudgetSpent } from "./guest-finance";
+import { MAX_MONEY, type Transaction } from "@picket/domain";
+
+test("guest transaction writes reject unsafe or out-of-domain money before changing state", () => {
+  const state=emptyGuestFinance();
+  const row={ id:"money-boundary",title:"Boundary",amount:1,kind:"expense",accountId:"cash",destinationAccountId:null,categoryId:null,occurredAt:"2026-10-20",note:"",refundOfTransactionId:null,version:1,createdAt:"",updatedAt:"",deletedAt:null } as Transaction;
+  for (const amount of [0,-1,1.5,NaN,Infinity,MAX_MONEY+1,Number.MAX_SAFE_INTEGER+1]) {
+    assert.throws(()=>applyGuestMutation(state,{type:"transaction.upsert",value:{...row,amount}}),/Số tiền/);
+    assert.equal(state.transactions.length,0);
+  }
+  assert.equal(applyGuestMutation(state,{type:"transaction.upsert",value:{...row,amount:MAX_MONEY}}).transactions[0].amount,MAX_MONEY);
+});
 
 test("guest finance keeps wallet and transaction on device without a cloud session", () => {
   const wallet = { id: "wallet-1", name: "Tiền mặt", kind: "cash" as const, currencyCode: "VND", openingBalance: 100000, version: 1, createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", deletedAt: null, archived: false };
