@@ -1,4 +1,8 @@
-export interface ReceiptImageCacheEntry { id: string; path: string; dataUri: string; usedAt: number }
+export interface ReceiptImageCacheEntry { id: string; path: string; dataUri: string; thumbnailUri?: string; usedAt: number }
+
+export function indexReceiptThumbnailPaths(items: ReceiptImageCacheEntry[]) {
+  return indexReceiptImagePaths(items);
+}
 
 /** Build only from the current owner's decrypted cache; paths are the image identity. */
 export function indexReceiptImagePaths(items: ReceiptImageCacheEntry[]) {
