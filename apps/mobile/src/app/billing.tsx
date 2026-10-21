@@ -267,7 +267,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           </View>
         ) : orderedProducts.length === 0 ? (
           <Text style={styles.notice}>
-            Chưa tải được bảng giá. Bản cài phải được phát hành qua Google Play Internal testing và dùng tài khoản tester.
+            Chưa tải được bảng giá. Hãy kiểm tra kết nối và dùng bản cài từ Google Play để mua hoặc khôi phục gói.
           </Text>
         ) : (
           orderedProducts.map((product) => {
