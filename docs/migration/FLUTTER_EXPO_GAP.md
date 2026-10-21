@@ -1,5 +1,9 @@
 # Flutter → Expo Android: các luồng còn thiếu
 
+Nghiệm thu cập nhật 22/10: [checklist phần 1 máy ảo đã đạt](PART1_ACCEPTANCE_20261022.md). Không phát sinh chức năng Flutter mới còn phải chuyển từ các ca này; đầu vào file xuất Flutter thật vẫn là kiểm chứng tương thích lịch sử riêng, chưa được thay thế bằng fixture tổng hợp.
+
+**Đọc trước:** [PROJECT_STATUS.md](../PROJECT_STATUS.md) tổng hợp hiện trạng ngày 22/10: public **1.0.4/code 5**, source 415 test và API 82 test. Các đoạn theo ngày bên dưới là lịch sử; không đọc “chưa push/1.0.1/241 test” thành hiện trạng. Chuyển đổi code không đồng nghĩa mọi nhánh nghiệm thu thiết bị thật/Play đã đạt.
+
 Ngày kiểm kê: 2026-10-17. Nguồn Flutter: commit trước `adce153` (`mobile/lib`). Chỉ Expo Android và Dart API nằm trong phạm vi; không mở rộng Next.js.
 
 ## Trạng thái cập nhật 2026-10-20
