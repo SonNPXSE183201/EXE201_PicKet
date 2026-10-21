@@ -74,3 +74,21 @@ test("offline failure keeps the same owner's metadata and never replaces it with
   remoteA.reject(new Error("offline")); remoteB.reject(new Error("offline"));
   assert.deepEqual(await a, { rows: ["A"], stale: true }); assert.deepEqual(await b, { rows: ["B"], stale: true });
 });
+
+test("fresh calendar metadata is published before slow cache persistence finishes", async () => {
+  const save = deferred<void>(); const seen: string[][] = [];
+  const loader = { remote: async () => ["new receipt"], cached: async () => null,
+    save: () => save.promise, onCached: () => {}, onRemote: (rows: string[]) => seen.push(rows) };
+  const result = loadReceiptGallery("A", loader);
+  await tick();
+  try { assert.deepEqual(seen, [["new receipt"]]); }
+  finally { save.resolve(); await result; }
+});
+
+test("a failed remote request never publishes another owner's fresh snapshot", async () => {
+  const seen: string[][] = [];
+  const loader = { remote: async (): Promise<string[]> => { throw new Error("offline"); },
+    cached: async () => ["A cached"], save: async () => {}, onRemote: (rows: string[]) => seen.push(rows) };
+  assert.deepEqual(await loadReceiptGallery("A", loader), { rows: ["A cached"], stale: true });
+  assert.deepEqual(seen, []);
+});
