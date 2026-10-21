@@ -17,6 +17,7 @@ import { authStorageKey, supabase } from "@/core/supabase/client";
 import { secureAuthStorage } from "@/core/storage/secure-auth-storage";
 import { AuthCallbackError, parseAuthCallbackUrl } from "@/features/auth/auth-callback";
 import { recoverDeviceSession } from "@/features/auth/session-recovery";
+import { createAuthMutationQueue, signOutDeviceSession } from "@/features/auth/device-sign-out";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -49,23 +50,25 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const localModeStorageKey = "picket_local_mode_v1";
 
 let callbackExchange: Promise<boolean> | null = null;
+const mutateAuth = createAuthMutationQueue();
 
 async function exchangeCallbackUrl(url: string): Promise<boolean> {
-  if (!supabase) return false;
+  const client = supabase;
+  if (!client) return false;
   if (callbackExchange) return callbackExchange;
 
-  callbackExchange = (async () => {
+  callbackExchange = mutateAuth(async () => {
     const { accessToken, code, errorDescription, refreshToken } = parseAuthCallbackUrl(url);
     if (errorDescription) throw new AuthCallbackError(errorDescription);
 
     if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { error } = await client.auth.exchangeCodeForSession(code);
       if (error) throw error;
       return true;
     }
 
     if (accessToken && refreshToken) {
-      const { error } = await supabase.auth.setSession({
+      const { error } = await client.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
       });
@@ -78,7 +81,7 @@ async function exchangeCallbackUrl(url: string): Promise<boolean> {
     }
 
     return false;
-  })();
+  });
 
   try {
     return await callbackExchange;
@@ -174,27 +177,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setLocalMode(false);
       },
       async signIn(email, password) {
-        const { error } = await requireClient().auth.signInWithPassword({
+        const { error } = await mutateAuth(() => requireClient().auth.signInWithPassword({
           email: email.trim().toLowerCase(),
           password,
-        });
+        }));
         if (error) throw error;
       },
       async signUp(email, password) {
-        const { data, error } = await requireClient().auth.signUp({
+        const { data, error } = await mutateAuth(() => requireClient().auth.signUp({
           email: email.trim().toLowerCase(),
           password,
           options: { emailRedirectTo: authCallbackUrl },
-        });
+        }));
         if (error) throw error;
         return data.session === null;
       },
       async verifySignup(email, token) {
-        const { error } = await requireClient().auth.verifyOtp({
+        const { error } = await mutateAuth(() => requireClient().auth.verifyOtp({
           email: email.trim().toLowerCase(),
           token: token.trim(),
           type: "signup",
-        });
+        }));
         if (error) throw error;
       },
       async resendSignup(email) {
@@ -213,20 +216,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (error) throw error;
       },
       async updatePassword(password) {
-        const { error } = await requireClient().auth.updateUser({ password });
+        const { error } = await mutateAuth(() => requireClient().auth.updateUser({ password }));
         if (error) throw error;
         setRecovery(false);
       },
       async signInWithGoogle() {
         const redirectTo = authCallbackUrl;
-        const { data, error } = await requireClient().auth.signInWithOAuth({
+        const { data, error } = await mutateAuth(() => requireClient().auth.signInWithOAuth({
           provider: "google",
           options: {
             redirectTo,
             skipBrowserRedirect: true,
             queryParams: { prompt: "select_account" },
           },
-        });
+        }));
         if (error) throw error;
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
         if (result.type === "success") {
@@ -245,8 +248,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
       },
       async signOut() {
-        const { error } = await requireClient().auth.signOut({ scope: "local" });
-        if (error) throw error;
+        const storageKey = authStorageKey;
+        if (!storageKey) throw new Error("Supabase public configuration is missing.");
+        await mutateAuth(() => signOutDeviceSession({
+          auth: requireClient().auth,
+          storageKey,
+          storage: secureAuthStorage,
+        }));
       },
     }),
     [loading, localMode, localModeLoading, recovery, requireClient, session],

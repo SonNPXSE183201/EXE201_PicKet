@@ -1,6 +1,6 @@
 import "react-native-url-polyfill/auto";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, processLock, type SupabaseClient } from "@supabase/supabase-js";
 import { fetch as expoFetch } from "expo/fetch";
 
 import { readPublicConfig } from "@/core/config/public-config";
@@ -19,6 +19,9 @@ export const supabase: SupabaseClient | null = config
       auth: {
         storageKey: authStorageKey!,
         storage: secureAuthStorage,
+        // Shared with explicit offline logout cleanup. Keep covered against
+        // the installed SDK: its legacy custom lock path is still supported.
+        lock: processLock,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
