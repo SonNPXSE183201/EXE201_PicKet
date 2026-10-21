@@ -89,12 +89,13 @@ function DeviceLockSession({ children }: PropsWithChildren) {
     },
   }), [enabled, busy, session]);
   return <LockContext.Provider value={value}>
-    {session && (locked || busy && enabled) ? <View style={styles.root}>
+    <View style={{ flex: 1, display: locked ? "none" : "flex" }} importantForAccessibility={locked ? "no-hide-descendants" : "auto"}>{children}</View>
+    {session && locked && <View style={styles.root}>
       <Text accessibilityRole="header" style={styles.heading}>Picket đã khóa</Text>
       <Text style={styles.copy}>Xác thực trên thiết bị để xem thông tin tài chính của bạn.</Text>
       {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text>}
       <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => void unlock()} style={styles.button}><Text style={styles.buttonText}>{busy ? "Đang xác thực…" : "Mở khóa"}</Text></Pressable>
-    </View> : children}
+    </View>}
   </LockContext.Provider>;
 }
 
