@@ -133,7 +133,7 @@ export default function ReconcileScreen() {
     </Surface>}
     {accounts.length === 0 ? <EmptyState title="Chưa có ví" description="Tạo ví trước khi đối soát." /> : <>
       <SectionTitle title="Ví cần đối soát" /><View style={styles.chips}>{accounts.map((item) => <ChoiceChip checked={item.id===currentAccount?.id} key={item.id} label={item.name} onPress={() => setAccountId(item.id)} />)}</View>
-      <Text style={styles.label}>Ngày sao kê (YYYY-MM-DD)</Text><TextInput accessibilityLabel="Ngày sao kê" onChangeText={setStatementDate} style={styles.input} value={statementDate} />
+      <Text style={styles.label}>Ngày sao kê</Text><TextInput date accessibilityLabel="Ngày sao kê" onChangeText={setStatementDate} style={styles.input} value={statementDate} />
       <Text style={styles.label}>Số dư trên sao kê (VND)</Text><TextInput money accessibilityLabel="Số dư trên sao kê" keyboardType="numbers-and-punctuation" onChangeText={setStatementBalance} style={styles.input} value={statementBalance} />
       <Surface peach><Text style={styles.title}>Số dư từ giao dịch đã chọn: {formatVnd(clearedBalance)}</Text>{difference !== null && <Text style={styles.hint}>Chênh lệch: {formatVnd(difference)}</Text>}</Surface>
       <SectionTitle title={`Giao dịch · đã chọn ${eligibleSelected.length}/${eligible.length}`} />
