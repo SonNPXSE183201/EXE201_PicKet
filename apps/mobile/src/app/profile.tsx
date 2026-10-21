@@ -29,8 +29,8 @@ export default function ProfileScreen() {
   const { error, loading, profile, refresh } = useProfile();
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
-  if (loading && !profile) return <SafeAreaView style={[styles.safeArea, styles.center]}><ActivityIndicator accessibilityLabel="Đang tải hồ sơ" color={colors.mauve} /></SafeAreaView>;
-  if (!profile) return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>{error ?? "Chưa có hồ sơ lưu trên thiết bị. Hãy kết nối mạng rồi thử lại."}</Text><Pressable accessibilityRole="button" onPress={() => void refresh()}><Text style={styles.back}>Tải lại hồ sơ</Text></Pressable></SafeAreaView>;
+  if (loading && !profile) return <SafeAreaView style={[styles.safeArea, styles.fallbackPage]}><View style={styles.center}><ActivityIndicator accessibilityLabel="Đang tải hồ sơ" color={colors.mauve} /></View><InstalledVersion /></SafeAreaView>;
+  if (!profile) return <SafeAreaView style={[styles.safeArea, styles.fallbackPage]}><View style={styles.center}><Text style={styles.error}>{error ?? "Chưa có hồ sơ lưu trên thiết bị. Hãy kết nối mạng rồi thử lại."}</Text><Pressable accessibilityRole="button" onPress={() => void refresh()}><Text style={styles.back}>Tải lại hồ sơ</Text></Pressable></View><InstalledVersion /></SafeAreaView>;
 
   return <ProfileForm key={profile.id} profile={profile} />;
 }
@@ -213,6 +213,7 @@ function ChoiceGroup<T extends string>({ label, options, selected, select }: { l
 }
 
 const styles = StyleSheet.create({
+  fallbackPage: { paddingBottom: 140 },
   profileCard: { alignItems: "center", gap: 8, paddingVertical: 24 }, avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.mauve, alignItems: "center", justifyContent: "center" }, profileName: { color: colors.ink, fontSize: 23, lineHeight: 32, fontWeight: "700", textAlign: "center" }, menuGroup: { paddingVertical: 4 },
   signOut: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 },
   signOutText: { color: colors.ink, fontSize: 15, fontWeight: "700" },
