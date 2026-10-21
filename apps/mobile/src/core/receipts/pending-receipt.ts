@@ -21,6 +21,7 @@ export type PendingReceiptDraft = {
   transactionId: string | null;
   createdAt: string;
   transactionRequest: CreateTransactionRequest | null;
+  transactionAttemptId?: string;
 };
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -43,6 +44,7 @@ async function database() {
         storage_path TEXT,
         transaction_id TEXT,
         transaction_request_payload TEXT,
+        transaction_attempt_id TEXT,
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS pending_receipt_drafts_owner_idx
@@ -57,6 +59,7 @@ async function database() {
       );
     }
     if (!columns.some((column) => column.name === "transaction_request_payload")) await db.execAsync("ALTER TABLE pending_receipt_drafts ADD COLUMN transaction_request_payload TEXT");
+    if (!columns.some((column) => column.name === "transaction_attempt_id")) await db.execAsync("ALTER TABLE pending_receipt_drafts ADD COLUMN transaction_attempt_id TEXT");
     return db;
   });
   return databasePromise;
@@ -179,10 +182,11 @@ export async function getPendingReceiptDraft(id: string, userId: string) {
     transaction_id: string | null;
     created_at: string;
     transaction_request_payload: string | null;
+    transaction_attempt_id: string | null;
   }>(
     `SELECT id, user_id, image_uri, merchant, amount, purchased_at, confidence,
             provider, review_required, raw_text, line_items_json, storage_path,
-            transaction_id, created_at, transaction_request_payload
+            transaction_id, created_at, transaction_request_payload, transaction_attempt_id
        FROM pending_receipt_drafts WHERE id = ? AND user_id = ?`,
     id,
     userId,
@@ -204,6 +208,7 @@ export async function getPendingReceiptDraft(id: string, userId: string) {
     transactionId: row.transaction_id,
     createdAt: row.created_at,
     transactionRequest: row.transaction_request_payload === null ? null : parseReceiptRequest(await decryptLocalPayload(row.transaction_request_payload, `pending-receipt-request:${userId}:${id}`)),
+    transactionAttemptId: row.transaction_attempt_id ?? id,
   } satisfies PendingReceiptDraft;
 }
 
@@ -217,6 +222,23 @@ const receiptRequestJournal = createReceiptRequestJournal({
 export async function pinPendingReceiptRequest(draft: PendingReceiptDraft, request: CreateTransactionRequest) {
   const transactionRequest = await receiptRequestJournal.pin(draft.userId,draft.id,request);
   return { ...draft, transactionRequest };
+}
+
+/** Call only after the server permanently fenced this exact old attempt. */
+export async function resetPendingReceiptAttempt(draft: PendingReceiptDraft) {
+  const db = await database();
+  const row = await db.getFirstAsync<{ transaction_request_payload: string | null }>(
+    "SELECT transaction_request_payload FROM pending_receipt_drafts WHERE id=? AND user_id=?", draft.id,draft.userId,
+  );
+  if (!row?.transaction_request_payload || draft.transactionId) throw new Error("Receipt attempt changed");
+  const result = await db.runAsync(`UPDATE pending_receipt_drafts SET transaction_request_payload=NULL,
+    transaction_attempt_id=? WHERE id=? AND user_id=? AND transaction_id IS NULL
+    AND COALESCE(transaction_attempt_id,id)=? AND transaction_request_payload=?`,
+    Crypto.randomUUID(),draft.id,draft.userId,draft.transactionAttemptId ?? draft.id,row.transaction_request_payload);
+  if (result.changes !== 1) throw new Error("Receipt attempt changed");
+  const next = await getPendingReceiptDraft(draft.id,draft.userId);
+  if (!next) throw new Error("Receipt draft disappeared");
+  return next;
 }
 
 function parseLineItems(raw: string): ReceiptLineItemInput[] {

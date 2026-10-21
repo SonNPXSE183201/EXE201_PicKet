@@ -22,6 +22,7 @@ import { picketApi } from "@/core/api/client";
 import {
   getPendingReceiptDraft,
   pinPendingReceiptRequest,
+  resetPendingReceiptAttempt,
   removePendingReceiptDraft,
   updatePendingReceiptProgress,
   type PendingReceiptDraft,
@@ -107,6 +108,25 @@ export default function NewTransactionScreen() {
     : availableCategories[0]?.id ?? "";
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
+
+  async function recoverReceiptAttempt() {
+    if (busy || !receiptDraft?.transactionRequest || receiptDraft.transactionId || !session || !picketApi || localMode) return;
+    setBusy(true); setMessage(null);
+    try {
+      const resolution = await picketApi.resolveTransactionAttempt(session.access_token,
+        `${session.user.id}:${receiptDraft.transactionAttemptId ?? receiptDraft.id}`);
+      if (resolution.status === "abandoned") {
+        setReceiptDraft(await resetPendingReceiptAttempt(receiptDraft));
+        setMessage("Yêu cầu cũ đã được khóa an toàn. Bạn có thể sửa thông tin rồi lưu lại; ảnh hóa đơn được giữ nguyên.");
+      } else {
+        const next = await updatePendingReceiptProgress(receiptDraft,{transactionId:resolution.transaction.id});
+        setReceiptDraft(next);
+        setMessage("Giao dịch đã được lưu. Nhấn thử lại để hoàn tất gắn ảnh hóa đơn, không tạo thêm giao dịch.");
+      }
+    } catch {
+      setMessage("Chưa xác minh được yêu cầu cũ. Bản nháp vẫn được giữ nguyên; kết nối mạng rồi kiểm tra lại trước khi sửa.");
+    } finally { setBusy(false); }
+  }
 
   async function submit() {
     if (loadingDraft || busy) return;
@@ -227,7 +247,7 @@ export default function NewTransactionScreen() {
         const created = await picketApi.createTransaction(
           session.access_token,
           request,
-          `${session.user.id}:${draft.id}`,
+          `${session.user.id}:${draft.transactionAttemptId ?? draft.id}`,
         );
         draft = await updatePendingReceiptProgress(draft, {
           transactionId: created.transaction.id,
@@ -325,6 +345,7 @@ export default function NewTransactionScreen() {
         </>}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         <PrimaryAction busy={busy} disabled={loadingDraft} label={receiptDraft?.transactionRequest ? "Thử lại yêu cầu cũ" : "Lưu giao dịch"} onPress={() => void submit()} />
+        {!localMode && receiptDraft?.transactionRequest && !receiptDraft.transactionId && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void recoverReceiptAttempt()}><Text style={styles.manage}>Kiểm tra để sửa yêu cầu</Text></Pressable>}
         </Surface>
     </PicketScreen>
   );
