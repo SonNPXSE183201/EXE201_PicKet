@@ -1,4 +1,11 @@
 export interface ReceiptImageCacheEntry { id: string; path: string; dataUri: string; thumbnailUri?: string; usedAt: number }
+export type ReceiptPreview = { path: string; thumbnailUri: string };
+export function hydrateReceiptPreviews<T extends { path?: string; thumbnailUri?: string }>(rows: T[], previews: ReceiptPreview[]): T[] {
+  const valid = new Map(previews.filter(item => typeof item?.path === "string" && typeof item.thumbnailUri === "string"
+    && item.thumbnailUri.startsWith("data:image/jpeg;base64,") && item.thumbnailUri.length <= 131_104)
+    .map(item => [item.path, item.thumbnailUri]));
+  return rows.map(row => ({ ...row, thumbnailUri: row.path ? valid.get(row.path) : undefined }));
+}
 
 export function indexReceiptThumbnailPaths(items: ReceiptImageCacheEntry[]) {
   const paths = new Map<string, string>();

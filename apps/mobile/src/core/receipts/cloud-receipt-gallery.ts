@@ -2,13 +2,14 @@ import { fromByteArray } from "base64-js";
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
-import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths, indexReceiptThumbnailPaths, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
+import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths, indexReceiptThumbnailPaths, hydrateReceiptPreviews, type ReceiptPreview, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 import { createReceiptThumbnail } from "./receipt-thumbnail";
 
 export type GalleryEntry = { id: string; day: string; title: string; uri?: string; thumbnailUri?: string; path?: string; transactionId?: string | null };
 
 export async function loadCloudReceiptGallery(owner: string, accessToken: string, month: string, transactionDates: Map<string, string>, signal: AbortSignal, onSnapshot?: (result: { rows: GalleryEntry[]; stale: boolean }) => void) {
+  const previews = await readOfflineCache<ReceiptPreview[]>(owner, "receipt-thumbnails").then(result => Array.isArray(result?.value) ? result.value : []).catch(() => []);
   let imageRead: Promise<ReceiptImageCacheEntry[]> | null = null;
   const readCachedImages = () => imageRead ??= readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images")
     .then(result => result?.value ?? []).catch(() => []);
@@ -26,13 +27,14 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
     onCached: onSnapshot ? (rows) => publish(rows, true) : undefined,
     onRemote: onSnapshot ? (rows) => publish(rows, false) : undefined,
     hydrateCached: onSnapshot ? async (_user, rows) => {
-      const cached = await readCachedImages();
-      const paths = indexReceiptImagePaths(cached), thumbnails = indexReceiptThumbnailPaths(cached);
-      return rows.map(row => ({ ...row, uri: row.path ? paths.get(row.path) : undefined, thumbnailUri: row.path ? thumbnails.get(row.path) : undefined }));
+      return hydrateReceiptPreviews(rows, previews);
     } : undefined,
   });
   if (signal.aborted) throw new Error("aborted");
+  result.rows = hydrateReceiptPreviews(result.rows, previews);
   publish(result.rows, result.stale);
+  const monthly = result.rows.filter(row => row.day.startsWith(month));
+  if (monthly.every(row => !row.path || row.thumbnailUri)) return result;
   let images = await readCachedImages();
   const validIds = new Set(result.rows.map((r) => r.id));
   const validPaths = new Set(result.rows.flatMap(row => row.path ? [row.path] : []));
@@ -40,9 +42,19 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
   images = trimReceiptImages(images, validIds, undefined, validPaths);
   const imagePaths = indexReceiptImagePaths(images);
   const thumbnailPaths = indexReceiptThumbnailPaths(images);
-  const rows = result.rows.map((r) => ({ ...r, uri: r.path ? imagePaths.get(r.path) : undefined, thumbnailUri: r.path ? thumbnailPaths.get(r.path) : undefined }));
+  const rows = result.rows.map((r) => ({ ...r, uri: r.path ? imagePaths.get(r.path) : undefined, thumbnailUri: (r.path ? thumbnailPaths.get(r.path) : undefined) ?? r.thumbnailUri }));
   publish(rows, result.stale);
   let cacheChanged = images.length !== originalImageCount;
+  async function persistPreviews() {
+    let remaining = 2 * 1024 * 1024;
+    const compact = rows.flatMap(row => {
+      if (!row.path || !row.thumbnailUri || row.thumbnailUri.length > Math.min(131_104, remaining)) return [];
+      remaining -= row.thumbnailUri.length;
+      return [{ path: row.path, thumbnailUri: row.thumbnailUri }];
+    });
+    try { await writeOfflineCache(owner, "receipt-thumbnails", compact); } catch { /* Preserve original full-photo cache on a failed small-cache write. */ }
+  }
+  await persistPreviews();
   async function thumbnail(row: GalleryEntry) {
     if (row.thumbnailUri || !row.path || !row.uri?.startsWith("data:image/") || signal.aborted) return;
     try {
@@ -51,6 +63,7 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
       row.thumbnailUri = uri; thumbnailPaths.set(row.path, uri);
       images = trimReceiptImages(images.map(image => image.path === row.path ? { ...image, thumbnailUri: uri } : image), validIds, undefined, validPaths);
       cacheChanged = true; publish(rows, result.stale);
+      await persistPreviews();
     } catch { /* Preserve the full offline image even when its preview fails. */ }
   }
   for (const row of rows.filter((r) => r.day.startsWith(month))) {
@@ -84,4 +97,17 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
     try { await writeOfflineCache(owner, "receipt-images", images); } catch { /* Images remain available for this session. */ }
   }
   return { rows, stale: result.stale };
+}
+
+/** The selected-photo viewer, not calendar startup, reads full-size bytes. */
+export async function loadCloudReceiptImage(owner: string, path: string, signal: AbortSignal): Promise<string | null> {
+  if (!path.startsWith(owner + "/") || signal.aborted) return null;
+  const cached = await readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images").catch(() => null);
+  if (signal.aborted) return null;
+  const uri = cached?.value.find(row => row.path === path)?.dataUri;
+  if (uri) return uri;
+  if (!supabase) return null;
+  const signed = await supabase.storage.from("picket-media").createSignedUrl(path, 300);
+  if (signal.aborted || signed.error) return null;
+  return signed.data.signedUrl;
 }

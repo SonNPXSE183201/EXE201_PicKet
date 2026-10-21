@@ -2,10 +2,11 @@ import { colors } from "@picket/design-tokens";
 import type { Transaction } from "@picket/domain";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { loadCloudReceiptGallery, type GalleryEntry } from "@/core/receipts/cloud-receipt-gallery";
 import { listGuestReceipts } from "@/core/receipts/guest-receipt-store";
 import { createReceiptThumbnail } from "@/core/receipts/receipt-thumbnail";
+import { ReceiptGalleryPhoto } from "@/core/receipts/receipt-gallery-photo";
 import { useAuth } from "@/features/auth/auth-context";
 import { routes } from "@/core/navigation/routes";
 import { MonthCalendar } from "./month-calendar";
@@ -28,7 +29,6 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
   const transactionDates = useMemo(() => new Map<string, string>(JSON.parse(datesKey)), [datesKey]);
   const [data, setData] = useState<{ owner?: string; month?: string; rows: Entry[] }>({ rows: [] });
   const [stale, setStale] = useState(false);
-  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -87,7 +87,6 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
         const next = { owner, month, rows: entries };
         snapshotRef.current = next;
         setData(next);
-        setFailedImages(new Set());
       }
     }
     let refreshing = false;
@@ -118,6 +117,6 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
     const found = monthly.some((r) => Number(r.day.slice(-2)) === value);
     if (found) setOpen(true); else router.push(routes.captureOnDate(`${month}-${String(value).padStart(2, "0")}`));
   }
-  return <View accessibilityState={{ busy: loading && !hasSnapshot }}><SectionTitle title="Lịch hóa đơn" /><Text style={styles.hint}>Chạm ngày để xem ảnh đã lưu. Ngày trống sẽ mở camera quét.</Text>{stale && <Text accessibilityLiveRegion="polite" style={styles.hint}>Đang xem hóa đơn đã lưu trên máy. Ảnh chưa tải trước đó cần kết nối mạng.</Text>}{error && <><Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text><PrimaryAction label="Tải lại hóa đơn" onPress={() => setRetry((n) => n + 1)} /></>}<MonthCalendar month={month} selected={selected} activeDays={new Set(monthly.map((r) => Number(r.day.slice(-2))))} thumbnails={thumbnails} receiptMode disabled={!hasSnapshot} onSelect={select} /><ActionSheet title={`Hóa đơn ngày ${selected ?? ""}/${Number(month.slice(-2))}`} visible={open} onClose={() => setOpen(false)}>{dayRows.map((entry) => <View key={entry.id} style={styles.receipt}>{entry.uri && !failedImages.has(entry.id) ? <Image onError={() => setFailedImages((current) => new Set([...current, entry.id]))} accessibilityLabel={`Ảnh hóa đơn ${entry.title}`} source={{ uri: entry.uri }} resizeMode="contain" style={styles.image} /> : <View><Text style={styles.hint}>Chưa tải được ảnh. Kết nối mạng rồi thử lại.</Text><PrimaryAction label="Tải lại ảnh" onPress={() => setRetry((value) => value + 1)} /></View>}<MenuRow icon="receipt-text-outline" title={entry.title} description="Mở chi tiết hóa đơn" onPress={() => { setOpen(false); router.push(localMode && entry.transactionId ? routes.transaction(entry.transactionId) : routes.receipt(entry.id)); }} /></View>)}<PrimaryAction label="Quét thêm hóa đơn" onPress={() => { setOpen(false); router.push(routes.capture); }} /></ActionSheet></View>;
+  return <View accessibilityState={{ busy: loading && !hasSnapshot }}><SectionTitle title="Lịch hóa đơn" /><Text style={styles.hint}>Chạm ngày để xem ảnh đã lưu. Ngày trống sẽ mở camera quét.</Text>{stale && <Text accessibilityLiveRegion="polite" style={styles.hint}>Đang xem hóa đơn đã lưu trên máy. Ảnh chưa tải trước đó cần kết nối mạng.</Text>}{error && <><Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text><PrimaryAction label="Tải lại hóa đơn" onPress={() => setRetry((n) => n + 1)} /></>}<MonthCalendar month={month} selected={selected} activeDays={new Set(monthly.map((r) => Number(r.day.slice(-2))))} thumbnails={thumbnails} receiptMode disabled={!hasSnapshot} onSelect={select} /><ActionSheet title={`Hóa đơn ngày ${selected ?? ""}/${Number(month.slice(-2))}`} visible={open} onClose={() => setOpen(false)}>{dayRows.map((entry) => <View key={entry.id} style={styles.receipt}>{open && <ReceiptGalleryPhoto key={`${owner}:${entry.id}`} owner={localMode ? undefined : owner} entry={entry} />}<MenuRow icon="receipt-text-outline" title={entry.title} description="Mở chi tiết hóa đơn" onPress={() => { setOpen(false); router.push(localMode && entry.transactionId ? routes.transaction(entry.transactionId) : routes.receipt(entry.id)); }} /></View>)}<PrimaryAction label="Quét thêm hóa đơn" onPress={() => { setOpen(false); router.push(routes.capture); }} /></ActionSheet></View>;
 }
 const styles = StyleSheet.create({ hint: { color: colors.muted, fontSize: 13, lineHeight: 20, marginBottom: 12 }, error: { color: colors.expense, lineHeight: 20 }, receipt: { marginBottom: 20 }, image: { height: 320, width: "100%", borderRadius: 16, backgroundColor: colors.cream } });

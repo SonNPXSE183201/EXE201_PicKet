@@ -4,7 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
 import { cacheCipher } from "./cache-cipher";
 
-export type CachedResource = "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "reconciliation-requests" | "spending-splits";
+export type CachedResource = "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "receipt-thumbnails" | "reconciliation-requests" | "spending-splits";
 type CacheRow = { nonce: string; ciphertext: string; updated_at: string };
 const keyName = "picket_offline_cache_key_v1";
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
