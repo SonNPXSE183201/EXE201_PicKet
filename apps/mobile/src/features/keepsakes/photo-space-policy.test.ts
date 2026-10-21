@@ -25,8 +25,17 @@ test("invalid requested sizes fail closed without attempting allocation", () => 
 test("capture restore checks free space before creating/writing its derived preview", () => {
   const source = readFileSync(new URL("../../core/ocr/capture-storage.ts", import.meta.url), "utf8");
   const restore = source.slice(source.indexOf("async function restoreCaptureImageWithLease"), source.indexOf("export function cleanupCaptureImages"));
-  assert.match(restore, /requirePhotoWriteSpace\(Paths\.availableDiskSpace/);
+  assert.match(restore, /requirePhotoWriteSpace\(await getFreeDiskStorageAsync\(\)/);
   assert.ok(restore.indexOf("requirePhotoWriteSpace") < restore.indexOf("dir.create("));
+});
+
+test("native storage preflight excludes Android reserved blocks rather than counting raw free space", () => {
+  for (const relative of ["../../core/ocr/capture-storage.ts", "./keepsake-photo-storage.ts"]) {
+    const source = readFileSync(new URL(relative, import.meta.url), "utf8");
+    assert.match(source, /import \{ getFreeDiskStorageAsync \} from "expo-file-system\/legacy"/);
+    assert.doesNotMatch(source, /Paths\.availableDiskSpace/);
+    assert.match(source, /requirePhotoWriteSpace\(await getFreeDiskStorageAsync\(\)/);
+  }
 });
 test("new capture and keepsake writes reserve storage before native directory creation", () => {
   const capture = readFileSync(new URL("../../core/ocr/capture-storage.ts", import.meta.url), "utf8");
