@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 import { capturePhotoLeases, collectCapturePhotoOrphans } from "./capture-photo-cleanup";
 
 test("capture cleanup preserves current and OCR-journal photos and only removes old owned orphans", async () => {
@@ -41,4 +42,15 @@ test("capture cleanup never enters while same-owner image persistence is active"
   release(); await saving;
   assert.equal(result, null);
   assert.equal(inspected, false);
+});
+
+test("native capture cleanup integrates both journals and leases without eagerly deleting superseded input", () => {
+  const storage = readFileSync(new URL("./capture-storage.ts", import.meta.url), "utf8");
+  const fallback = readFileSync(new URL("./fallback-storage.ts", import.meta.url), "utf8");
+  assert.match(storage, /fallbackImageReferences\(owner\)/);
+  assert.match(storage, /capturePhotoLeases\.use\(owner/);
+  assert.doesNotMatch(storage, /old\.delete\(/);
+  assert.match(fallback, /WHERE owner_id=\?/);
+  assert.match(fallback, /intent\.owner !== owner/);
+  assert.match(fallback, /capturePhotoLeases\.use\(intent\.owner/);
 });

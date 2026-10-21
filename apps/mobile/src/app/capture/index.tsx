@@ -15,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
-import { captureJournal, persistCaptureImage, restoreCaptureImage } from "@/core/ocr/capture-storage";
+import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptureImage } from "@/core/ocr/capture-storage";
 import { restoreCaptureSnapshot, type CaptureSnapshot } from "@/core/ocr/capture-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
@@ -105,6 +105,7 @@ export default function CaptureReceiptScreen() {
         setFallbackStoragePath(null); setProvider("manual"); setNeedsFallback(false); setLocalConfidence(0);
       }
       setHydratedOwner(ownerId);
+      void cleanupCaptureImages(ownerId).catch(() => undefined);
     }).catch(() => { if (active) setRestoreError(true); });
     return () => { active = false; };
   }, [ownerId, restoreRevision]);

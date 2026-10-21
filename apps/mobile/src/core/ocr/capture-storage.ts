@@ -5,6 +5,8 @@ import * as SQLite from "expo-sqlite";
 import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
 import { MAX_PHOTO_BYTES, validatePhoto } from "@/features/keepsakes/keepsake-photo-vault";
 import { createCaptureJournal, type CaptureSnapshot } from "./capture-journal";
+import { capturePhotoLeases, collectCapturePhotoOrphans } from "./capture-photo-cleanup";
+import { fallbackImageReferences } from "./fallback-storage";
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 function database() {
@@ -31,7 +33,7 @@ async function read(owner: string) {
 }
 export const captureJournal = createCaptureJournal({
   read,
-  write: async (owner, value) => {
+  write: (owner, value) => capturePhotoLeases.use(owner, async () => {
     const db = await database();
     const previous = await read(owner);
     if (value) {
@@ -41,13 +43,14 @@ export const captureJournal = createCaptureJournal({
       const payload = await encryptLocalPayload(value, `capture-draft:${owner}`);
       await db.runAsync("INSERT INTO capture_drafts(owner_id,payload) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET payload=excluded.payload", owner, payload);
     } else await db.runAsync("DELETE FROM capture_drafts WHERE owner_id=?", owner);
-    // Only remove the superseded owned image after the replacement is durable.
-    if (previous?.imageRef && previous.imageRef !== value?.imageRef) {
-      try { const old = imageFile(owner, previous.imageRef); if (old.exists) old.delete(); } catch { /* Orphan cleanup can retry later. */ }
-    }
-  },
+    // A submitted OCR journal may still need the superseded image. Leave
+    // deletion to the age-bounded, reference-aware sweep after in-flight work.
+  }),
 });
-export async function persistCaptureImage(owner: string, uri: string) {
+export function persistCaptureImage(owner: string, uri: string) {
+  return capturePhotoLeases.use(owner, () => persistCaptureImageWithLease(owner, uri));
+}
+async function persistCaptureImageWithLease(owner: string, uri: string) {
   const source = new File(uri);
   if (source.size <= 0 || source.size > MAX_PHOTO_BYTES) throw new Error("Ảnh vượt giới hạn 10 MB.");
   const bytes = await source.bytes();
@@ -63,7 +66,10 @@ export async function persistCaptureImage(owner: string, uri: string) {
     return { id, imageRef: destination.uri };
   } catch (error) { if (temp.exists) temp.delete(); throw error; }
 }
-export async function restoreCaptureImage(owner: string, imageRef: string) {
+export function restoreCaptureImage(owner: string, imageRef: string) {
+  return capturePhotoLeases.use(owner, () => restoreCaptureImageWithLease(owner, imageRef));
+}
+async function restoreCaptureImageWithLease(owner: string, imageRef: string) {
   const file = imageFile(owner, imageRef);
   if (!file.exists || file.size > 30_000_000) throw new Error("Không đọc được ảnh bản nháp.");
   const raw = await file.text();
@@ -73,4 +79,25 @@ export async function restoreCaptureImage(owner: string, imageRef: string) {
   const result = new File(dir, file.name.replace(/\.enc$/, photo.mime === "image/png" ? ".png" : photo.mime === "image/jpeg" ? ".jpg" : ".webp"));
   result.write(toByteArray(photo.base64));
   return result.uri;
+}
+
+export function cleanupCaptureImages(owner: string) {
+  const dirs = [folder(owner), folder(owner, true)];
+  return collectCapturePhotoOrphans(owner, {
+    now: Date.now(), prefixes: dirs.map(dir => dir.uri.replace(/\/$/, "") + "/"),
+    references: async () => {
+      const current = await read(owner);
+      const refs = [...(current ? [current.imageRef] : []), ...await fallbackImageReferences(owner)];
+      // The decrypted preview is derived from the encrypted filename. Keep
+      // all supported extensions while its encrypted source is referenced.
+      return refs.flatMap(uri => {
+        const file = imageFile(owner, uri);
+        const base = file.name.replace(/\.enc$/, "");
+        return [uri, ...["jpg", "png", "webp"].map(ext => new File(dirs[1], `${base}.${ext}`).uri)];
+      });
+    },
+    files: () => dirs.flatMap(dir => dir.exists ? dir.list().filter((entry): entry is File => entry instanceof File)
+      .map(file => ({ uri: file.uri, size: file.size, modifiedAt: file.modificationTime ?? 0 })) : []),
+    remove: uri => { new File(uri).delete(); },
+  });
 }

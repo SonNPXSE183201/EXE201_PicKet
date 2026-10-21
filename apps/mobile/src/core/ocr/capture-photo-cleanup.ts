@@ -9,6 +9,14 @@ export async function collectCapturePhotoOrphans(owner: string, io: {
   remove(uri: string): void;
   now: number;
 }): Promise<number | null> {
-  void owner; void io; void selectPhotoOrphans;
-  return 0;
+  return capturePhotoLeases.clean(owner, async () => {
+    let references: Set<string>;
+    try { references = new Set(await io.references()); } catch { return 0; }
+    const candidates = selectPhotoOrphans(io.files(), io.prefixes, references, io.now);
+    let removed = 0;
+    for (const file of candidates) {
+      try { io.remove(file.uri); removed++; } catch { /* Keep it for the next bounded sweep. */ }
+    }
+    return removed;
+  });
 }
