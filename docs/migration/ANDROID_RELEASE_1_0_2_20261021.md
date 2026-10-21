@@ -27,6 +27,6 @@ Publication is explicitly authorized by the user. It is not a certificate that a
 
 ## Publication and cleanup status
 
-The verified distribution is prepared locally. Live HTTPS deployment, GitHub push and post-push cleanup are still pending at this checkpoint. The final publication record must replace this paragraph only after those operations and their verification succeed.
+Live HTTPS deployment PASS on 21 October: landing metadata and HTML advertise the new immutable filename; the complete downloaded APK matches the approved byte count and SHA-256. MIME/disposition, HTTP 206 byte ranges, existing `/login` and API health all pass. Evidence: `production-1.0.2-publish.log` and `production-1.0.2-live-verification.json`. No containers were restarted or recreated. Previous immutable download and matching metadata remain available for rollback. GitHub push and post-push cleanup are still pending at this checkpoint.
 
 APK, signing files, environment files and generated build distributions are excluded from source commits. File-by-file English conventional commits preserve the implementation and QA reports. Existing open cases remain in `PART12_ACCEPTANCE_MATRIX_20261021.md`, including full natural-expiry A–B–A, Google cold callback, expanded media/camera faults, cache performance and Partner native acceptance.
