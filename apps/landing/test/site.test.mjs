@@ -33,7 +33,7 @@ test('landing exposes same-origin web login in header, hero and footer without d
     ['footer', /<footer\b[\s\S]*?<\/footer>/],
   ]) {
     const section = html.match(pattern)?.[0] ?? '';
-    const link = section.match(/<a\b[^>]*href="\/login"[^>]*>Đăng nhập web<\/a>/)?.[0];
+    const link = section.match(/<a\b[^>]*href="\/login"[^>]*>Đăng nhập<\/a>/)?.[0];
     assert.ok(link, `${name} must expose web login`);
     assert.doesNotMatch(link, /\b(download|target)=?/);
   }
