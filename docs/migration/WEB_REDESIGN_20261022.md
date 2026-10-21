@@ -1,5 +1,7 @@
 # Picket web: redesign và kiểm tra responsive — 22/10/2026
 
+**Checkpoint tiếp theo:** đã được chủ sở hữu phê duyệt push và triển khai production; source runtime `6993560`, login/admin HTTPS và smoke responsive đạt. [Báo cáo production/rollback](WEB_PRODUCTION_20261022.md). Các mô tả local/chưa deploy bên dưới là checkpoint trước phát hành.
+
 ## Phạm vi và trạng thái
 
 Thực hiện theo yêu cầu chỉ sửa Next.js. Thay đổi runtime nằm trong `web/`; không sửa Expo/mobile, Dart API, shared packages, migration hay cấu hình production. Các commit và giao diện mới hiện ở local, **chưa push/chưa triển khai production**. Không thay đổi tài khoản admin của chủ sở hữu khi kiểm thử.
