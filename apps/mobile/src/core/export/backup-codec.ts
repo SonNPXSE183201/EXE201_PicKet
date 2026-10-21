@@ -1,8 +1,7 @@
 import { gcm } from "@noble/ciphers/aes.js";
-import { pbkdf2Async } from "@noble/hashes/pbkdf2.js";
-import { sha256 } from "@noble/hashes/sha2.js";
 import { utf8ToBytes } from "@noble/hashes/utils.js";
 import { fromByteArray, toByteArray } from "base64-js";
+import { deriveBackupKey } from "./backup-key-derivation";
 
 const MAX_FILE_BYTES = 100_000_000;
 
@@ -14,7 +13,7 @@ export async function sealBackupEnvelope(
   nonce: Uint8Array,
 ) {
   if (password.length < 12 || salt.length !== 32 || nonce.length !== 12) throw new Error("Thông số mã hóa bản sao không hợp lệ.");
-  const key = await pbkdf2Async(sha256, utf8ToBytes(password), salt, { c:210_000, dkLen:32 });
+  const key = await deriveBackupKey(password, salt);
   const sealed = gcm(key, nonce).encrypt(utf8ToBytes(JSON.stringify(payload)));
   const encoded = JSON.stringify({ format, salt:fromByteArray(salt), nonce:fromByteArray(nonce),
     mac:fromByteArray(sealed.slice(-16)), ciphertext:fromByteArray(sealed.slice(0, -16)) });
@@ -38,7 +37,7 @@ export async function openBackupEnvelope<T>(
   const mac = toByteArray(envelope.mac);
   const ciphertext = toByteArray(envelope.ciphertext);
   if (salt.length !== 32 || nonce.length !== 12 || mac.length !== 16 || ciphertext.length > MAX_FILE_BYTES) throw new Error("Bản sao không hợp lệ.");
-  const key = await pbkdf2Async(sha256, utf8ToBytes(password), salt, { c:210_000, dkLen:32 });
+  const key = await deriveBackupKey(password, salt);
   const sealed = new Uint8Array(ciphertext.length + mac.length);
   sealed.set(ciphertext);
   sealed.set(mac, ciphertext.length);
