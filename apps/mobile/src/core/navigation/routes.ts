@@ -21,6 +21,7 @@ export const routes = {
   deleteAccount: "/delete-account" as Href,
   syncConflicts: "/sync-conflicts" as Href,
   capture: "/capture" as Href,
+  captureOnDate: (date: string) => ({ pathname: "/capture", params: { date } }) as Href,
   newAccount: "/accounts/new" as Href,
   accounts: "/accounts" as Href,
   budgets: "/budgets" as Href,
