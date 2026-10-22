@@ -6,9 +6,9 @@ The brief fixes the visual direction: match the existing Expo app, without modif
 
 - Cream canvas, peach selection/balance surfaces, mauve actions and ink text come from mobile. Green/red convey money direction and always have supporting text or signs.
 - Use the platform sans stack for Vietnamese text; avoid the old serif marketing treatment inside the application. Amounts use tabular numerals. Titles, section headings and captions have separate scales.
-- Desktop has a persistent sidebar; phone has five bottom tabs plus an accessible “Tất cả chức năng” disclosure. Every route remains reachable, including admin audit. Desktop tables become stacked records on phone.
+- Desktop has four primary destinations (overview, transactions, wallets, budgets); phone has the same four bottom tabs. The upper-right profile disclosure contains account utilities and logout, beside the notification bell. Admin retains six management destinations, including audit via its account menu on phone. Desktop tables become stacked records on phone.
 - White 24 px surfaces group actual tasks. Pills are reserved for navigation and actions; inputs have 12 px corners. No decorative gradients, glass layers, scroll reveals or heavy shadows.
-- Actions have at least 44 px targets, normally 48 px. Inputs on phone use 16 px text to avoid browser zoom. Keyboard focus, skip links, announced feedback and reduced motion are retained.
+- Desktop controls use a compact 40 px baseline, with 44 px controls on phone; inputs on phone use 16 px text to avoid browser zoom. Keyboard focus, skip links, announced feedback and reduced motion are retained. Short viewports may scroll instead of clipping form content.
 - Admin and user share visual tokens but not navigation or web mutation entry points. Supabase `is_staff` is checked on the server; an unavailable role lookup fails closed. This does not change Android roles or the Dart API.
 - Native ML Kit, Android billing, alarms and biometrics are not simulated. Web has explicit cloud OCR consent, in-app reminders and a Play subscription-management link. Device-only Android queues are not exposed as an invented browser queue.
 
@@ -20,7 +20,7 @@ Private image URLs are short-lived. Backup encryption/decryption uses Web Crypto
 
 ## Preview and verification
 
-Open [design-preview.html](design-preview.html) for a self-contained token preview with user/admin and narrow/wide controls. It contains explicitly illustrative values, not production data. Runtime CSS is [workspace.css](../src/app/workspace.css); the JSON inventory is [design-tokens.json](design-tokens.json).
+Open [design-preview.html](design-preview.html) for a self-contained token preview with user/admin and narrow/wide controls. It contains explicitly illustrative values, not production data. Runtime CSS is [workspace.css](../src/app/workspace.css) with final web density in [compact.css](../src/app/compact.css); the JSON inventory is [design-tokens.json](design-tokens.json). Selects progressively enhance to branded native pickers where base-select is supported; other browsers retain the accessible OS picker.
 
 Real Next.js pages were exercised at 390, 768 and 1440 px using generated QA accounts. One tablet overflow in duplicate-receipt filters was found and fixed. Screenshots were visually inspected. Full acceptance evidence and remaining limits are tracked in the web redesign report; a screenshot pass is not proof of every mutation or native capability.
 
