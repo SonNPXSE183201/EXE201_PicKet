@@ -23,13 +23,14 @@
   },
   "spacing": [6, 10, 16, 20, 24, 32],
   "radius": {
-    "input": 12,
+    "input": 9,
     "compact": 18,
     "surface": 24,
     "hero": 28,
-    "button": 999
+    "button": 10
   },
-  "touch": { "minimum": 44, "primary": 48 },
+  "touch": { "minimum": 44, "primary": 44 },
+  "webDensity": { "desktopControl": 40, "phoneControl": 44, "sidebarWidth": 216 },
   "breakpoints": { "phone": 760, "compactWorkspace": 1100 },
   "motion": { "interactionMs": 120, "reducedMotion": true }
 }
