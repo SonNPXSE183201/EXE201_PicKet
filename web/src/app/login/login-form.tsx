@@ -63,15 +63,14 @@ export function LoginForm({ initialError }: LoginFormProps) {
   }
 
   return (
-    <div className="auth-card">
+    <div className="auth-card auth-card-compact">
       <Link className="brand auth-brand" href="/" aria-label="Picket trang chủ">
         <Image src="/picket-logo.png" alt="" width={48} height={48} />
         <span>Picket</span>
       </Link>
       <h1 className="auth-title">Chào mừng trở lại</h1>
       <p className="auth-copy">
-        Đăng nhập để tiếp tục quản lý thu chi trên web và điện thoại. Tài khoản
-        quản trị sẽ vào không gian quản trị riêng.
+        Đăng nhập để tiếp tục quản lý thu chi của bạn.
       </p>
 
       <form className="auth-form" onSubmit={signIn}>
