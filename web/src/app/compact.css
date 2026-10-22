@@ -1,0 +1,87 @@
+/* Web-only compact density. Never applied to Expo or shared tokens. */
+.workspace { grid-template-columns: 216px minmax(0, 1fr); }
+.workspace-sidebar { padding: 22px 12px; }
+.workspace-brand { padding: 0 10px 24px; }
+.workspace-sidebar nav a { min-height: 44px; padding: 10px 14px; gap: 10px; font-size: 14px; border-radius: 12px; }
+.navigation-hint { font-size: 10px; margin-left: auto; }
+.navigation-hint:empty { display: none; }
+.workspace-topbar { height: 64px; padding: 10px clamp(16px, 3vw, 36px); }
+.workspace-account-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.workspace-account-menu { position: relative; }
+.workspace-avatar, .workspace-notifications { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; cursor: pointer; }
+.workspace-avatar { list-style: none; }
+.workspace-avatar::-webkit-details-marker { display: none; }
+.workspace-notifications:hover { background: var(--peach); }
+.workspace-account-popover { position: absolute; top: 50px; right: 0; z-index: 60; width: min(580px, calc(100vw - 32px)); padding: 16px; background: white; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 12px 36px #4a2c2a18; max-height: calc(100dvh - 96px); overflow-y: auto; overscroll-behavior: contain; }
+.account-menu-heading { margin: 0 0 10px; font-weight: 700; font-size: 13px; color: var(--muted); }
+.workspace-account-popover nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.workspace-account-popover nav a { display: flex; align-items: center; gap: 9px; padding: 8px 10px; min-height: 40px; border-radius: 9px; font-size: 13px; }
+.workspace-account-popover nav svg { flex-shrink: 0; width: 18px; height: 18px; }
+.workspace-account-popover nav a:hover, .workspace-account-popover nav a[aria-current] { background: var(--cream); }
+.workspace-account-popover .workspace-signout { position: static; margin: 0 0 10px; padding: 0 0 8px; border-bottom: 1px solid var(--line); }
+.workspace-account-popover .workspace-signout button { min-height: 40px; padding: 8px 10px; font-size: 14px; width: 100%; border-radius: 8px; }
+.workspace-account-popover .workspace-signout button:hover { background: var(--cream); }
+.workspace-content { padding: 4px clamp(16px, 3vw, 36px) 36px; }
+.workspace h1 { font-size: clamp(25px, 2.4vw, 30px); }
+.workspace h2 { font-size: 18px; }
+.workspace .button, .workspace .small-button, .auth-page .button { min-height: 40px; padding: 8px 16px; font-size: 14px; border-radius: 10px; }
+.workspace .finance-form { gap: 14px; }
+.workspace input:not([type=checkbox]):not([type=radio]):not([type=file]), .workspace select, .workspace textarea, .auth-form input { min-height: 40px; padding: 8px 12px; border-radius: 9px; font-size: 14px; }
+.workspace select { appearance: none; padding-right: 36px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2396606d' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 11px center; }
+.workspace select option { background: white; color: var(--ink); }
+/* Progressive enhancement: native keyboard/form semantics, branded picker where supported. */
+@supports (appearance: base-select) {
+  .workspace select:not([multiple]), .workspace select:not([multiple])::picker(select) { appearance: base-select; }
+  .workspace select:not([multiple]) { background-image: none; padding-right: 12px; align-items: center; }
+  .workspace select::picker-icon { color: var(--mauve); }
+  .workspace select::picker(select) { border: 1px solid #b59a9f; border-radius: 12px; padding: 5px; background: white; box-shadow: 0 8px 24px #4a2c2a18; max-height: 280px; }
+  .workspace select option { padding: 9px 12px; border-radius: 7px; font-size: 14px; }
+  .workspace select option:hover, .workspace select option:focus { background: var(--cream); }
+  .workspace select option:checked { background: var(--peach); color: var(--ink); }
+}
+.workspace .finance-panel, .workspace .resource-card, .workspace .settings-panel { padding: 20px; border-radius: 18px; }
+.workspace .overview-actions { justify-content: flex-start; align-items: center; gap: 10px; }
+.workspace .icon-action { width: 44px; min-height: 44px; border-radius: 12px; }
+.workspace .overview-actions .button { flex: 0 1 auto; width: auto; min-width: 116px; }
+.auth-page { min-height: 100dvh; padding: 20px 16px; }
+.auth-card-compact { width: min(100%, 420px); padding: 28px; border-radius: 22px; }
+.auth-card-compact .auth-brand { margin-bottom: 20px; font-size: 22px; }
+.auth-card-compact .auth-brand img { width: 38px; height: 38px; }
+.auth-card-compact .auth-title { font-size: 27px; margin: 0 0 8px; }
+.auth-card-compact .auth-copy { margin: 0; font-size: 14px; line-height: 1.5; }
+.auth-card-compact .auth-form { margin-top: 20px; gap: 12px; }
+.auth-card-compact .auth-form label { gap: 5px; font-size: 13px; }
+.auth-card-compact .auth-divider { margin: 14px 0; }
+.auth-card-compact .auth-links { margin-top: 14px; gap: 8px; font-size: 12px; }
+.auth-card-compact .back-link { margin-top: 16px; font-size: 12px; }
+.capture-workflow { gap: 20px; align-items: start; }
+.capture-step { font-size: 12px; font-weight: 700; color: var(--mauve); margin: 0 0 6px; }
+.capture-workflow h2 { margin: 0 0 18px; }
+.capture-empty { display: grid; justify-items: center; gap: 10px; text-align: center; background: var(--cream); border: 1px dashed #b59a9f; border-radius: 14px; padding: 28px 20px; color: var(--mauve); margin-bottom: 16px; }
+.capture-empty span { font-size: 13px; color: var(--muted); max-width: 32ch; }
+.capture-workflow .capture-picker { gap: 10px; }
+.capture-picker label:focus-within { outline: 3px solid var(--mauve); outline-offset: 3px; }
+.capture-workflow p:not(.capture-step), .capture-workflow .checkbox-label { font-size: 13px; line-height: 1.6; }
+.capture-workflow .capture-preview { max-height: 340px; object-fit: contain; background: var(--cream); border-radius: 12px; margin-bottom: 12px; }
+.capture-workflow .checkbox-label { display: flex; gap: 9px; margin: 16px 0; align-items: start; }
+.capture-workflow .checkbox-label input { margin-top: 4px; flex-shrink: 0; }
+.capture-workflow .finance-form > .button { justify-self: start; }
+@media (max-width: 760px) {
+  .workspace { display: block; }
+  .workspace-sidebar { height: 60px; padding: 10px 16px; }
+  .workspace-brand { padding: 0; }
+  .workspace-brand img { width: 34px; height: 34px; }
+  .workspace-topbar { position: absolute; top: 8px; right: 0; height: 44px; padding: 0 16px; }
+  .workspace-topbar > span { display: none; }
+  .workspace-account-popover { top: 48px; max-height: calc(100dvh - 146px); }
+  .workspace-account-popover nav { grid-template-columns: 1fr; }
+  .workspace-account-popover nav a, .workspace-account-popover .workspace-signout button { min-height: 44px; }
+  .workspace-account-popover .workspace-signout svg { display: block; }
+  .workspace-bottom-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .workspace-content { padding: 16px 16px calc(100px + env(safe-area-inset-bottom)); }
+  .workspace .button, .workspace .small-button, .auth-page .button { min-height: 44px; }
+  .workspace input:not([type=checkbox]):not([type=radio]):not([type=file]), .workspace select, .workspace textarea, .auth-form input { min-height: 44px; font-size: 16px; }
+  .auth-card-compact { padding: 24px; }
+  .workspace .overview-actions .button { min-width: 0; }
+  .capture-workflow .finance-form > .button { width: 100%; }
+}
