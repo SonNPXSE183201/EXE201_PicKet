@@ -241,9 +241,11 @@ export function CaptureForm({
     }
   }
   return (
-    <section className="receipt-detail-grid">
+    <section className="receipt-detail-grid capture-workflow">
       <article className="finance-panel">
+        <p className="capture-step">01 · Chọn ảnh</p>
         <h2>Ảnh hóa đơn</h2>
+        {!preview && <div className="capture-empty"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2ZM8 8h8m-8 4h8m-8 4h5" /></svg><strong>Giữ lại hóa đơn của bạn</strong><span>Chụp rõ toàn bộ hóa đơn hoặc chọn ảnh có sẵn.</span></div>}
         <div className="capture-picker">
           <label className="button secondary">
             Chụp ảnh
@@ -311,6 +313,7 @@ export function CaptureForm({
         </button>
       </article>
       <article className="finance-panel">
+        <p className="capture-step">02 · Xem lại thông tin</p>
         <h2>Kiểm tra rồi lưu</h2>
         <form className="finance-form" onSubmit={save}>
           <label>
