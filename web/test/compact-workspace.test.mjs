@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { test } from 'node:test';
+const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
+test('primary navigation excludes account utilities and prefetches routes', () => {
+  const shell = read('src/core/ui/workspace-shell.tsx');
+  const primary = shell.split('const userLinks = [')[1].split('] as const')[0];
+  assert.doesNotMatch(primary, /\/profile|\/data|\/notifications|\/billing/);
+  assert.match(shell, /prefetch=\{true\}/);
+  assert.doesNotMatch(shell, /Không gian cá nhân/);
+  assert.match(shell, /Mở menu tài khoản/);
+  assert.match(shell, /name="bell"/);
+});
+test('login uses a compact variant and short introductory copy', () => {
+  const login = read('src/app/login/login-form.tsx');
+  assert.match(login, /auth-card auth-card-compact/);
+  assert.doesNotMatch(login, /Tài khoản\s+quản trị sẽ vào/);
+});
+test('metadata explicitly uses Picket tab and home-screen icons', () => {
+  assert.match(read('src/app/layout.tsx'), /icons:[\s\S]*picket-logo.png/);
+});
+test('receipt capture has distinct image and review steps', () => {
+  assert.match(read('src/app/(finance)/capture/capture-form.tsx'), /capture-workflow/);
+  assert.match(read('src/app/(finance)/capture/capture-form.tsx'), /capture-empty/);
+});
