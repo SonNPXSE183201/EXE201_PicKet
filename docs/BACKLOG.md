@@ -1,6 +1,6 @@
 # Công việc còn mở
 
-Cập nhật 28/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế duy nhất](../PICKET-DESIGN.md) · [Release 1.0.7/code 20](migration/ANDROID_RELEASE_1_0_7_20261027.md).
+Cập nhật 01/11/2026. [Hiện trạng](PROJECT_STATUS.md) · [Readback cửa hàng](migration/STORE_RELEASE_READBACK_20261101.md) · [Thiết kế duy nhất](../PICKET-DESIGN.md) · [Báo cáo OCR](migration/MOBILE_OCR_EXPANDED_20261028.md).
 
 Đây là backlog hiện hành; không cộng lại mọi dòng “pending” trong checkpoint cũ. Phân biệt code đã có nhưng chưa nghiệm thu, tính năng chưa có và việc chủ động hoãn. Build, ảnh UI hoặc test source không thay thế nghiệm thu thiết bị/người dùng thật.
 
@@ -8,10 +8,11 @@ Cập nhật 28/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 
 | Việc | Trạng thái / bằng chứng còn cần | Phụ thuộc |
 | --- | --- | --- |
-| Điện thoại ARM64 | Camera/OCR hóa đơn thật, sinh trắc, thông báo, độ mượt và cập nhật giữ dữ liệu trên code 20 chưa có kết quả cuối | Chủ dự án đã nhận tự test; xem checklist thiết bị thật |
-| Play Console | Finance/contacts/Advertising ID đã xác minh; 10 khai báo processed, không mục cần chú ý. App vẫn draft, gửi review đang khóa bởi bước thiết lập/closed test | Quyền Console; không suy từ API upload |
+| OCR mobile | QA51 trên Redmi 7 chạy đủ 40 ảnh Bill; trong 25 tổng có nhãn, 19 đúng, 1 sai, 5 thiếu; 1 ảnh không chấm được, 14 chưa có nhãn. OCR chưa nghiệm thu tổng quát. Phát hành code 28 không đồng nghĩa đã đạt accuracy OCR. | Xử lý tổng sai/thiếu, tăng nhãn độc lập cho hàng hóa, đo fallback/date/edit và soak/nhiệt; xem [báo cáo OCR](migration/MOBILE_OCR_EXPANDED_20261028.md) |
+| Điện thoại ARM64 | QA OCR code 36 đã chạy chọn ảnh trên Redmi; chụp giấy thật, sinh trắc, thông báo, độ mượt dài hạn và giữ dữ liệu sau cập nhật còn cần nghiệm thu riêng. QA thật chỉ dùng `com.picket.mobile.bugqa`; không cài đè/xóa/gỡ `com.picket.mobile`. | Chủ dự án nghiệm thu các phần phần cứng; ghi đúng QA version/hash và thiết bị |
+| Google Play | Internal và alpha/closed đều có 1.0.14/code 28 `completed`, rollout 100%; beta/production chưa có release. Listing gần nhất được đọc lại 31/10; trạng thái Console review chưa được kiểm tra lại ngày 01/11. Alpha có một Google Group, nhưng số thành viên/opt-in/14 ngày chưa rõ. | Xác minh cohort thật và yêu cầu Console trước khi kết luận tester đã đủ hoặc xin production access; xem [readback 01/11](migration/STORE_RELEASE_READBACK_20261101.md) |
 | RTDN từ Play | Đã quan sát RTDN purchase/renew/cancel/revoke và server cập nhật khi app đóng. Live duplicate/out-of-order replay bị approval chặn; offline handler test đạt | Thiết bị license tester |
-| APKPure | Đã đăng nhập/readback 28/10: code 19 vẫn Publishing/Pending Approval, nút khóa. APK 1.0.10/code 23 và listing mới đã chuẩn bị, chờ nền tảng cho cập nhật | Review nền tảng/tài khoản chủ sở hữu |
+| APKPure | Đã build APK universal 1.0.14/code 28 và chuẩn bị 7 ảnh + release notes ngày 01/11. Trạng thái portal chưa có readback; không kết luận đã nộp, được duyệt hoặc xuất bản dựa vào artifact local. | Chủ tài khoản kiểm tra submission/review trên APKPure; cập nhật trạng thái sau khi đọc lại |
 | TalkBack | Có semantic/font/responsive kiểm từng phần; chưa có spoken audit toàn bộ luồng chính | Thiết bị hoặc môi trường assistive-tech phù hợp |
 
 ## Có implementation nhưng cần mở rộng kiểm chứng
@@ -26,7 +27,6 @@ Cập nhật 28/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 
 | Việc | Quyết định hiện tại |
 | --- | --- |
-| Closed test | Giữ alpha draft theo chủ dự án. Khi mở cần nhóm/tester và cohort thật; không tự chuyển completed |
 | Billing | Bốn SKU test verified/Publisher-acknowledged. Cancel/expiry/refund/decline/offline recovery/owner rejection/grace/hold/recovery và RTDN tương ứng đã kiểm chứng. Pending native không áp dụng cho auto-renew; còn live replay bị approval chặn; xem báo cáo 28/10 |
 | Nội dung học cloud | VI/EN biên tập 2 đã có trong code 20; còn review độc lập/pilot và quyết định publish. Cloud hiện không có bài published |
 | Cloud grading trả phí | Hoãn ngoài MVP. Không bật AI cá nhân hoặc truyền câu trả lời local lên cloud chỉ để đóng checklist |
@@ -37,9 +37,9 @@ Cập nhật 28/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 | Import Flutter thật | Đã loại khỏi MVP theo chủ dự án; chỉ mở lại khi có file lịch sử thật và nhu cầu cụ thể |
 | CD tự động | Có script deploy landing; Git push chạy CI, chưa tự deploy VPS/Google Play |
 
-## Không còn pending
+## Đã có bằng chứng hoàn tất và trạng thái release
 
-- Landing đã lên APK 1.0.10/code 23 ARM64; Play Internal hiện 1.0.9/code 22 ARM64+x86_64. Alpha vẫn draft, beta/production chưa mở.
+- Landing, Play Internal và Play closed alpha đã đọc lại ở 1.0.14/code 28; alpha/Internal completed 100%. Beta và production Google Play chưa có release. APKPure code 28 mới xác nhận ở mức artifact local, chưa xác minh trạng thái portal.
 - Paper mobile, asset, sign-out/updater/guest splits; landing motion/footer/CTA và điều hướng sạch URL đã triển khai theo phản hồi.
 - SMTP đã đổi sang Picket Production `<picketfinance@gmail.com>`, email recovery tới inbox thật đạt.
 - Supabase đã đồng bộ 51 migration; không cần chạy lại migration chỉ để đồng bộ tài liệu.

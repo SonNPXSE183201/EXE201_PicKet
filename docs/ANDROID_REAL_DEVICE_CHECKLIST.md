@@ -1,16 +1,16 @@
 # Nghiệm thu Picket trên điện thoại Android thật
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](PROJECT_STATUS.md) · [readback cửa hàng](migration/STORE_RELEASE_READBACK_20261101.md). Các ca bên dưới vẫn là kế hoạch thủ công, không phải kết quả đã chạy.
 
-Ngày lập: 22/10/2026; phạm vi cập nhật 27/10/2026. Đối tượng: bản **1.0.7/code 20** (Play Internal hoặc APK ARM64 ký cùng khóa), package `com.picket.mobile`, ARM64. Không dùng APK có `.qa`, debug, proxy hoặc probe. Trạng thái từng ca bên dưới là **CHỜ NGƯỜI DÙNG TEST**, không phải kết quả máy ảo. Xem [trạng thái hiện hành](PROJECT_STATUS.md).
+Ngày lập: 22/10/2026; đồng bộ hướng dẫn: 01/11/2026. Dùng bản QA ARM64 có package `com.picket.mobile.bugqa`; ghi `versionName`, versionCode và SHA-256 đúng với APK thực tế trước khi chạy. Không dùng APK production, debug, proxy hoặc probe làm bằng chứng QA. Tuyệt đối không cài đè, xóa dữ liệu hoặc gỡ package production `com.picket.mobile`. Trạng thái từng ca vẫn là **CHỜ NGƯỜI DÙNG TEST**, không phải kết quả đã chạy. Xem [trạng thái hiện hành](PROJECT_STATUS.md).
 
 **Phân công 27/10:** chủ dự án xác nhận sẽ tự nghiệm thu phần thiết bị thật sau; agent tiếp tục các đầu việc còn lại. Không coi việc phân công này là kết quả kiểm thử.
 
 ## Chuẩn bị và cách ghi kết quả
 
 1. Ghi model máy, Android, RAM, dung lượng trống, ngày/giờ và mạng đang dùng. Nên có một máy Android mới và nếu có thể một máy RAM thấp.
-2. Giữ nguyên app cũ. Trong app xuất backup có ảnh, đặt mật khẩu, lưu ở thư mục riêng; xác minh file tồn tại. Không gửi backup/mật khẩu/token lên chat hoặc GitHub.
+2. Giữ nguyên package production nếu đang cài. Với QA package riêng, xuất backup có ảnh, đặt mật khẩu, lưu ở thư mục riêng và xác minh file tồn tại. Không gửi backup/mật khẩu/token lên chat hoặc GitHub.
 3. Chụp lại tổng số dư, danh sách ví, một số giao dịch và ảnh hóa đơn/kỷ vật đối chứng. Với tài khoản thật, ghi chúng vào nơi riêng của bạn.
 4. Dùng dữ liệu test có tiền tố `PHONE-QA-YYYYMMDD-…`. Chỉ xóa chính các dữ liệu này khi kết thúc. Không thực hiện chốt tháng/thu hồi phiên/đầy ổ trên kỳ tài chính hay thiết bị sử dụng hằng ngày nếu chưa có backup.
 5. Mỗi ca ghi: mã ca, máy/Android, app version, bước đã làm, kết quả mong đợi/thực tế, PASS/FAIL, ảnh/video, thời điểm. Khi lỗi: dừng ở màn lỗi, ghi đường đi tái hiện; không Clear data hoặc gỡ app để “sửa”.
@@ -18,19 +18,19 @@ Ngày lập: 22/10/2026; phạm vi cập nhật 27/10/2026. Đối tượng: b�
 
 ## A. Cài đè và cập nhật
 
-### A01 — Cài đè từ landing, không mất dữ liệu
+### A01 — Cài hoặc cập nhật QA build, không mất dữ liệu
 
-1. Khi app cũ còn cài, vào Cá nhân và ghi phiên bản cũ.
-2. Mở landing HTTPS bằng Chrome, tải APK production mới; không gỡ app cũ.
-3. Nếu Android hỏi quyền cài từ nguồn này, chỉ bật cho trình duyệt/trình cài đang dùng. Xem tên ứng dụng và xác nhận cập nhật; không tắt Play Protect.
-4. Mở app → Cá nhân: phải hiện phiên bản **1.0.7**, mã bản dựng **20**.
-5. So lại phiên đăng nhập, ví, số dư, giao dịch, ảnh và cài đặt với dữ liệu đối chứng. Mở lại app khi mất mạng để kiểm tra cache đã tải.
-6. PASS: cài đè thành công, không yêu cầu gỡ app, không mất/trộn dữ liệu. Nếu báo xung đột chữ ký, dừng và báo lại; không gỡ app để vượt lỗi.
+1. Xác nhận QA package `com.picket.mobile.bugqa` đang cài và ghi versionName/versionCode hiện tại.
+2. Cài APK QA đã xác minh chữ ký, package và SHA-256; không tải APK production từ landing cho ca này.
+3. Nếu Android hỏi quyền cài từ nguồn này, chỉ bật cho trình duyệt/trình cài đang dùng. Xem package trước khi xác nhận; không tắt Play Protect.
+4. Mở QA app → Cá nhân: phải hiện đúng versionName/versionCode của artifact QA được ghi nhận.
+5. So lại phiên QA, ví, số dư, giao dịch, ảnh và cài đặt với dữ liệu đối chứng. Mở lại app khi mất mạng để kiểm tra cache đã tải.
+6. PASS: cập nhật QA package thành công, không mất/trộn dữ liệu. Nếu package hoặc chữ ký không khớp, dừng; không gỡ app để vượt lỗi. Production package phải được giữ nguyên.
 
 ### A02 — Cập nhật từ Cá nhân
 
-1. Trên bản cũ đã hỗ trợ updater, mở Cá nhân → cập nhật ứng dụng → kiểm tra.
-2. Khi báo có bản mới, tải bằng Wi-Fi, mở trình cài và xác nhận Android. Nếu chưa có bản mới, phải báo đang dùng bản mới nhất, không tự cài lại.
+1. Chỉ chạy nếu QA build được cấu hình trỏ tới QA manifest/update channel; mở Cá nhân → cập nhật ứng dụng → kiểm tra. Không chạy updater production trên package production.
+2. Khi QA manifest báo có bản mới, tải bằng Wi-Fi, mở trình cài và xác nhận Android. Nếu môi trường QA không có manifest riêng, ghi N/A/BLOCKED, không chuyển sang APK production.
 3. Quay lại app sau cài: kiểm tra footer và dữ liệu như A01. Tắt lại quyền cài từ nguồn ngoài sau test nếu không cần.
 4. Thử bắt đầu tải khi mất mạng; bật lại mạng và thử lại. Không được mở trình cài cho file tải dở.
 5. PASS: chỉ thông báo thành công sau xác minh/cài đúng bản; hủy quyền/hủy cài không làm mất dữ liệu hoặc khóa UI. Không tự động hạ phiên bản.
@@ -164,7 +164,7 @@ Ngày lập: 22/10/2026; phạm vi cập nhật 27/10/2026. Đối tượng: b�
 
 | Mã | Máy / Android | App | Kết quả | Bằng chứng / ghi chú |
 | --- | --- | --- | --- | --- |
-| A01 | … | 1.0.4 (5) | NOT RUN | Cài đè từ …; dữ liệu đối chứng … |
-| B03 | … | 1.0.4 (5) | NOT RUN | Loại cảm biến; hủy/sai/đúng/background/restart … |
-| C02 | … | 1.0.4 (5) | NOT RUN | Tổng đúng / OCR / sau sửa; online/offline … |
-| E01 | … | 1.0.4 (5) | NOT RUN | Giờ dự kiến/thực tế; quyền/battery/force-stop … |
+| A01 | … | QA version/code + SHA-256 | NOT RUN | Cài/cập nhật QA package; dữ liệu đối chứng … |
+| B03 | … | QA version/code + SHA-256 | NOT RUN | Loại cảm biến; hủy/sai/đúng/background/restart … |
+| C02 | … | QA version/code + SHA-256 | NOT RUN | Tổng đúng / OCR / sau sửa; online/offline … |
+| E01 | … | QA version/code + SHA-256 | NOT RUN | Giờ dự kiến/thực tế; quyền/battery/force-stop … |

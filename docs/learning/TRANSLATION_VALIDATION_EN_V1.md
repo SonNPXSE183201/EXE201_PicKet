@@ -1,7 +1,7 @@
 # English curriculum v1 — translation consistency record
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Kết quả biên dịch/kiểm nguồn trong tài liệu này là checkpoint theo ngày của chính tài liệu.
 
 Date: 2026-10-23. Status: **authored-not-independent-review**. This is an editorial translation of `PICKET_FINANCIAL_CURRICULUM_VI_V1.json`, not independent financial-content approval, an official translation of the references, or endorsement by their publishers.
 

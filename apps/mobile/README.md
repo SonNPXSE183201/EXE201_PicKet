@@ -1,6 +1,6 @@
 # Picket Expo mobile
 
-Hiện trạng: [PROJECT_STATUS.md](../../docs/PROJECT_STATUS.md). Landing và Play Internal **1.0.7/code 20** đã phát hành; Internal completed, rollout 100%. Google OAuth trên Pixel 5 đã đăng xuất/đăng nhập lại và giữ phiên sau cold restart ngày 27/10; native conflict merge đã nghiệm thu bằng package riêng. Bộ mobile mới nhất: **914 tests PASS**, typecheck PASS, lint 0 lỗi/0 cảnh báo. Thiết bị thật do chủ dự án tự kiểm sau; Billing và closed test giữ các gate hiện có.
+Hiện trạng: [PROJECT_STATUS.md](../../docs/PROJECT_STATUS.md). Source là **1.0.14/code 28**; Google Play Internal và closed testing (`alpha`) đều đọc lại `completed`, rollout 100%. Landing public cũng đang công bố APK 1.0.14/code 28. Beta/production Google Play chưa có release; APKPure có artifact code 28 nhưng trạng thái nộp/duyệt chưa xác minh. Xem [readback cửa hàng ngày 01/11](../../docs/migration/STORE_RELEASE_READBACK_20261101.md). Các kết quả test Pixel, mobile và merge bên dưới là checkpoint theo ngày trong từng báo cáo; thiết bị thật vẫn cần nghiệm thu riêng bằng package QA `com.picket.mobile.bugqa`.
 
 Đây là Android client chính thức của Picket. Dự án không còn duy trì Flutter
 hoặc iOS trong repository này.

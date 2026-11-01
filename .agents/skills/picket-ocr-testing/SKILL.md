@@ -1,11 +1,11 @@
 ---
 name: picket-ocr-testing
-description: "Ràng buộc nghiêm ngặt khi kiểm thử, đánh giá hình ảnh hóa đơn và sửa lỗi OCR trên Picket (Mobile ML Kit, Receipt Parser, Redmi 7 Corpus, và Server PaddleOCR). Kích hoạt khi người dùng gửi kèm hình hóa đơn, yêu cầu test OCR, chấm điểm corpus hoặc kiểm tra nhận diện hóa đơn."
+description: "Hướng dẫn kiểm thử nhanh và đánh giá OCR hóa đơn Picket trên mobile, ML Kit, Receipt Parser và corpus Bill. Dùng khi kiểm tra ảnh hóa đơn, sửa OCR hoặc đo chất lượng nhận diện."
 ---
 
 # Picket OCR Testing & Evaluation Constraints
 
-Khi kiểm thử một hình ảnh hóa đơn mới, chạy bộ test OCR, hoặc đánh giá kết quả trích xuất của Picket, Agent (**Luna**, **Gemini 3.8 Flash**, **Gemini 4 Argon**, **Sol**, **Astra**) **BẮT BUỘC** phải đối chiếu theo các ràng buộc nghiệp vụ dưới đây.
+Khi kiểm thử hình ảnh hóa đơn, chạy test OCR hoặc đánh giá kết quả trích xuất của Picket, hãy áp dụng các ràng buộc nghiệp vụ dưới đây.
 
 ---
 
@@ -42,9 +42,9 @@ Khi kiểm thử một hình ảnh hóa đơn mới, chạy bộ test OCR, hoặ
 
 ---
 
-## 2. Quy Trình Thực Thi Khi Kiểm Thử OCR (Theo Bước 3 của Workflow)
+## 2. Hướng Dẫn Kiểm Thử OCR Độc Lập
 
-### Bước A: Khi người dùng gửi kèm 1–5 hình ảnh hóa đơn lẻ vào khung chat
+### A. Kiểm tra một vài ảnh hóa đơn
 1. Quan sát hình ảnh và lập **Nhãn Chuẩn Thực Tế (Ground Truth)** của riêng bức ảnh đó gồm:
    - `Merchant` thực tế trên giấy (hoặc `null` nếu bị cắt/che).
    - `Date` thực tế.
@@ -52,19 +52,18 @@ Khi kiểm thử một hình ảnh hóa đơn mới, chạy bộ test OCR, hoặ
    - Các khoản điều chỉnh (`Subtotal`, `VAT/Tax`, `Fee`, `Discount`) và `Payable Total` cuối cùng.
    - Các dòng `Metadata bẫy` có trên ảnh (SĐT, địa chỉ, mã HĐ, tiền khách đưa) dễ bị nhận nhầm.
 2. Chạy parser / kiểm thử trên ảnh đó và so sánh kết quả đầu ra với **Ground Truth** theo đúng 7 ràng buộc ở Mục 1.
-3. Báo cáo rõ vào `REPORT.md`: Trường nào khớp (`EXACT`), trường nào thiếu (`MISSING`), trường nào sai (`WRONG`), và cờ cảnh báo (`needsReview`) có bật đúng chỗ không.
+3. Ghi rõ trường khớp (`EXACT`), thiếu (`MISSING`), sai (`WRONG`) và cảnh báo (`needsReview`) trong kết quả kiểm tra hoặc tệp bằng chứng nếu cần.
 
-### Bước A2: Khi người dùng yêu cầu test cả thư mục `@Bill` (`d:\EXE201\Project\Bill` — 40+ ảnh)
+### B. Kiểm tra corpus `Bill` (40 ảnh)
 - **QUY TẮC CHỐNG ĐỐT TOKEN VISION:** **TUYỆT ĐỐI CẤM** dùng công cụ đọc file ảnh (`read_file` / Vision) mở xem đồng loạt cả 40 tấm ảnh trong thư mục `Bill/` cùng một lúc (sẽ ngốn 40.000–60.000 tokens và làm tràn ngữ cảnh).
-- **Quy trình chuẩn tiết kiệm 90% Token:**
-  1. **Tận dụng Cache Native JSON trên PC trước:** Đối với 36 ảnh cũ trong `Bill/` đã có sẵn output ML Kit thật từ Redmi 7 (lưu trong `.artifacts/mobile-bugs-20261028/ocr-v3/`), chạy script Node/TS trên máy tính để chấm điểm qua `receipt-parser.ts` (tốn 0 token Vision, mất ~1 giây).
-  2. **Chỉ chạy Redmi 7 (`ReceiptCorpusDeviceTest`) cho ảnh mới hoặc khi sửa code Java:**
-     - Truyền `-PpicketReceiptCorpusDir=D:\EXE201\Project\Bill` (hoặc thư mục tạm chỉ chứa các ảnh mới thêm) để Redmi 7 chạy ML Kit phần cứng và xuất ra `receipt-corpus.json`.
+- **Giảm chi phí kiểm tra mà vẫn giữ đúng bằng chứng:**
+  1. **Kiểm tra đủ 40 ảnh khi yêu cầu nghiệm thu thiết bị:** Chạy corpus trên Redmi 7 bằng package QA, dùng đúng ảnh gốc trong `Bill/`, lưu output theo từng ảnh cùng SHA-256 để chứng minh không bỏ sót hoặc tráo ảnh.
+  2. **Tái sử dụng native output khi chỉ đổi parser:** Có thể chạy parser trên output ML Kit đã lưu nếu SHA-256 ảnh, phiên bản native engine và mục tiêu so sánh tương ứng; không dùng output cũ để chứng nhận build/source mới trên thiết bị.
   3. **Chỉ mở xem ảnh bằng AI Vision (tối đa 3–5 ảnh/lượt)** đối với:
      - Các ảnh mới vừa thêm vào `Bill/` chưa có nhãn chuẩn (`Ground Truth`).
      - Các ảnh bị `FAIL` (sai tổng, sai dòng hàng) cần nhìn mặt giấy để biết lỗi do ảnh mờ hay do parser.
 
-### Bước B: Chạy bộ Unit Test OCR trên máy tính (Nhanh — Ưu tiên số 1)
+### C. Chạy test OCR trên máy tính
 Chạy lệnh kiểm tra tập trung riêng cho OCR (không chạy toàn bộ monorepo):
 ```powershell
 cd apps/mobile
@@ -76,9 +75,8 @@ cd apps/mobile
 node --import tsx --test --experimental-test-coverage --test-coverage-include="src/core/ocr/receipt-*.ts" --test-coverage-exclude="**/*.test.ts" "src/core/ocr/*.test.ts"
 ```
 
-### Bước C: Kiểm thử trên Điện thoại Android thật (VD: Xiaomi Redmi 7 `897bc71` hoặc máy cắm ADB)
-*(Nếu môi trường không cắm điện thoại thật, chỉ thực hiện Bước B trên PC và ghi rõ vào `REPORT.md`, không tự ghi PASS cho phần cứng thật).*
-Chỉ thực hiện khi bài test trên PC đã `PASS` hoặc khi sửa code Java trong `apps/mobile/modules/picket-receipt-ocr`:
+### D. Kiểm thử trên điện thoại Android thật
+Chạy sau khi test PC đạt, hoặc khi cần kiểm tra phần native OCR:
 1. **Kiểm tra Java Unit Test trước:**
    ```powershell
    cd apps/mobile/android
@@ -86,7 +84,7 @@ Chỉ thực hiện khi bài test trên PC đã `PASS` hoặc khi sửa code Jav
    ```
 2. **Kiểm thử trên gói QA độc lập (`com.picket.mobile.bugqa`):**
    - Tuyệt đối không cài đè lên `com.picket.mobile`.
-   - Mở ảnh hóa đơn trên thiết bị (mặc định `-s 897bc71` nếu là Redmi 7, hoặc kiểm tra qua `adb devices`), kiểm tra giao diện Review (không bấm nút Lưu giao dịch để giữ nguyên số dư QA `60.000`).
+   - Chọn thiết bị bằng `adb devices` (Redmi 7 thường có serial `897bc71`), kiểm tra giao diện Review và không lưu giao dịch trong lúc đánh giá OCR.
    - Thu thập bằng chứng gọn nhẹ:
      ```powershell
      adb -s 897bc71 logcat -d | Select-String "PICKET_OCR_PERF|PICKET_OCR_STATUS"

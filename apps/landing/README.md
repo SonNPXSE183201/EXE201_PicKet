@@ -2,6 +2,8 @@
 
 Landing tĩnh tại **https://picketfinance.com**, độc lập với Next.js ở `web/` và `app.picketfinance.com`. Source công khai ở `site/`; `dist/` là output build và không commit. Không có analytics hoặc font từ bên thứ ba. Animation/tương tác dùng module JavaScript local theo progressive enhancement; nội dung và link tải vẫn đọc được khi tắt JavaScript.
 
+Readback ngày 01/11/2026: landing public đang phục vụ APK **1.0.14/code 28 ARM64**, 161.644.903 bytes; manifest HTTPS và URL APK trả 200, hash manifest khớp artifact đã ký. Artifact: `.artifacts/releases/picket-1.0.14-28-20261101-1713c3df.apk`. Trạng thái Google Play/APKPure xem [readback cửa hàng](../../docs/migration/STORE_RELEASE_READBACK_20261101.md); các mục phát hành cũ dưới đây là checkpoint lịch sử.
+
 ## Sửa giao diện và xem thử
 
 - `site/index.html`: nội dung, liên hệ, footer, FAQ và bảng hỗ trợ.
@@ -15,7 +17,7 @@ Chạy tại thư mục gốc repository bằng PowerShell, với Node và Pytho
 
 ```powershell
 npm test --prefix apps/landing
-$env:PICKET_APK = (Resolve-Path '.artifacts/releases/picket-1.0.9-22-production-arm64-v8a.apk').Path
+$env:PICKET_APK = (Resolve-Path '.artifacts/releases/picket-1.0.14-28-20261101-1713c3df.apk').Path
 npm run build --prefix apps/landing
 python -m http.server 4175 --bind 127.0.0.1 --directory apps/landing/dist
 ```
@@ -32,7 +34,7 @@ Chạy tại gốc repository:
 
 ```powershell
 ./apps/landing/scripts/deploy.ps1 `
-  -ApkPath '.artifacts/releases/picket-1.0.9-22-production-arm64-v8a.apk'
+  -ApkPath '.artifacts/releases/picket-1.0.14-28-20261101-1713c3df.apk'
 ```
 
 Nếu dùng máy/khóa SSH khác:
@@ -83,3 +85,7 @@ Các liên kết section trong trang cuộn đến nội dung mà không thêm h
 ## APK 1.0.9/code 22 — 28/10/2026
 
 Landing production đã cập nhật APK ARM64 1.0.9/code 22, ký cùng khóa các bản trực tiếp trước đó. Đã tải toàn bộ APK công khai và đối chiếu SHA-256; cập nhật native từ code 18 sang code 22 trên máy ảo x86_64 giữ tài khoản, số dư và 4 ví. Bản x86 chỉ dùng QA, không phải file tải public. Xem [báo cáo vòng đời và phát hành](../../docs/migration/BILLING_RELEASE_ACCEPTANCE_20261028.md).
+
+## APK 1.0.14/code 28 — readback 01/11/2026
+
+Manifest production trả version 1.0.14/code 28; URL tải APK trả HTTP 200 và đúng Content-Length 161.644.903 bytes. SHA-256 công khai khớp artifact build đã ký. Google Play Internal và alpha cũng có code 28 completed; APKPure có artifact local nhưng trạng thái portal chưa xác minh. Xem [readback cửa hàng](../../docs/migration/STORE_RELEASE_READBACK_20261101.md) và [artifact build](../../.artifacts/apkpure-store-20261101/BUILD-AND-LISTING.txt).

@@ -24,9 +24,10 @@ Place mobile tests beside code as `*.test.ts`; web tests in `web/test/*.test.mjs
 
 Recent commits use scoped Conventional Commits, such as `fix(learning): ...` and `test(notifications): ...`; some test-first commits end in `(RED)` or `(GREEN)`. Keep commits focused. PRs should state the change, affected apps, test commands and results, release or migration impact, and linked issue when available; include screenshots for UI changes.
 
-## Security & Agent Workflow
+## Security & Agent Use
 
-Use local `.env` files; never commit secrets, signing keys, APK/AAB backups, or generated caches. Preserve unrelated working-tree edits. Search and read narrowly, reuse one `.artifacts/features/<feature-slug>` (or `.artifacts/<task>`) directory, and summarize results instead of pasting full logs to limit token use.
+Use local `.env` files; never commit secrets, signing keys, APK/AAB backups, or generated caches. Preserve unrelated working-tree edits. Search and read narrowly; use an artifact directory when it helps preserve evidence, and summarize results instead of pasting full logs.
 
-- **Multi-Agent Workflow & Effort Rules:** Always follow [`.agents/rules/workflow.md`](.agents/rules/workflow.md) for the 5-step workflow (`PLAN.md` -> `REPORT.md` -> `REVIEW.md`), Dual-Mode model/effort routing (supports both **Hybrid Codex + Antigravity** and **Codex-Only** setups), skill gating (`~/.codex/skills`), and Android real-device guardrails (package `com.picket.mobile.bugqa`).
-- **Project Testing Skills:** Use [`.agents/skills/picket-workflow-testing/SKILL.md`](.agents/skills/picket-workflow-testing/SKILL.md) during Step 3 (`TESTING`) and [`.agents/skills/picket-ocr-testing/SKILL.md`](.agents/skills/picket-ocr-testing/SKILL.md) whenever evaluating receipt images, `/Bill/` corpus, or OCR changes.
+- There is no mandatory multi-agent workflow or required `PLAN.md` / `REPORT.md` / `REVIEW.md` sequence. Follow the task's scope and run focused checks appropriate to the change.
+- Use [`.agents/skills/picket-ocr-testing/SKILL.md`](.agents/skills/picket-ocr-testing/SKILL.md) when evaluating receipt images, the `/Bill/` corpus, or OCR changes.
+- For real-device Android QA, use only `com.picket.mobile.bugqa`; do not install over, clear, or remove the production package `com.picket.mobile` during QA.

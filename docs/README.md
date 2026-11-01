@@ -1,9 +1,12 @@
 # Tài liệu Picket
 
-Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới đây; báo cáo theo ngày giữ bằng chứng lịch sử. Không commit credential, APK/AAB hoặc cache.
+Cập nhật 01/11/2026. Bắt đầu bằng các nguồn hiện hành dưới đây; báo cáo theo ngày giữ bằng chứng lịch sử. Không commit credential, APK/AAB hoặc cache.
 
 - [Trạng thái toàn dự án](PROJECT_STATUS.md)
 - [Việc còn mở và quyết định MVP](BACKLOG.md)
+- [Readback Google Play, landing, APKPure artifact và web production — 01/11/2026](migration/STORE_RELEASE_READBACK_20261101.md)
+- [Web production responsive và kiểm tra phiên thật — 01/11/2026](../.artifacts/picket-web-prod-20261101/DEPLOYMENT.md)
+- [APKPure build và store listing artifact — 01/11/2026](../.artifacts/apkpure-store-20261101/BUILD-AND-LISTING.txt)
 - [Kế hoạch hậu đài admin, đo lường và xác thực tài khoản](ADMIN_PLATFORM_PLAN_20261028.md)
 - [Vận hành, triển khai và rollback admin](ADMIN_PLATFORM_RUNBOOK.md)
 - [Nghiệm thu admin, Auth và APK 1.0.10](migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md)
@@ -15,6 +18,7 @@ Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 
 ## Hướng dẫn chung
 
+- [Hướng dẫn kiểm thử OCR và corpus Bill](../.agents/skills/picket-ocr-testing/SKILL.md)
 - [Truy cập quản trị Picket trên web](ADMIN_WEB_ACCESS.md)
 - [Nghiệm thu Picket trên điện thoại Android thật](ANDROID_REAL_DEVICE_CHECKLIST.md)
 - [Android device fixes — 23 October 2026](ANDROID_REAL_DEVICE_FIXES_20261023.md)
@@ -31,6 +35,7 @@ Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 
 ## google-play
 
+- [Readback track Google Play và trạng thái các cửa hàng — 01/11/2026](migration/STORE_RELEASE_READBACK_20261101.md)
 - [Hồ sơ khai báo PicKet — bản chuẩn bị ngày 24/10/2026](google-play/CONSOLE_DECLARATIONS_VI.md)
 - [PicKet Google Play release readiness — 24 October 2026](google-play/RELEASE_READINESS_20261024.md)
 
@@ -52,6 +57,7 @@ Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 - [Automatic OCR orientation and retry UI — Android code 11](migration/ANDROID_OCR_CODE11_20261026.md)
 - [Receipt detail and orientation follow-up — Android code 12](migration/ANDROID_OCR_CODE12_20261026.md)
 - [Mobile structured OCR: research, fixes, Redmi testing and remaining gates](migration/MOBILE_STRUCTURED_OCR_20261028.md)
+- [Mobile OCR mở rộng: POS, tổng phải trả, corpus công khai và cache Redmi](migration/MOBILE_OCR_EXPANDED_20261028.md)
 - [Receipt OCR performance — Android code 13](migration/ANDROID_OCR_CODE13_PERFORMANCE_20261026.md)
 - [Receipt total guards — Android code 14](migration/ANDROID_OCR_CODE14_TOTAL_GUARDS_20261026.md)
 - [Camera-first capture and splash — Android code 15](migration/ANDROID_OCR_CODE15_CAMERA_ENTRY_20261026.md)

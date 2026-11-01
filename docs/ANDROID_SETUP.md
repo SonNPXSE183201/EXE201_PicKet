@@ -1,9 +1,9 @@
 # Picket Android — Expo/React Native
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](PROJECT_STATUS.md) · [readback store](migration/STORE_RELEASE_READBACK_20261101.md). Các báo cáo cũ theo ngày chỉ là bằng chứng lịch sử.
 
-Trạng thái hiện hành: [PROJECT_STATUS.md](PROJECT_STATUS.md). Public APK là **1.0.4 (5) ARM64**; máy ảo x86_64 dùng APK đúng ABI/package, cài đè bằng `adb install -r`, không gỡ hoặc xóa dữ liệu. [Checklist điện thoại thật](ANDROID_REAL_DEVICE_CHECKLIST.md), [Play sandbox](GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md). Các đường dẫn artifact ngày 20/10 bên dưới là lịch sử, không phải chỉ dẫn chọn APK mới nhất.
+Trạng thái hiện hành: [PROJECT_STATUS.md](PROJECT_STATUS.md). Landing public là **1.0.14/code 28 ARM64**; Google Play Internal và closed testing (`alpha`) cùng có code 28 completed. Khi làm QA thiết bị thật, chỉ dùng package `com.picket.mobile.bugqa`; không cài đè, xóa dữ liệu hoặc gỡ package production `com.picket.mobile`. [Checklist điện thoại thật](ANDROID_REAL_DEVICE_CHECKLIST.md), [Play sandbox](GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md), [readback store](migration/STORE_RELEASE_READBACK_20261101.md). Các đường dẫn artifact ngày 20/10 bên dưới là lịch sử, không phải chỉ dẫn chọn APK mới nhất.
 
 Picket Android được triển khai tại `apps/mobile` bằng Expo SDK 57 và React
 Native. Repository không còn Flutter hoặc iOS. Backend nghiệp vụ nằm tại

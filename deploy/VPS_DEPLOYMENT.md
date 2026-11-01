@@ -1,11 +1,11 @@
 # Triển khai Picket trên một VPS
 
 <!-- current-project-status -->
-Trạng thái triển khai và nghiệm thu cập nhật 27/10/2026: [PROJECT_STATUS](../docs/PROJECT_STATUS.md). Dùng trạng thái này để đối chiếu các ví dụ và checkpoint bên dưới.
+Trạng thái triển khai và nghiệm thu cập nhật 01/11/2026: [PROJECT_STATUS](../docs/PROJECT_STATUS.md) · [readback store](../docs/migration/STORE_RELEASE_READBACK_20261101.md) · [web production report](../.artifacts/picket-web-prod-20261101/DEPLOYMENT.md). Lần deploy web mới nhất chỉ thay web container; API, database và OCR không đổi.
 
-**Web/landing 22/10/2026:** đã triển khai image `picket-web:web-20261022-6993560`, source/build context ở `/opt/picket/releases/web-20261022-6993560/source`. Compose production đã cập nhật riêng web; không rebuild API từ cây cũ hoặc chạy full-stack up/remove-orphans cho thay đổi web. [Bằng chứng, giới hạn và rollback](../docs/migration/WEB_PRODUCTION_20261022.md). Các mô tả landing-only ở checkpoint trước bên dưới không bao gồm đợt triển khai web mới này.
+**Checkpoint web ngày 22/10/2026 (lịch sử):** image `picket-web:web-20261022-6993560`, source/build context ở `/opt/picket/releases/web-20261022-6993560/source`. Đợt mới hơn 01/11 dùng `picket-web:web-20261101-responsive-839e5cb-01`; xem report hiện hành ở trên. Giữ báo cáo [web production 22/10](../docs/migration/WEB_PRODUCTION_20261022.md) làm bằng chứng của rollout cũ.
 
-Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing static đang phục vụ Android **1.0.4/code 5**; [triển khai/checksum/rollback](../docs/migration/ANDROID_RELEASE_1_0_4_20261022.md). Đợt này chỉ đổi landing/download/manifest, không recreate container API/web/OCR. Các số audit và phiên bản ghi theo ngày phía dưới là checkpoint lịch sử, không phải chứng nhận bảo mật hiện tại; cần audit lại theo lockfile trước một đợt triển khai mới.
+Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing static đang phục vụ Android **1.0.14/code 28**; manifest và URL APK đã được đọc lại 01/11 ([bằng chứng](../docs/migration/STORE_RELEASE_READBACK_20261101.md)). Phần hướng dẫn và các phiên bản bên dưới ghi theo ngày là checkpoint lịch sử, không phải trạng thái production mới nhất. Trước mỗi lần triển khai, kiểm lại source, lockfile và artifact hiện hành.
 
 Increment API riêng ngày 21/10: migrations `202610210003`/`202610210004` và image `picket-api:transaction-attempt-20261021` đã triển khai theo phê duyệt. Source dùng để build giữ ở `/opt/picket/releases/transaction-attempt-20261021`, không ghi đè cây `/opt/picket/apps/api`; không rebuild cây cũ khi triển khai tiếp. Image rollback được giữ, nhưng không tháo SQL fence sau khi đã xác nhận bỏ yêu cầu. Xem [báo cáo rollout/rollback](../docs/migration/RECEIPT_ATTEMPT_RECOVERY_TDD_20261021.md).
 
@@ -21,15 +21,9 @@ không chạy trên VPS này.
 - Mở inbound TCP `80`, TCP/UDP `443`; không mở `3000`, `8000`, `8080`.
 - Swap 2-4 GB chỉ để chống OOM đột ngột, không coi là RAM cho OCR.
 
-> Security gate ngày 10/10/2026: web đang dùng Next.js 16.4.0 và audit dependency
-> production bằng 0. Next.js đã thông báo sẽ có bản vá bảo mật ngoài lịch vào
-> 14/10/2026, vì vậy phải nâng lên bản vá được công bố rồi chạy lại audit/build
-> trước khi mở DNS production: <https://nextjs.org/blog>.
+> Ghi chú bảo mật ngày 10/10/2026 đã lỗi thời: site đã mở production và Next.js/dependency đã được cập nhật sau checkpoint đó. Báo cáo deploy web 01/11 ghi build, test, lint và `npm audit --omit=dev` hiện hành. Trước một rollout tiếp theo, chạy lại các kiểm tra trên lockfile của chính source sắp phát hành; không dùng số phiên bản trong checkpoint cũ làm security gate.
 
-`npm audit` đầy đủ hiện vẫn báo advisory `braces` trong chuỗi ESLint chỉ dùng
-lúc phát triển; advisory chưa có patched version và package này không nằm trong
-standalone runtime. CI chặn theo `npm audit --omit=dev`; đồng thời vẫn phải theo
-dõi và nâng `eslint-config-next` ngay khi upstream phát hành bản đã vá.
+Các ghi chú audit đầy đủ bên dưới là kết quả theo thời điểm. `npm audit --omit=dev` trong report web 01/11 không có vulnerability; điều này không thay cho lần audit mới trước một release khác.
 
 Compose giới hạn PP-OCR ở 2.25 CPU, 4 GB RAM và một inference đồng thời. Web,
 API và Caddy vẫn còn tài nguyên để phản hồi khi OCR đang chạy. Đây là cấu hình

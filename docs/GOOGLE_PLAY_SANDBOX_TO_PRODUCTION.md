@@ -1,15 +1,15 @@
 # Google Play: hoàn tất xác minh, sandbox và production
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](PROJECT_STATUS.md) · [readback track](migration/STORE_RELEASE_READBACK_20261101.md). Nội dung thủ tục đăng ký ban đầu bên dưới được ghi ngày 22/10; không dùng các câu “chưa đăng ký/chưa upload” làm trạng thái hiện hành.
 
-Ngày đối chiếu tài liệu chính thức: **22/10/2026**. Theo ảnh người dùng cung cấp, **đã đăng ký Play Console cá nhân, đang chờ Google xét duyệt danh tính**. Ảnh Google Payments có dòng phí đăng ký 25 USD; không phải bằng chứng app được duyệt phát hành. Console yêu cầu hoàn tất xác minh danh tính trước khi xác minh số điện thoại. Thẻ xác minh website đã triển khai và commit `2c73b44`, nhưng chưa nhận bằng chứng Google xác minh thành công. Tài liệu này **không xác nhận Billing sandbox đã chạy hoặc thanh toán production đã bật**. Chưa có thao tác mua thật hay đăng ký dịch vụ trả phí được thực hiện thay người dùng.
+Ngày đối chiếu quy trình ban đầu: **22/10/2026**. Phần này ghi lại ảnh và trạng thái tài khoản tại thời điểm đó, không phản ánh trạng thái Console hiện hành. Đến 01/11, code 28 đã `completed` trên Internal và closed alpha; production chưa có release. Billing sandbox/lifecycle có các kiểm chứng riêng trong [báo cáo 28/10](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md). Không suy trạng thái production billing từ việc có track thử nghiệm.
 
-Các bước đăng ký dưới đây được giữ làm hướng dẫn tham khảo, không yêu cầu đăng ký hoặc trả phí lần nữa. Việc tiếp theo là theo dõi email xét duyệt, hoàn thành xác minh còn lại và chuẩn bị app/track/sandbox. Điện thoại thật chưa được ADB nhận theo kết quả gần nhất; các ca trong checklist thiết bị thật vẫn chưa nghiệm thu. Không bật Cloud Billing hoặc nạp 250.000đ chỉ để xóa cảnh báo: ảnh Billing hiện có cho thấy các tài khoản Closed và project Billing disabled; ảnh tài khoản đã mở có số dư 0đ/No balance due, không chứng minh số dư của mọi tài khoản.
+Các bước đăng ký dưới đây được giữ làm hướng dẫn tham khảo; không đăng ký hoặc trả phí lại. Tài khoản Play hiện có app và release thử nghiệm đang hoạt động; không chạy lại các bước mở tài khoản. Đánh giá thiết bị thật vẫn là mục riêng trong [backlog](BACKLOG.md). Không bật Cloud Billing hoặc nạp tiền chỉ để xóa cảnh báo. Trạng thái hiện hành của track ở [readback ngày 01/11](migration/STORE_RELEASE_READBACK_20261101.md).
 
 Bản Play cần rà soát loại bỏ cơ chế tải/cài APK cập nhật ngoài Play và dùng cơ chế cập nhật của Play; không coi APK landing là AAB đã đủ điều kiện upload. Xem [chính sách Device and Network Abuse](https://support.google.com/googleplay/android-developer/answer/16559646).
 
-## 1. Việc bạn thực hiện trước
+## 1. Tham khảo quy trình đăng ký ban đầu (lịch sử)
 
 1. Vào [Play Console](https://play.google.com/console/signup), dùng tài khoản Google do bạn kiểm soát lâu dài, bật xác minh hai bước.
 2. Chọn loại tài khoản đúng thực tế (cá nhân/tổ chức), điền thông tin pháp lý và liên hệ; hoàn tất các yêu cầu xác minh mà Console hiển thị. Bạn tự nhập giấy tờ/thẻ và chấp nhận điều khoản, không gửi vào chat.
@@ -18,15 +18,15 @@ Bản Play cần rà soát loại bỏ cơ chế tải/cài APK cập nhật ngo
 5. Tạo app Picket, loại App, ngôn ngữ và thông tin liên hệ phù hợp. Giữ package **`com.picket.mobile`** khi upload bản chính thức; không dùng `.qa`.
 6. Trước khi bán gói, hoàn thành payments profile/merchant, quốc gia, thuế và tài khoản nhận tiền theo Console. Chỉ bạn hoặc người được ủy quyền mới xác nhận các thông tin tài chính này.
 
-## 2. Khóa ký và bản upload — quyết định trước khi upload lần đầu
+## 2. Khóa ký và bản upload — quy tắc tham khảo cho các build tiếp theo
 
 - APK landing và app Play phải có chiến lược chữ ký tương thích nếu muốn cài đè giữ dữ liệu. Android không cho cập nhật cùng package bằng khóa ký không tương thích.
 - Play App Signing phân biệt **app signing key** và **upload key**. Nếu muốn cùng chữ ký giữa landing và Play, khi thiết lập phải chọn phương án dùng khóa app hiện tại theo quy trình bảo mật của Google; không mặc định để Google sinh khóa khác rồi kỳ vọng APK landing cập nhật được bản Play.
 - Không gửi file keystore/mật khẩu/PEPK hoặc private key qua chat/GitHub. Việc chuyển khóa vào Play do chủ tài khoản thực hiện qua công cụ chính thức, có bản sao khóa an toàn. [Tài liệu ký app](https://developer.android.com/studio/publish/app-signing).
-- Bản public landing **1.0.4 (5)** là APK ARM64. Bản upload Play cần **AAB release** riêng, ABI và versionCode được kiểm tra theo track. Không upload APK QA/probe; không tái dùng một versionCode đã được Play chấp nhận cho artifact khác. [Chuẩn bị release](https://developer.android.com/studio/publish/preparing/).
-- Sau khi cấu hình ký, người phụ trách build tạo AAB từ source đã chốt, kiểm tra không debug, package/signing/permissions/public HTTPS, rồi upload Internal testing. Tài liệu này chưa tạo hoặc upload AAB lên Console.
+- Landing public hiện là APK **1.0.14/code 28 ARM64**. Play dùng AAB riêng **1.0.14/code 28**, 118.288.427 bytes; track Internal và closed alpha đã đọc lại `completed`. Production chưa có release. Xem [readback hiện hành](migration/STORE_RELEASE_READBACK_20261101.md).
+- Với build tiếp theo, tạo AAB từ source đã chốt, kiểm tra package/signing/permissions/endpoint, tăng versionCode và đọc lại track sau commit. Không upload APK QA/probe; không tái dùng versionCode đã chấp nhận cho artifact khác. [Chuẩn bị release](https://developer.android.com/studio/publish/preparing/).
 
-## 3. Tạo đúng bốn sản phẩm Picket
+## 3. Đối chiếu bốn sản phẩm Picket đã cấu hình
 
 Code hiện dùng **bốn subscription ID độc lập**, không phải chỉ hai sản phẩm Plus/Pro có nhiều chu kỳ. Không tự đổi ID trên Console vì client/verifier sẽ từ chối ID khác.
 
@@ -37,9 +37,9 @@ Code hiện dùng **bốn subscription ID độc lập**, không phải chỉ ha
 | `picket_pro_monthly` | `pro` | `monthly` | Auto-renew hàng tháng |
 | `picket_pro_yearly` | `pro` | `yearly` | Auto-renew hàng năm |
 
-1. Trong app → Monetize with Play/Products → Subscriptions, tạo từng ID đúng bảng; đặt tên/mô tả quyền lợi và chu kỳ rõ ràng.
-2. Thêm base plan tương ứng, chọn quốc gia và giá bạn muốn bán; kiểm tra tiền tệ/thuế và ngày bắt đầu. Không sử dụng giá ví dụ trong tài liệu làm giá thương mại mặc định.
-3. Lưu rồi activate base plan sau khi kiểm tra. Chỉ thêm offer/trial khi đã xác định chính sách và kiểm thử eligibility; giai đoạn đầu nên giữ một base plan/ID để giảm mơ hồ offer.
+1. Trong Play Console → Monetize with Play/Products → Subscriptions, xác nhận từng ID đúng bảng; không tạo ID trùng hoặc đổi tên sản phẩm đang được app dùng.
+2. Kiểm tra base plan, quốc gia, giá, tiền tệ/thuế và ngày bắt đầu so với quyết định kinh doanh hiện hành. Không dùng giá ví dụ trong tài liệu làm giá mặc định.
+3. Bốn base plan hiện được ghi `ACTIVE` tại Việt Nam trong [trạng thái dự án](PROJECT_STATUS.md). Chỉ thêm offer/trial khi có quyết định và đã kiểm thử eligibility.
 4. Đối chiếu ID trong `packages/domain-ts`, `apps/api/lib/src/billing_contract.dart`, `supabase/functions/_shared/google_play.ts`. Không thay tên ID đã bán để “sửa nhãn”. [Subscriptions/base plans](https://support.google.com/googleplay/android-developer/answer/140504?hl=en).
 
 ## 4. Backend xác minh và cập nhật quyền lợi
@@ -56,6 +56,8 @@ Kiến trúc hiện có: Expo `expo-iap` → Dart `/v1/billing/google-play/verif
 Không đánh dấu backend Billing ready chỉ vì endpoint trả HTTP 200 với request giả. Cần purchase token thật từ license tester và kiểm tra quyền lợi server sau verification.
 
 ## 5. RTDN — gia hạn/hủy/hết hạn khi app không mở
+
+Topic RTDN đã được lưu và Send Test trả HTTP 200 theo checkpoint Billing ngày 28/10. Các bước dưới đây là quy trình cấu hình/đối chiếu khi cần sửa; không tạo topic/subscription trùng nếu Console đã có cấu hình.
 
 1. Trong Google Cloud tạo Pub/Sub topic riêng cho Picket.
 2. Cấp quyền Pub/Sub Publisher trên topic cho **`google-play-developer-notifications@system.gserviceaccount.com`**.

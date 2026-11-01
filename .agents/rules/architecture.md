@@ -1,7 +1,6 @@
 # Picket Project Architecture Rules
 
-Tài liệu này chứa các quy tắc kiến trúc và tiêu chuẩn mã hóa (coding standards) BẮT BUỘC cho dự án Picket.
-Tất cả AI Agents khi thao tác trong dự án này PHẢI đọc và tuân thủ các quy tắc này cùng với quy trình phối hợp tại [`.agents/rules/workflow.md`](workflow.md).
+Tài liệu này chứa các quy tắc kiến trúc và tiêu chuẩn mã hóa (coding standards) cho dự án Picket. Khi thay đổi ranh giới giữa mobile, web, API và Supabase, hãy đọc và tuân thủ các quy tắc phù hợp dưới đây.
 
 ## 1. Clean Code Principles
 - **Meaningful Names**: Đặt tên biến, class, hàm rõ nghĩa bằng tiếng Anh.

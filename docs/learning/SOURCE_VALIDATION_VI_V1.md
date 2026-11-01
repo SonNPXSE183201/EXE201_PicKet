@@ -1,7 +1,7 @@
 # Kiểm nguồn và số học cho giáo trình VI v1
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Kết quả biên tập/kiểm nguồn trong tài liệu này là checkpoint theo ngày của chính tài liệu.
 
 Ngày đối chiếu: 2026-10-23. Người biên soạn: Codex theo yêu cầu triển khai kế hoạch. **Không phải phê duyệt chuyên môn độc lập.**
 

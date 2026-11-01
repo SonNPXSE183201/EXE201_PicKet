@@ -1,7 +1,7 @@
 # Android device fixes — 23 October 2026
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Nội dung sửa lỗi và phiên bản dưới đây là checkpoint lịch sử; không dùng làm trạng thái release hiện hành.
 
 ## Target and current evidence
 

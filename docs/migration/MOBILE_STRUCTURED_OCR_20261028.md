@@ -1,5 +1,7 @@
 # Mobile OCR: cấu trúc hóa đơn và nghiệm thu
 
+Báo cáo này ghi đợt structured OCR trước. Hiện trạng mới hơn về POS, tổng phải trả, cache và QA code 26 nằm trong [báo cáo mở rộng](MOBILE_OCR_EXPANDED_20261028.md); các số liệu bên dưới giữ nguyên để đối chiếu lịch sử.
+
 ## Phạm vi
 
 Chỉ mobile theo chỉ đạo mới nhất. Không sửa web, không bật dịch vụ AI trả phí hoặc gửi corpus sang nhà cung cấp mới. Giữ ML Kit on-device, pipeline một session và giới hạn 20 giây. Kết quả là đề xuất phải kiểm tra trước khi lưu, không có cam kết đúng mọi ảnh.
