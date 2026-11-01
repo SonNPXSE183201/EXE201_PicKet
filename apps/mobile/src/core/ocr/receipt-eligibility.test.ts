@@ -30,3 +30,13 @@ test("a shopping list or typed amount cannot substitute for explicit invoice evi
  const rawText=partialTable.replace("HÓA ĐƠN\n","");
  assert.equal(canAttachReceipt({rawText,amount:60000,merchant:"Typed store"}),false);
 });
+
+test("a missing merchant can be entered manually when multiple OCR items reconcile with a printed total",()=>{
+ const rawText='Bánh ngọt 17000\nTrà đá 5000\nTOTAL 22000';
+ const draft=parseReceiptText(rawText);
+ assert.equal(draft.merchant,null);assert.equal(draft.needsReview,true);
+ assert.equal(canAttachReceipt(draft),true);
+ for(const bad of ['Bánh ngọt 17000\nTOTAL 17000','Bánh ngọt 17000\nTrà đá 5000\nTOTAL 25000']){
+  assert.equal(canAttachReceipt({rawText:bad,merchant:'Typed store',amount:22000}),false);
+ }
+});

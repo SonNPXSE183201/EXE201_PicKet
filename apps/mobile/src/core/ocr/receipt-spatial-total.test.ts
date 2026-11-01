@@ -42,6 +42,21 @@ test("two different amounts beside the total label require review",()=>{
  assert.equal(result.needsReview,true);
 });
 
+test("a tilted VAT total label matches its own right-hand amount without colliding with the cash row below",()=>{
+ const result=parseReceiptLines([
+  {text:"7-ELEVEN",top:10,bottom:30,left:100,right:250,angle:-3},
+  {text:"Ngày 30/08/2026 19:31:09",top:40,bottom:60,left:100,right:320,angle:-3},
+  {text:"HÓA ĐƠN BÁN HÀNG",top:70,bottom:90,left:100,right:280,angle:-3},
+  {text:"1 Túi Nước Đá 2KG 10,000",top:140,bottom:160,left:80,right:480,angle:-3},
+  {text:"TỔNG (G0M VAT)",top:200,bottom:220,left:100,right:250,angle:-3},
+  {text:"TIỀN MẶT",top:222,bottom:242,left:100,right:210,angle:-3},
+  {text:"66,000",top:186,bottom:206,left:430,right:510,angle:-3},
+  {text:"70,000",top:208,bottom:228,left:430,right:510,angle:-3},
+ ]);
+ assert.equal(result.amount,66000);
+ assert.equal(parseReceiptText(result.rawText).amount,66000);
+});
+
 test("an invalid or left-hand coordinate does not authorize a spatial total",()=>{
  for(const left of [20,NaN]){
   const result=parseReceiptLines([

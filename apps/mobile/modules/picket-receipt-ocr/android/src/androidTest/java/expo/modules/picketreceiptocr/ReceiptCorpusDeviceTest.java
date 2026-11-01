@@ -27,7 +27,17 @@ public class ReceiptCorpusDeviceTest extends InstrumentationTestCase {
     session=new ReceiptImageSession(target,input.toURI().toString());
     row.put("direction",new JSONObject(session.direction(20000)));
     session.select(0);
-    row.put("sample",new JSONObject(session.inspect(20000)));
+    Map<String,Object> sample=session.inspect(20000);
+    row.put("sample",new JSONObject(sample));
+    Map<String,Object> repeated=session.inspect(20000);
+    assertEquals(Boolean.TRUE,repeated.get("reused"));
+    assertEquals(0L,repeated.get("durationMs"));
+    assertEquals(sample.get("lines"),repeated.get("lines"));
+    row.put("repeated",new JSONObject(repeated));
+    session.select(180);
+    Map<String,Object> rotated=session.inspect(20000);
+    assertFalse(Boolean.TRUE.equals(rotated.get("reused")));
+    row.put("rotatedDurationMs",rotated.get("durationMs"));
    } catch(Exception error){row.put("error",error.getClass().getSimpleName()+":"+error.getMessage());}
    finally {if(session!=null)session.close();input.delete();}
    row.put("durationMs",SystemClock.elapsedRealtime()-start);rows.put(row);

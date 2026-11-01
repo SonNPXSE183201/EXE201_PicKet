@@ -12,7 +12,7 @@ import {
 test("normalizes common Vietnamese receipt money formats", () => {
   assert.equal(parseReceiptMoney("45.000 đ"), 45000);
   assert.equal(parseReceiptMoney("1,250,000 VND"), 1250000);
-  assert.equal(parseReceiptMoney("12,50"), 12);
+  assert.equal(parseReceiptMoney("12,50"), null);
   assert.equal(parseReceiptMoney("không có"), null);
 });
 
@@ -69,6 +69,111 @@ Tng cng:
 
   assert.equal(result.amount, 80000);
   assert.equal(result.needsReview, false);
+});
+
+test("links one nearby amount above an explicit payable label when OCR boxes do not overlap", () => {
+  const result = parseReceiptLines([
+    { text: "rhanh tean:", left: 54, right: 90, top: 244, bottom: 252, confidence: 0.55 },
+    { text: "17 925 000o", left: 165, right: 198, top: 229, bottom: 239, confidence: 0.48 },
+  ]);
+
+  assert.equal(result.amount, 17925000);
+  assert.equal(result.needsReview, true);
+});
+
+test("does not guess between two nearby amount candidates for a payable label", () => {
+  const result = parseReceiptLines([
+    { text: "Thanh toán:", left: 54, right: 100, top: 244, bottom: 252, confidence: 0.75 },
+    { text: "17 925 000", left: 165, right: 198, top: 229, bottom: 239, confidence: 0.75 },
+    { text: "17 900 000", left: 165, right: 198, top: 257, bottom: 267, confidence: 0.75 },
+  ]);
+
+  assert.equal(result.amount, null);
+  assert.equal(result.needsReview, true);
+});
+
+test("does not replace an unreadable inline total with a nearby small number", () => {
+  const result = parseReceiptLines([
+    { text: "Teng thanh toán", left: 51, right: 106, top: 226, bottom: 233, confidence: 0.63 },
+    { text: "14", left: 158, right: 181, top: 219, bottom: 222, confidence: 0.43 },
+    { text: "18.771,2noa", left: 142, right: 183, top: 228, bottom: 233, confidence: 0.44 },
+  ]);
+
+  assert.equal(result.amount, null);
+  assert.equal(result.needsReview, true);
+});
+
+test("recognizes a noisy payable label and joins its spatially aligned amount", () => {
+  const result = parseReceiptLines([
+    { text: "PICKET MART", left: 10, right: 110, top: 0, bottom: 20 },
+    { text: "30/08/2026", left: 10, right: 110, top: 25, bottom: 40 },
+    { text: "Iong thant toan", left: 10, right: 135, top: 150, bottom: 170 },
+    { text: "54 000", left: 180, right: 240, top: 150, bottom: 170 },
+  ]);
+
+  assert.equal(result.amount, 54000);
+});
+
+test("does not overstate total confidence beyond a weakly recognized value token", () => {
+  const result = parseReceiptLines([
+    { text: "PICKET MART", left: 10, right: 110, top: 0, bottom: 20, confidence: 0.98 },
+    { text: "Tổng thanh toán", left: 10, right: 130, top: 100, bottom: 120, confidence: 0.91 },
+    { text: "420.000", left: 150, right: 205, top: 100, bottom: 120, confidence: 0.62 },
+  ]);
+
+  assert.equal(result.amount, 420000);
+  assert.ok(result.amountConfidence !== null && result.amountConfidence <= 0.62);
+  assert.equal(result.needsReview, true);
+});
+
+test("recognizes an OCR-damaged generic total label without guessing a damaged amount", () => {
+  const result = parseReceiptText("PICKET STORE\n30/08/2026\nrOng tiêni\n513.238");
+  assert.equal(result.amount, 513238);
+
+  const damaged = parseReceiptText("PICKET STORE\n30/08/2026\nTÔNG (GỒH VAT)\n66,D00");
+  assert.equal(damaged.amount, null);
+  assert.equal(damaged.needsReview, true);
+});
+
+test("recovers a payable amount when ML Kit confuses two label letters and trails the value with o", () => {
+  const result = parseReceiptText("PICKET MART\n30/08/2026\nrhanh tean:\n17 925 000o");
+  assert.equal(result.amount, 17_925_000);
+  assert.equal(result.needsReview, false);
+});
+
+test("prefers a noisy payable amount over an ambiguous OCR total label", () => {
+  const result = parseReceiptText(`PICKET STORE
+30/08/2026
+Teng cộng 173,800
+Tng tiến 173,500
+Tiền khách trả 173,500
+Tiền thừa 0`);
+  assert.equal(result.amount, 173500);
+});
+
+test("keeps a receipt's product subtotal below its noisy payable total", () => {
+  const result = parseReceiptText(`CÔNG TY DEMO
+10/02/2023
+Tivi Samsung 1 x 12000000 ~ 12000000
+Cộng tiền 12.000.000
+Thuế suất GTGT: 10 %, Tiền thuế GTGT: 1.200.000
+Tông cộng tiến thanh toán 13.200.000`);
+
+  assert.equal(result.amount, 13200000);
+});
+
+test("does not promote a product label that resembles a damaged total", () => {
+  const result = parseReceiptText(`PICKET STORE
+30/08/2026
+Rong biển 35.000`);
+
+  assert.equal(result.amount, null);
+  assert.equal(result.lineItems[0]?.name, "Rong biển");
+});
+
+test("does not treat a similarly spelled product as a total label", () => {
+  const result = parseReceiptLineItems([{ text: "Rong biển khô 35.000" }]);
+  assert.deepEqual(result.map((item) => item.name), ["Rong biển khô"]);
 });
 
 test("prefers rounded total over an earlier generic total", () => {
@@ -205,4 +310,41 @@ test("recognizes OCR total VAT label and excludes item quantity totals",()=>{
 test("receipt metadata phone and document number are never product rows",()=>{
  const result=parseReceiptLineItems([{text:"ĐT: 0974.300.007 - 0909.191.195"},{text:"Số: 021900003"},{text:"Cà phê đá 10,000"}]);
  assert.deepEqual(result.map(item=>item.name),["Cà phê đá"]);
+});
+
+test("excludes payment methods, headers, time metadata, unit fragments and damaged digit lines from products", () => {
+  const result = parseReceiptLineItems([
+    { text: "Thanh tin: 50.000" },
+    { text: "Gis ra 50.000" },
+    { text: "1- Cái 25.000" },
+    { text: "125 oDO 125.000" },
+    { text: "125CCO 125.000" },
+    { text: "83,sco 83.500" },
+    { text: "Trà sen vàng 45.000" },
+    { text: "Phải thanh toán 50.000" },
+    { text: "Tiền cà thẻ 50.000" },
+  ]);
+  assert.deepEqual(result.map((item) => item.name), ["Trà sen vàng"]);
+});
+
+test("damaged total spans and item-count total lines never become truncated payable amounts", () => {
+  for (const raw of [
+    "SHOP\nHÓA ĐƠN\n29/10/2026\nTrà xanh 10000\nTổng 12O 900",
+    "SHOP\nHÓA ĐƠN\n29/10/2026\nTrà xanh 10000\nTổng 12 O00",
+    "SHOP\nHÓA ĐƠN\n29/10/2026\nTrà xanh 10000\n3 san phn tong cong\nTỔNG (gồm VAT) 68O00",
+  ]) {
+    const draft = parseReceiptText(raw);
+    assert.equal(draft.amount, null, raw);
+    assert.equal(draft.needsReview, true, raw);
+  }
+  const validWithItemCount = parseReceiptText(
+    "SHOP\nHÓA ĐƠN\n29/10/2026\n3 san phn tong cong\nTrà xanh 10,000\nTỔNG (GỒM VAT) 66,000",
+  );
+  assert.equal(validWithItemCount.amount, 66000);
+  const isoDraft = parseReceiptText(
+    "NGÔ GIA\nPhiếu Thanh Toán\nNgày tạo 2026-08-10 21:00\nMã đơn hàng 123456\nMã chứng từ 654321\nSố đơn hàng 987654\nOrder ID 112233\nBill No 445566\nCa dang k 2600\nGiá đăng ký 2500\nBí Đao Chanh 2 x 27000 | 54000\nMì 3 Miền 1 x 10000 | 10000\n7UP Lon 330ml 1 x 12000 | 12000\nMá đùi gà 1 x 45000 | 45000\nSò điệp nướng 1 x 60000 | 60000\nTổng tiền: 54,000đ",
+  );
+  assert.equal(isoDraft.date, "2026-08-10T00:00:00.000Z");
+  assert.equal(isoDraft.amount, 54000);
+  assert.deepEqual(isoDraft.lineItems.map((i) => i.name), ["Bí Đao Chanh", "Mì 3 Miền", "7UP Lon 330ml", "Má đùi gà", "Sò điệp nướng"]);
 });

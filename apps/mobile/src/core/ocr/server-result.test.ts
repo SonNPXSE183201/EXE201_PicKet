@@ -24,7 +24,8 @@ describe("server OCR result", () => {
       date: null,
     });
 
-    assert.equal(result.merchant, "Nasi Campur Bali");
+    // A priced dish is not evidence of a merchant when the header is absent.
+    assert.equal(result.merchant, null);
     assert.equal(result.amount, 1_591_600);
     assert.equal(result.rawText.includes("Grand Total"), true);
   });

@@ -26,7 +26,7 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
    [namePattern,quantityPattern,unitPattern,totalPattern,optionalPattern].some(pattern=>pattern.test(clean(line.text)))).sort((a,b)=>a.left-b.left);
   const find=(pattern:RegExp)=>{const matches=headers.filter(line=>pattern.test(clean(line.text)));return matches.length===1?matches[0]:undefined;};
   const quantityHeader=find(quantityPattern),unitHeader=find(unitPattern),totalHeader=find(totalPattern);
-  if(!quantityHeader||!unitHeader||!totalHeader||!(nameHeader.left<quantityHeader.left&&quantityHeader.left<unitHeader.left&&unitHeader.left<totalHeader.left))continue;
+  if(!quantityHeader||!unitHeader||!totalHeader||new Set([nameHeader,quantityHeader,unitHeader,totalHeader]).size!==4)continue;
   const band=(header:PositionedLine)=>{
    const index=headers.indexOf(header),previous=headers[index-1],next=headers[index+1];
    return {left:previous?(previous.right+header.left)/2:-Infinity,right:next?(header.right+next.left)/2:Infinity};
