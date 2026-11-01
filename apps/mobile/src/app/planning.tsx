@@ -19,6 +19,7 @@ import { guestBudgetSpent } from "@/core/local/guest-finance";
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { TopAppBar, ChoiceChip, EmptyState, PicketScreen, PrimaryAction, SectionTitle, Surface } from "@/core/ui/picket-ui";
+import { AppIcon } from "@/core/ui/app-icon";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBudgets } from "@/features/budgets/budgets-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
@@ -142,7 +143,7 @@ export default function PlanningScreen() {
     <View style={styles.chips}>{methods.map(([value,label]) => <ChoiceChip checked={planning?.method === value} key={value} label={t(label)} disabled={busy||!planning} onPress={() => void changeMethod(value)} />)}</View>
     <Text style={styles.hint}>{t("methodHelp")}</Text>
     <SectionTitle title={t("viewingMonth")} />
-    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><Text style={styles.arrow}>‹</Text></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><Text style={styles.arrow}>›</Text></Pressable></View></Surface>
+    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><AppIcon name="chevron-left" size={20} color={colors.ink} /></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><AppIcon name="chevron-right" size={20} color={colors.ink} /></Pressable></View></Surface>
     <SectionTitle title={t("overview")} />
     <Surface><Text style={styles.title}>{t("incomeExpense",{income:historyLoading||historyError?"—":money(income),expense:historyLoading||historyError?"—":money(expense)})}</Text>
       {historyError && <Text style={styles.message}>{t("historyUnavailable")}</Text>}

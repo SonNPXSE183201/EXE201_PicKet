@@ -24,7 +24,7 @@ export function AccessiblePressable({
   return (
     <Pressable
       {...props}
-      android_ripple={props.android_ripple ?? { color: "rgba(127,127,127,0.18)" }}
+      android_ripple={props.android_ripple ?? { color: "rgba(121, 50, 104, 0.10)", borderless: false }}
       accessibilityRole={accessibilityRole}
       accessibilityState={resolvedAccessibilityState}
       disabled={disabled}

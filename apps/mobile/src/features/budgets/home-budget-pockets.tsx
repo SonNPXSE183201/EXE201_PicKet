@@ -30,7 +30,7 @@ export function HomeBudgetPockets() {
     {loading && !items.length ? <Text style={styles.caption}>{vi ? "Đang tải ngân sách…" : "Loading budgets…"}</Text> : error && !items.length ? <Text accessibilityRole="alert" style={styles.caption}>{vi ? "Chưa tải được ngân sách. Mở để thử lại." : "Budgets unavailable. Open to retry."}</Text> : null}
     <View style={styles.grid}>{items.map((budget, index) => {
       const appearance = appearances[budget.id] ?? defaultPocketAppearance(budget.id, budget.name);
-      return <Pressable key={budget.id} accessibilityRole="button" onPress={() => router.push("/budgets")} style={[styles.pocket, { backgroundColor: colors[appearance.tone], width: width < 360 || fontScale > 1.3 ? "100%" : index === 2 ? "54%" : "48%", marginLeft: index === 2 ? "auto" : 0, marginTop: index === 2 && width >= 360 && fontScale <= 1.3 ? -6 : 0, minHeight: 112 }]}>
+      return <Pressable key={budget.id} accessibilityRole="button" onPress={() => router.push("/budgets")} style={[styles.pocket, { backgroundColor: colors[appearance.tone], width: width < 360 || fontScale > 1.3 ? "100%" : "48%", minHeight: 112 }]}>
         <Text style={styles.name}>{budget.name}</Text>
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.amount}>{formatMoney(budget.defaultLimit, language, "VND")}</Text>
         <Text style={styles.caption}>{vi ? "mỗi tháng" : "per month"}</Text>

@@ -1,7 +1,7 @@
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
-import { applyGuestMutation, emptyGuestFinance, guestOwnerId, type GuestFinance, type GuestMutation } from "@/core/local/guest-finance";
+import { applyGuestMutation, defaultGuestCategories, emptyGuestFinance, guestOwnerId, type GuestFinance, type GuestMutation } from "@/core/local/guest-finance";
 import { useAuth } from "@/features/auth/auth-context";
 
 type GuestFinanceValue = { data: GuestFinance; loading: boolean; error: string | null; commit(mutation: GuestMutation | ((current: GuestFinance) => GuestMutation)): Promise<GuestFinance>; replace(value: GuestFinance): Promise<void> };
@@ -22,6 +22,17 @@ export function GuestFinanceProvider({ children }: PropsWithChildren) {
       .then((cached) => {
         if (!active) return;
         const restored = { ...emptyGuestFinance(), ...(cached?.value ?? {}) };
+        const defaults = defaultGuestCategories();
+        const existingMap = new Map((restored.categories ?? []).map((c) => [c.id, c]));
+        defaults.forEach((d) => {
+          const existing = existingMap.get(d.id);
+          if (!existing) {
+            existingMap.set(d.id, d);
+          } else if (!existing.custom && (existing.icon !== d.icon || existing.kind !== d.kind)) {
+            existingMap.set(d.id, { ...existing, icon: d.icon, kind: d.kind });
+          }
+        });
+        restored.categories = Array.from(existingMap.values());
         current.current = restored;
         setData(restored);
       })

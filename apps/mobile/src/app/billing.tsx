@@ -343,12 +343,16 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         {!storeReady && <Text accessibilityLiveRegion="polite" style={{color:colors.muted}}>{t(checkingStore ? "checking" : "notReady")}</Text>}
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>{t("back")}</Text>
-        </Pressable>
-        <View style={styles.headingGroup}><Text style={styles.eyebrow}>{t("eyebrow")}</Text>
-        <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
-        <Text style={styles.notice}>{t("intro")}</Text></View>
+        <View style={styles.topHeader}>
+          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.backBtn}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.ink} />
+          </Pressable>
+          <Text accessibilityRole="header" style={styles.headerTitle}>Nâng cấp Picket Plus</Text>
+        </View>
+        <View style={styles.heroCenter}>
+          <Text style={styles.heroMain}>Quản lý tài chính không giới hạn</Text>
+          <Text style={styles.heroSubtitle}>Mở khóa trọn bộ tính năng cao cấp & OCR AI thông minh</Text>
+        </View>
         {entitlements && <View style={styles.currentPlan}>
           <View style={styles.currentHeading}>
             <View style={styles.currentIcon}><MaterialCommunityIcons name={entitlements.tier === "pro" ? "crown-outline" : entitlements.tier === "plus" ? "star-four-points-outline" : "sprout-outline"} size={28} color={colors.ink} /></View>
@@ -452,6 +456,14 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  topHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4 },
+  backBtn: { padding: 4 },
+  headerTitle: { color: colors.ink, fontSize: 22, fontWeight: "800", letterSpacing: -0.3 },
+  heroCenter: { alignItems: "center", marginTop: 6, gap: 4, marginBottom: 8 },
+  heroMain: { color: colors.ink, fontSize: 18, fontWeight: "800", textAlign: "center" },
+  heroSubtitle: { color: colors.muted, fontSize: 13, textAlign: "center", lineHeight: 18 },
+  popularBadge: { position: "absolute", top: -12, right: 18, backgroundColor: colors.mauve, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
+  popularBadgeText: { color: colors.onPrimary, fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
   headingGroup:{gap:8},
   flex: { flex: 1, minWidth: 0 },
   eyebrow: {color:colors.link,fontSize:11,fontWeight:"800",letterSpacing:1.1},

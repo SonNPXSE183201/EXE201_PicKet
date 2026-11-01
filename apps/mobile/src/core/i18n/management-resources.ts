@@ -1,4 +1,13 @@
 const labels={
+ "Quản lý danh mục & Icon 3D":"Category management & 3D Icons",
+ "+ Thêm":"+ Add",
+ "Chọn Icon 3D Paper Art":"Choose 3D Paper Art icon",
+ "Mua sắm":"Shopping","Ăn uống":"Food & drinks","Cà phê":"Coffee","Đi chợ":"Groceries",
+ "Di chuyển":"Transport","Hóa đơn":"Bills","Lương":"Salary","Thưởng":"Bonus",
+ "Đầu tư":"Investment","Tiết kiệm":"Savings","Quà tặng":"Gift","Giải trí":"Entertainment",
+ "Y tế":"Health","Thể thao":"Fitness","Học tập":"Education","Làm đẹp":"Beauty",
+ "Xe cộ":"Vehicle","Thú cưng":"Pet","Âm nhạc":"Music","Nhà cửa":"Home","Bảo hiểm":"Insurance",
+ "Tất cả danh mục đi kèm tài sản 3D Paper Art":"All categories paired with 3D Paper Art assets",
  "Thêm tiền vào ví":"Add money to wallet",
  "Tiền mặt":"Cash","Ngân hàng":"Bank","Ví điện tử":"E-wallet","Khác":"Other",
  "Hãy nhập tên tài khoản.":"Enter an account name.","Số dư chưa hợp lệ.":"Enter a valid balance.",

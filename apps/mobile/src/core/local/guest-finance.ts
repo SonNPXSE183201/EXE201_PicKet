@@ -47,10 +47,29 @@ export type GuestMutation =
 
 export const guestOwnerId = "device-guest";
 
+export function defaultGuestCategories(): Category[] {
+  const now = "2026-01-01T00:00:00.000Z";
+  return [
+    { id: "guest-cat-food", name: "Ăn uống", kind: "expense", color: "#8C6A7D", icon: "food", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-groceries", name: "Đi chợ", kind: "expense", color: "#4F8A6B", icon: "groceries", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-transport", name: "Di chuyển", kind: "expense", color: "#5577A8", icon: "transport", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-bills", name: "Hóa đơn", kind: "expense", color: "#D46A6A", icon: "bills", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-shopping", name: "Mua sắm", kind: "expense", color: "#C98A3D", icon: "shopping", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-leisure", name: "Giải trí", kind: "expense", color: "#5577A8", icon: "leisure", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-health", name: "Sức khỏe", kind: "expense", color: "#8C6A7D", icon: "health", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-education", name: "Giáo dục", kind: "expense", color: "#4F8A6B", icon: "education", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-salary", name: "Lương", kind: "income", color: "#4F8A6B", icon: "salary", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-bonus", name: "Thưởng", kind: "income", color: "#5577A8", icon: "bonus", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-invest", name: "Đầu tư", kind: "income", color: "#8C6A7D", icon: "investment", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-gift", name: "Quà tặng", kind: "income", color: "#D46A6A", icon: "gift", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+    { id: "guest-cat-other-inc", name: "Thu nhập khác", kind: "income", color: "#C98A3D", icon: "bloom", custom: false, version: 1, createdAt: now, updatedAt: now, deletedAt: null },
+  ];
+}
+
 export function emptyGuestFinance(): GuestFinance {
   return {
     profile: { id: guestOwnerId, displayName: "bạn", avatarUrl: null, onboardingCompleted: true, locale: "vi", timezone: "Asia/Ho_Chi_Minh", persona: "", goal: "", currencyCode: "VND", hideBalance: false },
-    accounts: [], categories: [], transactions: [], splits: {}, budgets: [], bills: [], subscriptions: [],
+    accounts: [], categories: defaultGuestCategories(), transactions: [], splits: {}, budgets: [], bills: [], subscriptions: [],
     planningMethod: "simple", planningPeriods: {}, planningCloses: {}, receiptCreateIds: [], reconciliationReceipts:[],
   };
 }

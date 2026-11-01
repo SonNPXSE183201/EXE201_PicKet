@@ -11,10 +11,28 @@ export const paperAssets = {
   home: require("../../../assets/paper/category-home-v1.png") as ImageSourcePropType,
   health: require("../../../assets/paper/category-health-v1.png") as ImageSourcePropType,
   gift: require("../../../assets/paper/category-gift-v1.png") as ImageSourcePropType,
+  beauty: require("../../../assets/paper/category-beauty-v1.png") as ImageSourcePropType,
+  bills: require("../../../assets/paper/category-bills-v1.png") as ImageSourcePropType,
+  cafe: require("../../../assets/paper/category-cafe-v1.png") as ImageSourcePropType,
+  education: require("../../../assets/paper/category-education-v1.png") as ImageSourcePropType,
+  fitness: require("../../../assets/paper/category-fitness-v1.png") as ImageSourcePropType,
+  gaming: require("../../../assets/paper/category-gaming-v1.png") as ImageSourcePropType,
+  groceries: require("../../../assets/paper/category-groceries-v1.png") as ImageSourcePropType,
+  music: require("../../../assets/paper/category-music-v1.png") as ImageSourcePropType,
+  pet: require("../../../assets/paper/category-pet-v1.png") as ImageSourcePropType,
+  salary: require("../../../assets/paper/category-salary-v1.png") as ImageSourcePropType,
+  bonus: require("../../../assets/paper/category-bonus-v1.png") as ImageSourcePropType,
+  investment: require("../../../assets/paper/category-investment-v1.png") as ImageSourcePropType,
+  savings: require("../../../assets/paper/category-savings-v1.png") as ImageSourcePropType,
+  security: require("../../../assets/paper/category-security-v1.png") as ImageSourcePropType,
+  travel: require("../../../assets/paper/category-travel-v1.png") as ImageSourcePropType,
+  vehicle: require("../../../assets/paper/category-vehicle-v1.png") as ImageSourcePropType,
+  empty: require("../../../assets/paper/state-empty-wallet-v1.png") as ImageSourcePropType,
+  error: require("../../../assets/paper/state-error-plant-v1.png") as ImageSourcePropType,
 };
 export type PaperAssetId = keyof typeof paperAssets;
 export function resolvePaperAsset(id: string): PaperAssetId { return Object.hasOwn(paperAssets, id) ? id as PaperAssetId : "shopping"; }
-export const paperArtOptions: { id: PaperAssetId; label: string }[] = ["shopping", "home", "health", "gift", ...Object.keys(paperAssets).filter(id => !["shopping", "home", "health", "gift"].includes(id))].map(id => ({ id: id as PaperAssetId, label: `paper${id[0].toUpperCase()}${id.slice(1)}` }));
+export const paperArtOptions: { id: PaperAssetId; label: string }[] = ["shopping", "home", "health", "gift", ...Object.keys(paperAssets).filter(id => !["shopping", "home", "health", "gift", "receipt", "empty", "error"].includes(id))].map(id => ({ id: id as PaperAssetId, label: `paper${id[0].toUpperCase()}${id.slice(1)}` }));
 export const pocketDecorations: readonly { id: PaperAssetId; tone: "pocketCoral" | "pocketMint" | "pocketBlue" | "pocketLilac" }[] = [
   { id: "food", tone: "pocketCoral" }, { id: "transport", tone: "pocketMint" },
   { id: "leisure", tone: "pocketBlue" }, { id: "shopping", tone: "pocketLilac" },
