@@ -26,14 +26,45 @@
 .workspace-admin .workspace-sidebar {
   background: #fff8ed;
 }
+.workspace-admin .button,
+.workspace-admin .button.primary,
+.workspace-admin button[type="submit"] {
+  border-radius: 999px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
 .workspace-admin .button.primary {
   background: #793268;
   color: #fff;
+  border: 1px solid #793268;
+}
+.workspace-admin .button.primary:hover {
+  background: #632654;
+  border-color: #632654;
+}
+.workspace-admin .button.secondary {
+  background: transparent;
+  color: #302132;
+  border: 1.5px solid #94818d;
+}
+.workspace-admin .button.secondary:hover {
+  background: rgba(121, 50, 104, 0.08);
+  border-color: #793268;
 }
 .workspace-admin .finance-form input,
 .workspace-admin .finance-form textarea,
 .workspace-admin .finance-form select {
-  border-color: #94818d;
+  border-radius: 14px;
+  border: 1.5px solid #94818d;
+  background: #fffcf5;
+  color: #302132;
+}
+.workspace-admin .finance-form input:focus,
+.workspace-admin .finance-form textarea:focus,
+.workspace-admin .finance-form select:focus {
+  border-color: #793268;
+  outline: 3px solid rgba(121, 50, 104, 0.15);
+  outline-offset: 1px;
 }
 .workspace-admin .workspace-sidebar {
   height: 100dvh;
@@ -285,7 +316,7 @@
     font-size: 12px;
   }
 }
-@media (max-width: 380px) {
+@media (max-width: 580px) {
   .admin-kpis {
     grid-template-columns: 1fr;
   }
@@ -941,7 +972,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 380px) {
+@media (max-width: 580px) {
   .admin-shell .admin-kpis,
   .admin-shell .admin-kpis:has(> :nth-child(4):last-child),
   .admin-shell .admin-kpis:has(> :nth-child(5):last-child) {
@@ -955,5 +986,28 @@
   }
   .admin-shell .admin-shortcuts {
     grid-template-columns: 1fr;
+  }
+}
+
+.admin-shell .admin-nav-group a {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.admin-shell .admin-account-panel {
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 90px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.admin-shell .admin-filter > *,
+.admin-shell .finance-form > *,
+.admin-shell .admin-panel > * {
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav-chevron,
+  .admin-shell .button,
+  .admin-shell button {
+    transition: none;
   }
 }

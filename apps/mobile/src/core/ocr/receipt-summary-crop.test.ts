@@ -26,8 +26,22 @@ test("a single explicit payable label can recover the rest of an unreadable summ
 });
 
 test("observed POS total labels authorize one bounded detail crop", () => {
- for (const text of ["Tổng cộng:","Grand total:","Amount due:"]) {
+ for (const text of ["Tổng cộng:","Grand total:","Amount due:","Tổng thanh toán","TỔNG (GỒM VAT)","Tổng tiền:"]) {
   const region=receiptSummaryCrop([{text,left:10,right:150,top:1000,bottom:1020}],1000,1400);
   assert.ok(region,text); assert.ok(region.height <= 700);
  }
+});
+
+test("small OCR damage on an explicit payable label still authorizes a bounded summary crop",()=>{
+ for(const text of ["Teng thanh toan:","Iong thanh toan:","T.Tiền:"]){
+  const region=receiptSummaryCrop([{text,left:10,right:200,top:1000,bottom:1020}],1000,1400);
+  assert.ok(region,text);assert.ok(region.originY<=880);assert.ok(region.originY+region.height>=1120);assert.ok(region.height<=700);
+ }
+ assert.equal(receiptSummaryCrop([{text:"Teng cong:",left:10,right:200,top:1000,bottom:1020}],1000,1400),null);
+});
+
+test("common per-letter OCR confusions in a payable label still authorize a bounded crop",()=>{
+ const region=receiptSummaryCrop([{text:"rhanh tean:",left:10,right:200,top:1000,bottom:1020}],1000,1400);
+ assert.ok(region);
+ assert.ok(region.height<=700);
 });

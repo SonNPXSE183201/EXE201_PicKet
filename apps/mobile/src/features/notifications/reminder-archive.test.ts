@@ -16,7 +16,8 @@ test("deleted bills recurring expenses and budgets never produce reminders",()=>
  const bill={id:"bill",title:"Bill",dueAt:due,status:"pending",paidTransactionId:null};
  const plan={id:"sub",title:"Sub",nextDueAt:due,active:true,alertDays:1};
  const budget={id:"budget",name:"Food",categoryId:"food",defaultLimit:100,alertPercent:80,active:true};
- const transaction={id:"expense",categoryId:"food",amount:100,kind:"expense",occurredAt:new Date().toISOString()};
+ const localMonth=String(new Date().getFullYear())+"-"+String(new Date().getMonth()+1).padStart(2,"0");
+ const transaction={id:"expense",categoryId:"food",amount:100,kind:"expense",occurredAt:`${localMonth}-01T12:00:00Z`};
  const input={bills:[bill],subscriptions:[plan],budgets:[budget],transactions:[transaction],keepsakes:[]};
  assert.equal(collect(input).length,3);
  assert.equal(collect({...input,bills:[{...bill,deletedAt}],subscriptions:[{...plan,deletedAt}],budgets:[{...budget,deletedAt}]}).length,0);

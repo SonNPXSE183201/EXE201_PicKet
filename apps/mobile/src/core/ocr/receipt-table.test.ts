@@ -10,6 +10,30 @@ test("purchase document headings and websites are not merchant names",()=>{
  const result=parseReceiptText("PHIẾU MUA HÀNG\nwww.example.test\nPICKET DEMO STORE\nNgày 06 tháng 10 năm 2026\nSan pham 145000\nTổng thanh toán 145000");
  assert.equal(result.merchant,"PICKET DEMO STORE");
 });
+test("stacked POS rows support VAT-tagged unit prices and two-column SL/Tong layouts",()=>{
+ const vatRows=parseReceiptLines([
+  cell("BÁCH HÓA XANH",10,10,180),cell("03/09/2026",10,35,120),
+  cell("SL",40,70,25),cell("Giá bán (VAT)",150,70,120),cell("Thành tiền",360,70,90),
+  cell("hành tím túi 200gr",20,100,180),
+  cell("1",45,122,20),cell("18.600 (VAT:5%)",150,122,120),cell("18.600",370,122,80),
+  cell("Tổng tiền:",20,170,100),cell("18.600",370,170,80),
+ ]);
+ assert.equal(vatRows.amount,18600);
+ assert.deepEqual(vatRows.lineItems.map(({name,quantity,unitPrice,total})=>({name,quantity,unitPrice,total})),[
+  {name:"hành tím túi 200gr",quantity:1,unitPrice:18600,total:18600},
+ ]);
+ const twoCol=parseReceiptLines([
+  cell("NGÔ GIA",10,10,120),cell("Phiếu thanh toán",10,30,150),cell("2026-08-10",160,50,100),
+  cell("SL",20,80,25),cell("Tổng",360,80,60),
+  cell("Bí Đao Chanh",20,110,160),
+  cell("2",20,135,20),cell("54,000",350,135,70),
+  cell("Tổng thanh toán",20,180,140),cell("54,000đ",350,180,70),
+ ]);
+ assert.equal(twoCol.amount,54000);
+ assert.deepEqual(twoCol.lineItems.map(({name,quantity,unitPrice,total})=>({name,quantity,unitPrice,total})),[
+  {name:"Bí Đao Chanh",quantity:2,unitPrice:27000,total:54000},
+ ]);
+});
 const cell=(text:string,left:number,top:number,width=70):ReceiptTextLine=>({text,left,right:left+width,top,bottom:top+15});
 function table(){return [
  cell("PICKET DEMO STORE",10,10,200),cell("Ngày 06 tháng 10 năm 2026",10,35,240),

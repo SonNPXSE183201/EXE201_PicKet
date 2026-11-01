@@ -32,6 +32,16 @@ test('a fully observed table matching payable total skips redundant detail OCR',
  assert.equal(result.stats.cropReads,0);
  assert.equal(app.events.at(-1),'close');
 });
+
+test('a reused native read is counted separately from the inspect bridge call',async()=>{
+ const app=harness();
+ app.native.inspect=async()=>({...vat(),reused:true});
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.stats.fullReads,1);
+ assert.equal(result.stats.nativeCacheHits,1);
+ assert.equal(result.draft.amount,54000);
+ assert.equal(app.events.at(-1),'close');
+});
 test('upside-down VAT re-reads only the selected direction before trusting its text',async()=>{
  const app=harness({strongAt:180});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
  assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);assert.ok(app.events.includes('select:180'));assert.equal(result.stats.fullReads,1);
@@ -87,6 +97,20 @@ test('a missing thumbnail direction can use verified upright full-text direction
  assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,1);
 });
 
+test('unknown direction keeps partial OCR evidence and requires manual review instead of aborting',async()=>{
+ const app=harness();app.native.direction=async()=>{app.events.push('direction');return {width:100,height:100,lines:[]};};
+ app.native.inspect=async()=>{app.events.push('inspect');return {width:300,height:600,lines:[
+  {...cell('PICKET DEMO',10,10,120),angle:0,confidence:0.3},
+  {...cell('Tổng thanh toán 54.000',10,500,260),angle:0,confidence:0.3},
+ ]};};
+ app.native.crop=async()=>{app.events.push('crop');return {width:300,height:100,lines:[]};};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);
+ assert.equal(result.draft.needsReview,true);
+ assert.match(result.draft.reviewReason??'',/hướng ảnh/i);
+ assert.deepEqual(app.events,['open','direction','select:0','inspect','close']);
+});
+
 test('a wrong thumbnail rotation is corrected once from full-text direction before trusting values',async()=>{
  const app=harness({strongAt:180});let reads=0;
  app.native.inspect=async()=>{app.events.push('inspect');reads++;return {...vat(),lines:vat().lines.map(line=>({...line,angle:reads===1?180:0,confidence:0.95}))};};
@@ -97,9 +121,32 @@ test('a wrong thumbnail rotation is corrected once from full-text direction befo
  assert.equal(app.events.at(-1),'close');
 });
 
-test('wrong full-text direction never becomes an accepted draft when the budget is exhausted',async()=>{
+test('wrong full-text direction preserves the parsed draft with a review warning when the budget is exhausted',async()=>{
  const app=harness();let clock=0;
  app.native.inspect=async()=>{app.events.push('inspect');clock=25000;return {...vat(),lines:vat().lines.map(line=>({...line,angle:180,confidence:0.95}))};};
- await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,()=>clock),/OCR_TIMEOUT/);
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,()=>clock);
+ assert.equal(result.draft.amount,54000);assert.equal(result.draft.needsReview,true);assert.equal(result.budgetExceeded,true);
  assert.equal(app.events.filter(event=>event==='inspect').length,1);assert.equal(app.events.at(-1),'close');
+});
+
+test('unresolved full-text rotation preserves readable evidence for manual review and still retries an explicit total crop',async()=>{
+ const app=harness();
+ app.native.direction=async()=>{app.events.push('direction');return {width:100,height:100,lines:[]};};
+ app.native.inspect=async()=>{app.events.push('inspect');return {width:1000,height:1400,lines:[
+  {...cell('PICKET DEMO',10,10,200),angle:180,confidence:.95},
+  {...cell('HÓA ĐƠN',10,35,200),angle:180,confidence:.95},
+  {...cell('Ngày 26/10/2026',10,60,250),angle:180,confidence:.95},
+  {...cell('Teng thanh toan:',10,1000,240),angle:180,confidence:.95},
+ ]};};
+ app.native.crop=async(_id,region)=>{app.events.push('crop');return {width:1000,height:region.height,lines:[
+  cell('Teng thanh toan:',10,1000-region.originY,240),cell('54.000',820,1000-region.originY,100),
+ ]};};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);
+ assert.equal(result.draft.needsReview,true);
+ assert.match(result.draft.reviewReason??'',/hướng ảnh/i);
+ assert.equal(result.stats.summaryReads,1);
+ assert.ok(app.events.includes('crop'));
+ assert.equal(app.events.filter(event=>event==='inspect').length,2);
+ assert.equal(app.events.at(-1),'close');
 });

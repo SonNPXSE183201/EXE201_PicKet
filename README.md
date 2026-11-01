@@ -1,6 +1,10 @@
 # Picket
 
-Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Landing phục vụ APK **1.0.11/code 24**; Play Internal đã cập nhật **1.0.11/code 24**. Supabase đã đồng bộ **51 migration**. Admin platform và ba trang xác thực Paper đã triển khai production ngày 28/10; [báo cáo nghiệm thu](docs/migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md) ghi bằng chứng và các giới hạn còn phụ thuộc nền tảng. Closed test giữ draft.
+Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Mobile source hiện là **1.0.14/code 28**. Landing public, Google Play Internal và closed testing (alpha) đều đã đọc lại ở **1.0.14/code 28**; beta và production Google Play chưa có release. Alpha có một Google Group, nhưng số thành viên/opt-in và điều kiện tham gia liên tục chưa được xác minh. APKPure có artifact code 28 và 7 ảnh sẵn sàng; trạng thái nộp/duyệt trên APKPure chưa có readback. [Báo cáo store](docs/migration/STORE_RELEASE_READBACK_20261101.md). Supabase đã đồng bộ **51 migration**.
+
+Web release `web-20261101-responsive-839e5cb-01` đã triển khai production. Tài khoản user và admin được kiểm tra bằng phiên thật, dữ liệu API thật và thao tác chỉ đọc; demo ngân sách trên landing được phép dùng dữ liệu minh họa. [Báo cáo production](.artifacts/picket-web-prod-20261101/DEPLOYMENT.md) ghi rõ phạm vi và phần chưa nghiệm thu.
+
+OCR QA51 trên Redmi 7 đã chạy 40 ảnh Bill gốc: trong 25 ảnh có nhãn tổng, 19 đúng, 1 sai và 5 thiếu; 1 ảnh không chấm được, 14 ảnh chưa có nhãn. Đây là tập kiểm tra giới hạn, không phải nghiệm thu accuracy tổng quát. Số liệu đến từ QA build code 36, không đồng nghĩa bản phát hành code 28 đã được kiểm chứng với cùng ma trận. [Trạng thái dự án](docs/PROJECT_STATUS.md), [báo cáo OCR](docs/migration/MOBILE_OCR_EXPANDED_20261028.md), [hướng dẫn kiểm thử OCR](.agents/skills/picket-ocr-testing/SKILL.md).
 
 Picket dùng một kiến trúc thống nhất: Next.js cho web, Expo/React Native cho
 Android và Dart Frog cho toàn bộ backend nghiệp vụ.

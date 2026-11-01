@@ -36,6 +36,7 @@ public final class ReceiptImageSession implements AutoCloseable {
   private int selections;
   private boolean closing;
   private boolean closed;
+  private final ReceiptReadCache fullSourceRead = new ReceiptReadCache();
 
   public static int decodeSample(int width, int height) {
     if (width <= 0 || height <= 0) throw new IllegalArgumentException("OCR_INVALID_DIMENSIONS");
@@ -87,6 +88,7 @@ public final class ReceiptImageSession implements AutoCloseable {
     requireWorker(); ensureActive(); validateAngle(angle);
     if (selections >= 2) throw new IOException("OCR_ALREADY_SELECTED");
     Bitmap corrected = rotate(source, angle);
+    if (angle != 0) fullSourceRead.invalidate();
     if (corrected != source) { source.recycle(); source = corrected; }
     selected = true; selections++; return dimensions(source);
   }
@@ -95,17 +97,37 @@ public final class ReceiptImageSession implements AutoCloseable {
     requireWorker(); ensureActive();
     float scale = Math.min(1f, 960f / Math.max(source.getWidth(), source.getHeight()));
     Bitmap small = Bitmap.createScaledBitmap(source, Math.max(1, Math.round(source.getWidth()*scale)), Math.max(1, Math.round(source.getHeight()*scale)), true);
-    return recognize(small, small != source, timeoutMs, "direction");
+    Map<String,Object> result=recognize(small, small != source, timeoutMs, "direction");
+    if(small==source)fullSourceRead.remember(result);
+    return result;
   }
 
   public synchronized Map<String, Object> inspect(int timeoutMs) throws Exception {
-    requireWorker(); ensureActive(); return recognize(source, false, timeoutMs, "inspect");
+    requireWorker(); ensureActive();
+    if(timeoutMs<=0)throw new IOException("OCR_TIMEOUT");
+    Map<String,Object> cached=fullSourceRead.read();
+    if(cached!=null)return cached;
+    Map<String,Object> result=recognize(source, false, timeoutMs, "inspect");fullSourceRead.remember(result);return result;
   }
 
   public synchronized Map<String, Object> crop(int x, int y, int width, int height, int timeoutMs) throws Exception {
     requireWorker(); ensureSelected();
     if (x < 0 || y < 0 || width <= 0 || height <= 0 || (long) x + width > source.getWidth() || (long) y + height > source.getHeight()) throw new IOException("OCR_INVALID_CROP");
-    Bitmap input = Bitmap.createBitmap(source, x, y, width, height);
+    Bitmap crop = Bitmap.createBitmap(source, x, y, width, height);
+    int[] target = ReceiptCropScalePolicy.targetDimensions(crop.getWidth(), crop.getHeight());
+    Bitmap input = crop;
+    if (target[0] != crop.getWidth() || target[1] != crop.getHeight()) {
+      long scaleStarted = SystemClock.elapsedRealtime();
+      try {
+        input = Bitmap.createScaledBitmap(crop, target[0], target[1], true);
+      } catch (RuntimeException error) {
+        if (!crop.isRecycled()) crop.recycle();
+        throw error;
+      }
+      if (input != crop) crop.recycle();
+      Log.i("PicketOcrPerf", "phase=crop-upscale ms=" + (SystemClock.elapsedRealtime() - scaleStarted)
+          + " pixels=" + ((long) input.getWidth() * input.getHeight()));
+    }
     return recognize(input, input != source, timeoutMs, "crop");
   }
 
@@ -156,6 +178,7 @@ public final class ReceiptImageSession implements AutoCloseable {
   public String id() { return id; }
   private void release() {
     if (closed) return;
+    fullSourceRead.invalidate();
     if (source != null && !source.isRecycled()) source.recycle(); source = null;
     if (recognizer != null) recognizer.close(); recognizer = null; closed = true;
   }

@@ -8,7 +8,7 @@ test("camera handoff rejects parallel submission and stale generation finalizers
   assert.match(handoff, /if \(isContinuing \|\| isRecognizing \|\| isQueueingFallback\) return/);
   assert.match(handoff, /generation === imageGeneration.current\) setIsContinuing\(false\)/);
   const choose = source.slice(source.indexOf('async function choose('), source.indexOf('function confirmServerFallback()'));
-  assert.match(choose, /if \(isContinuing \|\| isRecognizing \|\| isQueueingFallback\) return/);
+  assert.match(choose, /if \(pickerBusy.current \|\| isContinuing \|\| isRecognizing \|\| isQueueingFallback\) return/);
 });
 
 test("a late server OCR result must not re-enable an attachment the user opted out of", () => {

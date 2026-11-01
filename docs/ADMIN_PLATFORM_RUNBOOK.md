@@ -54,9 +54,11 @@ Nếu mất owner/MFA: quy trình khôi phục danh tính do chủ dự án qu�
 Dùng source đã review tại commit/tag bất biến, chạy quality gates, build image, áp migration được kiểm trước, cập nhật compose/image tags rồi kiểm health và UI. `git push` chỉ chuyển source lên GitHub; không tự triển khai nếu không có pipeline deploy. Không dùng `git pull` trực tiếp đè working tree server hoặc đưa `.env`, key ký APK vào image/source. Các lệnh và tag cụ thể của lần rollout phải được lưu trong báo cáo release.
 
 
-## Lệnh triển khai hiện hành
+## Trạng thái image production gần nhất
 
-Source đã kiểm nằm tại `/opt/picket/releases/admin-20261028`, image API/web tag `admin-20261028`; worker dùng image `picket-admin-worker`. Source chạy cũng được đồng bộ vào `/opt/picket`. File cấu hình production là `compose.production.yml`, phải chỉ rõ `-f`:
+API/admin platform giữ baseline triển khai `admin-20261028`; web image hiện tại là `picket-web:web-20261101-responsive-839e5cb-01`. Lượt 01/11 chỉ cập nhật web container, không redeploy API/database/OCR. Báo cáo có release ID, nguồn, phạm vi và rollback tại [web production 01/11](../.artifacts/picket-web-prod-20261101/DEPLOYMENT.md). Worker dùng image `picket-admin-worker`. File cấu hình production là `compose.production.yml`, phải chỉ rõ `-f`.
+
+Với rollout API/admin đã được phê duyệt, source và migration phải theo release cụ thể; không coi web image mới là API image. Lệnh stack đầy đủ dưới đây chỉ dùng khi chủ đích cập nhật các service liệt kê:
 
 ```sh
 cd /opt/picket
@@ -65,4 +67,4 @@ docker compose --env-file deploy/.env.production -f compose.production.yml --pro
 
 Lệnh này chỉ chuyển sang image đã build/kiểm, không tự lấy source mới từ GitHub. Mỗi lần cập nhật: kiểm source/commit → tests/build → backup → migration → cập nhật tag image trong env server → lệnh trên → HTTPS/probe/screenshot. Giữ env và credential trên server. Backup cấu hình trước rollout nằm tại `deploy/admin-rollbacks/20261028` với quyền hạn chế; không đưa thư mục này vào Git.
 
-APK landing hiện là 1.0.10/code23, SHA-256 `391619ad9514de11a7f02f6761972101c2c671f11653065c3393b01545bec7ec`. Dùng `PICKET_APK` trỏ đúng file đã ký khi build landing; upload APK/checksum trước, đổi manifest/index sau, giữ URL cũ.
+Landing hiện công bố APK 1.0.14/code 28, SHA-256 `1713c3dfbbe220720e5a355442d0de8b4d5cc27b7c89840c1b1f0a2a0120b17b`; readback manifest/download ngày 01/11 nằm trong [báo cáo cửa hàng](migration/STORE_RELEASE_READBACK_20261101.md). Dùng `PICKET_APK` trỏ đúng file đã ký khi build landing; upload APK/checksum trước, đổi manifest/index sau, giữ URL cũ.

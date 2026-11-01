@@ -1,7 +1,7 @@
 # Google Play MCP check — 24 October 2026
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](PROJECT_STATUS.md) · [readback track mới nhất](migration/STORE_RELEASE_READBACK_20261101.md). Snapshot MCP dưới đây là dữ liệu lịch sử ngày 24/10.
 
 Connected local Codex server `google-play` over stdio, using `play-store-mcp` source commit `a596ebfc691514f67292a17ad53f17e6648f9f92` from https://github.com/lusky3/play-store-mcp. Installed outside the repository under the user's `.codex/tools` directory with its dependency lockfile. Server runs with `--read-only` and `CODE_MODE=0`.
 

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { vietnamDate } from "@/core/finance/overview";
+import { Icon } from "./workspace-icon";
 export function ReceiptCalendar({
   dates,
   initialMonth,
@@ -41,13 +42,13 @@ export function ReceiptCalendar({
           aria-label="Tháng trước"
           onClick={() => shift(-1)}
         >
-          ‹
+          <Icon name="arrowLeft" />
         </button>
         <strong>
           Tháng {m}, {year}
         </strong>
         <button type="button" aria-label="Tháng sau" onClick={() => shift(1)}>
-          ›
+          <Icon name="arrowRight" />
         </button>
       </div>
       <div className="calendar-grid">

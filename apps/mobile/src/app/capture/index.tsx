@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { prepareCapture } from "@/core/ocr/capture-work";
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { canAttachReceipt } from "@/core/ocr/receipt-eligibility";
+import { receiptCurrencyWarning } from "@/core/ocr/receipt-currency";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptureImage, pickerRecovery } from "@/core/ocr/capture-storage";
 import type { CaptureSnapshot } from "@/core/ocr/capture-journal";
@@ -57,8 +58,10 @@ export default function CaptureReceiptScreen() {
   const [isQueueingFallback, setIsQueueingFallback] = useState(false);
   const [fallbackStatus, setFallbackStatus] = useState<string | null>(null);
   const [rawText, setRawText] = useState<string | null>(null);
+  const [currencyEvidence, setCurrencyEvidence] = useState<string | null>(null);
   const [lineItems, setLineItems] = useState<ReceiptDraftLine[]>([]);
   const [purchasedAt, setPurchasedAt] = useState(() => receiptCaptureDate(params.date, null));
+  const [hasObservedDate, setHasObservedDate] = useState(() => Boolean(params.date));
   const [provider, setProvider] = useState<"ml-kit" | "pp-ocr" | "manual">("manual");
   const [fallbackStoragePath, setFallbackStoragePath] = useState<string | null>(null);
   const [attachReceipt, setAttachReceipt] = useState(true);
@@ -69,9 +72,11 @@ export default function CaptureReceiptScreen() {
   const [hasDraft, setHasDraft] = useState(false);
   const captureRef = useRef<{ id: string; imageRef: string } | null>(null);
   const imageGeneration = useRef(0);
+  const pickerBusy = useRef(false);
   const mounted = useRef(true);
   const activeOwner = useRef(ownerId);
   const receiptEligible = useMemo(() => hasDraft && !isRecognizing && canAttachReceipt({ rawText }), [hasDraft, isRecognizing, rawText]);
+  const currencyWarning = useMemo(() => receiptCurrencyWarning(rawText) ?? currencyEvidence, [rawText, currencyEvidence]);
 
   useFocusEffect(useCallback(() => {
     setCameraOpen(true); setIsRecognizing(false); setIsQueueingFallback(false);
@@ -94,6 +99,7 @@ export default function CaptureReceiptScreen() {
       if (!active || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       setCameraOpen(true); setHasDraft(false); setImageUri(null);
       setTitle(""); setAmount(""); setRawText(null); setLineItems([]);
+      setCurrencyEvidence(null);
       setIsRecognizing(false); setIsQueueingFallback(false); setIsContinuing(false);
       setNeedsFallback(false); setLocalConfidence(0); setProvider("manual");
       setFallbackStatus(null); setFallbackStoragePath(null); setMessage(null);
@@ -175,14 +181,17 @@ export default function CaptureReceiptScreen() {
     setNeedsFallback(false);
     setLocalConfidence(0);
     setRawText(null);
+    setCurrencyEvidence(null);
     setLineItems([]);
     setPurchasedAt(receiptCaptureDate(explicitDate.current, null));
+    setHasObservedDate(Boolean(explicitDate.current));
     setProvider("manual");
 
     try {
       const result = await recognizeReceipt(uri, controller.signal);
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       const { draft } = result;
+      setCurrencyEvidence(receiptCurrencyWarning(draft.rawText));
       if (!canAttachReceipt(draft)) {
         setRawText(draft.rawText || null);
         setAttachReceipt(false);
@@ -195,6 +204,7 @@ export default function CaptureReceiptScreen() {
       setRawText(draft.rawText || null);
       setLineItems(draft.lineItems);
       setPurchasedAt(receiptCaptureDate(explicitDate.current, draft.date));
+      setHasObservedDate(Boolean(explicitDate.current || draft.date));
       setProvider("ml-kit");
       if (draft.merchant) setTitle(draft.merchant);
       if (draft.amount) setAmount(String(draft.amount));
@@ -215,7 +225,10 @@ export default function CaptureReceiptScreen() {
   }
 
   async function choose(source: "camera" | "library") {
-    if (isContinuing || isRecognizing || isQueueingFallback) return;
+    if (pickerBusy.current || isContinuing || isRecognizing || isQueueingFallback) return;
+    // A ref closes the gap before React renders or the native picker returns.
+    // Rapid taps must not launch competing native activities or recovery rows.
+    pickerBusy.current = true;
     const generation = imageGeneration.current;
     let pickerOperation: string | null = null;
     // Keep the current draft intact until a new image was actually selected.
@@ -259,6 +272,7 @@ export default function CaptureReceiptScreen() {
       Alert.alert("Quét hóa đơn", errorMessage);
     } finally {
       if (ownerId && pickerOperation) await pickerRecovery.complete(ownerId, pickerOperation).catch(() => undefined);
+      pickerBusy.current = false;
     }
   }
 
@@ -311,14 +325,22 @@ export default function CaptureReceiptScreen() {
                 if (!current()) return;
                 if (completed.status === "completed" && completed.result) {
                   const parsed = parseServerOcrResult(completed.result);
+                  // Missing currency in a second reading cannot clear evidence
+                  // already observed on this image while local amounts survive.
+                  setCurrencyEvidence(current => current ?? receiptCurrencyWarning(parsed.rawText));
                   // A late server result is a suggestion, not permission to
                   // overwrite edits made during polling or after restart.
                   if (parsed.merchant) setTitle(current => current === baseline.title ? parsed.merchant! : current);
                   if (parsed.amount) setAmount(current => current === baseline.amount ? String(parsed.amount) : current);
                   setRawText(parsed.rawText || null);
                   setLineItems(parsed.lineItems);
-                  setPurchasedAt(current => current === baseline.purchasedAt
-                    ? receiptCaptureDate(explicitDate.current, parsed.date) : current);
+                  // Fill only an unobserved default. A missing/late server date
+                  // must not replace local OCR evidence or a user's edit.
+                  if (parsed.date && !hasObservedDate && !explicitDate.current) {
+                    setPurchasedAt(current => current === baseline.purchasedAt
+                      ? receiptCaptureDate(null, parsed.date) : current);
+                    setHasObservedDate(true);
+                  }
                   setProvider("pp-ocr");
                   setLocalConfidence(parsed.confidence ?? 0);
                   setNeedsFallback(parsed.needsReview);
@@ -360,6 +382,7 @@ export default function CaptureReceiptScreen() {
 
   async function continueToTransaction() {
     if (isContinuing || isRecognizing || isQueueingFallback) return;
+    if (currencyWarning) { setMessage(currencyWarning); return; }
     if (!receiptEligible) { setMessage("Ảnh chưa được nhận diện là hóa đơn. Hãy chụp lại hoặc chọn ảnh khác."); return; }
     const generation = imageGeneration.current;
     if (!imageUri) {
@@ -487,9 +510,11 @@ export default function CaptureReceiptScreen() {
 
 
 
+        {currencyWarning && <Text role="alert" style={styles.message}>{currencyWarning}</Text>}
         {receiptEligible && <>
-        <Text style={styles.label}>Ngày hóa đơn</Text>
-        <TextInput date accessibilityLabel="Ngày hóa đơn" value={calendarReceiptDay({ purchasedAt }) ?? ""} onChangeText={(day) => { explicitDate.current = receiptCalendarDate(day); setPurchasedAt(receiptCaptureDate(day, null)); }} style={styles.input} />
+
+        <Text style={styles.label}>{typeof hasObservedDate === "boolean" && !hasObservedDate ? "Ngày hóa đơn (chưa đọc được trên ảnh — tạm điền hôm nay)" : "Ngày hóa đơn"}</Text>
+        <TextInput date accessibilityLabel="Ngày hóa đơn" value={calendarReceiptDay({ purchasedAt }) ?? ""} onChangeText={(day) => { explicitDate.current = receiptCalendarDate(day); setHasObservedDate(Boolean(explicitDate.current)); setPurchasedAt(receiptCaptureDate(day, null)); }} style={styles.input} />
         <Text style={styles.label}>Tên cửa hàng / nội dung</Text>
         <TextInput
           accessibilityLabel="Tên cửa hàng hoặc nội dung hóa đơn"
@@ -500,7 +525,7 @@ export default function CaptureReceiptScreen() {
           placeholderTextColor={colors.muted}
           style={styles.input}
         />
-        <Text style={styles.label}>Tổng tiền</Text>
+        <Text style={styles.label}>{currencyWarning ? "Số tiền đọc được (chưa xác nhận tiền tệ)" : "Tổng tiền (VND)"}</Text>
         <TextInput money
           accessibilityLabel="Tổng tiền hóa đơn"
           editable={receiptEligible}
@@ -524,7 +549,7 @@ export default function CaptureReceiptScreen() {
         {lineItems.map((item, index) => (
           <View key={`${index}-${item.name}`}>
             <Text style={styles.label}>{item.name}</Text>
-            <Text style={styles.metric}>Số lượng: {item.quantity} · Đơn giá: {formatMoney(item.unitPrice, "vi", "VND")} · Thành tiền: {formatMoney(item.total, "vi", "VND")}</Text>
+            <Text style={styles.metric}>Số lượng: {item.quantity} · Đơn giá: {currencyWarning ? String(item.unitPrice) : formatMoney(item.unitPrice, "vi", "VND")} · Thành tiền: {currencyWarning ? String(item.total) : formatMoney(item.total, "vi", "VND")}</Text>
             {item.confidence < 0.7 && <Text style={styles.message}>Số lượng hoặc đơn giá chưa chắc chắn. Hãy đối chiếu ảnh.</Text>}
           </View>
         ))}
@@ -573,10 +598,10 @@ export default function CaptureReceiptScreen() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ busy: isContinuing, disabled: !receiptEligible || isContinuing || isQueueingFallback }}
-          disabled={!receiptEligible || isContinuing || isQueueingFallback}
+          accessibilityState={{ busy: isContinuing, disabled: !receiptEligible || !!currencyWarning || isContinuing || isQueueingFallback }}
+          disabled={!receiptEligible || !!currencyWarning || isContinuing || isQueueingFallback}
           onPress={() => void continueToTransaction()}
-          style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
+          style={[styles.primary, (isRecognizing || !!currencyWarning || isContinuing || isQueueingFallback) && styles.disabled]}
         >
           {isContinuing ? (
             <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.onPrimary} />

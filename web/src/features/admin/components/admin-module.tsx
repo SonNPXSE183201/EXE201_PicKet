@@ -143,7 +143,7 @@ function DataTable({
           {data.map((row, i) => (
             <tr key={String(row.id ?? i)}>
               {Object.keys(fields).map((key) => (
-                <td key={key}>
+                <td key={key} data-label={fields[key]}>
                   {key === "email" && row.id ? (
                     <Link
                       href={`/admin/users?userId=${encodeURIComponent(String(row.id))}`}

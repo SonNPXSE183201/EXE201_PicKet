@@ -42,8 +42,8 @@ export function TopAppBar({ title, subtitle, back = true, action, backDisabled =
 }
 
 export function MenuRow({ title, description, icon, illustration, onPress, disabled = false }: { title: string; description?: string; icon: IconName; illustration?: PaperAssetId; onPress(): void; disabled?: boolean }) {
-  const { colors, styles } = useMobileStyles(createStyles);
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}>{illustration ? <PaperArt id={illustration} style={{ width: 36, height: 36 }} /> : <View style={styles.menuIcon}><AppIcon name={icon} size={22} /></View>}<View style={{ flex: 1 }}><Text style={styles.menuTitle}>{title}</Text>{description && <Text style={styles.menuDescription}>{description}</Text>}</View><AppIcon name="chevron-right" color={colors.muted} size={20} /></Pressable>;
+  const { styles } = useMobileStyles(createStyles);
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}>{illustration ? <PaperArt id={illustration} style={{ width: 36, height: 36 }} /> : <View style={styles.menuIcon}><AppIcon name={icon} size={22} /></View>}<View style={{ flex: 1 }}><Text style={styles.menuTitle}>{title}</Text>{description && <Text style={styles.menuDescription}>{description}</Text>}</View></Pressable>;
 }
 
 export function ConnectionNotice({ hasData, onRetry }: { hasData: boolean; onRetry(): void }) {
@@ -105,7 +105,7 @@ export function EmptyState({ title, description, action, onAction, symbol = "✦
   return (
     <Surface style={styles.emptyState}>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.emptyIcon}>
-        <PaperArt id={illustration ?? (symbol === "◌" ? "shopping" : "bloom")} style={{ width: 64, height: 64 }} />
+        <PaperArt id={illustration ?? (symbol === "◌" ? "shopping" : symbol === "▤" || symbol === "✓" ? "bills" : "empty")} style={{ width: 72, height: 72 }} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       <Text style={styles.emptyDescription}>{description}</Text>

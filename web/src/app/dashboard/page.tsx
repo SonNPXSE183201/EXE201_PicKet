@@ -1,4 +1,5 @@
 import { formatVnd } from "@picket/domain";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireApiSession } from "@/core/auth/require-api-session";
@@ -62,34 +63,44 @@ export default async function DashboardPage({
           <h1>Tài chính của bạn</h1>
         </header>
         <section className="overview-balance" aria-label="Tổng số dư">
-          <p>Tổng số dư · {profile.currencyCode}</p>
-          <strong>
-            {money(
-              currencyAccounts
-                .filter((a) => !a.archived && !a.deletedAt)
-                .reduce((sum, a) => sum + (balances[a.id] ?? 0), 0),
+          <div className="overview-balance-content">
+            <p className="overview-balance-label">Tổng số dư · {profile.currencyCode}</p>
+            <strong>
+              {money(
+                currencyAccounts
+                  .filter((a) => !a.archived && !a.deletedAt)
+                  .reduce((sum, a) => sum + (balances[a.id] ?? 0), 0),
+              )}
+            </strong>
+            <Link href="/accounts" className="overview-balance-wallets">
+              <Icon name="wallet" />
+              <span>{accounts.filter((a) => !a.archived && !a.deletedAt).length} ví của bạn</span>
+            </Link>
+            {accounts.some((a) => a.currencyCode !== profile.currencyCode) && (
+              <p className="overview-balance-note">
+                Các ví khác tiền tệ được hiển thị riêng tại mục Ví, không cộng
+                chung hoặc tự quy đổi.
+              </p>
             )}
-          </strong>
-          <Link href="/accounts">
-            {accounts.filter((a) => !a.archived && !a.deletedAt).length} ví của
-            bạn
-          </Link>
-          {accounts.some((a) => a.currencyCode !== profile.currencyCode) && (
-            <p>
-              Các ví khác tiền tệ được hiển thị riêng tại mục Ví, không cộng
-              chung hoặc tự quy đổi.
-            </p>
-          )}
+          </div>
+          <Image
+            src="/paper/picket-money-bloom-v2.png"
+            alt=""
+            width={120}
+            height={120}
+            priority
+            className="overview-balance-art"
+          />
         </section>
         <nav className="overview-period" aria-label="Chọn tháng">
           <Link href={"/dashboard?month=" + shift(-1)} aria-label="Tháng trước">
-            ‹
+            <Icon name="arrowLeft" />
           </Link>
           <span>
             Tháng {Number(month.slice(5))}, {month.slice(0, 4)}
           </span>
           <Link href={"/dashboard?month=" + shift(1)} aria-label="Tháng sau">
-            ›
+            <Icon name="arrowRight" />
           </Link>
         </nav>
         <section className="overview-summary" aria-label="Thu chi tháng">
@@ -125,9 +136,20 @@ export default async function DashboardPage({
             <Link href="/transactions">Xem tất cả</Link>
           </div>
           {!recent.length ? (
-            <p className="empty-state">
-              Chưa có giao dịch. Thêm khoản thu hoặc chi đầu tiên của bạn.
-            </p>
+            <div className="empty-state">
+              <Image
+                src="/paper/state-empty-wallet-v1.png"
+                alt=""
+                width={84}
+                height={84}
+                className="empty-state-art"
+              />
+              <h3>Chưa có giao dịch phù hợp</h3>
+              <p>Thử thay đổi bộ lọc hoặc ghi một khoản thu, chi mới.</p>
+              <Link className="button primary" href="/transactions#new">
+                Thêm giao dịch
+              </Link>
+            </div>
           ) : (
             recent.map((row) => (
               <div className="data-row" key={row.id}>

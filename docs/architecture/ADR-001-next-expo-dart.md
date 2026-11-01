@@ -1,7 +1,7 @@
 # ADR-001: Next.js, Expo và Dart là stack đích
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Các phiên bản và trạng thái phát hành thuộc nguồn trạng thái chung, không lấy từ ADR này.
 
 - Trạng thái: Accepted — Android cutover completed 2026-10-15
 - Ngày: 2026-10-08

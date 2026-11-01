@@ -1,7 +1,7 @@
 # Kiến trúc Picket
 
 <!-- project-status-link -->
-> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+> Đồng bộ tài liệu 01/11/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
 
 Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](PROJECT_STATUS.md). Landing APK là static site riêng (`apps/landing`), không thay Next.js; Android kiểm tra manifest HTTPS và xác minh APK native trước khi mở xác nhận cài đặt hệ thống.
 

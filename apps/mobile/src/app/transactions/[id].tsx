@@ -8,7 +8,7 @@ import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Alert, Image, StyleSheet } from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routes";
@@ -18,6 +18,8 @@ import { getGuestReceipt } from "@/core/receipts/guest-receipt-store";
 import type { GuestReceipt } from "@/core/receipts/guest-receipt-model";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { Surface, FieldLabel, ChoiceChip, TopAppBar } from "@/core/ui/picket-ui";
+import { PaperArt } from "@/core/ui/paper-art";
+import { categoryArt } from "@/core/theme/category-art";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 import { buildTransactionEditRequest } from "@/features/transactions/transaction-edit-request";
@@ -143,9 +145,20 @@ export default function TransactionDetailScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TopAppBar title={tx("Sửa giao dịch")} backDisabled={busy} />
         <Surface peach style={styles.editorCard}>
-        <Text style={transaction.kind === "income" ? styles.income : styles.expense}>
-          {transaction.kind === "income" ? tx("Khoản thu") : tx("Khoản chi")}
-        </Text>
+          <View style={styles.headerRow}>
+            <View style={styles.artBadge}>
+              <PaperArt id={categoryArt(categories.find(c => c.id === currentCategoryId)?.icon ?? null, categories.find(c => c.id === currentCategoryId)?.name || currentTitle)} style={{ width: 36, height: 36 }} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={transaction.kind === "income" ? styles.income : styles.expense}>
+                {transaction.kind === "income" ? tx("Khoản thu") : tx("Khoản chi")}
+              </Text>
+              <Text style={styles.headerAmount}>
+                {transaction.kind === "expense" ? "− " : transaction.kind === "transfer" ? "" : "+ "}
+                {money(Number(currentAmount))}
+              </Text>
+            </View>
+          </View>
         <FieldLabel>{tx("Nội dung")}</FieldLabel>
         <TextInput accessibilityLabel={tx("Nội dung giao dịch")} editable={editable} placeholder={tx("Nội dung")} placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentTitle} onChangeText={setTitle} />
         <FieldLabel>{tx("Số tiền")}</FieldLabel>
@@ -175,6 +188,9 @@ export default function TransactionDetailScreen() {
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   editorCard: { padding: 16 },
+  headerRow: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 12 },
+  artBadge: { width: 50, height: 50, borderRadius: 16, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
+  headerAmount: { color: colors.ink, fontSize: 24, fontWeight: "800", fontVariant: ["tabular-nums"] },
   safeArea: { backgroundColor: colors.cream, flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
   content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
