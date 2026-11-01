@@ -1,5 +1,6 @@
 import { SubmitButton } from "@/core/ui/submit-button";
 import { formatVnd } from "@picket/domain";
+import Image from "next/image";
 import Link from "next/link";
 
 import { requireApiSession } from "@/core/auth/require-api-session";
@@ -327,10 +328,20 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
             </article>
           ))}
           {transactions.length === 0 && (
-            <p className="empty-state">
-              Không có giao dịch phù hợp. Thử thay đổi bộ lọc hoặc tạo giao dịch
-              mới.
-            </p>
+            <div className="empty-state">
+              <Image
+                src="/paper/state-empty-wallet-v1.png"
+                alt=""
+                width={84}
+                height={84}
+                className="empty-state-art"
+              />
+              <h3>Chưa có giao dịch phù hợp</h3>
+              <p>Thử thay đổi bộ lọc hoặc ghi một khoản thu, chi mới.</p>
+              <a className="button primary" href="#new">
+                Thêm giao dịch
+              </a>
+            </div>
           )}
           <nav className="pagination" aria-label="Trang giao dịch">
             {page > 1 ? (

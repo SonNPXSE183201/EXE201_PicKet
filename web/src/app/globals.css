@@ -1,13 +1,33 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: Nunito;
+  src: url("/auth-paper/nunito-400.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Nunito;
+  src: url("/auth-paper/nunito-700.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
-  --cream: #fff8f0;
-  --peach: #ffd6ba;
-  --coral: #ffb4a2;
-  --mauve: #96606d;
-  --ink: #4a2c2a;
-  --muted: #806268;
-  --income: #147d62;
+  --cream: #fff8ed;
+  --surface: #fffcf5;
+  --sidebar: #f6eddf;
+  --peach: #fde6d8;
+  --coral: #fce8e4;
+  --mint: #dcebd7;
+  --pocket-lilac: #e8daee;
+  --mauve: #793268;
+  --mauve-hover: #632654;
+  --ink: #302132;
+  --muted: #72636e;
+  --line: #eaddd5;
+  --border-control: #94818d;
+  --income: #116044;
   --expense: #bd3152;
 }
 
@@ -22,6 +42,7 @@ body {
   background: var(--cream);
   color: var(--ink);
   font-family:
+    Nunito,
     Inter,
     ui-sans-serif,
     system-ui,
@@ -156,28 +177,41 @@ h1 {
   margin-top: 34px;
 }
 .button {
-  min-height: 52px;
+  min-height: 44px;
   padding: 0 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 18px;
-  font-weight: 750;
+  border-radius: 999px;
+  font-weight: 700;
   transition:
     transform 160ms ease,
-    box-shadow 160ms ease;
+    box-shadow 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
 }
 .button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 .button.primary {
   background: var(--mauve);
   color: white;
-  box-shadow: 0 14px 30px rgb(150 96 109 / 22%);
+  border: 1px solid var(--mauve);
+  box-shadow: 0 4px 14px rgba(121, 50, 104, 0.22);
+}
+.button.primary:hover {
+  background: var(--mauve-hover);
+  border-color: var(--mauve-hover);
+  box-shadow: 0 6px 18px rgba(121, 50, 104, 0.28);
 }
 .button.secondary {
-  border: 1px solid rgb(74 44 42 / 14%);
-  background: rgb(255 255 255 / 58%);
+  border: 1.5px solid var(--border-control);
+  background: transparent;
+  color: var(--ink);
+}
+.button.secondary:hover {
+  background: rgba(121, 50, 104, 0.08);
+  border-color: var(--mauve);
 }
 .overview-card {
   padding: clamp(26px, 4vw, 40px);
@@ -1243,8 +1277,14 @@ button:disabled {
     font-size: 16px;
   }
   .actions,
-  .button {
+  .hero .button {
     width: 100%;
+  }
+  .nav .button {
+    width: auto;
+    min-height: 38px;
+    padding: 6px 18px;
+    font-size: 13.5px;
   }
   .dashboard-header {
     align-items: flex-start;

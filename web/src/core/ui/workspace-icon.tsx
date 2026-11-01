@@ -11,15 +11,17 @@ export function Icon({ name }: { name: string }) {
     grid: "M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z",
     shield: "m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6Zm-5 9 3 3 6-6",
     logout: "M9 3H3v18h6m4-5 5-4-5-4m-5 4h13",
+    arrowLeft: "M19 12H5m7 7-7-7 7-7",
+    arrowRight: "M5 12h14m-7-7 7 7-7 7",
   };
   return (
     <svg
       viewBox="0 0 24 24"
-      width="22"
-      height="22"
+      width="20"
+      height="20"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.8"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
