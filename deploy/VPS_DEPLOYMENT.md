@@ -54,9 +54,11 @@ chmod 600 deploy/.env.production
 openssl rand -hex 32
 ```
 
-Điền giá trị thật vào `deploy/.env.production`. `SUPABASE_SECRET_KEY` chỉ được
-Compose truyền vào `ocr-worker`; API, web và OCR provider không nhận secret này.
-Không commit file `.env.production`.
+Điền giá trị thật vào `deploy/.env.production`. Compose truyền
+`SUPABASE_SECRET_KEY` cho Dart API thực hiện PayOS/PIN/quản trị và các worker
+backend cần quyền server. Web/Expo và OCR provider không nhận secret này.
+Không commit file `.env.production`. Nếu VPS đã có file thật, giữ cấu hình đang
+chạy và chỉ bổ sung các biến mới; không ghi đè bằng file local chưa điền đầy đủ.
 
 Các giá trị `REPLACE_ME` trong file mẫu cố ý không hợp lệ. API/worker sẽ thoát
 ngay nếu bạn quên thay key, thay vì khởi động với cấu hình production giả.
@@ -142,3 +144,7 @@ docker compose -f compose.production.yml ps
 
 Không dùng tag `latest` cho production. Tag phiên bản giúp rollback bằng cách
 đổi lại bốn biến image và chạy lại `pull`/`up -d --no-build`.
+
+Worker profile `admin` có thể ghim riêng bằng `PICKET_ADMIN_WORKER_IMAGE`.
+Lượt PayOS/PIN ngày 04/11 đã deploy API/web/worker theo tag riêng và giữ Play
+Billing; xem [bằng chứng, backup và lưu ý rollback phiên PIN](../docs/PAYOS_PRODUCTION_DEPLOYMENT_20261104.md).

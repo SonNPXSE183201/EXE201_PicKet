@@ -107,4 +107,74 @@ class AdminService {
   }
 
   void close() => _client.close();
+
+  Future<Map<String, dynamic>> quickLoginRpc(
+    String name,
+    Map<String, dynamic> body,
+  ) async {
+    if (!{
+      'quick_login_save',
+      'quick_login_attempt',
+      'quick_login_finish',
+      'quick_login_lock',
+      'quick_login_revoke',
+    }.contains(name)) {
+      throw const FormatException('Invalid quick login operation.');
+    }
+    final response = await _client
+        .post(
+          config.supabaseUrl.resolve('/rest/v1/rpc/$name'),
+          headers: _headers,
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode >= 300) {
+      throw const GatewayException(503, 'Quick login unavailable.');
+    }
+    final result = jsonDecode(response.body);
+    if (result is! Map<String, dynamic>) {
+      throw const GatewayException(503, 'Quick login unavailable.');
+    }
+    return result;
+  }
+
+  Future<void> paymentRpc(String name, Map<String, dynamic> body) async {
+    if (!{
+      'payment_attach',
+      'payment_state',
+      'payment_receive',
+    }.contains(name)) {
+      throw const FormatException('Invalid payment operation.');
+    }
+    final response = await _client
+        .post(
+          config.supabaseUrl.resolve('/rest/v1/rpc/$name'),
+          headers: _headers,
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode >= 300) {
+      throw const GatewayException(502, 'Unable to persist payment result.');
+    }
+  }
+
+  Future<Map<String, dynamic>> reconciliationRpc(
+    String name,
+    Map<String, dynamic> body,
+  ) async {
+    if (!{'payment_reconcile_queue', 'payment_checked'}.contains(name)) {
+      throw const FormatException('Invalid reconciliation operation.');
+    }
+    final response = await _client
+        .post(
+          config.supabaseUrl.resolve('/rest/v1/rpc/$name'),
+          headers: _headers,
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode >= 300) {
+      throw const GatewayException(502, 'Reconciliation unavailable.');
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
 }

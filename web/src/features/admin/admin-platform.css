@@ -91,6 +91,20 @@
 .admin-platform p {
   line-height: 1.65;
 }
+.payment-admin .admin-filter label {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.payment-admin .admin-filter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.payment-admin input,
+.payment-admin select {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
 .admin-platform-header {
   display: flex;
   justify-content: space-between;

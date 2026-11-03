@@ -9,10 +9,16 @@ normalized domain tables. Supabase production migration history was synchronized
 
 ## Local development
 
-Set the variables shown in `.env.example`, then run:
+Điền file `apps/api/.env` theo `.env.example`. API đọc biến môi trường của
+process; nạp file vào PowerShell trước khi chạy (đoạn này không in giá trị key):
 
 ```powershell
-dart_frog dev
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^\s*([A-Z][A-Z0-9_]*)=(.*)$') {
+    [Environment]::SetEnvironmentVariable($matches[1], $matches[2], 'Process')
+  }
+}
+dart pub global run dart_frog_cli:dart_frog dev
 ```
 
 Endpoints:
@@ -69,15 +75,15 @@ API có Dockerfile multi-stage tại thư mục này. Builder pin Dart `3.12.0` 
 Dart Frog CLI `1.2.14`; runtime là image `scratch` chỉ chứa AOT executable và
 public assets, chạy bằng user không đặc quyền `65532:65532`.
 
-Tạo file `.env.production` từ `.env.production.example` và điền giá trị thật.
-File thật bị gitignore. Public API chỉ nhận Supabase publishable/anon key; không
-đưa `sb_secret_*` hoặc service-role JWT vào container này. OCR worker phải deploy
-riêng vì worker mới cần server secret.
+Dùng `deploy/.env.production` theo `deploy/.env.production.example` ở root
+repository. File thật bị gitignore. `SUPABASE_PUBLISHABLE_KEY` là public key;
+`SUPABASE_SECRET_KEY` là key backend riêng cho PayOS, PIN và các tác vụ quản trị.
+API/worker giữ server secret; không đưa secret vào web/Expo hoặc public bundle.
 
 ```powershell
 cd apps/api
 docker build -t picket-api:local .
-docker run --rm --env-file .env.production -p 8080:8080 picket-api:local
+docker run --rm --env-file ../../deploy/.env.production -p 8080:8080 picket-api:local
 ```
 
 Nền tảng container cần:

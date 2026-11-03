@@ -73,8 +73,16 @@ function createMockApiClient(): PicketApiClient {
       return { receipts: [] };
     },
     async currentEntitlements() {
-      return { tier: "free", ocrFallbackRemaining: 5, ocrFallbackDailyLimit: 5 };
+      return { tier: "free", ocrFallbackRemaining: 5, ocrFallbackDailyLimit: 5, ocrFallbackUsed:0 };
     },
+    async paymentCustomer() {return {catalog:[
+      {sku:'picket_plus_monthly',tier:'plus',months:1,amount:19000},
+      {sku:'picket_pro_monthly',tier:'pro',months:1,amount:39000},
+      {sku:'picket_plus_yearly',tier:'plus',months:12,amount:199000},
+      {sku:'picket_pro_yearly',tier:'pro',months:12,amount:499000},
+    ],orders:[]};},
+    async adminPayments() {return {total:0,series:[],orders:[],events:[]};},
+    async adminPermissions() {return {catalog:[{code:'revenue.read',description:'Xem doanh thu'}],rules:[],groups:[]};},
     async listBills() {
       return { bills: [] };
     },
@@ -107,9 +115,9 @@ export async function requireApiSession(
       accessToken: "mock-token",
       api: createMockApiClient(),
       claims: { sub: "mock-user-123", email: "son.nguyen@picket.vn" },
-      staff: false,
-      role: "user",
-      mfaVerified: true,
+      staff: workspace==='admin',
+      role: workspace==='admin'?'owner':"user",
+      mfaVerified: true, permissions: ['overview.read','revenue.read','payments.read','permissions.manage'],
     };
   }
 
@@ -139,6 +147,6 @@ export async function requireApiSession(
     claims: claimsData.claims,
     staff,
     role: access.role,
-    mfaVerified: access.mfaVerified,
+    mfaVerified: access.mfaVerified, permissions: access.permissions,
   };
 }

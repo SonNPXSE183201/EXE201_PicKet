@@ -1,4 +1,7 @@
 export const adminSections = {
+  revenue: { title: 'Doanh thu', href: '/admin/revenue', icon: 'chart' },
+  payments: { title: 'Giao dịch thanh toán', href: '/admin/payments', icon: 'wallet' },
+  permissions: { title: 'Phân quyền', href: '/admin/permissions', icon: 'shield' },
   overview: { title: "Tổng quan", href: "/admin", icon: "chart" },
   users: { title: "Người dùng", href: "/admin/users", icon: "person" },
   acquisition: {
@@ -39,44 +42,13 @@ export const adminSections = {
   exports: { title: "Xuất báo cáo", href: "/admin/exports", icon: "receipt" },
 } as const;
 export type AdminSection = keyof typeof adminSections;
-const roleSections: Record<string, readonly AdminSection[]> = {
-  operations: [
-    "overview",
-    "users",
-    "billing",
-    "ocr",
-    "health",
-    "releases",
-    "incidents",
-    "tickets",
-    "audit",
-    "settings",
-    "integrations",
-    "acquisition",
-    "engagement",
-    "security",
-  ],
-  support: ["overview", "users", "billing", "tickets", "audit", "security"],
-  analyst: [
-    "overview",
-    "acquisition",
-    "engagement",
-    "ocr",
-    "integrations",
-    "security",
-  ],
-  content: ["overview", "content", "partners", "security"],
-};
 export function canViewAdminSection(
   role: string | null,
   section: AdminSection,
+  permissions?: readonly string[],
 ) {
-  if (section === "exports")
-    return Boolean(
-      role &&
-        ["owner", "operations", "support", "analyst", "content"].includes(role),
-    );
-  return (
-    role === "owner" || Boolean(role && roleSections[role]?.includes(section))
-  );
+  // This page manages only the signed-in user's MFA, not security admin data.
+  if (permissions && section === 'security') return permissions.length > 0;
+  if (permissions) return permissions.includes(section === 'permissions' ? 'permissions.manage' : `${section}.read`);
+  return role === 'owner'; // Bootstrap compatibility only; normal calls pass database permissions.
 }

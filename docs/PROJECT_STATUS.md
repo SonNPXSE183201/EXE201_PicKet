@@ -1,6 +1,6 @@
 # Trạng thái hiện hành của Picket
 
-Cập nhật **01/11/2026, Asia/Saigon**. Đây là nguồn trạng thái chung cho mobile, web, API, Supabase và phát hành. [Mục lục tài liệu](README.md). Các báo cáo theo ngày giữ bằng chứng của lần chạy đó; danh sách pending cũ không tự động là backlog hiện tại.
+Cập nhật **04/11/2026, Asia/Saigon** cho API/web/Supabase; trạng thái cửa hàng vẫn theo readback ngày 01/11 được ghi riêng bên dưới. Đây là nguồn trạng thái chung cho mobile, web, API, Supabase và phát hành. [Mục lục tài liệu](README.md). Các báo cáo theo ngày giữ bằng chứng của lần chạy đó; danh sách pending cũ không tự động là backlog hiện tại.
 
 ## Phiên bản và môi trường
 
@@ -12,11 +12,11 @@ Cập nhật **01/11/2026, Asia/Saigon**. Đây là nguồn trạng thái chung 
 | Google Play closed testing (`alpha`) | 1.0.14/code 28 `completed`, rollout 100%. Có một Google Group cấu hình; số thành viên, opt-in và số ngày tham gia liên tục chưa xác minh. |
 | Google Play beta/production | Chưa có release. |
 | APKPure | Artifact universal 1.0.14/code 28, ký xác minh, 7 ảnh store đã chuẩn bị. Nộp/duyệt/phát hành trên portal chưa có readback hiện hành. |
-| Web production | `web-20261101-responsive-839e5cb-01` đã deploy; web container only, API/DB/OCR không đổi. User/admin đã kiểm tra bằng phiên thật, dữ liệu live, chế độ chỉ đọc. Xem [báo cáo deploy](../.artifacts/picket-web-prod-20261101/DEPLOYMENT.md). |
+| Web/API production | Web `rbac-mfa-20261103t204838z`, API/worker `payos-20261103t194746z`; PayOS/PIN/Play Billing bật. Đã nghiệm thu tiền thật 19.000đ/cấp Plus và phân quyền user/group/MFA/thu hồi trên API/web. OCR/Caddy không đổi. Xem [nghiệm thu RBAC/MFA](RBAC_PRODUCTION_ACCEPTANCE_20261104.md). |
 | Domain landing | https://picketfinance.com |
 | Domain web | https://app.picketfinance.com |
 | Domain Dart API | https://api.picketfinance.com |
-| Supabase | Project `qyokoyopodjtvfyunyde`; 51 migration sau cập nhật admin ngày 28/10 |
+| Supabase | Project `qyokoyopodjtvfyunyde`; 53 migration sau sửa mã lỗi revision ngày 04/11; backup có giao dịch thật và khôi phục diễn tập đã kiểm chứng |
 
 Thiết kế duy nhất: [PICKET-DESIGN.md](../PICKET-DESIGN.md). Danh sách việc còn mở: [BACKLOG](BACKLOG.md). [Readback Google Play, landing, APKPure artifact và web](migration/STORE_RELEASE_READBACK_20261101.md). Không dùng số liệu phiên bản trong báo cáo cũ làm hiện trạng. Bản máy ảo không thay thế nghiệm thu điện thoại ARM64 hoặc Play Billing.
 

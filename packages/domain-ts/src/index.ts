@@ -1,5 +1,6 @@
 export * from "./finance";
 export * from "./billing";
+export * from "./phone";
 export * from "./snapshot";
 
 export interface ApiHealth {

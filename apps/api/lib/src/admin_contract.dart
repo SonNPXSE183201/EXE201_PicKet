@@ -21,7 +21,7 @@ class AdminUserResource {
     final revision = json['revision'];
     final entryCount = json['entry_count'];
     if (id is! String ||
-        email is! String ||
+        (email != null && email is! String) ||
         createdAt is! String ||
         DateTime.tryParse(createdAt) == null ||
         (bannedUntil != null &&
@@ -34,7 +34,7 @@ class AdminUserResource {
     }
     return AdminUserResource(
       id: id,
-      email: email,
+      email: email as String? ?? '',
       createdAt: createdAt,
       bannedUntil: bannedUntil as String?,
       revision: revision as int?,

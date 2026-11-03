@@ -14,7 +14,7 @@ export function workspaceRedirect(
   )
     return null;
   const admin = pathname === "/admin" || pathname.startsWith("/admin/");
-  if (staff) return admin ? null : "/admin";
+  if (staff) return pathname === "/session" ? "/admin" : null;
   if (admin || pathname === "/session") return "/dashboard";
   return null;
 }

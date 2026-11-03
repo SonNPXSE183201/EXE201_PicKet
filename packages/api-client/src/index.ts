@@ -837,8 +837,30 @@ export class PicketApiClient {
     });
   }
 
-  accountAccess(accessToken: string): Promise<{staff: boolean; role: string | null; mobileAllowed: boolean; mfaVerified: boolean}> {
+  accountAccess(accessToken: string): Promise<{staff: boolean; role: string | null; mobileAllowed: boolean; mfaVerified: boolean; permissions: string[]}> {
     return this.request('/v1/account/access', {headers: this.authHeaders(accessToken)});
+  }
+
+  paymentCustomer(accessToken:string,id?:string):Promise<import('@picket/domain').PaymentCustomer> {
+    return this.request(`/v1/billing/payos/${id?`order?id=${encodeURIComponent(id)}`:'orders'}`,{headers:this.authHeaders(accessToken)});
+  }
+  paymentCheckout(accessToken:string,sku:string,key:string):Promise<import('@picket/domain').PaymentCustomer> {
+    return this.request('/v1/billing/payos/orders',{method:'POST',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},body:JSON.stringify({sku})});
+  }
+  paymentAction(accessToken:string,id:string,action:'refresh'|'cancel'):Promise<import('@picket/domain').PaymentCustomer> {
+    return this.request(`/v1/billing/payos/order?id=${encodeURIComponent(id)}`,{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({action})});
+  }
+  adminPayments<T=Record<string,unknown>>(accessToken:string,filters:Record<string,string>={}):Promise<T> {
+    return this.request(`/v1/admin/payments?${new URLSearchParams(filters)}`,{headers:this.authHeaders(accessToken)});
+  }
+  adminPermissions<T=Record<string,unknown>>(accessToken:string,userId?:string):Promise<T> {
+    return this.request(`/v1/admin/permissions${userId?`?userId=${encodeURIComponent(userId)}`:''}`,{headers:this.authHeaders(accessToken)});
+  }
+  updatePermission(accessToken:string,input:{userId:string;permission:string;allowed:boolean;expiresAt:string|null;revision:number;reason:string}):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/permissions',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(input)});
+  }
+  updatePermissionGroup(accessToken:string,body:Record<string,unknown>,reason:string):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/permission-groups',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({body,reason})});
   }
 
   adminAccountAction(accessToken: string,input:{action:string;userId:string;reason:string;requestId:string}):Promise<{updated:boolean}> {

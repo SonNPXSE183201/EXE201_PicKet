@@ -18,3 +18,13 @@ export interface PlayPurchaseVerification {
   tier: "free" | "plus" | "pro";
   expiresAt: string;
 }
+
+export interface PaymentOrder {
+  id:string; order_code:number; sku:string; tier:'plus'|'pro'; amount:number; currency:'VND';
+  status:'pending'|'paid'|'cancelled'|'expired'|'review'; payment_link_id:string|null;
+  checkout_url:string|null; qr_code:string|null; created_at:string; expires_at:string;
+}
+export interface PaymentCustomer {
+  catalog:{sku:string;tier:'plus'|'pro';months:1|12;amount:number}[];
+  orders:PaymentOrder[];
+}

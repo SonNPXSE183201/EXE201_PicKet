@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { passwordLoginCredentials } from '@picket/domain';
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
@@ -36,7 +37,7 @@ interface AuthContextValue {
   localMode: boolean;
   enterLocalMode(): Promise<void>;
   leaveLocalMode(): Promise<void>;
-  signIn(email: string, password: string): Promise<void>;
+  signIn(identifier: string, password: string): Promise<void>;
   signUp(email: string, password: string): Promise<boolean>;
   verifySignup(email: string, token: string): Promise<void>;
   resendSignup(email: string): Promise<void>;
@@ -176,11 +177,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         await SecureStore.setItemAsync(localModeStorageKey, "false");
         setLocalMode(false);
       },
-      async signIn(email, password) {
-        const { error } = await mutateAuth(() => requireClient().auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        }));
+      async signIn(identifier, password) {
+        const credentials = passwordLoginCredentials(identifier, password);
+        const { error } = await mutateAuth(() => requireClient().auth.signInWithPassword(credentials));
         if (error) throw error;
       },
       async signUp(email, password) {
