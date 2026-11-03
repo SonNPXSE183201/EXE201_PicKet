@@ -10,7 +10,7 @@ const db = new PGlite();
 await db.exec(
   `create role anon; create role authenticated; create role service_role bypassrls;
 create schema auth; create schema storage;
-create table auth.users(id uuid primary key,email text,created_at timestamptz default now(),banned_until timestamptz,email_confirmed_at timestamptz,last_sign_in_at timestamptz,raw_app_meta_data jsonb default '{}'::jsonb);
+create table auth.users(id uuid primary key,email text,phone text,phone_confirmed_at timestamptz,created_at timestamptz default now(),banned_until timestamptz,email_confirmed_at timestamptz,last_sign_in_at timestamptz,raw_app_meta_data jsonb default '{}'::jsonb);
 create table auth.sessions(id uuid primary key,user_id uuid references auth.users(id)on delete cascade);
 create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
 grant usage on schema auth to authenticated,anon,service_role;

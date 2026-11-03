@@ -40,7 +40,7 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
       await service.userAction(
         action as String,
         target,
-        prepared['email'] as String,
+        prepared['email'] as String? ?? '',
       );
       await service.rpc('admin_finish_auth', {
         'p_actor': actor,

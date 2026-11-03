@@ -1,9 +1,19 @@
 # Tài liệu Picket
 
-Cập nhật 01/11/2026. Bắt đầu bằng các nguồn hiện hành dưới đây; báo cáo theo ngày giữ bằng chứng lịch sử. Không commit credential, APK/AAB hoặc cache.
+Cập nhật 04/11/2026. Bắt đầu bằng các nguồn hiện hành dưới đây; báo cáo theo ngày giữ bằng chứng lịch sử. Không commit credential, APK/AAB hoặc cache.
 
 - [Trạng thái toàn dự án](PROJECT_STATUS.md)
 - [Việc còn mở và quyết định MVP](BACKLOG.md)
+- [Kế hoạch PayOS, SĐT + mật khẩu, Zalo OTP và phân quyền tùy chỉnh — 03/11/2026](PLAN_PAYOS_AUTH_RBAC_20261103.md)
+- [Triển khai PayOS, SĐT và phân quyền; SMS để lại — 04/11/2026](PAYOS_AUTH_RBAC_IMPLEMENTATION_20261104.md)
+- [Backup DB, diễn tập migration và chuẩn bị rollout PayOS — 04/11/2026](PAYOS_PRODUCTION_PREFLIGHT_20261104.md)
+- [PayOS, PIN và phân quyền đã deploy production — 04/11/2026](PAYOS_PRODUCTION_DEPLOYMENT_20261104.md)
+- [PayOS — đã nhận tiền thật và cấp Plus — 04/11/2026](PAYOS_LIVE_PAYMENT_ACCEPTANCE_20261104.md)
+- [Phân quyền tùy chỉnh/MFA — nghiệm thu production và sửa revision timeout — 04/11/2026](RBAC_PRODUCTION_ACCEPTANCE_20261104.md)
+- [Khảo sát nhà cung cấp SMS OTP Việt Nam, giá và cấu hình Supabase — 03/11/2026](SMS_OTP_PROVIDERS_VN_20261103.md)
+- [Nghiên cứu SpeedSMS cho developer cá nhân và Supabase OTP — 03/11/2026](SPEEDSMS_RESEARCH_20261103.md)
+- [Nghiên cứu OMICall và eSMS cho OTP cá nhân — 03/11/2026](OMICALL_ESMS_OTP_RESEARCH_20261103.md)
+- [Roadmap học tập cloud và các phần mở rộng sản phẩm — 02/11/2026](ROADMAP_CLOUD_FEATURES_20261102.md)
 - [Readback Google Play, landing, APKPure artifact và web production — 01/11/2026](migration/STORE_RELEASE_READBACK_20261101.md)
 - [Web production responsive và kiểm tra phiên thật — 01/11/2026](../.artifacts/picket-web-prod-20261101/DEPLOYMENT.md)
 - [APKPure build và store listing artifact — 01/11/2026](../.artifacts/apkpure-store-20261101/BUILD-AND-LISTING.txt)

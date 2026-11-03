@@ -16,7 +16,7 @@ reset role;
 select set_config('request.jwt.claim.sub','d1000000-0000-4000-8000-000000000002',true);
 set local role authenticated;
 do $$ begin
- if (public.account_access()->>'mobileAllowed')::boolean then raise exception 'staff mobile allowed'; end if;
+ if not (public.account_access()->>'mobileAllowed')::boolean then raise exception 'staff personal mobile denied'; end if;
  perform public.admin_portal('overview','{}');
  begin perform public.admin_portal('users','{}'); raise exception 'analyst PII allowed'; exception when insufficient_privilege then null; end;
  begin perform public.admin_mutate('ticket','{}','investigate support','11111111-1111-4111-8111-111111111100'); raise exception 'analyst mutation allowed'; exception when insufficient_privilege then null; end;
@@ -104,7 +104,7 @@ do $$ declare t uuid; a jsonb; begin
  begin
   perform public.admin_mutate('ticket',jsonb_build_object('id',t,'title','Stale','status','open','priority','normal','expectedVersion',1),'stale support request','11111111-1111-4111-8111-111111111121');
   raise exception 'stale update accepted';
- exception when serialization_failure then null;end;
+ exception when sqlstate 'PT409' then null;end;
 end $$;
 reset role;
 do $$ declare a jsonb;begin

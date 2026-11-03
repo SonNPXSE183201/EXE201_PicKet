@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/core/supabase/client";
 import { PasswordField } from "@/features/auth/components/password-field";
+import { passwordLoginCredentials } from "@picket/domain";
 
 interface LoginFormProps {
   initialError?: string;
@@ -22,20 +23,24 @@ export function LoginForm({ initialError }: LoginFormProps) {
     if (busy) return;
 
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "")
-      .trim()
-      .toLowerCase();
     const password = String(form.get("password") ?? "");
+    let credentials;
+    try {
+      credentials = passwordLoginCredentials(
+        String(form.get("identifier") ?? ""),
+        password,
+      );
+    } catch {
+      setMessage("Email hoặc số điện thoại không hợp lệ.");
+      return;
+    }
     setBusy(true);
     setMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword(credentials);
       if (error) {
-        setMessage("Email hoặc mật khẩu không đúng.");
+        setMessage("Email, số điện thoại hoặc mật khẩu không đúng.");
         setBusy(false);
         return;
       }
@@ -106,7 +111,7 @@ export function LoginForm({ initialError }: LoginFormProps) {
         Tiếp tục với Google
       </button>
       <div className="auth-divider">
-        <span>hoặc đăng nhập bằng email</span>
+        <span>hoặc đăng nhập bằng email / số điện thoại</span>
       </div>
 
       <form
@@ -116,14 +121,14 @@ export function LoginForm({ initialError }: LoginFormProps) {
         aria-describedby={message ? "login-message" : undefined}
       >
         <label>
-          Email
+          Email hoặc số điện thoại
           <input
-            autoComplete="email"
+            autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
-            name="email"
+            name="identifier"
             required
-            type="email"
+            type="text"
           />
         </label>
         <PasswordField />
@@ -138,6 +143,7 @@ export function LoginForm({ initialError }: LoginFormProps) {
       </form>
 
       <div className="auth-links">
+        <Link href="/login/pin">Mở khóa bằng PIN</Link>
         <Link href="/forgot-password">Quên mật khẩu?</Link>
         <Link href="/register">Chưa có tài khoản? Đăng ký</Link>
       </div>

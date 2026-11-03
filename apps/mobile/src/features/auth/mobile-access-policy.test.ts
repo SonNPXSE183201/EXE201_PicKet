@@ -5,7 +5,7 @@ import {
   cachedMobileAccessAllowed,
 } from "./mobile-access-policy";
 
-test("only explicit ordinary-user policy permits mobile", () => {
+test("only an explicit server allowance permits mobile", () => {
   assert.equal(
     mobileAccessAllowed({ staff: false, mobileAllowed: true }),
     true,
@@ -13,14 +13,14 @@ test("only explicit ordinary-user policy permits mobile", () => {
   for (const value of [
     null,
     {},
-    { staff: true, mobileAllowed: true },
+    { staff: true, mobileAllowed: false },
     { staff: false },
     { mobileAllowed: true },
   ]) {
     assert.equal(mobileAccessAllowed(value), false);
   }
 });
-test("offline allowance is bounded, owner-specific and never permits staff", () => {
+test("offline allowance is bounded and owner-specific", () => {
   const cache = { owner: "a", allowed: true, checkedAt: 1000 };
   assert.equal(cachedMobileAccessAllowed(cache, "a", 2000), true);
   for (const [item, owner, time] of [

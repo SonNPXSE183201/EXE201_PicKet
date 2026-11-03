@@ -74,6 +74,15 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       LEARNING_AI_ENABLED: ${LEARNING_AI_ENABLED:-false}
       GOOGLE_PLAY_BILLING_ENABLED: ${GOOGLE_PLAY_BILLING_ENABLED:-false}
+      PAYOS_ENABLED: ${PAYOS_ENABLED:-false}
+      PAYOS_CLIENT_ID: ${PAYOS_CLIENT_ID:-}
+      PAYOS_API_KEY: ${PAYOS_API_KEY:-}
+      PAYOS_CHECKSUM_KEY: ${PAYOS_CHECKSUM_KEY:-}
+      PAYOS_ACCOUNT_NUMBER: ${PAYOS_ACCOUNT_NUMBER:-}
+      PAYOS_RETURN_URL: https://${PICKET_WEB_DOMAIN}/billing/return
+      PAYOS_WORKER_SECRET: ${PAYOS_WORKER_SECRET:-}
+      QUICK_LOGIN_ENABLED: ${QUICK_LOGIN_ENABLED:-false}
+      QUICK_LOGIN_ENCRYPTION_KEY: ${QUICK_LOGIN_ENCRYPTION_KEY:-}
       SUPABASE_SECRET_KEY: ${SUPABASE_SECRET_KEY}
       ADMIN_TELEMETRY_ENABLED: ${ADMIN_TELEMETRY_ENABLED:-false}
     expose:
@@ -167,6 +176,7 @@ services:
   admin-worker:
     <<: *service-defaults
     profiles: [admin]
+    image: ${PICKET_ADMIN_WORKER_IMAGE:-picket-admin-worker:local}
     build:
       context: ./deploy/admin-worker
     environment:
@@ -178,6 +188,8 @@ services:
       ADMIN_SMTP_PROBE: ${ADMIN_SMTP_PROBE:-false}
       GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/play-reporting.json
       ADMIN_WORKER_INTERVAL: "300"
+      PAYOS_ENABLED: ${PAYOS_ENABLED:-false}
+      PAYOS_WORKER_SECRET: ${PAYOS_WORKER_SECRET:-}
     volumes:
       - caddy_logs:/logs:ro
       - admin_worker_state:/state

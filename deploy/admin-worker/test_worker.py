@@ -48,3 +48,23 @@ class BackupSourceTests(unittest.TestCase):
             self.assertIsNone(newest_database_backup(root))
             (root/'database.sql.gz').write_bytes(b'qa')
             self.assertIsNotNone(newest_database_backup(root))
+
+
+class PaymentReconciliationTests(unittest.TestCase):
+    def test_worker_uses_internal_api_and_never_creates_a_payment(self):
+        from unittest.mock import MagicMock
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"reconciled":1,"failed":0}'
+        with patch.dict(worker.os.environ, {'PAYOS_WORKER_SECRET': 'x' * 32}), patch.object(worker.urllib.request, 'urlopen', return_value=response) as send:
+            result = worker.reconcile_payos()
+            request = send.call_args.args[0]
+            self.assertEqual(request.full_url, 'http://api:8080/v1/billing/payos/reconcile')
+            self.assertEqual(request.get_method(), 'POST')
+            self.assertEqual(request.data, b'{}')
+            self.assertEqual(result['reconciled'], 1)
+
+    def test_missing_worker_secret_never_contacts_api(self):
+        with patch.dict(worker.os.environ, {'PAYOS_WORKER_SECRET': ''}), patch.object(worker.urllib.request, 'urlopen') as send:
+            with self.assertRaises(ValueError):
+                worker.reconcile_payos()
+            send.assert_not_called()

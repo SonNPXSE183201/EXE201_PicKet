@@ -230,6 +230,11 @@ def cycle():
     except (FileNotFoundError, ValueError):
         state = {}
     health()
+    if os.getenv('PAYOS_ENABLED') == 'true':
+        try:
+            reconcile_payos()
+        except Exception:
+            print('PayOS reconciliation unavailable; durable orders will be retried', flush=True)
     for source, run in [('google_play_installs', play_reports), ('apk_access', apk_logs), ('google_play_vitals', play_vitals), ('google_play_financial', play_financial)]:
         try:
             run(state)
@@ -242,6 +247,17 @@ def cycle():
     temporary = STATE.with_suffix('.tmp')
     temporary.write_text(json.dumps(state))
     os.replace(temporary, STATE)
+
+
+def reconcile_payos():
+    secret = os.environ['PAYOS_WORKER_SECRET']
+    if len(secret) < 32:
+        raise ValueError('Worker secret required')
+    request = urllib.request.Request(
+        'http://api:8080/v1/billing/payos/reconcile', b'{}',
+        {'authorization': f'Bearer {secret}', 'content-type': 'application/json'}, method='POST')
+    with urllib.request.urlopen(request, timeout=660) as response:
+        return json.loads(response.read(4096))
 
 
 if __name__ == '__main__':

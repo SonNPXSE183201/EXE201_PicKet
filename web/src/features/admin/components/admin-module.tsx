@@ -11,6 +11,7 @@ import {
 import { mutateAdmin, accountAction } from "../actions";
 import { AdminRecordForm } from "./admin-record-form";
 import { MfaPanel } from "./mfa-panel";
+import { PaymentAdmin } from './payment-admin';
 import { adminLabel } from "../admin-labels";
 import "../admin-platform.css";
 
@@ -40,7 +41,8 @@ function text(value: unknown): string {
 }
 const columns: Record<string, Record<string, string>> = {
   users: {
-    email: "Email",
+    phone: "Số điện thoại",
+    email: "Email cũ",
     created_at: "Ngày đăng ký",
     email_confirmed_at: "Xác minh email",
     last_sign_in_at: "Đăng nhập gần nhất",
@@ -49,6 +51,7 @@ const columns: Record<string, Record<string, string>> = {
     banned_until: "Khóa đến",
     role: "Quyền quản trị",
     play_tier: "Gói Play",
+    payos_tier: "Gói PayOS",
     grant: "Gói hỗ trợ",
   },
   billing: {
@@ -543,9 +546,9 @@ export async function AdminModule({
   searchParams?: Promise<Query>;
 }) {
   const query = (await searchParams) ?? {};
-  const { api, accessToken, role, mfaVerified } =
+  const { api, accessToken, role, mfaVerified, permissions } =
     await requireApiSession("admin");
-  if (!canViewAdminSection(role, section))
+  if (!canViewAdminSection(role, section, permissions))
     return (
       <main className="admin-platform">
         <h1>Không đủ quyền truy cập</h1>
@@ -566,6 +569,7 @@ export async function AdminModule({
         <MfaPanel />
       </main>
     );
+  if(section==='revenue'||section==='payments'||section==='permissions') return <PaymentAdmin section={section} query={query}/>;
   const days = ["7", "30", "90"].includes(query.days ?? "")
     ? Number(query.days)
     : 30;
@@ -678,7 +682,7 @@ export async function AdminModule({
               defaultValue={query.search}
               placeholder={
                 section === "users"
-                  ? "Email hoặc User ID"
+                  ? "Số điện thoại, email cũ hoặc User ID"
                   : "Tiêu đề hoặc thao tác"
               }
             />
@@ -766,7 +770,7 @@ export async function AdminModule({
               value={data.totalUsers}
               note="Tài khoản hiện có, không gồm nhân sự quản trị"
               href={
-                canViewAdminSection(role, "users") ? "/admin/users" : undefined
+                canViewAdminSection(role, "users", permissions) ? "/admin/users" : undefined
               }
             />
             <Kpi
@@ -774,11 +778,11 @@ export async function AdminModule({
               value={data.newUsers}
               note={`Kỳ tương đương trước: ${text(data.newUsersPrevious)}. So sánh cùng thời lượng đã trôi qua.`}
               href={
-                canViewAdminSection(role, "users") ? "/admin/users" : undefined
+                canViewAdminSection(role, "users", permissions) ? "/admin/users" : undefined
               }
             />
             <Kpi
-              label="Email đã xác minh"
+              label="Tài khoản đã xác minh"
               value={data.verifiedUsers}
               note="Tổng tài khoản hiện có đã xác minh, không gồm staff"
             />
@@ -809,7 +813,7 @@ export async function AdminModule({
           <DailyChart data={rows(data.dailyUsers)} />
           <div className="admin-shortcuts">
             {(Object.keys(adminSections) as AdminSection[])
-              .filter((s) => s !== "overview" && canViewAdminSection(role, s))
+              .filter((s) => s !== "overview" && canViewAdminSection(role, s, permissions))
               .filter((s) =>
                 [
                   "users",

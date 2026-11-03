@@ -6,6 +6,6 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { role } = await requireApiSession("admin");
-  return <WorkspaceShell admin adminRole={role}>{children}</WorkspaceShell>;
+  const { role, permissions } = await requireApiSession("admin");
+  return <WorkspaceShell admin adminRole={role} adminPermissions={permissions}>{children}</WorkspaceShell>;
 }

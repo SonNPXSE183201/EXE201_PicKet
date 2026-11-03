@@ -8,11 +8,12 @@ import 'package:picket_api/src/api_config.dart';
 import 'package:picket_api/src/authenticated_route.dart';
 import 'package:picket_api/src/supabase_gateway.dart';
 
-// Staff cannot access consumer business data, regardless of a spoofed client
-// header. Web administrators use the separately authorized admin endpoints.
+// Verify active/unlocked account access before consumer business routes.
+// Administrative capabilities do not remove personal application access.
 Handler middleware(Handler handler) => (context) async {
   final path = context.request.uri.path;
   if (path.startsWith('/v1/admin/') ||
+      path == '/v1/billing/payos/reconcile' ||
       path == '/v1/account/access' ||
       path == '/v1/telemetry') {
     return handler(context);
@@ -23,7 +24,7 @@ Handler middleware(Handler handler) => (context) async {
   try {
     final access = await gateway.accountAccess(token);
     if (access['mobileAllowed'] != true) {
-      return apiError(403, 'Staff accounts must use the admin website.');
+      return apiError(403, 'Application access is not allowed.');
     }
     final response = await handler(context);
     final metric = response.statusCode == 429 && path.startsWith('/v1/ocr')

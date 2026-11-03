@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/core/supabase/server";
 
-import { RegisterForm } from "./register-form";
+import Link from 'next/link';
 import { AuthShell } from "@/features/auth/components/auth-shell";
 
 export default async function RegisterPage() {
@@ -11,7 +11,7 @@ export default async function RegisterPage() {
   if (data?.claims) redirect("/dashboard");
   return (
     <AuthShell variant="register">
-      <RegisterForm />
+      <div className="auth-card"><h1>Đăng ký bằng số điện thoại</h1><p>Đăng ký tài khoản mới chưa sẵn sàng. Vui lòng quay lại sau.</p><Link href="/login">Đã có tài khoản? Đăng nhập</Link></div>
     </AuthShell>
   );
 }

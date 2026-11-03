@@ -6,6 +6,121 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /v1/billing/payos/orders:
+    get:
+      operationId: paymentCustomer
+      security: [{bearerAuth: []}]
+      summary: Enabled server catalog and up to 30 customer-owned orders
+      responses:
+        '200': {description: Catalog and owner-scoped orders}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+    post:
+      operationId: paymentCheckout
+      security: [{bearerAuth: []}]
+      summary: Reserve an idempotent order and create a verified PayOS checkout
+      parameters:
+        - {in: header, name: Idempotency-Key, required: true, schema: {type: string, minLength: 8, maxLength: 120}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [sku]
+              properties: {sku: {type: string}}
+      responses:
+        '200': {description: Customer catalog and orders; price and user taken from server}
+        '503': {description: Checkout disabled or unconfigured}
+  /v1/billing/payos/order:
+    parameters:
+      - {in: query, name: id, required: true, schema: {type: string, format: uuid}}
+    get:
+      operationId: paymentOrder
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Customer-owned order}
+        '404': {description: Missing or another customer's order}
+    post:
+      operationId: paymentAction
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action]
+              properties: {action: {enum: [refresh, cancel]}}
+      responses:
+        '200': {description: Verified provider status persisted; cancellation is not a refund}
+  /v1/billing/payos/webhook:
+    post:
+      operationId: payosWebhook
+      summary: Verify full signed data and atomically persist receipt and entitlement
+      responses:
+        '200': {description: Durable processing, duplicate or unknown/sample order acknowledged}
+        '400': {description: Invalid signature or event}
+        '502': {description: Persistence failed; provider must retry}
+  /v1/billing/payos/reconcile:
+    post:
+      operationId: payosReconcile
+      summary: Worker-secret authenticated batch reconciliation, up to 30 durable orders
+      responses:
+        '200': {description: Reconciled and failed counters}
+        '401': {description: Invalid worker secret}
+  /v1/admin/payments:
+    get:
+      operationId: adminPayments
+      security: [{bearerAuth: []}]
+      summary: Revenue requires revenue.read; order timeline requires payments.read
+      parameters:
+        - {in: query, name: view, schema: {enum: [revenue, orders]}}
+        - {in: query, name: period, schema: {enum: [day, month, year, custom]}}
+        - {in: query, name: from, schema: {type: string}}
+        - {in: query, name: to, schema: {type: string}}
+        - {in: query, name: bucket, schema: {enum: [day, month, year]}}
+        - {in: query, name: id, schema: {type: string, format: uuid}}
+        - {in: query, name: status, schema: {enum: [pending, paid, review, expired, cancelled]}}
+        - {in: query, name: before, schema: {type: string, format: date-time}}
+        - {in: query, name: beforeId, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: VND receipts grouped in Asia/Ho_Chi_Minh or bounded order timeline}
+        '403': {description: Missing capability}
+  /v1/admin/permissions:
+    get:
+      operationId: adminPermissions
+      security: [{bearerAuth: []}]
+      parameters:
+        - {in: query, name: userId, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: Catalog, custom groups and explicit user rules; permissions.manage required}
+    post:
+      operationId: updatePermission
+      security: [{bearerAuth: []}]
+      summary: Grant or deny a permission with expiry, expected revision and audit reason; MFA required
+      responses:
+        '200': {description: Saved rule}
+        '403': {description: Permission or MFA missing}
+        '409': {description: Stale revision}
+  /v1/admin/permission-groups:
+    post:
+      operationId: updatePermissionGroup
+      security: [{bearerAuth: []}]
+      summary: Save custom group permissions or assign/remove a user; permissions.manage and MFA required
+      responses:
+        '200': {description: Saved group or membership with audit}
+  /v1/account/quick-login:
+    post:
+      operationId: quickLogin
+      summary: Save and lock a recent authenticated session; unlock with browser token and six-digit PIN; revoke device
+      description: Save requires bearer token and current refresh token. Browser token is held in an HttpOnly cookie by the web server. Vault is encrypted server-side. Five attempts per 15 minutes; valid session and revocation checked on unlock. Returned tokens must never be logged or cached.
+      responses:
+        '200': {description: Device binding, refreshed session or revocation confirmation}
+        '401': {description: Invalid PIN or expired/revoked session}
+        '429': {description: Locked out or concurrent attempt}
+        '503': {description: PIN disabled or unconfigured}
   /v1/transaction-attempts/resolve:
     post:
       operationId: resolveTransactionAttempt

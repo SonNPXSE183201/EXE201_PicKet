@@ -16,7 +16,7 @@ const groups: { title: string; icon: string; sections: AdminSection[] }[] = [
   {
     title: "Khách hàng",
     icon: "person",
-    sections: ["users", "tickets", "billing"],
+    sections: ["users", "tickets", "billing", "revenue", "payments"],
   },
   {
     title: "Tăng trưởng",
@@ -32,15 +32,17 @@ const groups: { title: string; icon: string; sections: AdminSection[] }[] = [
   {
     title: "Hệ thống",
     icon: "grid",
-    sections: ["integrations", "audit", "staff", "settings", "exports"],
+    sections: ["integrations", "audit", "staff", "permissions", "settings", "exports"],
   },
 ];
 export function AdminWorkspaceShell({
   children,
   role,
+  permissions,
 }: {
   children: ReactNode;
   role: string | null;
+  permissions: readonly string[];
 }) {
   const path = usePathname(),
     account = useRef<HTMLDetailsElement>(null),
@@ -67,7 +69,7 @@ export function AdminWorkspaceShell({
   }
   const navigation = (prefix: string) => (
     <nav aria-label={prefix === "desktop" ? "Quản trị" : "Điều hướng quản trị"}>
-      <Link
+      {canViewAdminSection(role,'overview',permissions) && <Link
         className="admin-nav-overview"
         href="/admin"
         aria-current={current === "overview" ? "page" : undefined}
@@ -75,10 +77,10 @@ export function AdminWorkspaceShell({
       >
         <Icon name="home" />
         <span>Tổng quan</span>
-      </Link>
+      </Link>}
       {groups.map((group) => {
         const sections = group.sections.filter((s) =>
-          canViewAdminSection(role, s),
+          canViewAdminSection(role, s, permissions),
         );
         if (!sections.length) return null;
         return (

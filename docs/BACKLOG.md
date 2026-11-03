@@ -1,6 +1,6 @@
 # Công việc còn mở
 
-Cập nhật 01/11/2026. [Hiện trạng](PROJECT_STATUS.md) · [Readback cửa hàng](migration/STORE_RELEASE_READBACK_20261101.md) · [Thiết kế duy nhất](../PICKET-DESIGN.md) · [Báo cáo OCR](migration/MOBILE_OCR_EXPANDED_20261028.md).
+Cập nhật 04/11/2026. [Hiện trạng](PROJECT_STATUS.md) · [Readback cửa hàng](migration/STORE_RELEASE_READBACK_20261101.md) · [Roadmap học tập cloud và các phần mở rộng](ROADMAP_CLOUD_FEATURES_20261102.md) · [Thiết kế duy nhất](../PICKET-DESIGN.md) · [Báo cáo OCR](migration/MOBILE_OCR_EXPANDED_20261028.md).
 
 Đây là backlog hiện hành; không cộng lại mọi dòng “pending” trong checkpoint cũ. Phân biệt code đã có nhưng chưa nghiệm thu, tính năng chưa có và việc chủ động hoãn. Build, ảnh UI hoặc test source không thay thế nghiệm thu thiết bị/người dùng thật.
 
@@ -20,13 +20,14 @@ Cập nhật 01/11/2026. [Hiện trạng](PROJECT_STATUS.md) · [Readback cửa 
 - Backup/restore kèm ảnh: native round-trip, sai mật khẩu/file lỗi/giới hạn ảnh/lỗi giữa chừng. Codec tests không thay ca native.
 - Hai thiết bị: media receipt/keepsake, cache và thay đổi đồng thời. CRUD offline/A→B→A và native conflict merge đã có bằng chứng, không coi toàn bộ sync chưa làm.
 - Thông báo: ngưỡng ngân sách, đọc/ẩn, đổi lịch từ nơi khác, hoạt động nền trên thiết bị thật.
-- Admin mới đã triển khai và kiểm thử theo [báo cáo 28/10](migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md). Còn nghiệm thu owner/MFA thật, luồng native staff online end-to-end và nguồn Play/vitals/sales khi nền tảng có quyền/báo cáo. Không bật bảo trì hoặc khóa user thật để thử.
+- Admin đã triển khai và nghiệm thu thêm owner/MFA, phân quyền user/group và thu hồi trên production theo [báo cáo 04/11](RBAC_PRODUCTION_ACCEPTANCE_20261104.md). Còn luồng native staff online end-to-end và nguồn Play/vitals/sales khi nền tảng có quyền/báo cáo. Không bật bảo trì hoặc khóa user thật để thử.
 - Ma trận dữ liệu: thống kê với income/refund/split/lịch sử lớn; bulk conflict/network/validation/tập lớn; UI từ chối thay đổi tháng đóng; điều kiện gói/ngày của partner notice.
 
 ## Chờ quyết định hoặc ngoài MVP hiện tại
 
 | Việc | Quyết định hiện tại |
 | --- | --- |
+| PayOS, SĐT và quyền tùy chỉnh | API/web/worker, PayOS/PIN đã deploy; tiền thật 19.000đ/cấp Plus và phân quyền user/group/MFA/thu hồi đã nghiệm thu. Còn APK native mới. SMS/OTP cùng đăng ký/khôi phục/đổi SĐT hoãn; giữ email/mật khẩu và Google cho tài khoản cũ. Xem [nghiệm thu RBAC/MFA](RBAC_PRODUCTION_ACCEPTANCE_20261104.md) |
 | Billing | Bốn SKU test verified/Publisher-acknowledged. Cancel/expiry/refund/decline/offline recovery/owner rejection/grace/hold/recovery và RTDN tương ứng đã kiểm chứng. Pending native không áp dụng cho auto-renew; còn live replay bị approval chặn; xem báo cáo 28/10 |
 | Nội dung học cloud | VI/EN biên tập 2 đã có trong code 20; còn review độc lập/pilot và quyết định publish. Cloud hiện không có bài published |
 | Cloud grading trả phí | Hoãn ngoài MVP. Không bật AI cá nhân hoặc truyền câu trả lời local lên cloud chỉ để đóng checklist |
@@ -42,7 +43,7 @@ Cập nhật 01/11/2026. [Hiện trạng](PROJECT_STATUS.md) · [Readback cửa 
 - Landing, Play Internal và Play closed alpha đã đọc lại ở 1.0.14/code 28; alpha/Internal completed 100%. Beta và production Google Play chưa có release. APKPure code 28 mới xác nhận ở mức artifact local, chưa xác minh trạng thái portal.
 - Paper mobile, asset, sign-out/updater/guest splits; landing motion/footer/CTA và điều hướng sạch URL đã triển khai theo phản hồi.
 - SMTP đã đổi sang Picket Production `<picketfinance@gmail.com>`, email recovery tới inbox thật đạt.
-- Supabase đã đồng bộ 51 migration; không cần chạy lại migration chỉ để đồng bộ tài liệu.
+- Supabase đã đồng bộ 53 migration sau sửa lỗi revision ngày 04/11; không cần chạy lại migration chỉ để đồng bộ tài liệu.
 - Dọn output build và hợp nhất design thuộc lượt repository sync hiện tại, theo [báo cáo](migration/REPOSITORY_SYNC_20261027.md).
 
 Checkpoint Billing code 22 được bổ sung bởi [nghiệm thu ngày 28/10](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md). Không còn gate Publisher ack/cancel/refund/grace/hold; pending native không áp dụng cho danh mục auto-renew; live replay còn bị approval chặn.

@@ -36,7 +36,7 @@ function harness(){
   "@/features/billing/restore-results":{verifyRestoredPurchases:async(purchases:unknown[],verify:(p:unknown)=>Promise<boolean>)=>{let count=0;for(const purchase of purchases)if(await verify(purchase))count++;return {verified:count,failed:purchases.length-count};}},
  };
  const exports:{Content?:(props:{accessToken:string;userId:string})=>unknown}={};
- vm.runInNewContext(ts.transpileModule(readFileSync("src/app/billing.tsx","utf8")+'\nexports.Content=BillingContent;',{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},AbortController});
+ vm.runInNewContext(ts.transpileModule(readFileSync("src/features/billing/play-billing-screen.tsx","utf8")+'\nexports.Content=BillingContent;',{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},AbortController});
  const render=()=>{cursor=0;return exports.Content!({accessToken,userId:"test-owner"});};
  const restore=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="restore");assert.ok(button);return button.props.onPress as ()=>void;};
  const buy=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose");assert.ok(button);return button.props.onPress as ()=>void;};

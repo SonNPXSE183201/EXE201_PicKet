@@ -18,7 +18,7 @@ export function authErrorMessage(error: unknown): string {
     case "otp_expired":
       return "Mã xác nhận không đúng hoặc đã hết hạn.";
     case "invalid_credentials":
-      return "Email hoặc mật khẩu không đúng.";
+      return "Email, số điện thoại hoặc mật khẩu không đúng.";
     case "weak_password":
       return "Mật khẩu chưa đáp ứng yêu cầu bảo mật.";
     default:

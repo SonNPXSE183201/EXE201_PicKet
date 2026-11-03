@@ -1,8 +1,8 @@
-/** A cached or malformed claim must never grant staff access to native data. */
+/** Server policy is independent of optional administrative permissions. */
 export function mobileAccessAllowed(value: unknown): boolean {
   if (!value || typeof value !== "object") return false;
   const policy = value as Record<string, unknown>;
-  return policy.staff === false && policy.mobileAllowed === true;
+  return typeof policy.staff === 'boolean' && policy.mobileAllowed === true;
 }
 
 export function cachedMobileAccessAllowed(

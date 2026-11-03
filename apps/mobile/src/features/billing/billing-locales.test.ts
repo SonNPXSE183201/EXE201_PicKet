@@ -12,7 +12,7 @@ test("billing notices rerender in the selected language with preserved plan", as
 });
 
 test("billing screen keeps controlled message keys and hides upstream error text", () => {
-  const source = readFileSync("src/app/billing.tsx", "utf8");
+  const source = readFileSync("src/features/billing/play-billing-screen.tsx", "utf8");
   assert.doesNotMatch(source, /error\.message/);
   assert.match(source, /useTranslation\("billing"\)/);
   assert.match(source, /t\(message\.key/);

@@ -29,6 +29,9 @@ if (process.env.PICKET_PLAY_BUILD === "1") {
     "src/features/updates/android-app-updates.play.ts",
   );
   config.resolver.resolveRequest = (context, moduleName, platform) => {
+    if (moduleName === "@/features/billing/billing-entry") {
+      return {filePath:path.join(projectRoot,"src/features/billing/billing-entry.play.tsx"),type:"sourceFile"};
+    }
     if (
       moduleName === "./android-app-updates" &&
       context.originModulePath.endsWith(

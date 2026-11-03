@@ -417,6 +417,38 @@ class SupabaseGateway {
   Future<Map<String, dynamic>> accountAccess(String token) =>
       adminRpc(token, 'account_access', {});
 
+  Future<Map<String, dynamic>> paymentRpc(
+    String token,
+    String name,
+    Map<String, dynamic> body,
+  ) async {
+    if (!{
+      'payment_reserve',
+      'payment_customer',
+      'payment_dashboard',
+      'payment_orders',
+      'permission_list',
+      'permission_update',
+      'permission_group_update',
+    }.contains(name)) {
+      throw const FormatException('Invalid payment operation.');
+    }
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/$name'),
+          headers: _headers(token),
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    if (value is! Map<String, dynamic>) {
+      throw const GatewayException(502, 'Invalid payment response.');
+    }
+    return value;
+  }
+
   Future<void> collectEvent(String token, Map<String, dynamic> event) async {
     await authenticate(token);
     final response = await _client

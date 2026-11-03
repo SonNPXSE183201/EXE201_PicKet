@@ -1,8 +1,11 @@
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { FinancePageHeader } from "../finance-ui";
+import { PaymentPanel } from '@/features/billing/payment-panel';
+import Link from 'next/link';
 export default async function BillingPage() {
   const { api, accessToken } = await requireApiSession();
   const entitlements = await api.currentEntitlements(accessToken);
+  const payments = await api.paymentCustomer(accessToken);
   return (
     <>
       <FinancePageHeader
@@ -23,7 +26,6 @@ export default async function BillingPage() {
           Để mua hoặc quản lý thuê bao Google Play, mở phần Gói dịch vụ trong
           ứng dụng Android hoặc tài khoản Google Play đã mua gói.
         </p>
-        <p>Web không tự tạo giao dịch thanh toán thay cho Google Play.</p>
         <a
           className="button secondary"
           href="https://play.google.com/store/account/subscriptions"
@@ -33,6 +35,8 @@ export default async function BillingPage() {
           Quản lý thuê bao Google Play
         </a>
       </article>
+      <PaymentPanel initial={payments} paid={entitlements.tier!=='free'} />
+      <p><Link href="/security/pin">Thiết lập PIN cho trình duyệt này</Link></p>
     </>
   );
 }

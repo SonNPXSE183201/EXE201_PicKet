@@ -10,9 +10,9 @@ test('CSV quotes cells and neutralizes spreadsheet formulas',()=>{
  assert.ok(csv.includes('"line\nnext"'));
  assert.ok(csv.includes('"42"'));
 });
-test('front-end navigation respects role capability scope',()=>{
+test('front-end navigation follows supplied database capabilities',()=>{
  assert.equal(canViewAdminSection('analyst','users'),false);
- assert.equal(canViewAdminSection('analyst','acquisition'),true);
+ assert.equal(canViewAdminSection('analyst','acquisition',['acquisition.read']),true);
  assert.equal(canViewAdminSection('content','billing'),false);
  assert.equal(canViewAdminSection('support','staff'),false);
  assert.equal(canViewAdminSection('owner','staff'),true);
