@@ -24,10 +24,19 @@ Place mobile tests beside code as `*.test.ts`; web tests in `web/test/*.test.mjs
 
 Recent commits use scoped Conventional Commits, such as `fix(learning): ...` and `test(notifications): ...`; some test-first commits end in `(RED)` or `(GREEN)`. Keep commits focused. PRs should state the change, affected apps, test commands and results, release or migration impact, and linked issue when available; include screenshots for UI changes.
 
+### GitHub activity and account safety
+
+- Create commits only for real, reviewable project changes. Group related work into a small number of meaningful commits; do not create empty, duplicate, or artificially split commits to inflate activity.
+- Keep commit author and committer metadata truthful. Do not spoof another person's identity, rewrite timestamps to imitate a natural cadence, or conceal automation. Use the configured Git identity and an authorized GitHub credential helper or connected integration; never put passwords or tokens in prompts, source files, or command arguments.
+- Push a coherent feature branch for review. Do not automate bulk pushes, duplicate PRs, comments, issues, stars, or other engagement. Do not add arbitrary delays or manipulate activity to evade spam detection.
+- No commit count, schedule, or push cadence can guarantee that GitHub's abuse or security systems will not flag activity. If GitHub shows a warning, restriction, or policy notice, stop retrying the affected action, preserve the notice, and have the account owner follow GitHub's security or appeal process. Do not use another account to bypass enforcement.
+- When AI or other automation materially creates or publishes changes, describe that accurately if asked by GitHub or reviewers; do not claim the work was performed manually when it was not.
+
 ## Security & Agent Use
 
 Use local `.env` files; never commit secrets, signing keys, APK/AAB backups, or generated caches. Preserve unrelated working-tree edits. Search and read narrowly; use an artifact directory when it helps preserve evidence, and summarize results instead of pasting full logs.
 
 - There is no mandatory multi-agent workflow or required `PLAN.md` / `REPORT.md` / `REVIEW.md` sequence. Follow the task's scope and run focused checks appropriate to the change.
 - Use [`.agents/skills/picket-ocr-testing/SKILL.md`](.agents/skills/picket-ocr-testing/SKILL.md) when evaluating receipt images, the `/Bill/` corpus, or OCR changes.
+- Use [`.agents/skills/picket-apk-testing/SKILL.md`](.agents/skills/picket-apk-testing/SKILL.md) when building APKs for Android QA or bug-fix testing; verify the QA package, retain only necessary backups, and clean generated outputs after testing.
 - For real-device Android QA, use only `com.picket.mobile.bugqa`; do not install over, clear, or remove the production package `com.picket.mobile` during QA.
