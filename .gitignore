@@ -29,3 +29,9 @@ deploy/secrets/
 
 # Local receipt corpus used for device OCR testing
 /Bill/
+
+# Local AI agent files (Claude Code / Codex sessions)
+/CLAUDE.md
+CLAUDE.local.md
+.claude/
+/docs/lovable/
