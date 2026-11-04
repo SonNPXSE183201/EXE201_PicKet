@@ -13,7 +13,19 @@ Readback ngày 01/11/2026: landing public đang phục vụ APK **1.0.14/code 28
 - `site/privacy.html`, `site/account-deletion.html`: nội dung chính sách, dùng chung font/footer landing.
 - `release.json`: metadata của APK đã được ký và xác minh. Không đổi metadata chỉ vì sửa landing.
 
-Chạy tại thư mục gốc repository bằng PowerShell, với Node và Python đã cài:
+Để xem source landing trong lúc chỉnh sửa:
+
+```powershell
+cd apps/landing
+npm install
+npm run dev
+```
+
+Mở `http://localhost:4175`. Development server phục vụ trực tiếp thư mục
+`site/`; link tải APK chỉ được kiểm chứng trong output build hoàn chỉnh.
+
+Để tạo và xem output build với APK đã ký, chạy tại thư mục gốc repository bằng
+PowerShell, với Node và Python đã cài:
 
 ```powershell
 npm test --prefix apps/landing
@@ -57,6 +69,12 @@ Script tự chạy test → build với APK được kiểm hash → đóng gói
 Sau deploy, kiểm tra `https://picketfinance.com`, `/privacy.html`, `/account-deletion.html`, `/release.json`, tải APK và đối chiếu SHA-256. Mở bảng hỗ trợ, xem footer trên điện thoại và xác nhận `/login` vẫn chuyển tới web. Không coi thông báo upload thành công là nghiệm thu trình duyệt.
 
 ## Phát hành APK mới khác với cập nhật landing
+
+### Liên kết Google Play
+
+Landing v2 dùng một nguồn cấu hình duy nhất: `PLAY_STORE_URL` trong
+`site/launch-assets/paper-motion-v1.js`. Giá trị tạm thời là `#`; thay bằng URL listing chính thức
+khi Google Play đã sẵn sàng. Badge vẫn là ảnh chính thức tiếng Việt lưu cục bộ, không dùng CDN.
 
 Để đưa **mobile source mới** tới người dùng, phải build APK/AAB production mới với versionCode tăng và khóa ký hiện có; xác minh bằng `apksigner`/`aapt2`, kiểm tra cấu hình API và nghiệm thu cài mới/cập nhật giữ dữ liệu. Sau đó cập nhật `release.json` bằng metadata thực, dùng filename có hash mới rồi chạy lại script landing. Google Play cần upload AAB riêng; script landing không phát hành Google Play.
 

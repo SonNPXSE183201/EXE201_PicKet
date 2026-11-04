@@ -1,0 +1,94 @@
+.phone img,
+.side-phone img {
+  object-fit: cover;
+  object-position: top;
+}
+
+.ticket {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  column-gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  box-shadow: 0 12px 26px rgb(48 33 50 / 16%);
+}
+
+.ticket img {
+  grid-row: 1 / 3;
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.ticket b {
+  grid-column: 2;
+}
+
+.hero-category,
+.feature-category {
+  position: absolute;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: 0 10px 24px rgb(48 33 50 / 14%);
+}
+
+.hero-category img,
+.feature-category img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hero-category.food { right: -22px; top: 45px; transform: rotate(8deg); }
+.hero-category.ride { right: -30px; top: 225px; transform: rotate(-7deg); }
+.hero-category.cafe { left: -24px; bottom: 72px; transform: rotate(6deg); }
+
+.receipt {
+  border: 1px solid rgb(234 221 213 / 75%);
+  box-shadow: 0 20px 45px rgb(48 33 50 / 14%);
+}
+
+.side-phone {
+  box-shadow: 0 18px 34px rgb(48 33 50 / 18%);
+}
+
+.feature-category.food { left: 255px; top: 155px; transform: rotate(-8deg); }
+.feature-category.ride { right: 240px; top: 135px; transform: rotate(7deg); }
+.feature-category.gift { right: 185px; bottom: 110px; transform: rotate(-6deg); }
+.feature-category.cafe { left: 205px; bottom: 100px; transform: rotate(8deg); }
+
+.seal {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  background: rgb(255 252 245 / 92%);
+  border: 3px solid var(--expense);
+  box-shadow: inset 0 0 0 4px var(--surface), inset 0 0 0 5px var(--expense), 0 10px 22px rgb(48 33 50 / 12%);
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+.seal b { font-size: 19px; }
+
+@media (max-width: 720px) {
+  .hero-category { width: 52px; height: 52px; border-radius: 15px; }
+  .hero-category.food { right: -10px; top: 38px; }
+  .hero-category.ride { right: -12px; top: 175px; }
+  .hero-category.cafe { left: -10px; bottom: 45px; }
+  .ticket { grid-template-columns: 30px 1fr; }
+  .ticket img { width: 30px; height: 30px; }
+  .feature-category { width: 56px; height: 56px; border-radius: 16px; }
+  .feature-category.food { left: 5px; top: 610px; }
+  .feature-category.ride { right: 5px; top: 630px; }
+  .feature-category.gift { right: 65px; bottom: 10px; }
+  .feature-category.cafe { left: 65px; bottom: 5px; }
+}

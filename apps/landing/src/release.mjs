@@ -33,8 +33,9 @@ export function renderRelease(template, release) {
     SIZE_MB: (data.bytes / 1_000_000).toFixed(1).replace('.',','),
     ANDROID_VERSION: 'Android ' + android[data.minSdk], SHA256: data.sha256,
     PUBLISHED_AT: data.publishedAt.split('-').reverse().join('/'),
+    filename: data.filename, version: data.version, sha256: data.sha256,
   };
-  return template.replace(/\{\{([A-Z0-9_]+)\}\}/g, (_, key) => {
+  return template.replace(/\{\{([A-Za-z0-9_]+)\}\}/g, (_, key) => {
     if (!(key in values)) throw new Error('Unknown release template token: ' + key);
     return values[key];
   });
