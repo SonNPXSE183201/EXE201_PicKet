@@ -29,6 +29,7 @@ function PayosBillingContent({ token }: { token: string }) {
   const [data, setData] = useState<PaymentCustomer | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [tier, setTier] = useState<string | null>(null);
   const key = useRef(new Map<string, string>()),
     active = useRef(true);
   const inFlight = useRef(false),
@@ -42,13 +43,18 @@ function PayosBillingContent({ token }: { token: string }) {
     setBusy(true);
     setMessage("");
     try {
-      const next = await action();
+      const [next, entitlement] = await Promise.all([
+        action(),
+        picketApi.currentEntitlements(token),
+      ]);
       if (
         active.current &&
         tokenRef.current === scope &&
         readRevision.current === revision
-      )
+      ) {
         setData(next);
+        setTier(entitlement?.tier ?? "free");
+      }
     } catch {
       if (active.current && tokenRef.current === scope)
         setMessage(
@@ -65,15 +71,19 @@ function PayosBillingContent({ token }: { token: string }) {
     function refresh() {
       if (inFlight.current) return;
       const revision = ++readRevision.current;
-      void picketApi
-        ?.paymentCustomer(token)
-        .then((next) => {
+      if (!picketApi) return;
+      void Promise.all([
+        picketApi.paymentCustomer(token),
+        picketApi.currentEntitlements(token),
+      ]).then(([next, entitlement]) => {
           if (
             active.current &&
             tokenRef.current === token &&
             readRevision.current === revision
-          )
+          ) {
             setData(next);
+            setTier(entitlement?.tier ?? "free");
+          }
         })
         .catch(() => {
           if (active.current && readRevision.current === revision)
@@ -95,6 +105,8 @@ function PayosBillingContent({ token }: { token: string }) {
       subtitle="Thanh toán trước qua PayOS. Không tự động gia hạn."
     >
       {message && <AuthMessage>{message}</AuthMessage>}
+      {tier && <Text>{t("Gói hiện tại")}: {tier.toUpperCase()}</Text>}
+      {tier && tier !== "free" && <Text>{t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}</Text>}
       {!data && <Text>{t('Đang tải…')}</Text>}
       {data && !data.catalog.length && <Text>{t('Các gói PayOS chưa mở bán.')}</Text>}
       {data?.catalog.map((plan) => (
@@ -108,6 +120,7 @@ function PayosBillingContent({ token }: { token: string }) {
             label="Tạo thanh toán"
             disabled={
               busy ||
+              tier === null || tier !== "free" ||
               data.orders.some(
                 (o) =>
                   o.status === "pending" &&
@@ -115,11 +128,13 @@ function PayosBillingContent({ token }: { token: string }) {
               )
             }
             onPress={() =>
-              void run(() => {
+              void run(async () => {
                 const requestKey =
                   key.current.get(plan.sku) ?? Crypto.randomUUID();
                 key.current.set(plan.sku, requestKey);
-                return picketApi!.paymentCheckout(token, plan.sku, requestKey);
+                const result = await picketApi!.paymentCheckout(token, plan.sku, requestKey);
+                key.current.delete(plan.sku);
+                return result;
               })
             }
           />
@@ -159,6 +174,13 @@ function PayosBillingContent({ token }: { token: string }) {
                   void run(() =>
                     picketApi!.paymentAction(token, order.id, "refresh"),
                   )
+                }
+              />
+              <PrimaryButton
+                label="Hủy thanh toán"
+                disabled={busy}
+                onPress={() =>
+                  void run(() => picketApi!.paymentAction(token, order.id, "cancel"))
                 }
               />
             </>

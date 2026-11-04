@@ -19,6 +19,8 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
   const { t } = useTranslation("auth");
   const { colors } = useAppTheme();
   const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
+  const [verifiedOwner, setVerifiedOwner] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -31,7 +33,8 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
   useEffect(() => {
     const listener = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        setVerifiedToken(null);
+        setChecking(true);
+        setFailed(false);
         setAttempt((value) => value + 1);
       }
     });
@@ -48,6 +51,7 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
         if (!active) return;
         setFailed(false);
         if (mobileAccessAllowed(access)) {
+          setVerifiedOwner(owner);
           setVerifiedToken(token);
           setBlocked(false);
           await SecureStore.setItemAsync(
@@ -55,6 +59,7 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
             JSON.stringify({ owner, allowed: true, checkedAt: Date.now() }),
           );
         } else {
+          setVerifiedOwner(null);
           await SecureStore.deleteItemAsync(cacheKey);
           setBlocked(true);
           await signOutRef.current();
@@ -73,7 +78,10 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
               active &&
               cachedMobileAccessAllowed(cached, owner, Date.now())
             ) {
+              setVerifiedOwner(owner);
               setVerifiedToken(token);
+              setFailed(false);
+              setBlocked(false);
               return;
             }
           } catch {
@@ -81,83 +89,101 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
           }
         }
         if (active) setFailed(true);
+      } finally {
+        if (active) setChecking(false);
       }
     })();
     return () => {
       active = false;
     };
   }, [token, owner, attempt]);
-  if (!blocked && (!session || verifiedToken === token)) return children;
+  if (!blocked && !session) return children;
+  const canMount = !blocked && verifiedOwner === owner;
+  const canUse = canMount && verifiedToken === token && !checking && !failed;
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        padding: 28,
-        gap: 18,
-        backgroundColor: colors.canvas,
-      }}
-    >
-      <PicketText
-        style={{ fontSize: 24, fontWeight: "700", color: colors.text }}
+    <View style={{ flex: 1 }}>
+      {/* Keep the authorized owner's navigator mounted during revalidation.
+          Removing it resets routes, drafts and the biometric background timer. */}
+      <View
+        style={{ flex: 1, display: canUse ? "flex" : "none" }}
+        pointerEvents={canUse ? "auto" : "none"}
+        importantForAccessibility={canUse ? "auto" : "no-hide-descendants"}
       >
-        {blocked
-          ? t("Quản trị Picket trên web")
-          : failed
-            ? t("Chưa xác minh được quyền truy cập")
-            : t("Đang xác minh tài khoản")}
-      </PicketText>
-      <PicketText style={{ color: colors.text }}>
-        {blocked
-          ? t("Tài khoản quản trị chỉ dùng trên website. Hãy dùng tài khoản cá nhân khác để đăng nhập ứng dụng.")
-          : t("Kết nối mạng để xác minh tài khoản trước khi mở dữ liệu. Chế độ dùng trên thiết bị vẫn có ở màn bắt đầu.")}
-      </PicketText>
-      {blocked && (
-        <AccessiblePressable
-          accessibilityRole="link"
-          onPress={() => {
-            void Linking.openURL("https://app.picketfinance.com/admin");
+        {canMount ? children : null}
+      </View>
+      {!canUse && (
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            padding: 28,
+            gap: 18,
+            backgroundColor: colors.canvas,
           }}
         >
-          <PicketText style={{ color: colors.link, paddingVertical: 12 }}>
-            {t("Mở trang quản trị web")}
+          <PicketText
+            style={{ fontSize: 24, fontWeight: "700", color: colors.text }}
+          >
+            {blocked
+              ? t("Quản trị Picket trên web")
+              : failed
+                ? t("Chưa xác minh được quyền truy cập")
+                : t("Đang xác minh tài khoản")}
           </PicketText>
-        </AccessiblePressable>
-      )}
-      {(blocked || failed) && (
-        <AccessiblePressable
-          accessibilityRole="button"
-          onPress={() => {
-            if (blocked) {
-              void signOutRef
-                .current()
-                .then(() => {
-                  setBlocked(false);
+          <PicketText style={{ color: colors.text }}>
+            {blocked
+              ? t("Tài khoản quản trị chỉ dùng trên website. Hãy dùng tài khoản cá nhân khác để đăng nhập ứng dụng.")
+              : t("Kết nối mạng để xác minh tài khoản trước khi mở dữ liệu. Chế độ dùng trên thiết bị vẫn có ở màn bắt đầu.")}
+          </PicketText>
+          {blocked && (
+            <AccessiblePressable
+              accessibilityRole="link"
+              onPress={() => {
+                void Linking.openURL("https://app.picketfinance.com/admin");
+              }}
+            >
+              <PicketText style={{ color: colors.link, paddingVertical: 12 }}>
+                {t("Mở trang quản trị web")}
+              </PicketText>
+            </AccessiblePressable>
+          )}
+          {(blocked || failed) && (
+            <AccessiblePressable
+              accessibilityRole="button"
+              onPress={() => {
+                if (blocked) {
+                  void signOutRef
+                    .current()
+                    .then(() => {
+                      setBlocked(false);
+                      setFailed(false);
+                    })
+                    .catch(() => setFailed(true));
+                } else {
+                  setChecking(true);
                   setFailed(false);
-                })
-                .catch(() => setFailed(true));
-            } else {
-              setVerifiedToken(null);
-              setAttempt((value) => value + 1);
-            }
-          }}
-        >
-          <PicketText style={{ color: colors.link, paddingVertical: 12 }}>
-            {blocked ? t("Dùng tài khoản khác") : t("Thử lại")}
-          </PicketText>
-        </AccessiblePressable>
-      )}
-      {!blocked && failed && (
-        <AccessiblePressable
-          accessibilityRole="button"
-          onPress={() => {
-            void signOutRef.current();
-          }}
-        >
-          <PicketText style={{ color: colors.link, paddingVertical: 12 }}>
-            {t("Về màn đăng nhập")}
-          </PicketText>
-        </AccessiblePressable>
+                  setAttempt((value) => value + 1);
+                }
+              }}
+            >
+              <PicketText style={{ color: colors.link, paddingVertical: 12 }}>
+                {blocked ? t("Dùng tài khoản khác") : t("Thử lại")}
+              </PicketText>
+            </AccessiblePressable>
+          )}
+          {!blocked && failed && (
+            <AccessiblePressable
+              accessibilityRole="button"
+              onPress={() => {
+                void signOutRef.current();
+              }}
+            >
+              <PicketText style={{ color: colors.link, paddingVertical: 12 }}>
+                {t("Về màn đăng nhập")}
+              </PicketText>
+            </AccessiblePressable>
+          )}
+        </View>
       )}
     </View>
   );
