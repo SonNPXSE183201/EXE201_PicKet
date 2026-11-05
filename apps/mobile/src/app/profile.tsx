@@ -1,4 +1,4 @@
-import { paperControl, paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { paperControl, paperShape } from "@/core/theme/paper-foundations";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
@@ -9,17 +9,17 @@ import type { CurrentProfile, Entitlements } from "@picket/domain";
 import { Redirect, router } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Linking, StyleSheet, Switch, View } from "react-native";
+import { ActivityIndicator, Image, Linking, StyleSheet, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
 import { routes } from "@/core/navigation/routes";
-import { exportAndShareFinance } from "@/core/export/export-finance";
-import { exportEncryptedBackup, exportFinanceCsv, exportGuestBackup } from "@/core/export/flutter-compatible-backup";
-import { useGuestFinance } from "@/core/local/guest-finance-context";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
-import { ActionSheet, ChoiceChip, IconButton, Surface } from "@/core/ui/picket-ui";
+import { ActionSheet } from "@/core/ui/picket-ui";
+import { Chip, FigmaButton, ReceiptEdge, figmaShadow } from "@/core/ui/figma-ui";
+import { FieldRow, GroupLabel, PaperGroup } from "@/features/settings/settings-figma";
+import { profileHubCopy, profileThemeMeta } from "@/features/profile/profile-hub-copy";
 import { useAuth } from "@/features/auth/auth-context";
 import { AnalyticsConsentControl } from "@/features/settings/analytics-consent";
 import { useProfile } from "@/features/profile/profile-context";
@@ -29,6 +29,7 @@ import { pendingMutationCount, mutationConflictCount } from "@/core/sync/mutatio
 import { signOutCopy } from "@/features/profile/sign-out-copy";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 
+const moneyBloom = require("../../assets/paper-v3/home/money-bloom-scene-v1.webp") as number;
 const personas = ["Đi làm", "Sinh viên", "Tự do", "Gia đình"] as const;
 const goals = ["Hiểu chi tiêu", "Tiết kiệm", "Quản lý hóa đơn"] as const;
 const currencies = ["VND", "USD"] as const;
@@ -71,12 +72,11 @@ export default function ProfileScreen() {
 
 function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const { t } = useTranslation("profile");
-  const { colors, styles, theme } = useMobileStyles(createStyles);
-  const { language, update: updateThemeSettings } = useAppTheme();
+  const { colors, styles } = useMobileStyles(createStyles);
+  const { language, themeMode, update: updateThemeSettings } = useAppTheme();
   const { session, localMode, leaveLocalMode, signOut } = useAuth();
   const { updatePreferences, updateProfile } = useProfile();
   const deviceLock = useDeviceLock();
-  const guest = useGuestFinance();
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [persona, setPersona] = useState(profile.persona);
   const [goal, setGoal] = useState(profile.goal);
@@ -86,9 +86,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
-  const [backupPassword, setBackupPassword] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
-  const [showBackup, setShowBackup] = useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const [signOutPrompt, setSignOutPrompt] = useState<{ owner: string | null; copy: string } | null>(null);
   const signOutReading = useRef(false);
@@ -140,48 +138,6 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
       setEditingProfile(false);
     } catch {
       setMessage("Không lưu được cài đặt. Hãy kiểm tra kết nối và thử lại.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function exportData() {
-    if (!session) return;
-    setBusy(true);
-    setMessage(null);
-    try {
-      await exportAndShareFinance(session.access_token,session.user.id);
-      setMessage("Đã tạo bản export. Hãy chọn nơi lưu an toàn.");
-    } catch {
-      setMessage("Chưa tạo được bản sao. Hãy kiểm tra kết nối và thử lại.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function exportExtra(kind: "csv" | "picket") {
-    if (!session) return;
-    setBusy(true);
-    setMessage(null);
-    try {
-      if (kind === "csv") await exportFinanceCsv(session.access_token,session.user.id);
-      else await exportEncryptedBackup(session.access_token, session.user.id, backupPassword);
-      setMessage("Đã tạo file. Hãy chọn nơi lưu an toàn.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Không tạo được bản sao.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function exportLocalBackup() {
-    setBusy(true);
-    setMessage(null);
-    try {
-      await exportGuestBackup(guest.data, backupPassword);
-      setMessage("Đã tạo bản sao trên máy. Hãy lưu file và mật khẩu ở nơi an toàn.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Không tạo được bản sao.");
     } finally {
       setBusy(false);
     }
@@ -244,298 +200,117 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     ? "Không giới hạn túi ngân sách · OCR AI thông minh"
     : "Quản lý cơ bản trên thiết bị · OCR offline";
 
+  const hub = profileHubCopy(language);
+  const initial = (profile.displayName || "B").trim().charAt(0).toUpperCase() || "B";
+  const tierChip = localMode ? hub.onDevice : entitlements?.tier === "pro" ? hub.pro : entitlements?.tier === "plus" ? hub.plus : hub.free;
+  const themeMeta = profileThemeMeta(language, themeMode);
+  const switchProps = { thumbColor: colors.white, trackColor: { false: colors.line, true: colors.mauve } };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {/* Master Design Screen 11 Header */}
-        <View style={styles.topHeader}>
-          <Text accessibilityRole="header" style={styles.screenTitle}>{t("Cá nhân")}</Text>
-        </View>
-
-        {/* Master User Card */}
-        <View style={styles.profileMasterCard}>
-          <View style={styles.avatar}>
-            <AppIcon name="account" color={colors.onPrimary} size={28} />
-          </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={hub.editProfile}
+          onPress={() => setEditingProfile(true)}
+          style={styles.profileHeader}
+        >
+          <View style={styles.avatar}><Text style={styles.avatarText}>{initial}</Text></View>
           <View style={styles.profileTextCol}>
-            <Text numberOfLines={1} style={styles.profileName}>
-              {profile.displayName || t("Bạn của Picket")}
-            </Text>
+            <Text numberOfLines={1} style={styles.profileName}>{profile.displayName || t("Bạn của Picket")}</Text>
             <Text numberOfLines={1} style={styles.profileSub}>
-              {localMode
-                ? t("Lưu riêng an toàn trên máy")
-                : session?.user.email
-                ? `${session.user.email} · ${t("Lưu an toàn")}`
-                : t("Lưu riêng an toàn trên máy")}
+              {localMode || !session?.user.email ? t("Lưu riêng an toàn trên máy") : session.user.email}
             </Text>
           </View>
-          <IconButton
-            icon="pencil-outline"
-            label={t("Chỉnh sửa hồ sơ")}
-            onPress={() => setEditingProfile(true)}
-          />
-        </View>
-
-        {/* Master Membership Banner Card */}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push(routes.billing)}
-          style={styles.membershipBanner}
-        >
-          <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={styles.membershipTitle}>{t("Gói tài khoản: {{tier}}", { tier: tierLabel })}</Text>
-            <Text style={styles.membershipSubtitle}>{tierSummary}</Text>
-          </View>
-          <Text style={styles.membershipLink}>{t("Quản lý")}</Text>
+          <Chip label={tierChip} tone="neutral" />
         </Pressable>
 
-        {/* Section 1: TÙY CHỌN & BẢO MẬT */}
-        <Text style={styles.sectionHeadingLabel}>TÙY CHỌN & BẢO MẬT</Text>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push(routes.appearance)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="palette-outline" color={colors.mauve} size={20} />
+        {localMode ? (
+          <View style={[styles.planCard, figmaShadow("paper")]}>
+            <Text style={styles.planTitle}>{hub.localTitle}</Text>
+            <Text style={styles.planBody}>{hub.localBody}</Text>
+            <FigmaButton label={hub.localCta} onPress={() => router.replace(routes.login)} fullWidth />
           </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Giao diện & Màu sắc</Text>
-            <Text style={styles.settingSub}>Bảng màu và chế độ sáng/tối</Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setShowLanguagePicker(true)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="translate" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Ngôn ngữ</Text>
-            <Text style={styles.settingSub}>
-              {language === "vi" ? "Tiếng Việt (Mặc định)" : "English"}
-            </Text>
-          </View>
-        </Pressable>
-
-        <View style={styles.settingCard}>
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="eye-off-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Ẩn số dư trên màn hình</Text>
-            <Text style={styles.settingSub}>Che số tiền trên trang chủ để đảm bảo riêng tư</Text>
-          </View>
-          <Switch
-            accessibilityLabel={t("Ẩn số dư")}
-            disabled={visibilityDraft !== null}
-            hitSlop={12}
-            onValueChange={(next) => void changeVisibility(next)}
-            thumbColor={theme === "dark" && !hideBalance ? colors.muted : colors.white}
-            trackColor={{ false: colors.line, true: colors.mauve }}
-            value={hideBalance}
-          />
-        </View>
-
-        <View style={styles.settingCard}>
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="shield-lock-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Khóa ứng dụng (Sinh trắc học / PIN)</Text>
-            <Text style={styles.settingSub}>Yêu cầu vân tay hoặc mã khi mở lại Picket</Text>
-          </View>
-          <Switch
-            accessibilityLabel={t("Khóa ứng dụng")}
-            disabled={deviceLock.busy}
-            hitSlop={12}
-            onValueChange={(next) =>
-              void deviceLock.setEnabled(next).then((saved) => {
-                if (!saved) setMessage("Chưa thể đổi khóa. Hãy thiết lập mã khóa thiết bị rồi thử lại.");
-              })
-            }
-            thumbColor={theme === "dark" && !deviceLock.enabled ? colors.muted : colors.white}
-            trackColor={{ false: colors.line, true: colors.mauve }}
-            value={deviceLock.enabled}
-          />
-        </View>
-
-        {/* Section 2: CÔNG CỤ CỦA BẠN */}
-        <Text style={styles.sectionHeadingLabel}>CÔNG CỤ CỦA BẠN</Text>
-
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.bills)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="calendar-check-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Hóa đơn cần thanh toán</Text>
-            <Text style={styles.settingSub}>Quản lý hạn nộp điện, nước, internet</Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.subscriptions)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="repeat" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Chi phí định kỳ & Thuê bao</Text>
-            <Text style={styles.settingSub}>Netflix, Spotify, phòng tập</Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.categories)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="shape-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Quản lý danh mục & Icon 3D</Text>
-            <Text style={styles.settingSub}>Tùy chỉnh nhóm chi tiêu cá nhân</Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.insights)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="chart-box-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Thống kê thu chi & Phân tích</Text>
-            <Text style={styles.settingSub}>Cơ cấu chi tiêu và xu hướng dòng tiền</Text>
-          </View>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.notifications)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="bell-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Thông báo & Lịch nhắc</Text>
-            <Text style={styles.settingSub}>Cảnh báo ngân sách và hạn thanh toán</Text>
-          </View>
-        </Pressable>
-
-        {/* Section 3: SAO LƯU & DỮ LIỆU */}
-        <Text style={styles.sectionHeadingLabel}>SAO LƯU & DỮ LIỆU</Text>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setShowBackup(!showBackup)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="cloud-upload-outline" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Sao lưu và xuất dữ liệu</Text>
-            <Text style={styles.settingSub}>Bản sao mã hóa, JSON và CSV</Text>
-          </View>
-        </Pressable>
-
-        {showBackup && (
-          <Surface style={styles.backupPanel}>
-            {!localMode && (
-              <Pressable
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={() => void exportData()}
-                style={styles.backupRow}
-              >
-                <AppIcon name="file-code-outline" color={colors.mauve} size={18} />
-                <Text style={styles.backupRowText}>Xuất dữ liệu JSON</Text>
-              </Pressable>
-            )}
-            {!localMode && (
-              <Pressable
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={() => void exportExtra("csv")}
-                style={styles.backupRow}
-              >
-                <AppIcon name="file-table-outline" color={colors.mauve} size={18} />
-                <Text style={styles.backupRowText}>Xuất giao dịch CSV</Text>
-              </Pressable>
-            )}
-            <TextInput
-              accessibilityLabel={t("Mật khẩu bản sao mã hóa")}
-              autoCapitalize="none"
-              autoComplete="off"
-              onChangeText={setBackupPassword}
-              placeholder={t("Mật khẩu riêng, ít nhất 12 ký tự")}
-              secureTextEntry
-              style={styles.input}
-              value={backupPassword}
-            />
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || backupPassword.length < 12 || (localMode && guest.loading)}
-              onPress={() => void (localMode ? exportLocalBackup() : exportExtra("picket"))}
-              style={styles.backupActionBtn}
-            >
-              <Text style={styles.backupActionText}>{t("Tạo bản sao .picket có ảnh")}</Text>
-            </Pressable>
-            <Text style={styles.sensitive}>
-              {t("Bản export chứa dữ liệu tài chính nhạy cảm. Chỉ lưu ở nơi bạn tin cậy.")}
-            </Text>
-          </Surface>
+        ) : (
+          <Pressable accessibilityRole="button" onPress={() => router.push(routes.billing)} style={styles.planWrap}>
+            <View style={figmaShadow("paper")}>
+              <View style={styles.planPaper}>
+                <Text style={styles.planOverline}>{hub.plan.toUpperCase()}</Text>
+                <Text style={styles.planTitle}>{tierLabel}</Text>
+                <Text style={styles.planBody}>{tierSummary}</Text>
+                <View style={styles.planLink}>
+                  <Text style={styles.planLinkText}>{hub.viewPlans}</Text>
+                  <AppIcon name="chevron-right" size={14} color={colors.primary} />
+                </View>
+              </View>
+              <ReceiptEdge direction="bottom" />
+            </View>
+            <Image accessible={false} resizeMode="contain" source={moneyBloom} style={styles.planArt} />
+          </Pressable>
         )}
 
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.restore)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="backup-restore" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Khôi phục từ bản sao</Text>
-            <Text style={styles.settingSub}>Nạp lại dữ liệu từ tệp sao lưu .picket</Text>
-          </View>
-        </Pressable>
+        <View style={styles.block}>
+          <GroupLabel>{hub.manage}</GroupLabel>
+          <PaperGroup>
+            <FieldRow icon="wallet-outline" meta={hub.walletsMeta} title={hub.wallets} onPress={() => router.push(routes.accounts)} />
+            <FieldRow icon="shopping-outline" meta={hub.categoriesMeta} title={hub.categories} onPress={() => router.push(routes.categories)} />
+            <FieldRow icon="calendar-month-outline" meta={hub.recurringMeta} title={hub.recurring} onPress={() => router.push(routes.subscriptions)} />
+            <FieldRow icon="flash-outline" meta={hub.billsMeta} title={hub.bills} onPress={() => router.push(routes.bills)} />
+            <FieldRow icon="heart-outline" meta={hub.keepsakesMeta} title={hub.keepsakes} onPress={() => router.push(routes.keepsakes)} />
+            <FieldRow icon="chart-box-outline" meta={hub.insightsMeta} title={hub.insights} onPress={() => router.push(routes.insights)} />
+            <FieldRow icon="bell-outline" meta={hub.notificationsMeta} title={hub.notifications} onPress={() => router.push(routes.notifications)} />
+          </PaperGroup>
+        </View>
 
-        <Pressable
-          accessibilityRole="button"
-          disabled={busy}
-          onPress={() => router.push(routes.syncConflicts)}
-          style={styles.settingCard}
-        >
-          <View style={styles.settingIconBadge}>
-            <AppIcon name="sync" color={colors.mauve} size={20} />
-          </View>
-          <View style={styles.settingTextCol}>
-            <Text style={styles.settingTitle}>Kiểm tra đồng bộ</Text>
-            <Text style={styles.settingSub}>Xem trạng thái xung đột dữ liệu</Text>
-          </View>
-        </Pressable>
+        <View style={styles.block}>
+          <GroupLabel>{hub.settings}</GroupLabel>
+          <PaperGroup>
+            <FieldRow icon="palette-outline" meta={themeMeta} title={hub.appearance} onPress={() => router.push(routes.appearance)} />
+            <FieldRow icon="translate" meta={language === "vi" ? hub.vietnamese : "English"} title={hub.language} onPress={() => setShowLanguagePicker(true)} />
+            <FieldRow
+              icon="eye-off-outline"
+              meta={hub.hideBalanceMeta}
+              title={hub.hideBalance}
+              trailing={
+                <Switch
+                  accessibilityLabel={t("Ẩn số dư")}
+                  disabled={visibilityDraft !== null}
+                  hitSlop={12}
+                  onValueChange={(next) => void changeVisibility(next)}
+                  value={hideBalance}
+                  {...switchProps}
+                />
+              }
+            />
+            <FieldRow
+              icon="lock-outline"
+              meta={hub.lockMeta}
+              title={hub.lock}
+              trailing={
+                <Switch
+                  accessibilityLabel={t("Khóa ứng dụng")}
+                  disabled={deviceLock.busy}
+                  hitSlop={12}
+                  onValueChange={(next) =>
+                    void deviceLock.setEnabled(next).then((saved) => {
+                      if (!saved) setMessage("Chưa thể đổi khóa. Hãy thiết lập mã khóa thiết bị rồi thử lại.");
+                    })
+                  }
+                  value={deviceLock.enabled}
+                  {...switchProps}
+                />
+              }
+            />
+          </PaperGroup>
+        </View>
+
+        <View style={styles.block}>
+          <GroupLabel>{hub.data}</GroupLabel>
+          <PaperGroup>
+            <FieldRow icon="cloud-upload-outline" meta={hub.backupMeta} title={hub.backup} onPress={() => router.push(routes.restore)} />
+            <FieldRow icon="sync" meta={hub.syncMeta} title={hub.sync} onPress={() => router.push(routes.syncConflicts)} />
+          </PaperGroup>
+        </View>
 
         {message && (
           <Text accessibilityLiveRegion="polite" style={message.startsWith("Đã") ? styles.success : styles.error}>
@@ -543,103 +318,57 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
           </Text>
         )}
 
-        {/* Bottom Action Buttons */}
-        {localMode ? (
-          <View style={styles.bottomButtonsColumn}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.replace(routes.login)}
-              style={styles.masterLoginBtn}
-            >
-              <AppIcon name="login" size={20} color={colors.onPrimary} />
-              <Text style={styles.masterLoginText}>Đăng nhập / Tạo tài khoản</Text>
+        <View style={styles.footer}>
+          <FigmaButton
+            variant="text"
+            size="medium"
+            disabled={busy}
+            label={localMode ? hub.leaveLocal : hub.signOut}
+            onPress={() => void confirmSignOut()}
+          />
+          {!localMode && (
+            <FigmaButton variant="text" size="medium" disabled={busy} label={hub.deleteAccount} onPress={() => router.push(routes.deleteAccount)} style={{ opacity: 0.8 }} />
+          )}
+          <View style={styles.legalSection}>
+            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL("https://picketfinance.com/privacy.html")} style={styles.legalLink}>
+              <Text style={styles.legalText}>{hub.privacy}</Text>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={confirmSignOut}
-              style={styles.masterSignOutFullBtn}
-            >
-              <Text style={styles.masterSignOutText}>{t("Thoát chế độ trên máy")}</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.bottomButtonsRow}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={confirmSignOut}
-              style={styles.masterSignOutBtn}
-            >
-              <Text style={styles.masterSignOutText}>{t("Đăng xuất tài khoản")}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={() => router.push(routes.deleteAccount)}
-              style={styles.masterDeleteBtn}
-            >
-              <Text style={styles.masterDeleteText}>Xóa tài khoản</Text>
+            <Text style={styles.legalDot}>·</Text>
+            <Pressable accessibilityRole="link" onPress={() => void Linking.openURL("https://picketfinance.com/account-deletion.html")} style={styles.legalLink}>
+              <Text style={styles.legalText}>{hub.support}</Text>
             </Pressable>
           </View>
-        )}
-
-        {/* Help & Policies */}
-        <View style={styles.legalSection}>
-          <Pressable
-            accessibilityRole="link"
-            onPress={() => void Linking.openURL("https://picketfinance.com/privacy.html")}
-            style={styles.legalLink}
-          >
-            <Text style={styles.legalText}>Chính sách quyền riêng tư</Text>
-          </Pressable>
-          <Text style={styles.legalDot}>·</Text>
-          <Pressable
-            accessibilityRole="link"
-            onPress={() => void Linking.openURL("https://picketfinance.com/account-deletion.html")}
-            style={styles.legalLink}
-          >
-            <Text style={styles.legalText}>Hỗ trợ tài khoản</Text>
-          </Pressable>
         </View>
-
         <AppUpdateSection />
         <AnalyticsConsentControl />
         <InstalledVersion />
       </ScrollView>
 
-      {/* Edit Profile Sheet */}
-      <ActionSheet
-        title={t("Chỉnh sửa hồ sơ")}
-        visible={editingProfile}
-        onClose={() => setEditingProfile(false)}
-      >
-        <Text style={styles.fieldLabel}>{t("Tên hiển thị")}</Text>
-        <TextInput
-          accessibilityLabel={t("Tên hiển thị")}
-          maxLength={120}
-          onChangeText={setDisplayName}
-          style={styles.input}
-          value={displayName}
-        />
-        <ChoiceGroup label={t("Nhịp sống")} options={personas} selected={persona} select={setPersona} />
-        <ChoiceGroup label={t("Mục tiêu")} options={goals} selected={goal} select={setGoal} />
-        <ChoiceGroup label={t("Tiền tệ chính")} options={currencies} selected={currencyCode} select={setCurrencyCode} />
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={styles.saveBtn}>
-          {busy ? (
-            <ActivityIndicator accessibilityLabel={t("Đang lưu hồ sơ")} color={colors.onPrimary} />
-          ) : (
-            <Text style={styles.saveBtnText}>{t("Lưu thay đổi")}</Text>
-          )}
-        </Pressable>
+      {/* Edit Profile Sheet (G17) */}
+      <ActionSheet title={hub.editTitle} visible={editingProfile} onClose={() => setEditingProfile(false)}>
+        <View style={styles.editAvatarRow}>
+          <View style={styles.editAvatar}><Text style={styles.editAvatarText}>{initial}</Text></View>
+          <Text style={styles.editAvatarLabel}>{hub.avatar}</Text>
+        </View>
+        <PaperGroup>
+          <FieldRow icon="account-outline" meta={hub.displayName} title={displayName} trailing="none">
+            <TextInput
+              accessibilityLabel={t("Tên hiển thị")}
+              maxLength={120}
+              onChangeText={setDisplayName}
+              style={styles.nameInput}
+              value={displayName}
+            />
+          </FieldRow>
+        </PaperGroup>
+        <ChoiceGroup label={hub.currency} options={currencies} selected={currencyCode} select={setCurrencyCode} />
+        <ChoiceGroup label={hub.persona} options={personas} selected={persona} select={setPersona} />
+        <ChoiceGroup label={hub.goal} options={goals} selected={goal} select={setGoal} />
+        <FigmaButton label={hub.save} busy={busy} onPress={() => void save()} fullWidth style={{ marginTop: 12 }} />
       </ActionSheet>
 
       {/* Language Picker Sheet */}
-      <ActionSheet
-        title="Chọn ngôn ngữ"
-        visible={showLanguagePicker}
-        onClose={() => setShowLanguagePicker(false)}
-      >
+      <ActionSheet title="Chọn ngôn ngữ" visible={showLanguagePicker} onClose={() => setShowLanguagePicker(false)}>
         <Pressable
           onPress={() => {
             void updateThemeSettings({ languageMode: "vi" });
@@ -713,14 +442,14 @@ function ChoiceGroup<T extends string>({
   const { t } = useTranslation("profile");
   const { styles } = useMobileStyles(createStyles);
   return (
-    <View style={{ marginTop: 8 }}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+    <View style={styles.choiceBlock}>
+      <GroupLabel muted>{label}</GroupLabel>
       <View style={styles.choices}>
         {options.map((option) => (
-          <ChoiceChip
-            checked={selected === option}
+          <Chip
             key={option}
             label={t(option, { defaultValue: option })}
+            tone={selected === option ? "neutral" : "outline"}
             onPress={() => select(option)}
           />
         ))}
@@ -731,13 +460,14 @@ function ChoiceGroup<T extends string>({
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    safeArea: { backgroundColor: colors.cream, flex: 1 },
+    safeArea: { backgroundColor: colors.canvas, flex: 1 },
     content: {
       maxWidth: 720,
       width: "100%",
       alignSelf: "center",
-      gap: 10,
-      padding: paperSpace.screen,
+      gap: 24,
+      paddingHorizontal: 20,
+      paddingTop: 24,
       paddingBottom: 140,
     },
     topHeader: {
@@ -767,10 +497,12 @@ const createStyles = (colors: MobileThemeColors) =>
       elevation: 1,
     },
     avatar: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      backgroundColor: colors.mauve,
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      borderWidth: 3,
+      borderColor: colors.paper,
+      backgroundColor: colors.pocketLilac,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -778,14 +510,17 @@ const createStyles = (colors: MobileThemeColors) =>
       flex: 1,
     },
     profileName: {
-      color: colors.ink,
-      fontSize: 18,
-      fontWeight: "700",
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: "800",
+      letterSpacing: -0.3,
+      lineHeight: 29,
     },
     profileSub: {
       color: colors.muted,
       fontSize: 12,
-      marginTop: 3,
+      fontWeight: "600",
+      lineHeight: 18,
     },
     membershipBanner: {
       backgroundColor: colors.pocketLilac,
@@ -923,6 +658,25 @@ const createStyles = (colors: MobileThemeColors) =>
       fontSize: 14,
       fontWeight: "700",
     },
+    profileHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
+    avatarText: { color: colors.primary, fontSize: 22, fontWeight: "800", letterSpacing: -0.3 },
+    block: { gap: 10 },
+    planWrap: { minHeight: 152 },
+    planPaper: { backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, gap: 4, paddingBottom: 12, paddingLeft: 16, paddingRight: 110, paddingTop: 16 },
+    planOverline: { color: colors.muted, fontSize: 11, fontWeight: "800", letterSpacing: 1.1, lineHeight: 16 },
+    planTitle: { color: colors.text, fontSize: 16, fontWeight: "800", lineHeight: 26 },
+    planBody: { color: colors.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+    planLink: { alignItems: "center", flexDirection: "row", gap: 4, paddingTop: 4 },
+    planLinkText: { color: colors.primary, fontSize: 12, fontWeight: "700", lineHeight: 18 },
+    planArt: { height: 94, position: "absolute", right: -6, top: 24, width: 112 },
+    planCard: { backgroundColor: colors.paper, borderRadius: 18, gap: 8, padding: 16 },
+    footer: { alignItems: "center", gap: 6 },
+    editAvatarRow: { alignItems: "center", flexDirection: "row", gap: 16, marginBottom: 16 },
+    editAvatar: { alignItems: "center", backgroundColor: colors.pocketLilac, borderRadius: 30, height: 60, justifyContent: "center", width: 60 },
+    editAvatarText: { color: colors.primary, fontSize: 22, fontWeight: "800" },
+    editAvatarLabel: { color: colors.text, fontSize: 14, fontWeight: "700" },
+    nameInput: { color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: 24, padding: 0 },
+    choiceBlock: { gap: 10, marginTop: 20 },
     legalSection: {
       flexDirection: "row",
       alignItems: "center",

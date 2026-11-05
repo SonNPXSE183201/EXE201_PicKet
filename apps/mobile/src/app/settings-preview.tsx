@@ -1,7 +1,9 @@
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { paperShape } from "@/core/theme/paper-foundations";
-import { Redirect, router } from "expo-router";
+import { Redirect } from "expo-router";
+import { FigmaHeader } from "@/features/settings/settings-figma";
+import { figmaShadow } from "@/core/ui/figma-ui";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { ActivityIndicator, TextInput, View } from "react-native";
@@ -28,9 +30,8 @@ export default function SettingsPreview() {
   const choiceStyle = (selected: boolean) => ({ backgroundColor: selected ? c.primary : c.surface, borderColor: c.border, borderWidth: 1, borderRadius: 12, minHeight: 48, padding: 14 });
   return <SafeAreaView style={{ flex: 1, backgroundColor: c.canvas }}>
     <StatusBar style={theme === "dark" ? "light" : "dark"} />
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 50 }}>
-      <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={{ color: c.link }}>{t("back")}</Text></Pressable>
-      <Text accessibilityRole="header" style={{ color: c.text, fontSize: 26, fontWeight: "800" }}>{t("title")}</Text>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, gap: 16, paddingBottom: 50 }}>
+      <FigmaHeader title={t("title")} />
       {!ready && <ActivityIndicator accessibilityLabel={t("loading")} color={c.primary} />}
       {error && <View><Text accessibilityRole="alert" style={{ color: c.expense }}>{t("loadError")}</Text><Pressable accessibilityRole="button" onPress={retry}><Text style={{ color: c.link }}>{t("retry")}</Text></Pressable></View>}
       <Text accessibilityRole="header" style={{ color: c.text, fontWeight: "700" }}>{t("theme")}</Text>
@@ -46,7 +47,7 @@ export default function SettingsPreview() {
         {(["system", ...languageCodes] as LanguageMode[]).map(mode => <Pressable key={mode} accessibilityRole="radio" accessibilityState={{ checked: (settings.languageMode ?? "system") === mode, disabled: !ready || error || saving }} disabled={!ready || error || saving} onPress={() => void select({ languageMode: mode })} style={choiceStyle((settings.languageMode ?? "system") === mode)}><Text style={{ color: (settings.languageMode ?? "system") === mode ? c.onPrimary : c.text }}>{mode === "system" ? t("system") : languages[mode].name}</Text></Pressable>)}
       </View>
       <Text accessibilityLiveRegion="polite" style={{ color: status === "failed" ? c.expense : c.muted }}>{saving ? t("saving") : status ? t(status) : ""}</Text>
-      <View style={{ backgroundColor: c.surface, borderColor: c.border, borderWidth: 1, borderRadius: paperShape.card, padding: 20, gap: 12 }}>
+      <View style={{ backgroundColor: "#FFFFFF", borderRadius: 18, padding: 20, gap: 12, ...figmaShadow("paper") }}>
         <Text accessibilityRole="header" style={{ color: c.text, fontSize: 20 }}>{t("preview")}</Text>
         <Text style={{ color: c.muted }}>{t("caption")}</Text>
         <Text style={{ color: c.text }}>{t("balance")}: {formatMoney(1234567, language, "VND")}</Text>

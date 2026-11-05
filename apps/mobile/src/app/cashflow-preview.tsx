@@ -1,4 +1,5 @@
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { FigmaHeader } from "@/features/settings/settings-figma";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { paperShape } from "@/core/theme/paper-foundations";
 import { Redirect, router } from "expo-router";
@@ -86,8 +87,8 @@ function Scenario({owner}:{owner:string}){
     const formatter=new Intl.NumberFormat(localeFor(language),{style:"currency",currency:code});
     return formatter.format(value/10**(formatter.resolvedOptions().maximumFractionDigits??2));
   };
-  const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={{minHeight:48,padding:14,borderRadius:paperShape.button,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary}}>{label}</Text></Pressable>;
-  const field=(label:string,value:string,onChange:(value:string)=>void)=><View style={{gap:6}}><Text style={{color:c.text}}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} autoCapitalize="none" autoCorrect={false} keyboardAppearance={theme} selectionColor={c.primary} style={{minHeight:48,color:c.text,borderColor:c.border,borderWidth:1,borderRadius:12,padding:12}}/></View>;
+  const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={{minHeight:48,paddingHorizontal:16,alignItems:"center",justifyContent:"center",borderRadius:24,borderWidth:1,borderColor:c.border,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.text,fontSize:14,fontWeight:"800"}}>{label}</Text></Pressable>;
+  const field=(label:string,value:string,onChange:(value:string)=>void)=><View style={{gap:6}}><Text style={{color:c.text}}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} autoCapitalize="none" autoCorrect={false} keyboardAppearance={theme} selectionColor={c.primary} style={{minHeight:48,color:c.text,fontWeight:"700",backgroundColor:"#FFFFFF",borderColor:c.border,borderWidth:1,borderRadius:14,padding:12}}/></View>;
   const [mutate]=useState(()=>{
     let inFlight=false;
     return async(change:()=>Promise<ScheduleDocument>)=>{
@@ -117,9 +118,8 @@ function Scenario({owner}:{owner:string}){
       setCalculatedSignature(signature);setFailed(false);
     }catch{setResult(null);setFailed(true);}
   }
-  return <SafeAreaView style={{flex:1,backgroundColor:c.canvas}}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{padding:20,gap:16,paddingBottom:60}}>
-    {button(t("back"),()=>router.back())}
-    <Text accessibilityRole="header" style={{color:c.text,fontSize:26,fontWeight:"800"}}>{t("title")}</Text>
+  return <SafeAreaView style={{flex:1,backgroundColor:c.canvas}}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{paddingHorizontal:20,gap:16,paddingBottom:60}}>
+    <FigmaHeader title={t("title")}/>
     <Text style={{color:c.muted}}>{t("notice")}</Text>
     <Text style={{color:c.muted}}>{t("units")}</Text>
     <Text accessibilityLiveRegion="polite" style={{color:failed?c.expense:c.muted}}>{failed?t("error"):saved?t("saved"):!doc?t("loading"):""}</Text>
