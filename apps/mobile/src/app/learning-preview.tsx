@@ -113,12 +113,8 @@ function LearningSession({ owner }: { owner: string }) {
   return <SafeAreaView style={{ flex: 1, backgroundColor: c.canvas }}><ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
     <Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={() => { if(!canInteract())return; if (lesson) { setLessonIndex(null); setAnswers({}); setSubmitted(false); setReviewOffset(null);setReviewSaved(false); } else router.back(); }}><Text style={{ color: c.link }}>{t("back")}</Text></Pressable>
     <Text accessibilityRole="header" style={{ color: c.text, fontSize: 26, fontWeight: "800" }}>{lesson?.title ?? t("title")}</Text>
-    <Text style={{ color: c.muted }}>{t("underReview")}</Text>
-    {!lesson && <WeeklyPractice owner={owner} />}
+    <Text style={{ color: c.muted }}>{t("intro")}</Text>
     {!lesson && progress && <LearningAchievements owner={owner} progress={progress}/>}
-    {!lesson && <LearningAiCard />}
-    {!lesson && <AssessmentDraftCard key={owner} owner={owner} />}
-    {!lesson&&!localMode&&session&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true"&&<Pressable accessibilityRole="button" onPress={()=>router.push("/weekly-story-preview")} style={{minHeight:48,padding:16,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link}}>{t("storyTitle",{ns:"cashflow"})}</Text></Pressable>}
     {!lesson && reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=><Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" disabled={saving || !draftReady} accessibilityState={{disabled:saving || !draftReady}} onPress={()=>{if(!canInteract() || !draftReady)return;setLessonIndex(curriculum.lessons.findIndex(item=>item.lessonId===review.lessonId));setReviewOffset(review.offset);setReviewSaved(false);setAnswers({});setSubmitted(false);}} style={{padding:16,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link}}>{t("reviewOpen")} · {curriculum.lessons.find(item=>item.lessonId===review.lessonId)?.title} · {review.dueDay}</Text></Pressable>)}</View>}
     <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{storageError ? t("storageError") : progress ? `${progress.completed.length}/${curriculum.lessons.length}` : t("loading")}</Text>
     {storageError && <Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={()=>void retryStorage()} style={{minHeight:48,padding:14,backgroundColor:c.surface}}><Text style={{color:c.link}}>{t("retryStorage")}</Text></Pressable>}
@@ -163,5 +159,9 @@ function LearningSession({ owner }: { owner: string }) {
       <Text style={{ color: c.muted }}>{lesson.sources.join("\n")}</Text>
       <NeedsWantsPractice />
     </>}
+    {!lesson && <WeeklyPractice owner={owner} />}
+    {!lesson && <LearningAiCard />}
+    {!lesson && <AssessmentDraftCard key={owner} owner={owner} />}
+    {!lesson&&!localMode&&session&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true"&&<Pressable accessibilityRole="button" onPress={()=>router.push("/weekly-story-preview")} style={{minHeight:48,padding:16,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link}}>{t("storyTitle",{ns:"cashflow"})}</Text></Pressable>}
   </ScrollView></SafeAreaView>;
 }
