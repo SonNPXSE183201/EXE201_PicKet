@@ -66,7 +66,8 @@ function render(eligible: boolean, recognizing = false, lineItems: ReceiptDraftL
   message:"Không nhận diện được hóa đơn hợp lệ.",ocrDurationMs:null,__DEV__:false,lineItems,formatMoney:(amount:number)=>`${amount} VND`,serverFallbackEnabled:false,localMode:false,needsFallback:false,fallbackStatus:null,attachReceipt:false,
   title:"",amount:"",purchasedAt:"2026-10-26",hasObservedDate,calendarReceiptDay:()=>"2026-10-26",setTitle:noop,setAmount:noop,
  };
- for(const name of ["SafeAreaView","ScrollView","TopAppBar","Text","Image","View","AppIcon","Pressable","ActivityIndicator","TextInput"])context[name]=name;
+ context.figmaType=new Proxy({},{get:()=>({})});context.receiptArt=1;context.busyAny=recognizing;context.reviewCount=eligible?1:0;context.pinnedPhoto="PinnedPhoto";
+ for(const name of ["SafeAreaView","ScrollView","TopAppBar","Text","Image","View","AppIcon","Pressable","ActivityIndicator","TextInput","Chip","Overline","ReceiptDivider","ReceiptSheet"])context[name]=name;
  vm.runInNewContext(ts.transpileModule(`exports.render=()=>{${source.slice(start,end)}};`,{fileName:"capture.tsx",compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React,jsxFactory:"element",jsxFragmentFactory:"Fragment"}}).outputText,context);
  const tree=exports.render!();const nodes:Node[]=[];const text:string[]=[];
  const visit=(value:unknown)=>{if(Array.isArray(value)){value.forEach(visit);return;}if(typeof value==="string"){text.push(value);return;}if(value&&typeof value==="object"&&"type" in value){const node=value as Node;nodes.push(node);node.children.forEach(visit);}};visit(tree);
@@ -85,8 +86,11 @@ test("recognized receipt exposes the review fields and handoff",()=>{
  assert.match(result.text,/Kiểm tra và tạo giao dịch/);
 });
 test("recognition in progress does not expose editable transaction fields",()=>{
- const result=render(false,true);assert.equal(result.nodes.filter(node=>node.type==="TextInput").length,0);
- assert.match(result.text,/Đang đọc hóa đơn/);
+ const source=readFileSync(new URL("../../app/capture/index.tsx",import.meta.url),"utf8");
+ assert.match(source,/if \(isRecognizing\) return <CaptureReading/);
+ const reading=readFileSync(new URL("../../features/capture/capture-reading.tsx",import.meta.url),"utf8");
+ assert.match(reading,/Đang đọc hoá đơn/);
+ assert.equal(render(false,true).nodes.filter(node=>node.type==="TextInput").length,0);
 });
 
 test("review displays each recognized product quantity unit price and total before saving",()=>{
