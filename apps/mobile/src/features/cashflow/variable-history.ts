@@ -2,7 +2,15 @@ import {ledgerOpening,parseLedgerSnapshot,type LedgerSnapshot} from "./ledger-sn
 import type {ObservedVariableDay} from "./variable-spending";
 export type HistoryReview={transactionId:string;kind:"variable"|"scheduled"|"one-off";reviewedAt:string};
 export type CompleteDay={day:string;confirmedAt:string};
-export type VariableHistoryInput={snapshot:LedgerSnapshot;accounts:string[];currency:string;startDay:string;pendingCount:number;completeScope:{accounts:string[];currency:string};completeDays:CompleteDay[];reviews:HistoryReview[]};
+export type VariableHistoryInput={snapshot:LedgerSnapshot;accounts:string[];currency:string;startDay:string;pendingCount:number;completeScope:{accounts:string[];currency:string};completeDays:CompleteDay[];reviews:HistoryReview[];
+ /** IANA zone of the owner (e.g. Asia/Ho_Chi_Minh). Expenses are bucketed by local calendar day; defaults to UTC. */
+ timeZone?:string};
+/** Calendar day of an instant in a time zone, as YYYY-MM-DD. */
+export function localDayOf(instantIso:string,timeZone="UTC"){
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(instantIso));
+ const get=(type:string)=>parts.find(p=>p.type===type)?.value;
+ return `${get("year")}-${get("month")}-${get("day")}`;
+}
 function day(value:string){
  if(typeof value!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error("Invalid history day");
  const time=Date.parse(value+"T00:00:00Z");
@@ -40,7 +48,7 @@ export function buildVariableHistory(input:VariableHistoryInput):{history:Observ
  });
  const byDay=new Map(history.map(row=>[row.day,row])),unclassified:string[]=[],includedVariableTransactionIds:string[]=[];
  for(const expense of expenses.values()){
-  const row=byDay.get(new Date(expense.occurredAt).toISOString().slice(0,10));if(!row)continue;
+  const row=byDay.get(localDayOf(expense.occurredAt,input.timeZone));if(!row)continue;
   const review=reviews.get(expense.id);
   if(!review){row.complete=false;unclassified.push(expense.id);continue;}
   if(review.kind==="variable"){

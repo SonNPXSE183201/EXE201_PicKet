@@ -44,3 +44,13 @@ test("expense reviews must follow the latest known version and cannot classify o
  const edited=structuredClone(value);edited.snapshot.entries[0].updatedAt="2026-10-02T00:00:00Z";
  assert.throws(()=>buildVariableHistory(edited));
 });
+
+test("expenses are bucketed by the owner's local day, not UTC", async () => {
+ const { localDayOf } = await import("./variable-history");
+ // 00:30 on 1 Oct in Vietnam is still 30 Sep in UTC.
+ assert.equal(localDayOf("2026-09-30T17:30:00Z", "Asia/Ho_Chi_Minh"), "2026-10-01");
+ assert.equal(localDayOf("2026-09-30T17:30:00Z"), "2026-09-30");
+ // Month boundary.
+ assert.equal(localDayOf("2026-10-31T16:59:59Z", "Asia/Ho_Chi_Minh"), "2026-10-31");
+ assert.equal(localDayOf("2026-10-31T17:00:00Z", "Asia/Ho_Chi_Minh"), "2026-11-01");
+});
