@@ -10,6 +10,21 @@ Nhánh làm việc: `fix/mobile-completion-plan`. Plan này thay cho phần “�
 4. **Truy vết:** mọi thay đổi tiền, giá, quyền, nội dung, thông báo có `revision`, người sửa, lý do, thời điểm (audit) và MFA cho thao tác admin.
 5. **Bí mật** chỉ ở `apps/api/.env`, `deploy/.env.production` (VPS). Không đưa key vào bundle mobile/web, Git hay báo cáo.
 
+## Tiến độ (cập nhật 05/11/2026, tối)
+
+| Đợt | Trạng thái |
+| --- | --- |
+| 0 PayOS 15 phút | ✅ Đã code, test và chạy trên production ([báo cáo](../PAYOS_EXPIRY_DEPLOYMENT_20261105.md)). Còn: nghiệm thu tiền thật trên Redmi |
+| 1 Sổ doanh thu | ✅ Production ([báo cáo](../REVENUE_PROMO_NOTICE_RELEASE_DEPLOYMENT_20261105.md)). Còn: cấp quyền bucket báo cáo tài chính Play để xác nhận số tiền Google |
+| 2 Ưu đãi | ✅ Production (chưa tạo ưu đãi nào). Còn: tạo offer trên Play Console nếu muốn áp ưu đãi cho bản Play |
+| 3 Thông báo | ✅ Backend/web trên production; mobile chờ APK |
+| 4 Phiên bản | ✅ Production; readback Play trong worker đang tắt (`PLAY_TRACK_READBACK`) |
+| 5 Học tài chính | ✅ 30 bài VI/EN, tự duyệt theo checklist; bật trong app bằng `EXPO_PUBLIC_LEARNING_ENABLED`. Chấm điểm cloud cần thêm đáp án cho bài 13–30 |
+| 6 Dự báo AI | ⏸ Đã nghiên cứu ([báo cáo](AI_FORECAST_RESEARCH_20261105.md)); đã sửa lỗi gom ngày theo UTC. Phần LLM chưa bật, chờ: đánh giá tác động theo Luật BVDLCN 91/2025, Gemini gói trả phí, nhóm thử nghiệm 30 người × 8 tuần |
+| 7 Đăng ký email/SĐT | ✅ Backend trên production (OTP email qua Gmail SMTP của Supabase; SMS chỉ cần cấu hình). Mobile chờ APK |
+| 8 Mobile còn lại | ✅ Đường vào Học tài chính và Kỷ niệm, module cờ tính năng, xóa màn preview. Còn: chuyển i18n các màn capture/receipts/onboarding |
+| 9 APK QA / internal | 🔄 Đang build APK QA `com.picket.mobile.bugqa` cho Redmi 7 |
+
 ## Thứ tự thực hiện
 
 | Đợt | Nội dung | Tự làm được | Cần chủ dự án |
