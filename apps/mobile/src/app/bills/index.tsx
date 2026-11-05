@@ -8,7 +8,8 @@ import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
+import { SwipeableRow } from "@/core/ui/swipeable-row";
 
 import { routes } from "@/core/navigation/routes";
 import { ConnectionNotice, IconButton, PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
@@ -26,7 +27,8 @@ export default function BillsScreen() {
   const { t, i18n } = useTranslation("bills");
   const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
-  const { bills, error, loading, refresh } = useBills();
+  const { bills, error, loading, refresh, archive } = useBills();
+  const confirmArchive = (item: { id: string; version: number }) => Alert.alert(t("archiveTitle"), t("archiveDescription"), [{ text: t("cancel"), style: "cancel" }, { text: t("confirmArchive"), style: "destructive", onPress: () => { void archive(item.id, item.version).catch(() => undefined); } }]);
   const language = normalizeLanguage(i18n.resolvedLanguage ?? i18n.language);
   const m = useMgmtCopy();
   const [renderedAt] = useState(() => Date.now());
@@ -79,14 +81,14 @@ export default function BillsScreen() {
             const due = late ? m.late(short(bill.dueAt)) : m.due(short(bill.dueAt), days);
             return <View key={bill.id} style={figmaShadow("paper")}>
               <View style={styles.paper}>
-                <View style={styles.line}>
+                <SwipeableRow actionLabel={t("confirmArchive")} onAction={() => confirmArchive(bill)}><View style={styles.line}>
                   <View style={[styles.tile, { backgroundColor: toneAt(tones, index) }]}><AppIcon name={titleIcon(bill.title)} size={20} color={colors.text} /></View>
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{bill.title}</Text>
                     <Text style={[figmaType.bodySmall, { color: soon ? colors.warning : colors.muted }]}>{due}</Text>
                   </View>
                   <Text style={[figmaType.amountRow, { color: colors.text }]}>{money(bill.amount)}</Text>
-                </View>
+                </View></SwipeableRow>
                 <ReceiptDivider />
                 <View style={[styles.line, { justifyContent: "space-between" }]}>
                   <Text style={[figmaType.micro, { color: colors.muted, flex: 1 }]}>{m.billHint}</Text>

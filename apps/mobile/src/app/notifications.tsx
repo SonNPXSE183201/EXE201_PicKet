@@ -1,3 +1,4 @@
+import { SwipeableRow } from "@/core/ui/swipeable-row";
 import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { notificationScreenCopy } from "@/features/notifications/notification-screen-copy";
@@ -244,10 +245,15 @@ export default function NotificationsScreen() {
           return (
             <View key={item.id}>
               {index > 0 && <ReceiptDivider />}
-              <Pressable
+              <SwipeableRow
+                tone="primary"
+                disabled={isRead}
+                actionLabel={tx("Đã đọc")}
+                // eslint-disable-next-line react-hooks/refs
+                onAction={() => void markRead(item.id)}
+              ><Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`${item.label}, ${isRead ? tx("đã đọc") : tx("chưa đọc")}`}
-                // eslint-disable-next-line react-hooks/refs
                 onPress={() => void markRead(item.id)}
                 style={styles.row}
               >
@@ -262,7 +268,7 @@ export default function NotificationsScreen() {
                   <Text style={[figmaType.micro, { color: colors.muted }]}>{timeOf(item)}</Text>
                   {!isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
                 </View>
-              </Pressable>
+              </Pressable></SwipeableRow>
             </View>
           );
         })}

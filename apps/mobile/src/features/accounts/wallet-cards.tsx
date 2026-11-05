@@ -32,16 +32,16 @@ export function WalletTotalPouch({ label, total, lines = 1, footer, art = "savin
   return <View style={{ height: 144 + extra, alignSelf: "stretch" }}>
     <View style={[styles.pouch, { height: 136 + extra }, figmaShadow("camera", "#000000")]}>
       <View pointerEvents="none" style={[styles.stitch, { height: 120 + extra }]} />
-      <Text style={[figmaType.captionStrong, { color: colors.onCamera, position: "absolute", left: 24, top: 24 }]}>{label}</Text>
+      <Text style={[figmaType.captionStrong, { color: colors.onCamera, position: "absolute", left: 24, right: 100, top: 24 }]}>{label}</Text>
       <Text adjustsFontSizeToFit minimumFontScale={0.6} numberOfLines={Math.max(1, lines)} style={[figmaType.amountHero, { color: colors.onCamera, position: "absolute", left: 24, right: 100, top: 44 }]}>{total}</Text>
-      <Text style={[figmaType.bodySmall, { color: colors.onCamera, position: "absolute", left: 24, top: 98 + extra }]}>{footer}</Text>
+      <Text style={[figmaType.bodySmall, { color: colors.onCamera, position: "absolute", left: 24, right: 100, top: 98 + extra }]}>{footer}</Text>
     </View>
     <View pointerEvents="none" style={{ position: "absolute", right: -8, top: 40 + extra }}><PaperArt id={art} style={{ width: art === "bloom" ? 128 : 96, height: 96 }} /></View>
   </View>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  card: { width: 148 },
+  card: { width: "46.5%" },
   tab: { alignSelf: "flex-start", maxWidth: 148, paddingHorizontal: 12, paddingVertical: 5, borderTopLeftRadius: 12, borderTopRightRadius: 12 },
   body: { padding: 14, gap: 4, borderWidth: 1, borderBottomLeftRadius: 12, borderBottomRightRadius: 24, borderTopRightRadius: 24 },
   tile: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },

@@ -92,7 +92,7 @@ export default function AccountsScreen() {
               onPress={() => router.push(routes.account(a.id))}
             />
           ))}
-          <DashedAddCard layout="card" label="Thêm ví" onPress={() => router.push(routes.newAccount)} />
+          <DashedAddCard layout="card" cardWidth="46.5%" label="Thêm ví" onPress={() => router.push(routes.newAccount)} />
         </View>
         <View style={styles.hint}>
           <AppIcon name="star-four-points-outline" size={16} color={colors.muted} />

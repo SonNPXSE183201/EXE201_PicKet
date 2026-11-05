@@ -1,5 +1,5 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { StyleSheet, View, type ViewStyle, type StyleProp } from "react-native";
+import { ActivityIndicator, StyleSheet, View, type ViewStyle, type StyleProp } from "react-native";
 import { figmaShadows, figmaType } from "@picket/design-tokens";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -52,24 +52,29 @@ export function FigmaButton({ label, onPress, variant = "primary", size = "large
   const bg = variant === "primary" ? colors.primary : variant === "secondary" ? colors.selectedSurface : variant === "outline" ? colors.surface : "transparent";
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
     style={({ pressed }) => [styles.button, { height: size === "large" ? 48 : 40, backgroundColor: bg }, variant === "outline" && { borderWidth: 1, borderColor: colors.border }, fullWidth && { alignSelf: "stretch" }, (disabled || busy) && { opacity: .5 }, pressed && { opacity: .75 }, style]}>
-    {icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text numberOfLines={1} style={[figmaType.button, { color: fg, flexShrink: 0 }]}>{label}</Text>
+    {busy ? <ActivityIndicator accessibilityLabel={label} size="small" color={fg} /> : icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text numberOfLines={1} style={[figmaType.button, { color: fg, flexShrink: 0 }]}>{label}</Text>
   </Pressable>;
 }
 
-/** Zig-zag paper edge; teeth point away from the paper (down for bottom, up for top). */
+/**
+ * Figma Receipt/Edge: 10 wide x 8 deep teeth in the paper colour, hanging off the paper (absolute, so the paper's own shadow stays on the
+ * rectangular body only). A shadow-tinted tooth row sits 2px behind it so the drop shadow reads along the zig-zag.
+ */
 export function ReceiptEdge({ direction = "bottom", color }: { direction?: "top" | "bottom"; color?: string }) {
   const { colors } = useMobileStyles(createStyles);
   const [width, setWidth] = useState(0);
-  const tooth = 14, depth = 8, count = Math.ceil(width / tooth);
+  const tooth = 10, depth = 8, count = Math.ceil(width / tooth) + 1;
   const paper = color ?? colors.paper;
-  // Native shadows do not follow triangle shapes, so a 1.5px border-coloured row sits under the paper row as the visible cut line.
-  const row = (fill: string, offset: number) => <View style={{ position: "absolute", left: 0, right: 0, [direction === "bottom" ? "top" : "bottom"]: offset, flexDirection: "row" }}>
-    {Array.from({ length: count }, (_, i) => <View key={i} style={direction === "bottom"
+  const down = direction === "bottom";
+  const row = (fill: string, offset: number) => <View style={{ position: "absolute", left: 0, right: 0, [down ? "top" : "bottom"]: offset, flexDirection: "row" }}>
+    {Array.from({ length: count }, (_, i) => <View key={i} style={down
       ? { width: 0, height: 0, borderLeftWidth: tooth / 2, borderRightWidth: tooth / 2, borderTopWidth: depth, borderLeftColor: "transparent", borderRightColor: "transparent", borderTopColor: fill }
       : { width: 0, height: 0, borderLeftWidth: tooth / 2, borderRightWidth: tooth / 2, borderBottomWidth: depth, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: fill }} />)}
   </View>;
-  return <View onLayout={event => setWidth(event.nativeEvent.layout.width)} accessible={false} importantForAccessibility="no-hide-descendants" style={{ height: depth + 2, overflow: "hidden" }}>
-    {row(colors.border, 1.5)}
+  return <View onLayout={event => setWidth(event.nativeEvent.layout.width)} pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants"
+    style={{ position: "absolute", left: 0, right: 0, [down ? "bottom" : "top"]: 1 - depth, height: depth + 3, overflow: "hidden" }}>
+    {row(colors.text + "2E", 2.5)}
+    {row(colors.text + "14", 1.2)}
     {row(paper, 0)}
   </View>;
 }
@@ -83,7 +88,7 @@ export function ReceiptDivider() {
 /** White receipt sheet with rounded top, zig-zag bottom and soft Paper shadow. */
 export function ReceiptSheet({ children, style }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
   const { styles } = useMobileStyles(createStyles);
-  return <View style={[styles.receiptSheet, figmaShadow("paper")]}><View style={[styles.receiptBody, style]}>{children}</View><ReceiptEdge direction="bottom" /></View>;
+  return <View style={styles.receiptSheet}><View style={[styles.receiptBody, figmaShadow("paper"), style]}>{children}<ReceiptEdge direction="bottom" /></View></View>;
 }
 
 /** Date-group caption used on receipt sheets and stubs. */
@@ -103,11 +108,11 @@ export function TransactionRow({ tile, title, meta, amount, amountColor, onPress
 }
 
 /** Dashed "add" card (Pocket/Add). layout="wide" is the new-user row, "card" is the scroller tail. */
-export function DashedAddCard({ label, description, layout = "wide", onPress }: { label: string; description?: string; layout?: "wide" | "card"; onPress(): void }) {
+export function DashedAddCard({ label, description, layout = "wide", onPress, cardWidth = 110 }: { label: string; description?: string; layout?: "wide" | "card"; onPress(): void; cardWidth?: number | `${number}%` }) {
   const { colors, styles } = useMobileStyles(createStyles);
   const plus = <View style={styles.plus}><AppIcon name="plus" size={20} color={colors.primary} /></View>;
   return layout === "card"
-    ? <Pressable accessibilityRole="button" onPress={onPress} style={[styles.addCard, { width: 110, height: 162, gap: 8, justifyContent: "center", alignItems: "center" }]}>{plus}<Text style={[figmaType.button, { color: colors.primary }]}>{label}</Text></Pressable>
+    ? <Pressable accessibilityRole="button" onPress={onPress} style={[styles.addCard, { width: cardWidth, height: 162, gap: 8, justifyContent: "center", alignItems: "center" }]}>{plus}<Text numberOfLines={1} style={[figmaType.button, { color: colors.primary, textAlign: "center", alignSelf: "stretch" }]}>{label}</Text></Pressable>
     : <Pressable accessibilityRole="button" onPress={onPress} style={[styles.addCard, { flexDirection: "row", alignItems: "center", gap: 14, padding: 18 }]}>{plus}<View style={{ flex: 1 }}><Text style={[figmaType.bodyStrong, { color: colors.text }]}>{label}</Text>{description ? <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{description}</Text> : null}</View></Pressable>;
 }
 
@@ -125,7 +130,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   sectionAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.selectedSurface, alignItems: "center", justifyContent: "center" },
   chip: { alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   button: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 24, paddingHorizontal: 20 },
-  receiptSheet: { alignSelf: "stretch" },
+  receiptSheet: { alignSelf: "stretch", marginBottom: 8 },
   receiptBody: { backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 16, paddingBottom: 12, paddingHorizontal: 16, gap: 8 },
   txRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 4, minHeight: 44 },
   tile: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },

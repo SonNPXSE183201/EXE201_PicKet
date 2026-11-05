@@ -7,7 +7,8 @@ import { figmaType } from "@picket/design-tokens";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
+import { SwipeableRow } from "@/core/ui/swipeable-row";
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { ConnectionNotice, IconButton, PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
@@ -28,7 +29,8 @@ export default function SubscriptionsScreen() {
   const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const { accounts } = useAccounts();
-  const { subscriptions, loading, error, refresh } = useSubscriptions();
+  const { subscriptions, loading, error, refresh, archive } = useSubscriptions();
+  const confirmArchive = (item: { id: string; version: number }) => Alert.alert(t("archiveTitle"), t("archiveDescription"), [{ text: t("cancel"), style: "cancel" }, { text: t("confirmArchive"), style: "destructive", onPress: () => { void archive(item.id, item.version).catch(() => undefined); } }]);
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
@@ -56,7 +58,7 @@ export default function SubscriptionsScreen() {
   const row = (item: (typeof subscriptions)[number], index: number, isPaused: boolean) => (
     <View key={item.id} style={isPaused ? { opacity: 0.6 } : undefined}>
       {index > 0 && <ReceiptDivider />}
-      <Pressable accessibilityRole="button" onPress={() => router.push(routes.subscription(item.id))} style={styles.row}>
+      <SwipeableRow actionLabel={t("confirmArchive")} onAction={() => confirmArchive(item)}><Pressable accessibilityRole="button" onPress={() => router.push(routes.subscription(item.id))} style={styles.row}>
         <View style={[styles.tile, { backgroundColor: toneAt(tones, index + (isPaused ? 3 : 0)) }]}><AppIcon name={titleIcon(item.title)} size={18} color={colors.text} /></View>
         <View style={{ flex: 1, gap: 1 }}>
           <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{item.title}</Text>
@@ -68,7 +70,7 @@ export default function SubscriptionsScreen() {
           <Text style={[figmaType.amountRow, { color: colors.text }]}>{money(item.amount)}</Text>
           {isPaused ? <Text style={[figmaType.micro, { color: colors.warning }]}>{m.pausedShort}</Text> : null}
         </View>
-      </Pressable>
+      </Pressable></SwipeableRow>
     </View>
   );
 

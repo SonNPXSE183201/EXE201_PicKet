@@ -40,7 +40,7 @@ export function IconButton({ icon, label, onPress, disabled = false, expanded, v
 export function TopAppBar({ title, subtitle, back = true, action, backDisabled = false, illustration, onBack }: { title: string; subtitle?: string; back?: boolean; action?: ReactNode; backDisabled?: boolean; illustration?: PaperAssetId; onBack?: () => void }) {
   const { t } = useTranslation("common");
   const { styles } = useMobileStyles(createStyles);
-  return <View style={styles.appBar}><View style={styles.appBarRow}>{back && <IconButton icon="arrow-left" label={t("Quay lại")} disabled={backDisabled} onPress={onBack ?? (() => router.back())} />}<Text accessibilityRole="header" style={styles.appBarTitle}>{title}</Text>{action}{illustration && <PaperArt id={illustration} style={{ width: 58, height: 58 }} />}</View>{subtitle && <Text style={styles.appBarSubtitle}>{subtitle}</Text>}</View>;
+  return <View style={styles.appBar}><View style={styles.appBarRow}>{back && <IconButton variant="surface" icon="arrow-left" label={t("Quay lại")} disabled={backDisabled} onPress={onBack ?? (() => router.back())} />}<Text accessibilityRole="header" style={[styles.appBarTitle, back && styles.appBarChildTitle]}>{title}</Text>{action}{illustration && <PaperArt id={illustration} style={{ width: 58, height: 58 }} />}</View>{subtitle && <Text style={styles.appBarSubtitle}>{subtitle}</Text>}</View>;
 }
 
 export function MenuRow({ title, description, icon, illustration, onPress, disabled = false }: { title: string; description?: string; icon: IconName; illustration?: PaperAssetId; onPress(): void; disabled?: boolean }) {
@@ -191,6 +191,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   iconBadge: { position: "absolute", top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.expense, borderWidth: 1.5, borderColor: colors.surface },
   appBar: { marginBottom: 20 },
   appBarRow: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 56 },
+  appBarChildTitle: { fontSize: 16, lineHeight: 26, letterSpacing: 0 },
   appBarTitle: { flex: 1, color: colors.ink, fontSize: 22, lineHeight: 29, fontWeight: "800", letterSpacing: -0.3 },
   appBarSubtitle: { color: colors.muted, fontSize: 14, lineHeight: 21, marginTop: 4 },
   menuRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, minHeight: 64 },

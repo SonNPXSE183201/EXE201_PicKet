@@ -30,7 +30,7 @@ function createController(setOpen: (open: boolean) => void) {
 }
 
 /** Swipe left to reveal a rounded red action (default "Xoá"). Core PanResponder + Animated only; vertical scrolling is never blocked. */
-export function SwipeableRow({ children, actionLabel = "Xoá", onAction, disabled = false }: PropsWithChildren<{ actionLabel?: string; onAction(): void; disabled?: boolean }>) {
+export function SwipeableRow({ children, actionLabel = "Xoá", onAction, disabled = false, tone = "danger" }: PropsWithChildren<{ actionLabel?: string; onAction(): void; disabled?: boolean; tone?: "danger" | "primary" }>) {
   const { styles } = useMobileStyles(createStyles);
   const [open, setOpen] = useState(false);
   const [controller] = useState(() => createController(setOpen));
@@ -39,7 +39,7 @@ export function SwipeableRow({ children, actionLabel = "Xoá", onAction, disable
   if (disabled) return <>{children}</>;
   return <View style={styles.wrap}>
     <View style={styles.actionSlot} pointerEvents={open ? "auto" : "none"}>
-      <Pressable accessibilityRole="button" accessibilityLabel={actionLabel} onPress={() => { controller.closeNow(); onAction(); }} style={styles.action}><Text style={styles.actionText}>{actionLabel}</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={actionLabel} onPress={() => { controller.closeNow(); onAction(); }} style={[styles.action, tone === "primary" && styles.actionPrimary]}><Text style={styles.actionText}>{actionLabel}</Text></Pressable>
     </View>
     <Animated.View {...controller.responder.panHandlers} accessible={false} accessibilityActions={[{ name: "delete", label: actionLabel }]} onAccessibilityAction={(event) => { if (event.nativeEvent.actionName === "delete") onAction(); }} style={[styles.front, { transform: [{ translateX: controller.x }] }]}>
       {children}
@@ -53,5 +53,6 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   front: { backgroundColor: colors.paper },
   actionSlot: { position: "absolute", top: 2, bottom: 2, right: 0, width: actionWidth, justifyContent: "center", alignItems: "flex-end" },
   action: { width: actionWidth - 4, height: "100%", minHeight: 40, borderRadius: 14, backgroundColor: colors.expense, alignItems: "center", justifyContent: "center" },
+  actionPrimary: { backgroundColor: colors.primary },
   actionText: { ...figmaType.button, color: "#FFFFFF" },
 });
