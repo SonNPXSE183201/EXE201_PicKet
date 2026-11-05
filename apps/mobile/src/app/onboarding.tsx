@@ -6,6 +6,7 @@ import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Dispatch, SetStateAction } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -22,6 +23,7 @@ const personas = ["Đi làm", "Sinh viên", "Tự do", "Gia đình"] as const;
 const currencies = ["VND", "USD"] as const;
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation("common");
   const { colors, styles } = useMobileStyles(createStyles);
   const { loading: authLoading, session } = useAuth();
   const { completeOnboarding, loading: profileLoading, profile } = useProfile();
@@ -45,10 +47,10 @@ export default function OnboardingScreen() {
 
   async function next() {
     setMessage(null);
-    if (step === 1 && !displayName.trim()) return setMessage("Hãy nhập tên hiển thị.");
-    if (step === 5 && !walletName.trim()) return setMessage("Hãy nhập tên ví.");
-    if (step === 6 && !/^\d+$/.test(openingBalance)) return setMessage("Số dư chưa hợp lệ.");
-    if (step === 7 && !privacyAccepted) return setMessage("Bạn cần xác nhận chính sách dữ liệu.");
+    if (step === 1 && !displayName.trim()) return setMessage(t("Hãy nhập tên hiển thị."));
+    if (step === 5 && !walletName.trim()) return setMessage(t("Hãy nhập tên ví."));
+    if (step === 6 && !/^\d+$/.test(openingBalance)) return setMessage(t("Số dư chưa hợp lệ."));
+    if (step === 7 && !privacyAccepted) return setMessage(t("Bạn cần xác nhận chính sách dữ liệu."));
     if (step < 7) return setStep((current) => current + 1);
 
     setBusy(true);
@@ -64,7 +66,7 @@ export default function OnboardingScreen() {
       await refreshAccounts();
       router.replace(routes.home);
     } catch {
-      setMessage("Chưa lưu được lựa chọn. Hãy kiểm tra kết nối và thử lại.");
+      setMessage(t("Chưa lưu được lựa chọn. Hãy kiểm tra kết nối và thử lại."));
     } finally {
       setBusy(false);
     }

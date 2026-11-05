@@ -4,6 +4,7 @@ import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { formatVnd } from "@picket/domain";
 import { Redirect, router } from "expo-router";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
@@ -20,6 +21,7 @@ import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { categorySpending } from "@/core/ui/category-spending";
 
 export default function InsightsScreen() {
+  const { t } = useTranslation("common");
   const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const { profile } = useProfile();
@@ -49,12 +51,12 @@ export default function InsightsScreen() {
       return {
         id,
         amount,
-        name: cat?.name ?? "Chưa phân loại",
+        name: cat?.name ?? t("Chưa phân loại"),
         icon: cat?.icon ?? null,
       };
     });
     return { income, expense: Math.max(0, expense - refunds), breakdown };
-  }, [categories, month, transactions, selectedMonth, splits]);
+  }, [categories, month, transactions, selectedMonth, splits, t]);
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
@@ -87,7 +89,7 @@ export default function InsightsScreen() {
           <AppIcon name="arrow-left" color={colors.ink} size={24} />
         </Pressable>
         <Text accessibilityRole="header" style={styles.headerTitle}>
-          Phân tích tài chính
+          {t("Phân tích tài chính")}
         </Text>
       </View>
 
@@ -98,7 +100,7 @@ export default function InsightsScreen() {
           style={[styles.monthPill, monthOffset === 0 && styles.monthPillActive]}
         >
           <Text style={[styles.monthPillText, monthOffset === 0 && styles.monthPillTextActive]}>
-            Tháng {month.getMonth() + 1}
+            {t("Tháng {{month}}", { month: month.getMonth() + 1 })}
           </Text>
         </Pressable>
         <Pressable
@@ -106,7 +108,7 @@ export default function InsightsScreen() {
           style={[styles.monthPill, monthOffset === -1 && styles.monthPillActive]}
         >
           <Text style={[styles.monthPillText, monthOffset === -1 && styles.monthPillTextActive]}>
-            Tháng {prevMonth.getMonth() + 1}
+            {t("Tháng {{month}}", { month: prevMonth.getMonth() + 1 })}
           </Text>
         </Pressable>
       </View>
@@ -114,16 +116,16 @@ export default function InsightsScreen() {
       {error && (
         <Pressable accessibilityRole="button" onPress={() => void refresh()}>
           <Text accessibilityLiveRegion="polite" style={styles.warning}>
-            {error} Chạm để tải lại.
+            {t("{{error}} Chạm để tải lại.", { error })}
           </Text>
         </Pressable>
       )}
 
       {/* Master Donut Chart Card */}
       <View style={styles.donutCard}>
-        <Text style={styles.donutCardTitle}>Cơ cấu chi tiêu theo nhóm</Text>
+        <Text style={styles.donutCardTitle}>{t("Cơ cấu chi tiêu theo nhóm")}</Text>
         <Text style={styles.donutCardSubtitle}>
-          Tổng chi tiêu: {profile?.hideBalance ? "••••••" : formatVnd(summary.expense)}
+          {t("Tổng chi tiêu: {{amount}}", { amount: profile?.hideBalance ? "••••••" : formatVnd(summary.expense) })}
         </Text>
 
         <View style={styles.donutGraphicContainer}>
@@ -132,21 +134,21 @@ export default function InsightsScreen() {
               <Text style={styles.donutCenterAmount}>
                 {profile?.hideBalance ? "••" : formatShortM(summary.expense)}
               </Text>
-              <Text style={styles.donutCenterLabel}>đã chi</Text>
+              <Text style={styles.donutCenterLabel}>{t("đã chi")}</Text>
             </View>
           </View>
         </View>
       </View>
 
       {/* Section: DANH MỤC CHI TIÊU HÀNG ĐẦU */}
-      <Text style={styles.sectionHeaderLabel}>DANH MỤC CHI TIÊU HÀNG ĐẦU</Text>
+      <Text style={styles.sectionHeaderLabel}>{t("DANH MỤC CHI TIÊU HÀNG ĐẦU")}</Text>
 
       {splitError ? (
         <Text accessibilityLiveRegion="polite" style={styles.warning}>{splitError}</Text>
       ) : splitLoading ? null : summary.breakdown.length === 0 ? (
         <EmptyState
-          title="Chưa có chi tiêu trong tháng"
-          description="Phân bổ sẽ xuất hiện khi bạn ghi giao dịch."
+          title={t("Chưa có chi tiêu trong tháng")}
+          description={t("Phân bổ sẽ xuất hiện khi bạn ghi giao dịch.")}
           symbol="▥"
         />
       ) : (

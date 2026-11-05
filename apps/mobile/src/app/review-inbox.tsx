@@ -5,6 +5,7 @@ import { formatVnd, type ReceiptRecord } from "@picket/domain";
 import { Redirect, router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { routes } from "@/core/navigation/routes";
 import { picketApi } from "@/core/api/client";
@@ -17,6 +18,7 @@ import { selectReceiptReviews, selectReviewInbox } from "@/features/transactions
 
 // Remount per owner; never retain a previous account's receipts on screen.
 function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry: () => void }) {
+  const { t } = useTranslation("common");
   const { styles } = useMobileStyles(createStyles);
   const [rows, setRows] = useState<ReceiptRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,18 +43,19 @@ function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry
     return () => { active = false; controller.abort(); };
   }, [accessToken]));
   return <View style={styles.stack}>
-    <Text accessibilityRole="header" style={styles.section}>Hóa đơn cần kiểm tra</Text>
-    {loading ? <Text accessibilityLiveRegion="polite" style={styles.reason}>Đang tải danh sách hóa đơn…</Text> : failed ?
-      <Pressable accessibilityRole="button" accessibilityLabel="Thử tải lại hóa đơn cần kiểm tra" onPress={onRetry}><Text style={styles.warning}>Chưa tải được trạng thái hóa đơn. Kết nối mạng rồi chạm để thử lại.</Text></Pressable> : rows.length === 0 ?
-      <Text style={styles.reason}>Không có hóa đơn cần kiểm tra trong dữ liệu vừa tải.</Text> : rows.map(item => {
-        const title = item.merchant?.trim() || "Hóa đơn chưa rõ cửa hàng";
-        const amount = item.detectedTotal === null ? "Chưa có tổng tiền" : formatVnd(item.detectedTotal);
-        return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${title}, hóa đơn cần kiểm tra, ${amount}`} onPress={() => router.push(routes.receipt(item.id))}><Surface><View style={styles.row}><View style={styles.copy}><Text style={styles.title}>{title}</Text><Text style={styles.reason}>Kiểm tra kết quả nhận diện hóa đơn</Text></View><Text style={styles.amount}>{amount}</Text></View></Surface></Pressable>;
+    <Text accessibilityRole="header" style={styles.section}>{t("Hóa đơn cần kiểm tra")}</Text>
+    {loading ? <Text accessibilityLiveRegion="polite" style={styles.reason}>{t("Đang tải danh sách hóa đơn…")}</Text> : failed ?
+      <Pressable accessibilityRole="button" accessibilityLabel={t("Thử tải lại hóa đơn cần kiểm tra")} onPress={onRetry}><Text style={styles.warning}>{t("Chưa tải được trạng thái hóa đơn. Kết nối mạng rồi chạm để thử lại.")}</Text></Pressable> : rows.length === 0 ?
+      <Text style={styles.reason}>{t("Không có hóa đơn cần kiểm tra trong dữ liệu vừa tải.")}</Text> : rows.map(item => {
+        const title = item.merchant?.trim() || t("Hóa đơn chưa rõ cửa hàng");
+        const amount = item.detectedTotal === null ? t("Chưa có tổng tiền") : formatVnd(item.detectedTotal);
+        return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={t("{{title}}, hóa đơn cần kiểm tra, {{amount}}", { title, amount })} onPress={() => router.push(routes.receipt(item.id))}><Surface><View style={styles.row}><View style={styles.copy}><Text style={styles.title}>{title}</Text><Text style={styles.reason}>{t("Kiểm tra kết quả nhận diện hóa đơn")}</Text></View><Text style={styles.amount}>{amount}</Text></View></Surface></Pressable>;
       })}
   </View>;
 }
 
 export default function ReviewInboxScreen() {
+  const { t } = useTranslation("common");
   const { styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const [receiptAttempt, setReceiptAttempt] = useState(0);
@@ -64,13 +67,13 @@ export default function ReviewInboxScreen() {
   }, [categories, transactions]);
   if (!session && !localMode) return <Redirect href={routes.login} />;
   return <PicketScreen>
-    <TopAppBar title="Cần kiểm tra" />
-    <Text style={styles.subtitle}>Kiểm tra hóa đơn, phân loại giao dịch và đối chiếu các khoản nghi trùng.</Text>
+    <TopAppBar title={t("Cần kiểm tra")} />
+    <Text style={styles.subtitle}>{t("Kiểm tra hóa đơn, phân loại giao dịch và đối chiếu các khoản nghi trùng.")}</Text>
     {session && <ReceiptReviews key={`${session.user.id}:${receiptAttempt}`} accessToken={session.access_token} onRetry={() => setReceiptAttempt(n => n + 1)} />}
-    <Text accessibilityRole="header" style={styles.section}>Giao dịch cần kiểm tra</Text>
-    {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><Text accessibilityLiveRegion="polite" style={styles.warning}>{error} Chạm để thử lại.</Text></Pressable>}
-    {loading && <Text style={styles.warning}>Đang đối chiếu toàn bộ lịch sử giao dịch…</Text>}
-    {!loading && !error && (flagged.length === 0 ? <EmptyState illustration="receipt" title="Giao dịch đã gọn gàng" description="Không có giao dịch cần phân loại hoặc nghi trùng trong dữ liệu đã tải." symbol="✓" /> :
+    <Text accessibilityRole="header" style={styles.section}>{t("Giao dịch cần kiểm tra")}</Text>
+    {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><Text accessibilityLiveRegion="polite" style={styles.warning}>{t("{{error}} Chạm để thử lại.", { error })}</Text></Pressable>}
+    {loading && <Text style={styles.warning}>{t("Đang đối chiếu toàn bộ lịch sử giao dịch…")}</Text>}
+    {!loading && !error && (flagged.length === 0 ? <EmptyState illustration="receipt" title={t("Giao dịch đã gọn gàng")} description={t("Không có giao dịch cần phân loại hoặc nghi trùng trong dữ liệu đã tải.")} symbol="✓" /> :
       <View style={styles.stack}>{flagged.map(({ item, reason }) => <Pressable accessibilityLabel={`${item.title}, ${reason}, ${formatVnd(item.amount)}`} accessibilityRole="button" key={item.id} onPress={() => router.push(routes.transaction(item.id))}><Surface><View style={styles.row}><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.reason}>{reason}</Text></View><Text style={styles.amount}>{formatVnd(item.amount)}</Text></View></Surface></Pressable>)}</View>)}
   </PicketScreen>;
 }
