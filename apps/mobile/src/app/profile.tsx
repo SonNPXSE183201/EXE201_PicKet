@@ -1,3 +1,4 @@
+import { featureFlags } from "@/core/config/feature-flags";
 import { paperControl, paperShape, paperSpace } from "@/core/theme/paper-foundations";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
@@ -424,6 +425,38 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
           <View style={styles.settingTextCol}>
             <Text style={styles.settingTitle}>Thống kê thu chi & Phân tích</Text>
             <Text style={styles.settingSub}>Cơ cấu chi tiêu và xu hướng dòng tiền</Text>
+          </View>
+        </Pressable>
+
+        {featureFlags.learning && (
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={() => router.push(routes.learning)}
+            style={styles.settingCard}
+          >
+            <View style={styles.settingIconBadge}>
+              <AppIcon name="school-outline" color={colors.mauve} size={20} />
+            </View>
+            <View style={styles.settingTextCol}>
+              <Text style={styles.settingTitle}>Học tài chính</Text>
+              <Text style={styles.settingSub}>30 bài ngắn: ngân sách, tiết kiệm, nợ, an toàn</Text>
+            </View>
+          </Pressable>
+        )}
+
+        <Pressable
+          accessibilityRole="button"
+          disabled={busy}
+          onPress={() => router.push(routes.keepsakes)}
+          style={styles.settingCard}
+        >
+          <View style={styles.settingIconBadge}>
+            <AppIcon name="image-multiple-outline" color={colors.mauve} size={20} />
+          </View>
+          <View style={styles.settingTextCol}>
+            <Text style={styles.settingTitle}>Kỷ niệm & giấy tờ</Text>
+            <Text style={styles.settingSub}>Lưu ảnh hóa đơn, bảo hành và khoảnh khắc chi tiêu</Text>
           </View>
         </Pressable>
 

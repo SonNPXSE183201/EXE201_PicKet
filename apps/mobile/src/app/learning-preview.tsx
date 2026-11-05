@@ -14,17 +14,18 @@ import { useAppTheme } from "@/features/settings/appearance-provider";
 import { curriculumForLanguage, gradeQuiz } from "@/features/learning/curriculum";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/features/auth/auth-context";
+import { featureFlags } from "@/core/config/feature-flags";
 import { guestOwnerId } from "@/core/local/guest-finance";
 import { learningAttempts, learningDrafts, learningProgress } from "@/features/learning/progress-storage";
 import type { LearningProgress } from "@/features/learning/progress";
 import { NeedsWantsPractice } from "@/features/learning/needs-wants";
 import { WeeklyPractice } from "@/features/learning/weekly-practice";
 
-/** Authoring acceptance route; unpublished content never becomes a public course. */
+/** Financial-literacy course: bundled, self-reviewed content; cloud grading stays behind its own flag. */
 export default function LearningPreview() {
   const { session, localMode } = useAuth();
   const owner = localMode ? guestOwnerId : session?.user.id;
-  if (!__DEV__ || !owner) return <Redirect href="/" />;
+  if (!featureFlags.learning || !owner) return <Redirect href="/" />;
   return <LearningSession key={owner} owner={owner} />;
 }
 

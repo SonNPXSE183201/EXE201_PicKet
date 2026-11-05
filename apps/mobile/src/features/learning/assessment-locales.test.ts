@@ -16,6 +16,6 @@ test("assessment rubric and storage states have complete vi/en copy without tran
   assert.equal(i18n.t("characters", { ns: "assessment", count: 23, max: 4000 }), "23/4000 characters");
   assert.equal(i18n.t("clearError", { ns: "assessment" }), assessmentEn.clearError);
   const source = readFileSync("src/app/learning-preview.tsx", "utf8");
-  assert.match(source, /if \(!__DEV__ \|\| !owner\) return <Redirect/);
+  assert.match(source, /if \(!featureFlags\.learning \|\| !owner\) return <Redirect/);
   assert.match(source, /AssessmentDraftCard key=\{owner\} owner=\{owner\}/);
 });
