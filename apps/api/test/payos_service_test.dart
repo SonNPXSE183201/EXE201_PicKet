@@ -26,6 +26,8 @@ void main() {
     'payment_link_id': null,
     'expires_at': '2026-11-04T00:15:00Z',
   };
+  final now = DateTime.utc(2026, 11, 4);
+  DateTime clock() => now;
   http.Response signed(Map<String, dynamic> data) => http.Response(
     jsonEncode({
       'code': '00',
@@ -40,11 +42,16 @@ void main() {
       final writes = <String>[];
       final service = PayosService(
         environment: environment,
+        clock: clock,
         clientFactory: () => MockClient((request) async {
           if (request.url.host == 'api-merchant.payos.vn') {
             expect(request.headers['x-api-key'], 'fixture');
             final input = jsonDecode(request.body) as Map<String, dynamic>;
             expect(input['amount'], 19000);
+            expect(
+              input['expiredAt'],
+              now.millisecondsSinceEpoch ~/ 1000 + 900,
+            );
             expect(
               (input['description'] as String).length,
               lessThanOrEqualTo(9),
@@ -76,7 +83,12 @@ void main() {
           }
           writes.add(request.url.path);
           expect(request.headers['apikey'], environment['SUPABASE_SECRET_KEY']);
-          expect((jsonDecode(request.body) as Map)['p_id'], 'fixture-id');
+          final body = jsonDecode(request.body) as Map;
+          expect(body['p_id'], 'fixture-id');
+          expect(
+            (body['p_data'] as Map)['expiresAt'],
+            now.add(const Duration(seconds: 900)).toIso8601String(),
+          );
           return http.Response('null', 200);
         }),
       );
@@ -89,6 +101,7 @@ void main() {
     var writes = 0;
     final service = PayosService(
       environment: environment,
+      clock: clock,
       clientFactory: () => MockClient((request) async {
         if (request.url.host != 'api-merchant.payos.vn') {
           writes++;
@@ -113,6 +126,7 @@ void main() {
   test('signed mismatched amount cannot attach checkout', () async {
     final service = PayosService(
       environment: environment,
+      clock: clock,
       clientFactory: () => MockClient((request) async {
         expect(request.url.host, 'api-merchant.payos.vn');
         return signed({
@@ -187,6 +201,7 @@ void main() {
       final writes = <String>[];
       final service = PayosService(
         environment: environment,
+        clock: clock,
         clientFactory: () => MockClient((request) async {
           if (request.url.host == 'api-merchant.payos.vn') {
             return signed({
@@ -214,4 +229,87 @@ void main() {
       ]);
     },
   );
+  test('stale reservation never opens a new PayOS link', () async {
+    final service = PayosService(
+      environment: environment,
+      clock: () => now.add(const Duration(minutes: 16)),
+      clientFactory: () => MockClient((request) async {
+        fail('No provider or database call for an expired reservation.');
+      }),
+    );
+    await expectLater(
+      service.create(order),
+      throwsA(
+        isA<GatewayException>().having((e) => e.statusCode, 'statusCode', 409),
+      ),
+    );
+  });
+  Map<String, dynamic> linkData(String status, [List<Object?>? tx]) => {
+    'id': 'link-id',
+    'orderCode': 1000000000,
+    'amount': 19000,
+    'status': status,
+    'transactions': tx ?? <Object?>[],
+  };
+  test('cancel reads first and keeps a link that was already paid', () async {
+    final calls = <String>[];
+    final service = PayosService(
+      environment: environment,
+      clock: clock,
+      clientFactory: () => MockClient((request) async {
+        calls.add('${request.method} ${request.url.path}');
+        if (request.url.host == 'api-merchant.payos.vn') {
+          return signed(
+            linkData('PAID', [
+              {
+                'amount': 19000,
+                'reference': 'late-ref',
+                'transactionDateTime': '2026-11-04 07:14:59',
+              },
+            ]),
+          );
+        }
+        return http.Response('{}', 200);
+      }),
+    );
+    final status = await service.reconcile({
+      ...order,
+      'payment_link_id': 'link-id',
+    }, cancel: true);
+    expect(status, 'PAID');
+    expect(calls, [
+      'GET /v2/payment-requests/1000000000',
+      'POST /rest/v1/rpc/payment_receive',
+      'POST /rest/v1/rpc/payment_state',
+    ]);
+  });
+  test('supersede cancels an unpaid older link at PayOS', () async {
+    final calls = <String>[];
+    final service = PayosService(
+      environment: environment,
+      clock: clock,
+      clientFactory: () => MockClient((request) async {
+        calls.add('${request.method} ${request.url.path}');
+        if (request.url.host == 'api-merchant.payos.vn') {
+          return signed(
+            linkData(request.method == 'GET' ? 'PENDING' : 'CANCELLED'),
+          );
+        }
+        final body = jsonDecode(request.body) as Map;
+        if (request.url.path.endsWith('payment_state')) {
+          expect(body['p_status'], 'CANCELLED');
+        }
+        return http.Response('{}', 200);
+      }),
+    );
+    final paid = await service.supersede([
+      {...order, 'payment_link_id': 'link-id'},
+    ]);
+    expect(paid, false);
+    expect(calls, [
+      'GET /v2/payment-requests/1000000000',
+      'POST /v2/payment-requests/1000000000/cancel',
+      'POST /rest/v1/rpc/payment_state',
+    ]);
+  });
 }

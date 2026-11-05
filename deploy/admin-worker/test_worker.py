@@ -63,6 +63,14 @@ class PaymentReconciliationTests(unittest.TestCase):
             self.assertEqual(request.data, b'{}')
             self.assertEqual(result['reconciled'], 1)
 
+    def test_payos_tick_only_runs_when_enabled_and_swallows_failures(self):
+        with patch.dict(worker.os.environ, {'PAYOS_ENABLED': 'false'}), patch.object(worker, 'reconcile_payos') as reconcile:
+            worker.payos_tick()
+            reconcile.assert_not_called()
+        with patch.dict(worker.os.environ, {'PAYOS_ENABLED': 'true'}), patch.object(worker, 'reconcile_payos', side_effect=OSError('down')) as reconcile:
+            worker.payos_tick()
+            reconcile.assert_called_once()
+
     def test_missing_worker_secret_never_contacts_api(self):
         with patch.dict(worker.os.environ, {'PAYOS_WORKER_SECRET': ''}), patch.object(worker.urllib.request, 'urlopen') as send:
             with self.assertRaises(ValueError):

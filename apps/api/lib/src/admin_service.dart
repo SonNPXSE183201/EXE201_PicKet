@@ -162,7 +162,11 @@ class AdminService {
     String name,
     Map<String, dynamic> body,
   ) async {
-    if (!{'payment_reconcile_queue', 'payment_checked'}.contains(name)) {
+    if (!{
+      'payment_reconcile_queue',
+      'payment_checked',
+      'payment_expire_unlinked',
+    }.contains(name)) {
       throw const FormatException('Invalid reconciliation operation.');
     }
     final response = await _client

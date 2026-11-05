@@ -1,17 +1,18 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PicketApiClient } from "@picket/api-client";
-import { formatVnd, type PaymentCustomer } from "@picket/domain";
+import {
+  formatPaymentCountdown,
+  formatVnd,
+  openPaymentOrder,
+  PAYMENT_ORDER_PHASE_LABELS,
+  paymentOrderPhase,
+  paymentSecondsLeft,
+  type PaymentCustomer,
+} from "@picket/domain";
 import { createClient } from "@/core/supabase/client";
 import './payment-panel.css';
 
-const labels = {
-  pending: "Chờ thanh toán",
-  paid: "Đã thanh toán",
-  cancelled: "Đã hủy",
-  expired: "Hết hạn",
-  review: "Cần đối soát",
-};
 export function PaymentPanel({
   initial,
   paid,
@@ -24,6 +25,14 @@ export function PaymentPanel({
     [error, setError] = useState("");
   const keys = useRef(new Map<string, string>());
   const inFlight = useRef(false);
+  const verified = useRef(new Set<string>());
+  const [now, setNow] = useState(() => Date.now());
+  const hasPending = data.orders.some((o) => o.status === "pending");
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [hasPending]);
   async function run(
     action: (api: PicketApiClient, token: string) => Promise<PaymentCustomer>,
   ) {
@@ -53,6 +62,20 @@ export function PaymentPanel({
       setBusy(false);
     }
   }
+  // A link that runs out is re-read at PayOS by the server before it is
+  // treated as expired, so last-second payments are not lost.
+  useEffect(() => {
+    const overdue = data.orders.find(
+      (o) =>
+        o.status === "pending" &&
+        paymentOrderPhase(o, now) === "verifying" &&
+        !verified.current.has(o.id),
+    );
+    if (!overdue || inFlight.current) return;
+    verified.current.add(overdue.id);
+    void run((api, token) => api.paymentAction(token, overdue.id, "refresh"));
+  }, [data, now]);
+  const open = openPaymentOrder(data.orders, now);
   return (
     <section className="data-panel payment-panel" aria-busy={busy}>
       <h2>Thanh toán qua PayOS</h2>
@@ -71,22 +94,27 @@ export function PaymentPanel({
           </strong>{" "}
           <button
             className="button primary"
-            disabled={
-              busy ||
-              paid ||
-              data.orders.some(
-                (o) =>
-                  o.status === "pending" &&
-                  Date.parse(o.expires_at) > Date.now(),
+            disabled={busy || paid}
+            onClick={() => {
+              if (
+                open &&
+                !window.confirm(
+                  "Link thanh toán đang mở sẽ bị hủy. Mỗi lần mua dùng một link mới có hạn 15 phút. Tiếp tục?",
+                )
               )
-            }
-            onClick={() =>
+                return;
               void run((api, token) => {
                 const key = keys.current.get(plan.sku) ?? crypto.randomUUID();
                 keys.current.set(plan.sku, key);
-                return api.paymentCheckout(token, plan.sku, key);
-              })
-            }
+                return api
+                  .paymentCheckout(token, plan.sku, key)
+                  .then((result) => {
+                    // Each successful purchase gets a fresh key (new orderCode).
+                    keys.current.delete(plan.sku);
+                    return result;
+                  });
+              });
+            }}
           >
             Tạo thanh toán
           </button>
@@ -101,7 +129,7 @@ export function PaymentPanel({
         >
           <strong>
             #{order.order_code} · {formatVnd(order.amount)} ·{" "}
-            {labels[order.status]}
+            {PAYMENT_ORDER_PHASE_LABELS[paymentOrderPhase(order, now)]}
           </strong>
           <p>
             {new Date(order.created_at).toLocaleString("vi-VN")} · {order.sku}
@@ -116,8 +144,17 @@ export function PaymentPanel({
               Khoản tiền cần được đối soát. Vui lòng liên hệ hỗ trợ kèm mã đơn.
             </p>
           )}
-          {order.status === "pending" && (
+          {paymentOrderPhase(order, now) === "verifying" && (
+            <p>Link đã hết hạn. Đang kiểm tra lại với PayOS…</p>
+          )}
+          {paymentOrderPhase(order, now) === "pending" && (
             <>
+              <p role="timer" aria-live="off">
+                Link hết hạn sau{" "}
+                <strong>
+                  {formatPaymentCountdown(paymentSecondsLeft(order, now))}
+                </strong>
+              </p>
               {order.checkout_url && (
                 <a
                   className="button primary"

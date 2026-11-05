@@ -3,6 +3,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:picket_api/src/authenticated_route.dart';
 import 'package:picket_api/src/payos_client.dart';
 import 'package:picket_api/src/payos_service.dart';
+import 'package:picket_api/src/supabase_gateway.dart';
 
 Future<Response> onRequest(RequestContext context) => handleAuthenticated(
   context,
@@ -35,7 +36,12 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
       final order = Map<String, dynamic>.from(orders.first as Map);
       try {
         if (order['payment_link_id'] == null && input['action'] == 'refresh') {
-          await PayosService().create(order);
+          try {
+            await PayosService().create(order);
+          } on GatewayException catch (error) {
+            // Expired reservation: the worker closes it; show current state.
+            if (error.statusCode != 409) rethrow;
+          }
           return await customerResponse();
         }
         await PayosService().reconcile(

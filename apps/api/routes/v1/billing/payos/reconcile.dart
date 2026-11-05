@@ -18,6 +18,7 @@ Future<Response> onRequest(RequestContext context) async {
   var success = 0;
   var failed = 0;
   try {
+    await store.reconciliationRpc('payment_expire_unlinked', {});
     final queue = await store.reconciliationRpc('payment_reconcile_queue', {});
     for (final row in queue['orders'] as List) {
       final order = Map<String, dynamic>.from(row as Map);

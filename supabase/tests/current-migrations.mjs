@@ -7,6 +7,7 @@ const cronMigration = "20261024013825_learning_ai_scheduled_cleanup.sql";
 const suites = [
   "admin-revision-conflicts",
   "payos-auth-permissions",
+  "payos-expiry-hardening",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",

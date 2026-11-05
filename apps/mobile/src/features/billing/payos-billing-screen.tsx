@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { AppState, Linking, View } from "react-native";
 import { Redirect } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { formatVnd, type PaymentCustomer } from "@picket/domain";
+import {
+  formatPaymentCountdown,
+  formatVnd,
+  openPaymentOrder,
+  PAYMENT_ORDER_PHASE_LABELS,
+  paymentOrderPhase,
+  paymentSecondsLeft,
+  type PaymentCustomer,
+} from "@picket/domain";
 import { picketApi } from "@/core/api/client";
 import { useAuth } from "@/features/auth/auth-context";
 import {
@@ -30,6 +38,9 @@ function PayosBillingContent({ token }: { token: string }) {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [tier, setTier] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [confirmSku, setConfirmSku] = useState<string | null>(null);
+  const verified = useRef(new Set<string>());
   const key = useRef(new Map<string, string>()),
     active = useRef(true);
   const inFlight = useRef(false),
@@ -99,12 +110,43 @@ function PayosBillingContent({ token }: { token: string }) {
       listener.remove();
     };
   }, [token]);
+  const hasPending = Boolean(data?.orders.some((o) => o.status === "pending"));
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [hasPending]);
+  // When a 15-minute link runs out, ask the server to re-read it at PayOS
+  // (money may have arrived at the last second) instead of assuming expiry.
+  useEffect(() => {
+    const overdue = data?.orders.find(
+      (o) =>
+        o.status === "pending" &&
+        paymentOrderPhase(o, now) === "verifying" &&
+        !verified.current.has(o.id),
+    );
+    if (!overdue || inFlight.current) return;
+    verified.current.add(overdue.id);
+    void run(() => picketApi!.paymentAction(token, overdue.id, "refresh"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, now]);
+  const open = data ? openPaymentOrder(data.orders, now) : undefined;
+  function checkout(sku: string) {
+    setConfirmSku(null);
+    void run(async () => {
+      const requestKey = key.current.get(sku) ?? Crypto.randomUUID();
+      key.current.set(sku, requestKey);
+      const result = await picketApi!.paymentCheckout(token, sku, requestKey);
+      key.current.delete(sku);
+      return result;
+    });
+  }
   return (
     <AuthScreen
       title="Gói dịch vụ"
       subtitle="Thanh toán trước qua PayOS. Không tự động gia hạn."
     >
-      {message && <AuthMessage>{message}</AuthMessage>}
+      {message && <AuthMessage>{t(message)}</AuthMessage>}
       {tier && <Text>{t("Gói hiện tại")}: {tier.toUpperCase()}</Text>}
       {tier && tier !== "free" && <Text>{t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}</Text>}
       {!data && <Text>{t('Đang tải…')}</Text>}
@@ -118,45 +160,37 @@ function PayosBillingContent({ token }: { token: string }) {
           </Text>
           <PrimaryButton
             label="Tạo thanh toán"
-            disabled={
-              busy ||
-              tier === null || tier !== "free" ||
-              data.orders.some(
-                (o) =>
-                  o.status === "pending" &&
-                  Date.parse(o.expires_at) > Date.now(),
-              )
-            }
-            onPress={() =>
-              void run(async () => {
-                const requestKey =
-                  key.current.get(plan.sku) ?? Crypto.randomUUID();
-                key.current.set(plan.sku, requestKey);
-                const result = await picketApi!.paymentCheckout(token, plan.sku, requestKey);
-                key.current.delete(plan.sku);
-                return result;
-              })
-            }
+            disabled={busy || tier === null || tier !== "free"}
+            onPress={() => (open ? setConfirmSku(plan.sku) : checkout(plan.sku))}
           />
         </View>
       ))}
+      {confirmSku && open && (
+        <View>
+          <AuthMessage>
+            {t("Link thanh toán đang mở sẽ bị hủy. Mỗi lần mua dùng một link mới có hạn 15 phút.")}
+          </AuthMessage>
+          <PrimaryButton
+            label="Hủy link cũ và tạo link mới"
+            disabled={busy}
+            onPress={() => checkout(confirmSku)}
+          />
+          <TextLink label="Giữ link hiện tại" onPress={() => setConfirmSku(null)} />
+        </View>
+      )}
       <Text accessibilityRole="header">{t('Lịch sử thanh toán')}</Text>
       {data?.orders.map((order) => (
         <View key={order.id}>
           <Text>
             #{order.order_code} · {formatVnd(order.amount)} ·{" "}
-            {t(order.status === "paid"
-              ? "Đã thanh toán"
-              : order.status === "review"
-                ? "Cần đối soát"
-                : order.status === "pending"
-                  ? "Chờ thanh toán"
-                  : order.status === "cancelled"
-                    ? "Đã hủy"
-                    : "Hết hạn")}
+            {t(PAYMENT_ORDER_PHASE_LABELS[paymentOrderPhase(order, now)])}
           </Text>
-          {order.status === "pending" && (
+          {paymentOrderPhase(order, now) === "pending" && (
             <>
+              <Text>
+                {t("Link hết hạn sau")}{" "}
+                {formatPaymentCountdown(paymentSecondsLeft(order, now))}
+              </Text>
               {order.checkout_url && (
                 <PrimaryButton
                   label="Mở thanh toán"

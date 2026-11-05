@@ -9,10 +9,16 @@ class PayosService {
   PayosService({
     Map<String, String>? environment,
     http.Client Function()? clientFactory,
+    DateTime Function()? clock,
   }) : env = environment ?? Platform.environment,
-       _clientFactory = clientFactory ?? http.Client.new;
+       _clientFactory = clientFactory ?? http.Client.new,
+       _clock = clock ?? DateTime.now;
   final Map<String, String> env;
   final http.Client Function() _clientFactory;
+  final DateTime Function() _clock;
+
+  /// Every PayOS link is valid for 15 minutes from the moment it is created.
+  static const linkLifetime = Duration(seconds: 900);
   bool get enabled =>
       env['PAYOS_ENABLED'] == 'true' &&
       [
@@ -59,6 +65,14 @@ class PayosService {
     if (!enabled) {
       throw const GatewayException(503, 'PayOS checkout is disabled.');
     }
+    final now = _clock().toUtc();
+    final reserved = DateTime.tryParse('${order['expires_at']}');
+    // A stale reservation is closed by the worker; never open a fresh link
+    // for it, so an old price or slot cannot be paid later.
+    if (reserved != null && !reserved.isAfter(now)) {
+      throw const GatewayException(409, 'Payment reservation expired.');
+    }
+    final expiresAt = now.add(linkLifetime);
     final client = _client();
     final store = AdminService(
       ApiConfig.fromEnvironment(env),
@@ -77,11 +91,7 @@ class PayosService {
           'description': 'PK${code.substring(code.length - 7)}',
           'returnUrl': _returnUrl(order['id'] as String).toString(),
           'cancelUrl': _returnUrl(order['id'] as String).toString(),
-          'expiredAt':
-              DateTime.parse(
-                order['expires_at'] as String,
-              ).millisecondsSinceEpoch ~/
-              1000,
+          'expiredAt': expiresAt.millisecondsSinceEpoch ~/ 1000,
         });
       } on PayosException {
         data = await client.getPayment(order['order_code'] as int);
@@ -106,6 +116,7 @@ class PayosService {
           'paymentLinkId': link,
           'checkoutUrl': checkout,
           'qrCode': data['qrCode'],
+          'expiresAt': expiresAt.toIso8601String(),
         },
       });
     } finally {
@@ -114,7 +125,9 @@ class PayosService {
     }
   }
 
-  Future<void> reconcile(
+  /// Checks the provider state, records any received money, then optionally
+  /// cancels a link that is still unpaid. Returns the final PayOS status.
+  Future<String?> reconcile(
     Map<String, dynamic> order, {
     bool cancel = false,
   }) async {
@@ -125,13 +138,21 @@ class PayosService {
       client: _clientFactory(),
     );
     try {
-      final data = cancel
-          ? await client.cancelPayment(order['order_code'] as int)
-          : await client.getPayment(order['order_code'] as int);
-      if (data['orderCode'] != order['order_code'] ||
-          data['amount'] != order['amount'] ||
-          data['id'] != order['payment_link_id']) {
-        throw const PayosException();
+      void check(Map<String, dynamic> data) {
+        if (data['orderCode'] != order['order_code'] ||
+            data['amount'] != order['amount'] ||
+            data['id'] != order['payment_link_id']) {
+          throw const PayosException();
+        }
+      }
+
+      // Always read first: money that arrived just before a cancel or the
+      // expiry must be recorded and honoured, never discarded.
+      var data = await client.getPayment(order['order_code'] as int);
+      check(data);
+      if (cancel && data['status'] == 'PENDING') {
+        data = await client.cancelPayment(order['order_code'] as int);
+        check(data);
       }
       final transactions = data['transactions'];
       if (transactions is! List) throw const PayosException();
@@ -160,8 +181,37 @@ class PayosService {
         'p_id': order['id'],
         'p_status': data['status'],
       });
+      return data['status'] as String?;
     } finally {
       client.close();
+      store.close();
+    }
+  }
+
+  /// Cancels older unpaid links before a new checkout link is opened.
+  /// Returns true when one of them turned out to be paid already.
+  Future<bool> supersede(List<Object?> orders) async {
+    var paid = false;
+    for (final item in orders) {
+      final order = Map<String, dynamic>.from(item! as Map);
+      if (await reconcile(order, cancel: true) == 'PAID') paid = true;
+    }
+    return paid;
+  }
+
+  /// Closes an unlinked reservation that will never be used.
+  Future<void> abandon(String id) async {
+    final store = AdminService(
+      ApiConfig.fromEnvironment(env),
+      environment: env,
+      client: _clientFactory(),
+    );
+    try {
+      await store.paymentRpc('payment_state', {
+        'p_id': id,
+        'p_status': 'CANCELLED',
+      });
+    } finally {
       store.close();
     }
   }

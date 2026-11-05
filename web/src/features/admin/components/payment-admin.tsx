@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { formatVnd } from "@picket/domain";
+import {
+  formatVnd,
+  PAYMENT_ORDER_PHASE_LABELS,
+  paymentOrderPhase,
+  type PaymentOrder,
+} from "@picket/domain";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { saveUserPermission, savePermissionGroup } from "../payment-actions";
 
@@ -9,9 +14,13 @@ type Order = {
   user_id: string | null;
   order_code: number;
   amount: number;
-  status: string;
+  status: PaymentOrder["status"];
   created_at: string;
+  expires_at: string;
 };
+/** Server component: rendered once per request, so one clock read is stable. */
+const requestTime = () => Date.now();
+const STATUS_FILTERS = ["paid", "expired", "cancelled", "pending", "review"] as const;
 export async function PaymentAdmin({
   section,
   query,
@@ -26,6 +35,7 @@ export async function PaymentAdmin({
       if (query[k]) filters[k] = query[k]!;
     const data = await api.adminPayments<{
       total: number;
+      reviewTotal?: number;
       series: { period: string; amount: number; transactions: number }[];
       coverage: string;
     }>(accessToken, filters);
@@ -33,8 +43,8 @@ export async function PaymentAdmin({
       <main className="admin-platform payment-admin">
         <h1>Doanh thu</h1>
         <p>
-          Tiền thực nhận PayOS, VND. Khoản hoàn và Google Play chưa được nhập
-          vào tổng này.
+          Chỉ cộng đơn PayOS Đã thanh toán, VND. Đơn hết hạn/đã hủy không có
+          tiền; khoản hoàn và Google Play chưa được nhập vào tổng này.
         </p>
         <form className="admin-filter">
           <label>
@@ -69,6 +79,12 @@ export async function PaymentAdmin({
           <button className="button primary">Lọc</button>
         </form>
         <h2>{formatVnd(data.total)}</h2>
+        {!!data.reviewTotal && (
+          <p role="status">
+            Ngoài doanh thu: {formatVnd(data.reviewTotal)} cần đối soát (trả
+            thiếu, thừa hoặc trả hai lần) — xử lý hoàn tiền thủ công.
+          </p>
+        )}
         <table className="admin-table">
           <thead>
             <tr>
@@ -104,6 +120,9 @@ export async function PaymentAdmin({
         details: Record<string, unknown>;
       }[];
     }>(accessToken, filters);
+    // Pending only lasts 15 minutes; past that it shows as "Đang xác minh"
+    // until the worker re-reads PayOS and records the final state.
+    const now = requestTime();
     return (
       <main className="admin-platform payment-admin">
         <h1>Giao dịch thanh toán</h1>
@@ -112,11 +131,11 @@ export async function PaymentAdmin({
             Trạng thái{" "}
             <select name="status" defaultValue={query.status ?? ""}>
               <option value="">Tất cả</option>
-              {["pending", "paid", "review", "cancelled", "expired"].map(
-                (v) => (
-                  <option key={v}>{v}</option>
-                ),
-              )}
+              {STATUS_FILTERS.map((v) => (
+                <option key={v} value={v}>
+                  {PAYMENT_ORDER_PHASE_LABELS[v]}
+                </option>
+              ))}
             </select>
           </label>
           <button className="button primary">Lọc</button>
@@ -139,7 +158,7 @@ export async function PaymentAdmin({
                   </Link>
                 </td>
                 <td>{formatVnd(o.amount)}</td>
-                <td>{o.status}</td>
+                <td>{PAYMENT_ORDER_PHASE_LABELS[paymentOrderPhase(o, now)]}</td>
                 <td>
                   {new Date(o.created_at).toLocaleString("vi-VN", {
                     timeZone: "Asia/Ho_Chi_Minh",

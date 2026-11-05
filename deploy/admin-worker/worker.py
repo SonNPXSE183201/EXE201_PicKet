@@ -230,11 +230,6 @@ def cycle():
     except (FileNotFoundError, ValueError):
         state = {}
     health()
-    if os.getenv('PAYOS_ENABLED') == 'true':
-        try:
-            reconcile_payos()
-        except Exception:
-            print('PayOS reconciliation unavailable; durable orders will be retried', flush=True)
     for source, run in [('google_play_installs', play_reports), ('apk_access', apk_logs), ('google_play_vitals', play_vitals), ('google_play_financial', play_financial)]:
         try:
             run(state)
@@ -260,11 +255,27 @@ def reconcile_payos():
         return json.loads(response.read(4096))
 
 
+def payos_tick():
+    """PayOS links live 15 minutes; overdue ones are re-read about every minute."""
+    if os.getenv('PAYOS_ENABLED') != 'true':
+        return
+    try:
+        reconcile_payos()
+    except Exception:
+        print('PayOS reconciliation unavailable; durable orders will be retried', flush=True)
+
+
 if __name__ == '__main__':
+    interval = max(60, int(os.getenv('ADMIN_WORKER_INTERVAL', '300')))
+    payos_interval = max(30, int(os.getenv('PAYOS_RECONCILE_INTERVAL', '60')))
+    next_cycle = 0.0
     while True:
-        try:
-            cycle()
-            print('Admin ingestion cycle completed', flush=True)
-        except Exception:
-            print('Admin ingestion unavailable; retrying without exposing upstream details', flush=True)
-        time.sleep(max(60, int(os.getenv('ADMIN_WORKER_INTERVAL', '300'))))
+        payos_tick()
+        if time.monotonic() >= next_cycle:
+            try:
+                cycle()
+                print('Admin ingestion cycle completed', flush=True)
+            except Exception:
+                print('Admin ingestion unavailable; retrying without exposing upstream details', flush=True)
+            next_cycle = time.monotonic() + interval
+        time.sleep(payos_interval)

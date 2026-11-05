@@ -24,7 +24,16 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
         'p_key': key,
       });
       try {
-        await service.create(order);
+        final older = order['supersede'];
+        if (older is List &&
+            older.isNotEmpty &&
+            await service.supersede(older)) {
+          // An older link was already paid: the plan is now active, so the
+          // new reservation is closed instead of opening a second link.
+          await service.abandon(order['id'] as String);
+        } else {
+          await service.create(order);
+        }
       } on PayosException {
         return apiError(
           502,

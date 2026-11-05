@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import * as domain from "@picket/domain";
 
 type Node = { type: unknown; props: Record<string, any> };
 function nodes(value: any): Node[] {
@@ -19,7 +20,7 @@ function harness() {
   const calls: any[] = [];
   const state = (initial: any) => {
     const index = cursor++;
-    if (!(index in slots)) slots[index] = initial;
+    if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
     return [slots[index], (value: any) => { slots[index] = value; }];
   };
   const effect = (callback: () => any, deps: any[]) => {
@@ -49,7 +50,7 @@ function harness() {
     "react/jsx-runtime": { jsx: (type: any, props: any) => ({ type, props }), jsxs: (type: any, props: any) => ({ type, props }) },
     "react-native": { View: "View", AppState: { addEventListener: (_event: string, callback: typeof foreground) => { foreground = callback; return { remove() {} }; } }, Linking: { openURL: async (url: string) => { calls.push({ url }); } } },
     "expo-router": { Redirect: "Redirect" }, "expo-crypto": { randomUUID: () => `request-${++uuid}` },
-    "@picket/domain": { formatVnd: (amount: number) => String(amount) },
+    "@picket/domain": { ...domain, formatVnd: (amount: number) => String(amount) },
     "@/core/api/client": { picketApi: api },
     "@/features/auth/auth-context": { useAuth: () => ({ session: { user: { id: "qa" }, access_token: "session" } }) },
     "@/features/auth/auth-screen": Object.fromEntries(["AuthMessage", "AuthScreen", "PrimaryButton", "TextLink"].map((name) => [name, name])),
@@ -59,7 +60,7 @@ function harness() {
   const module = { exports: {} as any };
   vm.runInNewContext(ts.transpileModule(readFileSync("src/features/billing/payos-billing-screen.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
     module, exports: module.exports, require: (name: string) => { assert.ok(modules[name], name); return modules[name]; },
-    Date, Map, Promise,
+    Date, Map, Set, Promise, Boolean, setInterval: () => 0, clearInterval: () => {},
   });
   function render() {
     cursor = 0;
@@ -123,4 +124,31 @@ test("rapid checkout taps dispatch a single payment request", async () => {
   const app = harness(); app.render(); await settle();
   app.press("Tạo thanh toán"); app.press("Tạo thanh toán"); await settle();
   assert.equal(app.calls.filter((call) => call.sku).length, 1);
+});
+test("a pending link shows its 15-minute countdown", async () => {
+  const app = harness();
+  app.setOrders([{ id: "o1", order_code: 1, amount: 19000, status: "pending", checkout_url: "https://pay.payos.vn/web/qa", expires_at: new Date(Date.now() + 900_000).toISOString() }]);
+  app.render(); await settle();
+  assert.match(app.text(), /Link hết hạn sau/);
+  assert.match(app.text(), /1[45]:[0-5][0-9]/);
+});
+test("buying again while a link is open asks to cancel the old link first", async () => {
+  const app = harness();
+  app.setOrders([{ id: "old", order_code: 1, amount: 19000, status: "pending", checkout_url: "https://pay.payos.vn/web/old", expires_at: new Date(Date.now() + 600_000).toISOString() }]);
+  app.render(); await settle();
+  app.press("Tạo thanh toán"); await settle();
+  assert.equal(app.calls.filter((call) => call.sku).length, 0);
+  assert.match(app.text(), /sẽ bị hủy/);
+  app.press("Hủy link cũ và tạo link mới"); await settle();
+  assert.equal(app.calls.filter((call) => call.sku).length, 1);
+});
+test("an overdue link is re-checked at PayOS once and never shown as payable", async () => {
+  const app = harness();
+  app.setOrders([{ id: "late", order_code: 1, amount: 19000, status: "pending", checkout_url: "https://pay.payos.vn/web/late", expires_at: new Date(Date.now() - 1000).toISOString() }]);
+  app.render(); await settle();
+  app.render(); await settle();
+  assert.match(app.text(), /Đang xác minh/);
+  assert.equal(app.button("Mở thanh toán"), undefined);
+  app.render(); await settle();
+  assert.deepEqual(app.calls.filter((call) => call.action === "refresh"), [{ id: "late", action: "refresh" }]);
 });
