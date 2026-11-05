@@ -81,19 +81,23 @@ export function receiptMerchantFromDocumentHeading(text:string):string|null {
 
 export function isReceiptMetadata(text: string): boolean {
   const value = normalizeReceiptLabel(text);
-  return /^thong tin ocr\s*:|^store\s*:|^thu\s+n?[cgp]?an\b/.test(value)
+  return /^(?:(?:ban|table)\s*[:#-]?\s*\d+\b|cashier\s*name\b|n\s*\/\s*v\s*:|kh\s*:|d\s*\/\s*c\s*:|so\s+order\b|ho(?:\s+va)?\s+ten\s+nguoi\s+mua(?:\s+hang)?\s*:)/.test(value)
+    || /^(?:order|bill|inv(?:oice)?|receipt|ref(?:erence)?|trans(?:action)?|doc(?:ument)?|check|ticket|voucher|folio|pos|terminal|approval|auth(?:orization)?|trace|batch)\s*[:#]/.test(value)
+    || /^thong tin ocr\s*:|^store\s*:|^thu\s+n?[cgp]?an\b/.test(value)
     || /^(?:[:|]\s*)?(?:s[. ]?d[. ]?t|dt|dien thoai|phone|hotline|tel|fax|mst|ma so thue|tax id|stk|so tai khoan|account|iban|website|email|thu\s*ngan|cashier|nhan vien|nv|phuc\s*vu|phyc\s*u|khach hang|customer|nguoi mua|nguoi ban|dia chi|address|ma\s*(?:don(?:\s*hang)?|dh|dat\s*hang|the|hd|hoa\s*don|phieu|bien\s*lai|chung\s*tu|cqt|thanh\s*vien|tv|giao\s*dich|gd|thanh\s*toan|tham\s*chieu|tra\s*cuu|xac\s*nhan|chuan\s*chi|phe\s*duyet|bill|order|ticket|check|ban|phong|khach(?:\s*hang)?|kh|nhan\s*vien|nv|thu\s*ngan|tn|cua\s*hang|ch|chi\s*nhanh|cn|quay|may|pos|thiet\s*bi|vach|hang|sp|san\s*pham)|so\s*(?:don(?:\s*hang)?|dh|dat\s*hang|hd|hoa\s*don|phieu|bien\s*lai|chung\s*tu|giao\s*dich|gd|tham\s*chieu|tra\s*cuu|bill|order|ticket|check|hieu|seri|serial|may|quay|pos)|(?:order|bill|inv(?:oice)?|receipt|ref(?:erence)?|trans(?:action)?|doc(?:ument)?|check|ticket|voucher|folio|pos|terminal|approval|auth(?:orization)?|trace|batch)\s*(?:no|number|id|code|#|:|\d)|ban\s*\d|table\s*\d|in luc|gio\s*(?:vao|ra|in)|gi[os]\s*(?:vao|ra)|gia vao|thoi gian|cam on|hen gap|thank|uu dai|khuyen mai|chuong trinh|diem tich|tich diem)\b/.test(value)
     || /^(?:www\.|https?:)/.test(value)
     || /^(?:so|no|ngay|date|time)\s*[:.#-]/.test(value)
     || /\b\d{1,2}[/-]\d{1,2}[/-]/.test(value)
     || /\b\d{1,2}:\d{2}(?::\d{2})?\b/.test(value)
-    || /^(?:duong\b|dc\s*[:.]|q[.]|p[.]|tp[.]|tinh\b|huyen\b|quan\b|phuong\b|no[.]?\s*\d|\d+\s+[^|]*\b(?:duong|nguyen|tran|le|pham|hoang|street|road|avenue|kdc|phuong|quan)\b)/.test(value)
+    // Folding accents must not turn a restaurant's "Quán" into district "Quận".
+    || (!/^quán\b/iu.test(text.trim().normalize("NFC")) && /^(?:duong\b|dc\s*[:.]|q[.]|p[.]|tp[.]|tinh\b|huyen\b|quan\b|phuong\b|no[.]?\s*\d|\d+\s+[^|]*\b(?:duong|nguyen|tran|le|pham|hoang|street|road|avenue|kdc|phuong|quan)\b)/.test(value))
     || /\b(?:q[.]\s*\d|p[.]\s*\d|tp[.]\s|kdc\b|jalan\b|district\b)/.test(value)
     || /[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(value)
     || /^(?:[:|]\s*)?[^\d]*\b0\d{8,10}\b/.test(value);
 }
 
 export function isReceiptSummary(text: string): boolean {
+  if (/^(?:cong(?=\s*(?:[:|]\s*)?(?:\d|$))|da\s+thanh\s+toan\b|already\s+paid\b|amount\s+paid\b|paid\b|khach\s+dua\b|tra\s+lai\b)/.test(normalizeReceiptLabel(text))) return true;
   if(/^(?:phi\s+(?:van chuyen|giao hang)|shipping\s+(?:fee|charge)|delivery\s+(?:fee|charge)|can\s*tra)\b/.test(normalizeReceiptLabel(text)))return true;
   if(/^(?:subttl\b|sub\s*ttl\b|items?\s+\d|total\s*(?:item|qty)|tax\b|pb[ -]?1\b|service charge\b|edc\b)/.test(normalizeReceiptLabel(text)))return true;
   return /^(?:tong\b|tng\b|teng cong\b|total\b|grand total\b|sub[ -]?total\b|tam tinh\b|thanh toan\b|so tien\b|tien\s*(?:hang|thue|khach|thua|thanh toan|ca\s*the|the|mat|chuyen\s*khoan|quet\s*the)\b|phai\s*(?:thanh\s*toan|tra)\b|can\s*(?:thanh\s*toan|tra)\b|vat\b|thue\b|tax\b|giam gia\b|discount\b|service\b|phi dich vu\b|cash\b|change\b|tendered\b|amount due\b|due\b)/.test(normalizeReceiptLabel(text)) || noisyReceiptSummaryRole(text) !== null;

@@ -1,10 +1,10 @@
 import type {ReceiptTextLine} from "./receipt-parser";
 import {normalizeReceiptLabel} from "./receipt-semantics";
 
-const header=/^(mat hang|ten san pham|ten hang hoa|description|item|sl|so luong|qty|quantity|don gia|gia|d[.]?g[.]?|unit price|price|thanh tien|t[. ]?tien|amount|total)$/;
-const nameHeader=/^(mat hang|ten san pham|ten hang hoa|description|item)$/;
+const header=/^(mat hang|ten mon|ten hang|ten san pham|ten hang hoa|description|item|sl|so luong|qty|quantity|don gia|gia|d[.]?g[.]?|unit price|price|thanh tien|t[. ]?tien|tt|amount|total)$/;
+const nameHeader=/^(mat hang|ten mon|ten hang|ten san pham|ten hang hoa|description|item)$/;
 const quantityHeader=/^(sl|so luong|qty|quantity)$/;
-const totalHeader=/^(thanh tien|t[. ]?tien|amount|total)$/;
+const totalHeader=/^(thanh tien|t[. ]?tien|tt|amount|total)$/;
 function combine(parts:NonNullable<ReceiptTextLine['elements']>):ReceiptTextLine{
  return {text:parts.map(p=>p.text).join(' '),left:Math.min(...parts.map(p=>p.left)),right:Math.max(...parts.map(p=>p.right)),top:Math.min(...parts.map(p=>p.top)),bottom:Math.max(...parts.map(p=>p.bottom)),confidence:Math.min(...parts.map(p=>p.confidence??.75))};
 }

@@ -3,6 +3,7 @@ import {normalizeReceiptLabel,noisyReceiptSummaryRole} from "./receipt-semantics
 /** Explicit payable labels outrank generic totals; subtotals never become payable. */
 export function receiptTotalRole(text:string):0|1|2|3 {
   const label=normalizeReceiptLabel(text).replace(/^[\s|:–—-]+/,'');
+  if (/^(?:da\s+thanh\s+toan|already\s+paid|amount\s+paid|paid|tra\s+lai)\b/.test(label)) return 0;
   if(/^\d+\s+[a-z]+\s+.*\b(?:tong|total)\b|^(?:phieu\s+(?:thanh\s*toan|tinh\s*tien|ban\s*hang)|tong\s*(?:so luong|sl|san pham|tien hang)|cong tien hang|tien hang|sub[ -]?total|tam tinh|total\s*item|total\s*qty|tien\s*(?:khach|thua|tra lai)|khach dua|cash|change|tendered|vat|tax|thue|phi|shipping|discount|giam gia)\b/.test(label))return 0;
   if(/^t[.]?\s*tien\s*[:\-]?\s*\d/.test(label))return 3;
   if(/(?:tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|can\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|amount\s*due|total\s*due|^due\b)/.test(label))return 2;

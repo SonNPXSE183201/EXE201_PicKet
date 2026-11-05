@@ -6,6 +6,7 @@ import {receiptPosRows} from "./receipt-pos-rows";
 import {receiptTotalRole,looksLikeContactAmount} from "./receipt-total-role";
 import {receiptUnheadedRows} from "./receipt-unheaded-rows";
 import {receiptAdjustmentLabel} from "./receipt-adjustments";
+import { receiptDate } from "./receipt-date";
 export { parseReceiptMoney } from "./receipt-money";
 
 export type ReceiptTextLine = {
@@ -42,7 +43,7 @@ export type ReceiptDraftLine = {
   confidence: number;
 };
 
-const totalWords = /^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
+const totalWords = /^cong(?=\s*(?:[:|]\s*)?(?:\d|$))|^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|can\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
 const rejectedTotalWords = /hinh\s*thuc|phuong\s*thuc|payment\s*method|\b(?:dt|dien\s*thoai|phone|hotline|tel)\b|subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|total\s*item|\b(?:qty|0ty)\b|so\s*luong/i;
@@ -64,8 +65,9 @@ function confidence(line: ReceiptTextLine, fallback = 0.75) {
 
 function receiptItemCandidates(
   recognizedLines: ReceiptTextLine[],
-): {item:ReceiptDraftLine;source:ReceiptTextLine}[] {
+): {items: {item:ReceiptDraftLine;source:ReceiptTextLine}[]; hasArithmeticConflict: boolean} {
   const items: {item:ReceiptDraftLine;source:ReceiptTextLine}[] = [];
+  let hasArithmeticConflict = false;
   const {index:header,top:tableTop}=receiptBodyStart(recognizedLines);
   const summary = recognizedLines.findIndex((line,index) => index > header && (typeof tableTop !== "number" || typeof line.top !== "number" || line.top > tableTop) && isReceiptSummary(line.text));
   for (let index=0;index<recognizedLines.length;index++) {
@@ -114,6 +116,8 @@ function receiptItemCandidates(
         quantity = parsedQuantity;
         unitPrice = parsedUnitPrice;
       } else {
+        if (Number.isFinite(parsedQuantity) && parsedQuantity > 0 && parsedQuantity <= 1_000_000 &&
+          parsedUnitPrice !== null && Math.abs(parsedQuantity * parsedUnitPrice - total) > 1) hasArithmeticConflict = true;
         continue;
       }
     }
@@ -126,11 +130,11 @@ function receiptItemCandidates(
       confidence: quantityMatch && !inferredUnit && !lowConfidenceRow ? confidence(line) : Math.min(0.65,confidence(line)),
     }});
   }
-  return items;
+  return { items, hasArithmeticConflict };
 }
 
 export function parseReceiptLineItems(recognizedLines:ReceiptTextLine[]):ReceiptDraftLine[]{
-  return receiptItemCandidates(recognizedLines).map(candidate=>candidate.item);
+  return receiptItemCandidates(recognizedLines).items.map(candidate=>candidate.item);
 }
 
 export function parseReceiptText(rawText: string): ReceiptDraft {
@@ -291,39 +295,15 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   const selectedTotal = hasExplicitPayable&&(totals[0]?.role??0)<2?null:totals[0]??null;
   const conflictingTotals = selectedTotal !== null && totals.some(candidate => candidate.role===selectedTotal.role && candidate.amount !== selectedTotal.amount && candidate.score >= 0.8 && selectedTotal.score - candidate.score < 0.15);
 
-  let date: string | null = null;
-  let dateConfidence: number | null = null;
-  for (const line of lines) {
-    const iso = line.text.match(/\b(\d{4})[./-](\d{1,2})[./-](\d{1,2})\b/);
-    if (iso) {
-      const [year, month, day] = iso.slice(1, 4).map(Number);
-      const candidate = new Date(Date.UTC(year, month - 1, day));
-      if (candidate.getUTCFullYear() === year && candidate.getUTCMonth() === month - 1 && candidate.getUTCDate() === day && year >= 2000 && year <= new Date().getFullYear() + 1) {
-        date = candidate.toISOString();
-        dateConfidence = confidence(line, 0.8);
-        break;
-      }
-    }
-    const match = line.text.match(
-      /\b(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})\b/,
-    )??normalized(line.text).match(/\bngay\s*(\d{1,2})\s*thang\s*(\d{1,2})\s*nam\s*(\d{4})\b/);
-    if (!match) continue;
-    const [day, month] = match.slice(1, 3).map(Number);
-    const parsedYear = Number(match[3]);
-    const year = match[3].length === 2 ? 2000 + parsedYear : parsedYear;
-    const candidate = new Date(Date.UTC(year, month - 1, day));
-    if (candidate.getUTCFullYear() === year && candidate.getUTCMonth() === month - 1 && candidate.getUTCDate() === day && year >= 2000 && year <= new Date().getFullYear() + 1) {
-      date = candidate.toISOString();
-      dateConfidence = confidence(line, 0.8);
-      break;
-    }
-  }
+  const selectedDate = receiptDate(lines);
+  const date = selectedDate?.date ?? null;
+  const dateConfidence = selectedDate?.confidence ?? null;
 
   const bodyStart=receiptBodyStart(lines);
-  const dateLineIndex=lines.findIndex(line=>/\b\d{1,2}[./-]\d{1,2}[./-](?:\d{2}|\d{4})\b/.test(line.text)||/\bngay\s*\d{1,2}\s*thang\s*\d{1,2}\s*nam\s*\d{4}\b/i.test(normalized(line.text)));
+  const dateLineIndex=selectedDate?.index ?? -1;
   const dateLine=dateLineIndex>=0?lines[dateLineIndex]:null;
   const itemLines = receiptHasTableColumns(lines) ? lines.filter(line => /\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/.test(line.text)) : lines;
-  const itemCandidates=receiptItemCandidates(itemLines),lineItems=itemCandidates.map(candidate=>candidate.item);
+  const {items:itemCandidates,hasArithmeticConflict}=receiptItemCandidates(itemLines),lineItems=itemCandidates.map(candidate=>candidate.item);
   const bodySources=new Set([...itemCandidates.map(candidate=>candidate.source),...lines.filter(line=>isReceiptSummary(line.text))]);
   const bodyTop=Math.min(Infinity,...[...bodySources].flatMap(line=>typeof line.top==='number'&&Number.isFinite(line.top)?[line.top]:[]));
   const bodyIndex=lines.findIndex(line=>bodySources.has(line));
@@ -363,7 +343,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
       ? "Các tổng tiền không khớp. Hãy đối chiếu số tiền cần thanh toán trên hóa đơn."
     : lines.some(line => line.reviewIssue === "inconsistent-vat-components")
       ? "Một số ô tiền hàng hoặc thuế chưa khớp. Hãy kiểm tra tổng tiền."
-    : lines.some(line => line.reviewIssue === "inconsistent-item")
+    : hasArithmeticConflict || lines.some(line => line.reviewIssue === "inconsistent-item")
       ? "Một số dòng sản phẩm có số lượng, đơn giá và thành tiền không khớp nên chưa được đưa vào danh sách. Hãy đối chiếu và bổ sung dòng thiếu."
     : lineItems.some(item => item.confidence < 0.7)
       ? "Một số số lượng hoặc đơn giá được suy ra, chưa được xác nhận từ ảnh. Hãy đối chiếu từng dòng với hóa đơn."

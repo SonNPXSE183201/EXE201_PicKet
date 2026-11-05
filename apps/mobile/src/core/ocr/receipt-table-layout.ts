@@ -3,10 +3,10 @@ import type {ReceiptTextLine} from "./receipt-parser";
 import {receiptTableTokens} from "./receipt-table-tokens";
 type PositionedLine=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
 const clean=(value:string)=>value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/\s+/g," ").replace(/^[|\s]+|[|\s]+$/g,"");
-const namePattern=/^(ten\s*(san pham|hang hoa)(?:,?\s*dich vu)?|san pham|mat hang|item|description)$/;
+const namePattern=/^(ten\s*(mon|hang|san pham|hang hoa)(?:,?\s*dich vu)?|san pham|mat hang|item|description)$/;
 const quantityPattern=/^(sl|s\.l\.?|so luong|qty|quantity)$/;
 const unitPattern=/^(don gia|d[.]?g[.]?|gia|unit price|price)$/;
-const totalPattern=/^(thanh tien|t[. ]?tien|t tren|amount|total)$/;
+const totalPattern=/^(thanh tien|t[. ]?tien|tt|t tren|amount|total)$/;
 const optionalPattern=/^(stt|don vi tinh|dvt|thue suat|\(%\)|bh|bao hanh|giam gia)$/;
 function positioned(line:ReceiptTextLine):line is PositionedLine{
  return [line.left,line.right,line.top,line.bottom].every(value=>typeof value==="number"&&Number.isFinite(value))&&line.right!>line.left!&&line.bottom!>line.top!;
@@ -70,10 +70,10 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
    let inferred=false;
    if(amount===null)continue;
    if(quantity===null&&unit!==null&&unit>0){quantity=Math.round(amount/unit);inferred=true;}
-   else if(unit===null&&quantity!==null&&quantity>0){unit=Math.round(amount/quantity);inferred=true;}
-   if(quantity===null||unit===null||!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||Math.abs(quantity*unit-amount)>1){
+   else if(unit===null&&quantity!==null&&quantity>0){unit=amount/quantity;inferred=true;}
+   if(quantity===null||unit===null||!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||inferred&&!Number.isSafeInteger(unit)||Math.abs(quantity*unit-amount)>1){
     const unresolved=(partsByTotal.get(total)??[])[0];
-    if(unresolved&&amount>0&&quantity!==null&&quantity>0&&unit!==null&&Math.abs(quantity*unit-amount)>1)
+    if(unresolved&&amount>0&&quantity!==null&&quantity>0&&unit!==null&&(inferred&&!Number.isSafeInteger(unit)||Math.abs(quantity*unit-amount)>1))
      replacements.set(unresolved,{...unresolved,reviewIssue:"inconsistent-item"});
     continue;
    }
