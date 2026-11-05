@@ -29,7 +29,7 @@ export function HomeHero({ label, balance, lines = 1, hidden, onToggle, toggleLa
     <View style={[styles.pouch, { height: 108 + extra }, figmaShadow("camera", "#000000")]}>
       <View pointerEvents="none" style={[styles.stitch, { height: 92 + extra }]} />
       <View style={styles.labelRow}>
-        <Text style={[figmaType.captionStrong, { color: colors.onCamera }]}>{label}</Text>
+        <Text numberOfLines={1} style={[figmaType.captionStrong, { color: colors.onCamera, flexShrink: 0 }]}>{label}</Text>
         <Pressable accessibilityLabel={toggleLabel} accessibilityRole="button" onPress={onToggle} style={styles.eye}><AppIcon name={hidden ? "eye-off-outline" : "eye-outline"} size={16} color={colors.onCamera} /></Pressable>
       </View>
       {wallets && onWallets ? <Pressable accessibilityRole="button" onPress={onWallets} style={styles.wallets}><Text style={[figmaType.captionStrong, { color: colors.onCamera }]}>{wallets}</Text><AppIcon name="chevron-right" size={16} color={colors.onCamera} /></Pressable> : null}
@@ -63,8 +63,8 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   stubPaper: { backgroundColor: colors.paper, paddingTop: 5, paddingHorizontal: 12, paddingBottom: 40 },
   pouch: { position: "absolute", left: 0, right: 0, top: 60, height: 108, backgroundColor: colors.camera, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderBottomRightRadius: 32, borderBottomLeftRadius: 16 },
   stitch: { position: "absolute", left: 8, right: 8, top: 8, height: 92, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.onCamera, borderTopLeftRadius: 25, borderTopRightRadius: 25, borderBottomRightRadius: 25, borderBottomLeftRadius: 10 },
-  labelRow: { position: "absolute", left: 24, top: 10, flexDirection: "row", alignItems: "center", minHeight: 44, marginTop: -10 },
-  eye: { width: 44, height: 44, marginLeft: -8, alignItems: "center", justifyContent: "center" },
+  labelRow: { position: "absolute", left: 24, right: 96, top: 10, flexDirection: "row", alignItems: "center", minHeight: 44, marginTop: -10 },
+  eye: { width: 44, height: 44, marginLeft: -6, alignItems: "center", justifyContent: "center" },
   wallets: { position: "absolute", right: 24, top: 12, height: 24, flexDirection: "row", alignItems: "center", minHeight: 24, minWidth: 24 },
   amount: { position: "absolute", left: 24, right: 90, top: 42, fontSize: 34, lineHeight: 42, fontWeight: "800", letterSpacing: -0.6, fontVariant: ["tabular-nums"] },
   art: { position: "absolute", right: -12 },
