@@ -1,6 +1,7 @@
 import json, re
 from pathlib import Path
 from study_support import apply_study_support, editorial_metadata, markdown_example, write_app_copy
+import curriculum_v2_extension as ext
 
 ROOT=Path(__file__).parent
 DATE='2026-10-23'
@@ -183,22 +184,65 @@ Q('Xóa ứng dụng khỏi điện thoại có đủ chứng minh gói đã h�
 Q('Hai gói giữ nguyên giá trong 12 tháng như ví dụ. Tổng?', ['128.000đ','1.536.000đ','450.000đ'],1,['Đây là tổng một tháng.','Đúng: 128.000 nhân mười hai.','Đây là giá món đồ khác, không phải hai gói.']),
 Q('Picket đánh dấu cần xem lại gói B. Có thể coi đã ngừng tính phí chưa?', ['Có ngay khi đánh dấu','Có sau một ngày chờ bất kỳ','Chưa, phải hủy và xác nhận ở nhà cung cấp/kênh quản lý'],2,['Ghi chú trong Picket không điều khiển dịch vụ bên ngoài.','Khoảng chờ tự chọn không làm thay đổi hợp đồng.','Đúng: chỉ cập nhật lịch khi biết kết quả thực tế.'])], 'Rà giá/ngày gia hạn trên một ví dụ hoặc gói có sẵn; có thể bỏ qua, không đăng ký thêm.', ['trial'])
 
+ALL_SOURCES={**SOURCES, **{k:v[0] for k,v in ext.NEW_SOURCES.items()}}
+
+def add_extension_lessons():
+    """Append the v2 lessons (13-30) authored in curriculum_v2_extension.py."""
+    for item in ext.NEW_LESSONS:
+        v=item['vi']
+        questions=[Q(prompt,choices,correct,explanations) for (prompt,choices,explanations),correct in zip(v['questions'],item['correct'])]
+        lesson={'lessonId':ext.lesson_id(item['n']),'chapterId':f"chapter-{item['chapter']:02}",'version':1,'locale':'vi-VN','title':v['title'],'competencyId':item['competency'],'objective':v['objective'],'body':v['body'].strip(),'workedExample':{'currency':'VND','description':v['example'],'arithmeticChecks':[{'expression':e,'expected':x} for e,x in item['checks']]},'questions':questions,'optionalAction':{'text':v['action'],'requiresSpending':False,'maySkip':True,'evidence':'self-reported-or-local-review'},'sources':[ALL_SOURCES[k] for k in item['sources']],'reviewedAt':DATE,'reviewType':'author-source-and-arithmetic-check','independentReviewedAt':None,'status':'authored-not-independent-review'}
+        if item['figures']:
+            lesson['citedFigures']=[dict(f) for f in item['figures']]
+        lessons.append(lesson)
+
+def finalize_lessons():
+    """Attach stages, apply the v2 self-review status and order lessons by stage."""
+    order=ext.ordered_ids()
+    assert sorted(order)==sorted(l['lessonId'] for l in lessons)
+    for l in lessons:
+        l['stageId']=ext.stage_of(int(l['lessonId'][-2:]))
+        l['reviewedAt']=ext.EXTENSION_DATE
+        l['reviewType']=ext.REVIEW_TYPE
+        l['status']=ext.REVIEW_STATUS
+    lessons.sort(key=lambda l: order.index(l['lessonId']))
+
+def source_registry():
+    old=[{'id':k,'url':v,'accessedAt':DATE,'validation':'Opened and read as primary source; educational concepts only.'} for k,v in SOURCES.items()]
+    new=[{'id':k,'url':url,'accessedAt':ext.EXTENSION_DATE,'validation':note} for k,(url,note) in ext.NEW_SOURCES.items()]
+    return old+new
+
 if __name__=='__main__':
-    apply_study_support(lessons, 'vi')
+    add_extension_lessons()
+    apply_study_support(lessons, 'vi', extra_entries=ext.support_entries())
+    finalize_lessons()
+    registry=source_registry()
+    registry_ids={r['id'] for r in registry}
+    stages=ext.stages_for('vi')
+    stage_ids={s['stageId'] for s in stages}
     for l in lessons:
         for check in l['workedExample']['arithmeticChecks']:
             assert re.fullmatch(r'[0-9+*/(). -]+',check['expression'])
             assert eval(check['expression'],{'__builtins__':{}},{})==check['expected'], (l['lessonId'],check)
         assert len(l['questions'])==3
         assert all(len(q['choices'])==3 and 0<=q['correctIndex']<3 and all(c['explanation'] for c in q['choices']) for q in l['questions'])
-    payload={'schemaVersion':1,'curriculumId':'picket.financial.vi.v1','locale':'vi-VN','authoredAt':DATE,'status':'authored-not-independent-review','reviewedAtSemantics':'Author source-check date, not external or independent approval.','audience':'Adults 18+, original educational examples; no individualized financial advice.','sourceUse':'Source concepts inform the objectives. All scenarios, arithmetic, explanations and Picket interactions are original; no quotations, no imported US/EU legal rights.','publicationGate':{'publishable':False,'required':['Independent financial-content review','Vietnamese editorial and accessibility review','Vietnam-relevant legal/safety review for borrowing and digital safety','Pilot comprehension and Android font/TalkBack/offline checks','Approved English translation before claiming bilingual curriculum']},'sourceRegistry':[{'id':k,'url':v,'accessedAt':DATE,'validation':'Opened and read as primary source; educational concepts only.'} for k,v in SOURCES.items()],'lessons':lessons}
+        assert l['stageId'] in stage_ids
+        assert all(f['sourceId'] in registry_ids and re.fullmatch(r'\d{4}-\d{2}-\d{2}',f['asOf']) for f in l.get('citedFigures',[]))
+    assert len(lessons)==30
+    question_count=sum(len(l['questions']) for l in lessons)
+    payload={'schemaVersion':1,'curriculumId':'picket.financial.vi.v1','locale':'vi-VN','authoredAt':DATE,'status':ext.REVIEW_STATUS,'reviewedAtSemantics':'Author self-review date against REVIEW_CHECKLIST_V2_20261105.md, not external or independent approval.','audience':'Adults 18+, original educational examples; no individualized financial advice.','sourceUse':'Source concepts inform the objectives. All scenarios, arithmetic, explanations and Picket interactions are original; no quotations, no imported US/EU legal rights.','publicationGate':{'publishable':False,'required':['Owner approval of the v2 self-review checklist (docs/learning/REVIEW_CHECKLIST_V2_20261105.md)','Independent financial-content review','Vietnamese editorial and accessibility review','Vietnam-relevant legal/safety review for borrowing, tax, insurance and digital safety','Re-verification of dated figures (tax, deposit insurance, social insurance) before each release','Pilot comprehension and Android font/TalkBack/offline checks','Approved English translation before claiming bilingual curriculum']},'stages':stages,'sourceRegistry':registry,'lessons':lessons}
     p=ROOT/'PICKET_FINANCIAL_CURRICULUM_VI_V1.json'
     editorial_metadata(payload)
     p.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     write_app_copy(payload, 'vi')
-    lines=['# Picket — Giáo trình tài chính tiếng Việt v1','',f'Biên soạn và đối chiếu nguồn ngày {DATE}. **authored-not-independent-review**: chưa được người độc lập duyệt; chưa đủ điều kiện phát hành nội dung published.','', '12 bài / 6 chương, dành cho người lớn từ 18 tuổi. Nội dung và tình huống VND do Picket biên soạn mới, không sao chép giáo trình nguồn. Nguồn quốc tế chỉ dùng cho khái niệm, không áp dụng quyền hoặc luật nước ngoài cho Việt Nam. Không khẳng định nguồn đã duyệt hoặc chứng thực Picket.','', 'JSON cùng tên là dữ liệu chuẩn của bản này. `correctIndex` bắt đầu từ 0; `reviewedAt` chỉ là ngày tác giả rà nguồn và số học, không phải ngày phê duyệt độc lập. `workedExample.arithmeticChecks` là dữ liệu kiểm tra số học, không thực thi biểu thức trong ứng dụng.','', '## Cửa kiểm duyệt trước phát hành','', *['- '+x for x in payload['publicationGate']['required']], '', 'Thời lượng 3–5 phút chỉ là mục tiêu UX của kế hoạch, chưa có đo thử. Số từ dưới đây đếm theo khoảng trắng tiếng Việt, không tương đương số từ vựng ngôn ngữ học. Không hứa hoàn thành bài trong thời lượng đó trước pilot.','']
-    lines[2:2] = ['> [Trạng thái hiện hành](../PROJECT_STATUS.md). Bản biên tập 2 bổ sung ngày 27/10/2026: 12 bài tự kiểm tra hư cấu và lời giải VI/EN; giữ ID bài và đáp án quiz.', '']
+    lines=['# Picket — Giáo trình tài chính tiếng Việt v1','',f'Biên soạn ngày {DATE}; mở rộng và tự rà soát ngày {ext.EXTENSION_DATE}. **{ext.REVIEW_STATUS}**: chưa được người độc lập duyệt; chưa đủ điều kiện phát hành nội dung published.','', f'{len(lessons)} bài / {len(stages)} giai đoạn, dành cho người lớn từ 18 tuổi. Nội dung và tình huống VND do Picket biên soạn mới, không sao chép giáo trình nguồn. Nguồn quốc tế chỉ dùng cho khái niệm, không áp dụng quyền hoặc luật nước ngoài cho Việt Nam. Không khẳng định nguồn đã duyệt hoặc chứng thực Picket.','', 'JSON cùng tên là dữ liệu chuẩn của bản này. `correctIndex` bắt đầu từ 0; `reviewedAt` chỉ là ngày tác giả tự rà soát, không phải ngày phê duyệt độc lập. `workedExample.arithmeticChecks` là dữ liệu kiểm tra số học, không thực thi biểu thức trong ứng dụng. `citedFigures` ghi nguồn và ngày cho từng con số quy định.','', '## Cửa kiểm duyệt trước phát hành','', *['- '+x for x in payload['publicationGate']['required']], '', 'Thời lượng 3–5 phút chỉ là mục tiêu UX, chưa có đo thử. Số từ dưới đây đếm theo khoảng trắng tiếng Việt, không tương đương số từ vựng ngôn ngữ học.','']
+    lines[2:2] = ['> [Trạng thái hiện hành](../PROJECT_STATUS.md). Bản biên tập 3 ngày 05/11/2026: lộ trình 4 giai đoạn, thêm 18 bài (13–30); giữ ID và đáp án quiz của 12 bài cũ. [Checklist tự rà soát](REVIEW_CHECKLIST_V2_20261105.md).', '']
+    stage_titles={s['stageId']:s for s in stages}
+    current=None
     for l in lessons:
+        if l['stageId']!=current:
+            current=l['stageId']; st=stage_titles[current]
+            lines += [f"# Giai đoạn {st['order']}: {st['title']}",'',st['summary'],'']
         lines += [f"## {l['lessonId']} — Chương {l['chapterId'][-2:]}: {l['title']}",'',f"**Năng lực:** {l['competencyId']}  ",f"**Mục tiêu:** {l['objective']}  ",f"**Trạng thái:** {l['status']} · reviewedAt: {l['reviewedAt']} · {len(l['body'].split())} đơn vị cách trắng trong thân bài",'',l['body'],'','### Ví dụ và số học','',markdown_example(l['workedExample']['description'], 'vi'),'']
         for check in l['workedExample']['arithmeticChecks']: lines += [f"- `{check['expression']} = {check['expected']}`"]
         lines += ['','### Tình huống thực hành','']
@@ -206,7 +250,10 @@ if __name__=='__main__':
             lines += [f"**{i}. {q['prompt']}**",'']
             for j,c in enumerate(q['choices']): lines += [f"- {chr(65+j)}. {c['text']} — {c['explanation']}"]
             lines += [f"Đáp án: **{chr(65+q['correctIndex'])}** (`correctIndex: {q['correctIndex']}`).",'']
-        lines += ['### Hành động tự chọn','',l['optionalAction']['text']+' Có thể bỏ qua; không cần chi tiền, mở sản phẩm, cung cấp OTP hoặc gửi dữ liệu cho AI.','','### Nguồn đã đọc','']+[f'- [Nguồn tham khảo]({u})' for u in l['sources']]+['']
-    lines += ['## Kiểm tra bản biên soạn','',f'- Đủ {len(lessons)} bài, 36 câu hỏi, 108 lựa chọn có lời giải riêng.',f"- {sum(len(l['workedExample']['arithmeticChecks']) for l in lessons)} phép tính được chạy và so giá trị mong đợi bằng script đi kèm.",'- Tất cả ID duy nhất; mọi chỉ số đáp án thuộc 0–2.','- Nguồn được mở đọc ngày 2026-10-23; URL được lưu để kiểm tra lại trước phát hành. Không phải cam kết URL tồn tại vĩnh viễn.','- Chưa có người duyệt độc lập, người học pilot, nghiệm thu nội dung tiếng Anh hoặc xác nhận hiệu quả giáo dục thực tế.','']
+        lines += ['### Hành động tự chọn','',l['optionalAction']['text']+' Có thể bỏ qua; không cần chi tiền, mở sản phẩm, cung cấp OTP hoặc gửi dữ liệu cho AI.','']
+        if l.get('citedFigures'):
+            lines += ['### Số liệu có nguồn và ngày','']+[f"- {f['claim']} — nguồn `{f['sourceId']}`, mốc {f['asOf']}" for f in l['citedFigures']]+['']
+        lines += ['### Nguồn đã đọc','']+[f'- [Nguồn tham khảo]({u})' for u in l['sources']]+['']
+    lines += ['## Kiểm tra bản biên soạn','',f'- Đủ {len(lessons)} bài, {question_count} câu hỏi, {question_count*3} lựa chọn có lời giải riêng.',f"- {sum(len(l['workedExample']['arithmeticChecks']) for l in lessons)} phép tính được chạy và so giá trị mong đợi bằng script đi kèm.",'- Tất cả ID duy nhất; mọi chỉ số đáp án thuộc 0–2.',f'- Nguồn bài 1–12 được mở đọc ngày {DATE}; nguồn mới của bài 13–30 được mở đọc ngày {ext.EXTENSION_DATE}. URL được lưu để kiểm tra lại trước phát hành.','- Chưa có người duyệt độc lập, người học pilot, nghiệm thu nội dung tiếng Anh hoặc xác nhận hiệu quả giáo dục thực tế.','']
     (ROOT/'PICKET_FINANCIAL_CURRICULUM_VI_V1.md').write_text('\n'.join(lines),encoding='utf-8')
-    print(json.dumps({'lessons':len(lessons),'questions':36,'explanations':108,'checks':sum(len(l['workedExample']['arithmeticChecks']) for l in lessons),'bodyWordCounts':[len(l['body'].split()) for l in lessons]},ensure_ascii=False))
+    print(json.dumps({'lessons':len(lessons),'questions':question_count,'explanations':question_count*3,'checks':sum(len(l['workedExample']['arithmeticChecks']) for l in lessons),'bodyWordCounts':[len(l['body'].split()) for l in lessons]},ensure_ascii=False))

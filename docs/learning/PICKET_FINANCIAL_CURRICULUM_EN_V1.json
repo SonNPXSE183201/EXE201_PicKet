@@ -3,20 +3,86 @@
   "curriculumId": "picket.financial.en.v1",
   "locale": "en-US",
   "authoredAt": "2026-10-23",
-  "status": "authored-not-independent-review",
-  "reviewedAtSemantics": "Author source/arithmetic review date; neither independent translation nor financial-content approval.",
+  "status": "self-reviewed-pending-owner-approval",
+  "reviewedAtSemantics": "Author self-review date against REVIEW_CHECKLIST_V2_20261105.md; neither independent translation nor financial-content approval.",
   "audience": "Adults 18+, original educational examples; no individualized financial advice.",
   "sourceUse": "Source concepts inform objectives. Scenarios and calculations originate in the Vietnamese Picket curriculum. This is an original English editorial translation, not an official translation or endorsement of source organizations. No US/EU legal rights are imported into Vietnam.",
   "publicationGate": {
     "publishable": false,
     "required": [
+      "Owner approval of the v2 self-review checklist (docs/learning/REVIEW_CHECKLIST_V2_20261105.md)",
       "Independent financial-content review",
-      "Vietnamese-context legal/safety review for borrowing and digital safety",
+      "Vietnamese-context legal/safety review for borrowing, tax, insurance and digital safety",
+      "Re-verification of dated figures (tax, deposit insurance, social insurance) before each release",
       "Independent English translation and terminology review against the Vietnamese source",
       "Accessibility and pilot comprehension review",
       "Android large-font/TalkBack/offline checks"
     ]
   },
+  "stages": [
+    {
+      "stageId": "stage-01-foundation",
+      "order": 1,
+      "title": "Foundation",
+      "summary": "Know your take-home pay, record accurately and give every amount a pocket.",
+      "lessonIds": [
+        "picket.vi.financial.v1.13",
+        "picket.vi.financial.v1.01",
+        "picket.vi.financial.v1.02",
+        "picket.vi.financial.v1.14",
+        "picket.vi.financial.v1.03",
+        "picket.vi.financial.v1.15",
+        "picket.vi.financial.v1.04"
+      ]
+    },
+    {
+      "stageId": "stage-02-stability",
+      "order": 2,
+      "title": "Stability",
+      "summary": "Set goals, build an emergency fund, read balances and understand tax on wages.",
+      "lessonIds": [
+        "picket.vi.financial.v1.16",
+        "picket.vi.financial.v1.06",
+        "picket.vi.financial.v1.05",
+        "picket.vi.financial.v1.17",
+        "picket.vi.financial.v1.07",
+        "picket.vi.financial.v1.08",
+        "picket.vi.financial.v1.18"
+      ]
+    },
+    {
+      "stageId": "stage-03-protection",
+      "order": 3,
+      "title": "Protection",
+      "summary": "Understand borrowing costs, avoid scams, read insurance contracts and use consumer rights.",
+      "lessonIds": [
+        "picket.vi.financial.v1.09",
+        "picket.vi.financial.v1.10",
+        "picket.vi.financial.v1.19",
+        "picket.vi.financial.v1.20",
+        "picket.vi.financial.v1.11",
+        "picket.vi.financial.v1.21",
+        "picket.vi.financial.v1.23",
+        "picket.vi.financial.v1.12",
+        "picket.vi.financial.v1.25"
+      ]
+    },
+    {
+      "stageId": "stage-04-growth",
+      "order": 4,
+      "title": "Growth",
+      "summary": "Understand compounding, deposits, inflation, risk and periodic reviews.",
+      "lessonIds": [
+        "picket.vi.financial.v1.26",
+        "picket.vi.financial.v1.27",
+        "picket.vi.financial.v1.24",
+        "picket.vi.financial.v1.28",
+        "picket.vi.financial.v1.29",
+        "picket.vi.financial.v1.22",
+        "picket.vi.financial.v1.30"
+      ]
+    }
+  ],
   "sourceRegistry": [
     {
       "id": "oecd",
@@ -107,9 +173,212 @@
       "url": "https://vcc.gov.vn/default.aspx?category_id=9343771e-96be-48b5-a35d-b8ea9bc1aa93&do=detail&id=04a6bd22-786c-4d56-983c-923cce86ec7c&page=news",
       "accessedAt": "2026-10-23",
       "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "oecd-core-2016",
+      "url": "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf",
+      "accessedAt": "2026-11-05",
+      "validation": "G20/OECD INFE Core Competencies Framework on Financial Literacy for Adults (July 2016): emergency savings, compound interest, inflation, diversification, scams, taxes. Competency framing only."
+    },
+    {
+      "id": "bhxh-rates",
+      "url": "https://hanoi.baohiemxahoi.gov.vn/UserControls/Publishing/News/BinhLuan/pFormPrint.aspx?UrlListProcess=/content/tintuc/Lists/News&ItemID=35560&IsTA=False",
+      "accessedAt": "2026-11-05",
+      "validation": "BHXH Ha Noi, 08/09/2025: employee share 10.5% (8% social insurance, 1.5% health, 1% unemployment). Contribution base and caps vary; example uses a base below the cap."
+    },
+    {
+      "id": "pit-law-2025",
+      "url": "https://pbgdpl.cantho.gov.vn/tu-ngay-0172026-nhieu-diem-moi-cua-luat-thue-thu-nhap-ca-nhan-can-luu-y",
+      "accessedAt": "2026-11-05",
+      "validation": "Can Tho legal-education portal: PIT Law 2025 effective 01/07/2026; 5-bracket monthly schedule 5/10/20/30/35% at 10/30/60/100 million VND; deductions 15.5m/6.2m. Statute text itself not opened."
+    },
+    {
+      "id": "pit-deduction-2026",
+      "url": "https://hcc.nghean.gov.vn/tin-tong-hop/nghi-quyet-110-2025-ubtvqh15-dieu-chinh-muc-giam-tru-gia-canh-cua-thue-thu-nhap-ca-nhan-2448.html",
+      "accessedAt": "2026-11-05",
+      "validation": "Nghe An public-service portal: Resolution 110/2025/UBTVQH15 adopted 17/10/2025, effective 01/01/2026, applies from tax period 2026: 15.5m VND/month taxpayer, 6.2m VND/month per dependant."
+    },
+    {
+      "id": "civil-interest-cap",
+      "url": "https://baochinhphu.vn/huong-dan-ap-dung-phap-luat-ve-lai-suat-trong-giao-dich-dan-su-102248799.htm",
+      "accessedAt": "2026-11-05",
+      "validation": "Government e-newspaper, 04/12/2018: Civil Code 2015 Article 468 caps agreed civil-loan interest at 20%/year unless another law provides otherwise; excess is void."
+    },
+    {
+      "id": "sbv-security",
+      "url": "https://sbv.gov.vn/en/w/sbv624798",
+      "accessedAt": "2026-11-05",
+      "validation": "State Bank of Vietnam, 31/03/2025: never share OTP/password/card data even with bank staff; banks stop sending links by SMS/email from 01/01/2025; official app stores only; do not grant Accessibility permission."
+    },
+    {
+      "id": "account-rental",
+      "url": "https://xaydungchinhsach.chinhphu.vn/khuyen-cao-hoc-sinh-sinh-vien-khong-mo-tai-khoan-ngan-hang-de-cho-thue-cho-muon-ban-lai-119260310141959148.htm",
+      "accessedAt": "2026-11-05",
+      "validation": "Police warning via Chinhphu.vn, 10/03/2026: do not open bank accounts to rent, lend or sell; do not hand over cards, OTP or SIM; may lead to administrative or criminal liability."
+    },
+    {
+      "id": "ssc-warning",
+      "url": "https://xaydungchinhsach.chinhphu.vn/canh-bao-rui-ro-khi-tham-gia-san-giao-dich-chung-khoan-truc-tuyen-119220630163102206.htm",
+      "accessedAt": "2026-11-05",
+      "validation": "State Securities Commission via Chinhphu.vn, 30/06/2022: be very cautious with offers of high returns; securities companies in Vietnam must be licensed; unregulated platforms are at the investor's own risk."
+    },
+    {
+      "id": "insurance-free-look",
+      "url": "https://thoibaotaichinhvietnam.vn/nen-su-dung-dac-quyen-21-ngay-khi-mua-bao-hiem-nhan-tho-123293.html",
+      "accessedAt": "2026-11-05",
+      "validation": "Ministry of Finance newspaper, 13/03/2023: Insurance Business Law 08/2022/QH15 Article 35 gives 21 days after receiving a life or health contract with a term over 1 year to reconsider."
+    },
+    {
+      "id": "consumer-law-2023",
+      "url": "https://pbgdpl.cantho.gov.vn/bao-ve-tot-hon-quyen-loi-nguoi-tieu-dung",
+      "accessedAt": "2026-11-05",
+      "validation": "Can Tho legal-education portal: Consumer Protection Law 2023 effective 01/07/2024; bans misleading information, harassment and coercion; refunds/exchanges when goods do not match commitments."
+    },
+    {
+      "id": "deposit-insurance-2026",
+      "url": "https://vnba.org.vn/vi/han-muc-chi-tra-tien-bao-hiem-tien-gui-tang-len-350-trieu-dong-tu-ngay-13-7-2026-22749.htm",
+      "accessedAt": "2026-11-05",
+      "validation": "Vietnam Banks Association, 17/07/2026: Circular 05/2026/TT-NHNN sets the deposit-insurance payout limit at 350m VND per person per participating institution (principal and interest) from 13/07/2026, replacing 125m VND (Decision 32/2021/QD-TTg). Circular text itself not opened."
     }
   ],
   "lessons": [
+    {
+      "lessonId": "picket.vi.financial.v1.13",
+      "chapterId": "chapter-07",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Gross pay and take-home pay",
+      "competencyId": "income.gross-to-net",
+      "objective": "Read a payslip, separate the deductions and plan from take-home pay.",
+      "body": "The salary in a contract is usually gross pay. The money reaching your account is take-home pay. In between are deductions, such as mandatory insurance and personal income tax if any. A spending plan should start from take-home pay, because that is the money you can actually use.\n\nFor employees covered by mandatory insurance, the employee share is usually 10.5% of the contribution salary. It is made up of 8% social insurance, 1.5% health insurance and 1% unemployment insurance. Hanoi Social Security stated these rates on 8 September 2025. The contribution salary can differ from gross pay and has a cap, so check your payslip instead of guessing.\n\nA fictional example: Lan earns a gross salary of 12,000,000 VND, which is also the contribution salary. Insurance is 12,000,000 × 10.5% = 1,260,000 VND. The remainder is 10,740,000 VND. This is below the personal deduction of 15,500,000 VND per month applied from the 2026 tax period, so in this example Lan owes no tax on wages. Take-home pay is 10,740,000 VND.\n\nBonuses, overtime or wages from several employers can change the calculation. This lesson helps you read a payslip. Actual tax depends on current rules and your own documents.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "12,000,000 × 10.5% = 1,260,000 VND insurance; 12,000,000 − 1,260,000 = 10,740,000 VND. This is below the personal deduction, so taxable income in the example is 0.\n\nRemember\n• Plan from take-home pay, not gross pay.\n• The employee share of mandatory insurance is usually 10.5% of the contribution salary.\n• Tax on wages arises only when income after insurance exceeds the deductions.\n\nCommon misconception\nBelieving the number in the contract is what will arrive in your account each month.\n\nSelf-check — fictional scenario\nMinh has a contribution salary of 16,000,000 VND, no dependants and no other income. Work out the 10.5% insurance deduction and take-home pay.\n\nStep-by-step reasoning\n1. Insurance: 16,000,000 × 10.5% = 1,680,000 VND.\n2. Remainder: 16,000,000 − 1,680,000 = 14,320,000 VND.\n3. 14,320,000 VND is below the 15,500,000 VND personal deduction, so no tax arises under these assumptions.\n\nConclusion\nInsurance is 1,680,000 VND and take-home pay is 14,320,000 VND under the lesson assumptions.",
+        "arithmeticChecks": [
+          {
+            "expression": "12000000*105/1000",
+            "expected": 1260000
+          },
+          {
+            "expression": "12000000-1260000",
+            "expected": 10740000
+          },
+          {
+            "expression": "16000000*105/1000",
+            "expected": 1680000
+          },
+          {
+            "expression": "16000000-1680000",
+            "expected": 14320000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Which amount should a monthly budget start from?",
+          "choices": [
+            {
+              "text": "Gross pay in the contract",
+              "explanation": "Gross pay has not had insurance and tax removed, so it is larger than what you can use."
+            },
+            {
+              "text": "Take-home pay after deductions",
+              "explanation": "Correct: this is the money that actually reaches your account."
+            },
+            {
+              "text": "Gross pay plus an expected bonus",
+              "explanation": "An unpaid bonus is an assumption, not money you already have."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "The contribution salary is 10,000,000 VND and the employee share is 10.5%. What is the insurance deduction?",
+          "choices": [
+            {
+              "text": "1,050,000 VND",
+              "explanation": "Correct: 10,000,000 × 10.5% = 1,050,000 VND."
+            },
+            {
+              "text": "105,000 VND",
+              "explanation": "This is 1.05%, one decimal place off."
+            },
+            {
+              "text": "10,500,000 VND",
+              "explanation": "This is larger than the salary, so it cannot be the deduction."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Your payslip shows a deduction that differs from your own calculation. What should you do?",
+          "choices": [
+            {
+              "text": "Ignore it because the gap is small",
+              "explanation": "The gap may come from the contribution base or another item; find the reason."
+            },
+            {
+              "text": "Assume your own calculation is always right",
+              "explanation": "The contribution salary can differ from gross pay."
+            },
+            {
+              "text": "Ask the payroll team and check the contribution salary",
+              "explanation": "Correct: ask the right place and check the base before concluding."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "If you have a recent payslip, enter take-home pay as planned income in Picket. You do not need to photograph or upload the payslip.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://hanoi.baohiemxahoi.gov.vn/UserControls/Publishing/News/BinhLuan/pFormPrint.aspx?UrlListProcess=/content/tintuc/Lists/News&ItemID=35560&IsTA=False",
+        "https://hcc.nghean.gov.vn/tin-tong-hop/nghi-quyet-110-2025-ubtvqh15-dieu-chinh-muc-giam-tru-gia-canh-cua-thue-thu-nhap-ca-nhan-2448.html",
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "Employee mandatory insurance share 10.5% = 8% social + 1.5% health + 1% unemployment",
+          "sourceId": "bhxh-rates",
+          "asOf": "2025-09-08"
+        },
+        {
+          "claim": "Personal PIT deduction 15,500,000 VND/month from tax period 2026",
+          "sourceId": "pit-deduction-2026",
+          "asOf": "2026-01-01"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Plan from take-home pay, not gross pay.",
+          "The employee share of mandatory insurance is usually 10.5% of the contribution salary.",
+          "Tax on wages arises only when income after insurance exceeds the deductions."
+        ],
+        "misconception": "Believing the number in the contract is what will arrive in your account each month.",
+        "practicePrompt": "Minh has a contribution salary of 16,000,000 VND, no dependants and no other income. Work out the 10.5% insurance deduction and take-home pay.",
+        "solutionSteps": [
+          "Insurance: 16,000,000 × 10.5% = 1,680,000 VND.",
+          "Remainder: 16,000,000 − 1,680,000 = 14,320,000 VND.",
+          "14,320,000 VND is below the 15,500,000 VND personal deduction, so no tax arises under these assumptions."
+        ],
+        "answer": "Insurance is 1,680,000 VND and take-home pay is 14,320,000 VND under the lesson assumptions."
+      },
+      "stageId": "stage-01-foundation",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
     {
       "lessonId": "picket.vi.financial.v1.01",
       "chapterId": "chapter-01",
@@ -218,10 +487,10 @@
       "sources": [
         "https://www.oecd.org/content/dam/oecd/en/publications/reports/2022/01/financial-competence-framework-for-adults-in-the-european-union_614b8b97/510f133c-en.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -238,9 +507,10 @@
         ],
         "answer": "The transfer is 150,000 VND and the expense is 5,000 VND. Do not classify all 155,000 VND as overall spending."
       },
+      "stageId": "stage-01-foundation",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -340,10 +610,10 @@
       "sources": [
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_spending_tracker_2018-11_ADA.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -360,9 +630,147 @@
         ],
         "answer": "The stated total is 70,000 VND. Another image or draft alone does not increase it to 110,000 VND."
       },
+      "stageId": "stage-01-foundation",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.14",
+      "chapterId": "chapter-07",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Fixed costs, variable costs and annual costs",
+      "competencyId": "budgeting.fixed-variable-annual",
+      "objective": "Sort spending into three groups and convert annual costs into a monthly amount to set aside.",
+      "body": "Not every expense behaves the same way. Fixed costs barely change each month, such as rent or internet. Variable costs rise and fall with how you live, such as food and transport. Annual costs arrive once or a few times a year, such as tuition, renewal fees or Tết gifts. Annual costs are easy to forget, then feel like a shock even though they come every year.\n\nA fictional example: Tú pays rent of 3,000,000 VND and internet of 220,000 VND. Fixed costs are 3,220,000 VND. Food averages 2,500,000 VND. Each year Tú has a course fee of 1,200,000 VND and expected Tết gifts of 2,400,000 VND, a total of 3,600,000 VND. Divided over 12 months, Tú needs to set aside 300,000 VND each month. The monthly plan is 3,220,000 + 2,500,000 + 300,000 = 6,020,000 VND.\n\nVariable costs should use an average from real transactions, not a hoped-for number. An annual cost may not be known exactly; record it as an estimate and update it when the real price is known.\n\nWhen a month with a large cost arrives, the money is already waiting in the pocket you filled gradually. That month you do not need to borrow or cut essentials.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Fixed: 3,000,000 + 220,000 = 3,220,000 VND. Annual: 1,200,000 + 2,400,000 = 3,600,000 VND; 3,600,000 / 12 = 300,000 VND per month. Plan: 3,220,000 + 2,500,000 + 300,000 = 6,020,000 VND.\n\nRemember\n• Fixed costs rarely change, variable costs fluctuate, annual costs are infrequent but recurring.\n• Divide an annual cost by the months remaining to find the monthly amount.\n• Use averages from real transactions for variable costs.\n\nCommon misconception\nTreating tuition or Tết gifts as unexpected just because they do not come every month.\n\nSelf-check — fictional scenario\nLanguage-class tuition of 2,400,000 VND is due in 6 months. A gym membership of 900,000 VND is due in 3 months. How much is needed each month for both?\n\nStep-by-step reasoning\n1. Tuition: 2,400,000 / 6 = 400,000 VND per month.\n2. Gym: 900,000 / 3 = 300,000 VND per month.\n3. Together: 400,000 + 300,000 = 700,000 VND per month for the first 3 months.\n\nConclusion\nSet aside 700,000 VND per month for the first three months; after the gym fee is paid, only 400,000 VND for tuition remains.",
+        "arithmeticChecks": [
+          {
+            "expression": "3000000+220000",
+            "expected": 3220000
+          },
+          {
+            "expression": "1200000+2400000",
+            "expected": 3600000
+          },
+          {
+            "expression": "3600000/12",
+            "expected": 300000
+          },
+          {
+            "expression": "3220000+2500000+300000",
+            "expected": 6020000
+          },
+          {
+            "expression": "2400000/6",
+            "expected": 400000
+          },
+          {
+            "expression": "900000/3",
+            "expected": 300000
+          },
+          {
+            "expression": "400000+300000",
+            "expected": 700000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Electricity varies between 300,000–500,000 VND each month. Which group is it?",
+          "choices": [
+            {
+              "text": "Strictly fixed",
+              "explanation": "The amount changes each month, so it is not strictly fixed."
+            },
+            {
+              "text": "Recurring but variable",
+              "explanation": "Correct: it comes monthly but the amount varies."
+            },
+            {
+              "text": "Annual cost",
+              "explanation": "It comes every month, not once a year."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "A 1,800,000 VND cost is due each year. Setting aside evenly over 12 months, how much is that per month?",
+          "choices": [
+            {
+              "text": "150,000 VND",
+              "explanation": "Correct: 1,800,000 / 12 = 150,000 VND."
+            },
+            {
+              "text": "180,000 VND",
+              "explanation": "This divides by 10, not 12."
+            },
+            {
+              "text": "1,800,000 VND",
+              "explanation": "This is the whole annual amount, not the monthly part."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Spending jumps in the month of Tết. How should it be handled?",
+          "choices": [
+            {
+              "text": "Treat it as a surprise even though it happens every year",
+              "explanation": "A cost that repeats every year can be anticipated."
+            },
+            {
+              "text": "Leave it out of the records so the month looks tidy",
+              "explanation": "Leaving it out makes the records wrong."
+            },
+            {
+              "text": "Put it in the annual plan and set money aside beforehand",
+              "explanation": "Correct: if you know it is coming, set aside in advance."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "In Picket, add one annual cost under Bills with its due date, then create a small budget pocket for the monthly amount.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_spending_tracker_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_bill_calendar_tool_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_savings_plan_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Fixed costs rarely change, variable costs fluctuate, annual costs are infrequent but recurring.",
+          "Divide an annual cost by the months remaining to find the monthly amount.",
+          "Use averages from real transactions for variable costs."
+        ],
+        "misconception": "Treating tuition or Tết gifts as unexpected just because they do not come every month.",
+        "practicePrompt": "Language-class tuition of 2,400,000 VND is due in 6 months. A gym membership of 900,000 VND is due in 3 months. How much is needed each month for both?",
+        "solutionSteps": [
+          "Tuition: 2,400,000 / 6 = 400,000 VND per month.",
+          "Gym: 900,000 / 3 = 300,000 VND per month.",
+          "Together: 400,000 + 300,000 = 700,000 VND per month for the first 3 months."
+        ],
+        "answer": "Set aside 700,000 VND per month for the first three months; after the gym fee is paid, only 400,000 VND for tuition remains."
+      },
+      "stageId": "stage-01-foundation",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -466,10 +874,10 @@
       "sources": [
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -486,9 +894,143 @@
         ],
         "answer": "One option supported by the facts is to buy the exam connection and postpone entertainment. This is not a universal ban on entertainment."
       },
+      "stageId": "stage-01-foundation",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.15",
+      "chapterId": "chapter-07",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Pocket budgeting: every amount has a job",
+      "competencyId": "budgeting.pocket-allocation",
+      "objective": "Allocate all take-home pay to pockets and adjust between pockets without breaking the total.",
+      "body": "A pocket budget starts with one question: what jobs will this month's money do? You divide take-home pay into pockets such as housing, food, transport, bills, emergencies and annual costs. When the pockets add up to take-home pay, every amount has a job. Money without a job is easy to spend without noticing.\n\nA fictional example: Hưng takes home 10,000,000 VND. Hưng allocates housing 3,500,000 VND, food 2,800,000 VND, transport 700,000 VND, bills 600,000 VND, emergencies 1,000,000 VND and annual costs 300,000 VND. The total is 8,900,000 VND. That leaves 1,100,000 VND without a job, so Hưng puts it in a flexible pocket. Mid-month, food runs over by 400,000 VND. Hưng moves 400,000 VND from the flexible pocket to food. The flexible pocket has 700,000 VND left. The total money is unchanged; only the plan was adjusted on purpose.\n\nThere is no single split that suits everyone. Someone raising children, repaying debt or earning irregularly will divide money differently. What matters is that the pockets never exceed the money you actually have.\n\nMoving money between pockets is not failure. It is how a plan keeps up with life.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Pockets: 3,500,000 + 2,800,000 + 700,000 + 600,000 + 1,000,000 + 300,000 = 8,900,000 VND. Unassigned: 10,000,000 − 8,900,000 = 1,100,000 VND. After the move: 1,100,000 − 400,000 = 700,000 VND.\n\nRemember\n• Allocate all take-home pay to pockets so nothing drifts.\n• Moving between pockets keeps the total unchanged.\n• The right split depends on your own circumstances.\n\nCommon misconception\nThinking that moving money between pockets means the budget has failed.\n\nSelf-check — fictional scenario\nTake-home pay is 9,000,000 VND. Housing 3,000,000 VND, food 2,500,000 VND, transport 800,000 VND and emergencies 700,000 VND are allocated. The rest goes 1,200,000 VND to a study goal and the remainder to a flexible pocket. Check what is unassigned.\n\nStep-by-step reasoning\n1. Allocated: 3,000,000 + 2,500,000 + 800,000 + 700,000 = 7,000,000 VND.\n2. Left: 9,000,000 − 7,000,000 = 2,000,000 VND.\n3. After allocating: 2,000,000 − 1,200,000 − 800,000 = 0 VND.\n\nConclusion\nThe flexible pocket receives 800,000 VND and nothing is left unassigned.",
+        "arithmeticChecks": [
+          {
+            "expression": "3500000+2800000+700000+600000+1000000+300000",
+            "expected": 8900000
+          },
+          {
+            "expression": "10000000-8900000",
+            "expected": 1100000
+          },
+          {
+            "expression": "1100000-400000",
+            "expected": 700000
+          },
+          {
+            "expression": "3000000+2500000+800000+700000",
+            "expected": 7000000
+          },
+          {
+            "expression": "9000000-7000000",
+            "expected": 2000000
+          },
+          {
+            "expression": "2000000-1200000-800000",
+            "expected": 0
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Take-home pay is 8,000,000 VND and 7,400,000 VND is in pockets. How much has no job yet?",
+          "choices": [
+            {
+              "text": "600,000 VND",
+              "explanation": "Correct: 8,000,000 − 7,400,000 = 600,000 VND."
+            },
+            {
+              "text": "7,400,000 VND",
+              "explanation": "This is the allocated part, not the remainder."
+            },
+            {
+              "text": "0 VND",
+              "explanation": "Some money still has no pocket."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "The food pocket is over by 200,000 VND. What is the consistent fix?",
+          "choices": [
+            {
+              "text": "Delete the extra transaction so it matches",
+              "explanation": "Deleting a real transaction makes the records wrong."
+            },
+            {
+              "text": "Move 200,000 VND from a flexible pocket and note why",
+              "explanation": "Correct: the total stays the same and the plan changes on purpose."
+            },
+            {
+              "text": "Raise income on paper",
+              "explanation": "Income does not grow because a number is edited."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Is there one mandatory split that everyone must use?",
+          "choices": [
+            {
+              "text": "Yes, everyone must follow the same ratios",
+              "explanation": "Everyone's circumstances differ."
+            },
+            {
+              "text": "No; the split depends on circumstances, but pockets must match the money you have",
+              "explanation": "Correct: the core rule is that pockets do not exceed real money."
+            },
+            {
+              "text": "Yes, if an app suggests it",
+              "explanation": "A suggestion is a starting point, not a rule."
+            }
+          ],
+          "correctIndex": 1
+        }
+      ],
+      "optionalAction": {
+        "text": "Open your budget pockets in Picket and check whether their total exceeds expected take-home pay. You may just look without editing.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_spending_tracker_2018-11_ADA.pdf",
+        "https://www.oecd.org/content/dam/oecd/en/publications/reports/2022/01/financial-competence-framework-for-adults-in-the-european-union_614b8b97/510f133c-en.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Allocate all take-home pay to pockets so nothing drifts.",
+          "Moving between pockets keeps the total unchanged.",
+          "The right split depends on your own circumstances."
+        ],
+        "misconception": "Thinking that moving money between pockets means the budget has failed.",
+        "practicePrompt": "Take-home pay is 9,000,000 VND. Housing 3,000,000 VND, food 2,500,000 VND, transport 800,000 VND and emergencies 700,000 VND are allocated. The rest goes 1,200,000 VND to a study goal and the remainder to a flexible pocket. Check what is unassigned.",
+        "solutionSteps": [
+          "Allocated: 3,000,000 + 2,500,000 + 800,000 + 700,000 = 7,000,000 VND.",
+          "Left: 9,000,000 − 7,000,000 = 2,000,000 VND.",
+          "After allocating: 2,000,000 − 1,200,000 − 800,000 = 0 VND."
+        ],
+        "answer": "The flexible pocket receives 800,000 VND and nothing is left unassigned."
+      },
+      "stageId": "stage-01-foundation",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -589,10 +1131,10 @@
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf",
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_income_benefits_tool_2018-11_ADA.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -609,131 +1151,143 @@
         ],
         "answer": "The day-7 shortfall is 50,000 VND. A Picket schedule makes it visible; it does not move a due date or create money."
       },
+      "stageId": "stage-01-foundation",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
     {
-      "lessonId": "picket.vi.financial.v1.05",
-      "chapterId": "chapter-03",
+      "lessonId": "picket.vi.financial.v1.16",
+      "chapterId": "chapter-08",
       "version": 1,
       "locale": "en-US",
-      "title": "Emergency funds differ from known future costs",
-      "competencyId": "resilience.emergency-vs-planned",
-      "objective": "Distinguish unexpected events from scheduled costs and choose a reserve goal suited to your circumstances.",
-      "body": "Emergency money gives you more options when something unexpected happens, such as essential equipment breaking or income being interrupted. Money for a known cost, such as next term's tuition or an annual renewal, serves a different purpose: preparation for a schedule. Both are useful. Distinguishing them helps avoid feeling that you constantly face emergencies when an annual bill simply was not planned. There is no need for blame when allocated money must be used; look at what actually happened.\n\nDung has 2,000,000 VND, including 1,200,000 VND allocated to tuition and 800,000 VND to emergencies. Tuition of 1,200,000 VND becomes due; paying it leaves 800,000 VND. If essential study equipment then unexpectedly needs a 500,000 VND repair, 300,000 VND remains. Under this allocation, tuition was not a withdrawal from the emergency reserve. The reserve is not extra money beyond the 2,000,000 VND either; it is part of the existing total. Labeling the same money as belonging to two funds does not let it pay twice.\n\nA suitable reserve depends on needs, dependants, income stability and support you can actually access. A modest starting goal may be more manageable than a large target that makes you give up. This lesson does not require everybody to hold the same number of months of expenses, or promise that reaching a number protects against every disruption. If nothing remains after basic needs, acknowledge that limit. You do not need to borrow simply to create a balance labeled as an emergency fund.\n\nConsider keeping money somewhere whose fees, withdrawal access and availability when needed you understand, rather than chasing a promised return. Do not put all money needed soon into something you do not understand or cannot access in time. In Picket, review goal labels and balances separately to avoid confusion. After using a reserve, rebuild the plan when circumstances allow; do not punish yourself by dropping essential costs. A learning step can simply be listing known costs and unexpected events, without depositing money or buying a financial product.",
+      "title": "Write clear goals and put them in order",
+      "competencyId": "goals.specific-and-prioritised",
+      "objective": "Write goals with an amount, a deadline and a way to track them; prioritise when money cannot cover all of them.",
+      "body": "\"Save more\" is a wish. A clearer goal answers: how much, for what, by when, and how will you track it? A goal also needs to be realistic for your current income. Otherwise it is easy to give up after a few weeks.\n\nWhen there are several goals, put them in order. Many people first build a small emergency reserve and keep essential bills paid on time. Optional large purchases come after that. This is a common ordering, not a mandatory rule.\n\nA fictional example: Ngọc has 1,500,000 VND left each month. Ngọc wants 6,000,000 VND for emergencies and 9,000,000 VND for a computer, both within 12 months. The emergency goal needs 6,000,000 / 12 = 500,000 VND per month. The computer needs 9,000,000 / 12 = 750,000 VND per month. The total is 1,250,000 VND. Ngọc has 250,000 VND left for other things. If the monthly surplus falls, Ngọc keeps the emergency amount first and moves the computer deadline.\n\nWriting goals down shows conflicts early. Changing a deadline when circumstances change is normal.",
       "workedExample": {
         "currency": "VND",
-        "description": "2,000,000 − 1,200,000 = 800,000 VND; 800,000 − 500,000 = 300,000 VND.\n\nRemember\n• Separate known future costs from unexpected expenses.\n• An appropriate reserve depends on circumstances; the examples are not mandatory targets.\n• An earmark helps tracking but does not move money or guarantee a balance.\n\nCommon misconception\nTreating every large cost as an emergency, or treating a reserve label as new money.\n\nSelf-check — fictional scenario\nHà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.\n\nStep-by-step reasoning\n1. The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.\n2. The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.\n3. The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity.\n\nConclusion\nThe service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes.",
+        "description": "6,000,000 / 12 = 500,000 VND; 9,000,000 / 12 = 750,000 VND; 500,000 + 750,000 = 1,250,000 VND; 1,500,000 − 1,250,000 = 250,000 VND left.\n\nRemember\n• A clear goal has an amount, purpose, deadline and tracking method.\n• Add up the monthly amounts for all goals to spot conflicts.\n• When money is short, move deadlines or shrink goals rather than borrowing.\n\nCommon misconception\nBelieving that changing a goal deadline means you have failed.\n\nSelf-check — fictional scenario\nA goal of 4,800,000 VND in 8 months. How much is needed per month? If only 400,000 VND per month is possible, how many months are needed?\n\nStep-by-step reasoning\n1. Planned amount: 4,800,000 / 8 = 600,000 VND per month.\n2. At 400,000 VND per month: 4,800,000 / 400,000 = 12 months.\n3. The deadline moves from 8 to 12 months; the goal amount stays the same.\n\nConclusion\n600,000 VND per month for 8 months, or 12 months at 400,000 VND.",
         "arithmeticChecks": [
           {
-            "expression": "2000000-1200000",
-            "expected": 800000
+            "expression": "6000000/12",
+            "expected": 500000
           },
           {
-            "expression": "800000-500000",
-            "expected": 300000
+            "expression": "9000000/12",
+            "expected": 750000
           },
           {
-            "expression": "240000/4",
-            "expected": 60000
+            "expression": "500000+750000",
+            "expected": 1250000
           },
           {
-            "expression": "90000-40000",
-            "expected": 50000
+            "expression": "1500000-1250000",
+            "expected": 250000
+          },
+          {
+            "expression": "4800000/8",
+            "expected": 600000
+          },
+          {
+            "expression": "4800000/400000",
+            "expected": 12
           }
         ]
       },
       "questions": [
         {
-          "prompt": "Tuition has a clear date next term. How is it classified in this lesson?",
+          "prompt": "Which goal is clearest?",
           "choices": [
             {
-              "text": "An unforeseeable emergency",
-              "explanation": "A known date and amount can be planned."
+              "text": "Save more",
+              "explanation": "There is no amount or deadline."
             },
             {
-              "text": "A scheduled cost to prepare for",
-              "explanation": "Correct: it differs from an unexpected event."
+              "text": "Set aside 3,000,000 VND for a course in 10 months, reviewing monthly",
+              "explanation": "Correct: it has an amount, purpose, deadline and a way to track."
             },
             {
-              "text": "New income",
-              "explanation": "It is money to pay, not money coming in."
+              "text": "Buy something someday",
+              "explanation": "Progress cannot be measured."
             }
           ],
           "correctIndex": 1
         },
         {
-          "prompt": "Dung pays tuition and repairs the equipment as in the example. How much remains?",
+          "prompt": "Two goals need 400,000 VND and 700,000 VND per month; you have 900,000 VND spare. What is true?",
           "choices": [
             {
-              "text": "300,000 VND",
-              "explanation": "Correct: both actual expenses have been deducted."
+              "text": "Enough for both",
+              "explanation": "400,000 + 700,000 = 1,100,000 VND, which is more than 900,000 VND."
             },
             {
-              "text": "800,000 VND",
-              "explanation": "This was the balance before the repair."
+              "text": "Short by 200,000 VND; move a deadline or reduce a goal",
+              "explanation": "Correct: 1,100,000 − 900,000 = 200,000 VND."
             },
             {
-              "text": "1,500,000 VND",
-              "explanation": "This calculation omitted tuition."
+              "text": "Short by 1,100,000 VND",
+              "explanation": "1,100,000 VND is the total needed, not the shortfall."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Before an optional large purchase, which priority is usually sensible?",
+          "choices": [
+            {
+              "text": "A small emergency reserve and paying essential bills on time",
+              "explanation": "Correct: it lowers the risk of late payments and gives a buffer for surprises."
+            },
+            {
+              "text": "The large purchase because prices may rise",
+              "explanation": "A possible price rise does not make an item essential."
+            },
+            {
+              "text": "Borrow more to do both at once",
+              "explanation": "Borrowing more creates a new obligation and interest cost."
             }
           ],
           "correctIndex": 0
-        },
-        {
-          "prompt": "Nothing remains after basic needs. What is the most suitable response?",
-          "choices": [
-            {
-              "text": "Borrow to make a fund label look good",
-              "explanation": "Borrowing adds an obligation; it does not automatically create safety."
-            },
-            {
-              "text": "Treat yourself as a failure",
-              "explanation": "Limited resources are not a judgment of character."
-            },
-            {
-              "text": "Acknowledge the constraint and revisit the goal when circumstances change",
-              "explanation": "Correct: goals should fit real circumstances."
-            }
-          ],
-          "correctIndex": 2
         }
       ],
       "optionalAction": {
-        "text": "Separate two examples into scheduled costs and unexpected events; no money transfer is required.",
+        "text": "In Picket, rewrite one goal with an amount and a deadline, then create a pocket to track it. You can write it on paper if you do not want a pocket yet.",
         "requiresSpending": false,
         "maySkip": true,
         "evidence": "self-reported-or-local-review"
       },
       "sources": [
-        "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_SMART-goals_tool_2018-11.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_savings_plan_tool_2018-11_ADA.pdf",
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
-          "Separate known future costs from unexpected expenses.",
-          "An appropriate reserve depends on circumstances; the examples are not mandatory targets.",
-          "An earmark helps tracking but does not move money or guarantee a balance."
+          "A clear goal has an amount, purpose, deadline and tracking method.",
+          "Add up the monthly amounts for all goals to spot conflicts.",
+          "When money is short, move deadlines or shrink goals rather than borrowing."
         ],
-        "misconception": "Treating every large cost as an emergency, or treating a reserve label as new money.",
-        "practicePrompt": "Hà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.",
+        "misconception": "Believing that changing a goal deadline means you have failed.",
+        "practicePrompt": "A goal of 4,800,000 VND in 8 months. How much is needed per month? If only 400,000 VND per month is possible, how many months are needed?",
         "solutionSteps": [
-          "The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.",
-          "The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.",
-          "The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity."
+          "Planned amount: 4,800,000 / 8 = 600,000 VND per month.",
+          "At 400,000 VND per month: 4,800,000 / 400,000 = 12 months.",
+          "The deadline moves from 8 to 12 months; the goal amount stays the same."
         ],
-        "answer": "The service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes."
+        "answer": "600,000 VND per month for 8 months, or 12 months at 400,000 VND."
       },
+      "stageId": "stage-02-stability",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -846,10 +1400,10 @@
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_savings_plan_tool_2018-11_ADA.pdf",
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_SMART-goals_tool_2018-11.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -866,9 +1420,262 @@
         ],
         "answer": "The original plan no longer fits. Six more weeks at 80,000 VND would add 480,000 VND before other costs; that is a scenario to consider, not a promise."
       },
+      "stageId": "stage-02-stability",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.05",
+      "chapterId": "chapter-03",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Emergency funds differ from known future costs",
+      "competencyId": "resilience.emergency-vs-planned",
+      "objective": "Distinguish unexpected events from scheduled costs and choose a reserve goal suited to your circumstances.",
+      "body": "Emergency money gives you more options when something unexpected happens, such as essential equipment breaking or income being interrupted. Money for a known cost, such as next term's tuition or an annual renewal, serves a different purpose: preparation for a schedule. Both are useful. Distinguishing them helps avoid feeling that you constantly face emergencies when an annual bill simply was not planned. There is no need for blame when allocated money must be used; look at what actually happened.\n\nDung has 2,000,000 VND, including 1,200,000 VND allocated to tuition and 800,000 VND to emergencies. Tuition of 1,200,000 VND becomes due; paying it leaves 800,000 VND. If essential study equipment then unexpectedly needs a 500,000 VND repair, 300,000 VND remains. Under this allocation, tuition was not a withdrawal from the emergency reserve. The reserve is not extra money beyond the 2,000,000 VND either; it is part of the existing total. Labeling the same money as belonging to two funds does not let it pay twice.\n\nA suitable reserve depends on needs, dependants, income stability and support you can actually access. A modest starting goal may be more manageable than a large target that makes you give up. This lesson does not require everybody to hold the same number of months of expenses, or promise that reaching a number protects against every disruption. If nothing remains after basic needs, acknowledge that limit. You do not need to borrow simply to create a balance labeled as an emergency fund.\n\nConsider keeping money somewhere whose fees, withdrawal access and availability when needed you understand, rather than chasing a promised return. Do not put all money needed soon into something you do not understand or cannot access in time. In Picket, review goal labels and balances separately to avoid confusion. After using a reserve, rebuild the plan when circumstances allow; do not punish yourself by dropping essential costs. A learning step can simply be listing known costs and unexpected events, without depositing money or buying a financial product.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "2,000,000 − 1,200,000 = 800,000 VND; 800,000 − 500,000 = 300,000 VND.\n\nRemember\n• Separate known future costs from unexpected expenses.\n• An appropriate reserve depends on circumstances; the examples are not mandatory targets.\n• An earmark helps tracking but does not move money or guarantee a balance.\n\nCommon misconception\nTreating every large cost as an emergency, or treating a reserve label as new money.\n\nSelf-check — fictional scenario\nHà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.\n\nStep-by-step reasoning\n1. The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.\n2. The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.\n3. The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity.\n\nConclusion\nThe service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes.",
+        "arithmeticChecks": [
+          {
+            "expression": "2000000-1200000",
+            "expected": 800000
+          },
+          {
+            "expression": "800000-500000",
+            "expected": 300000
+          },
+          {
+            "expression": "240000/4",
+            "expected": 60000
+          },
+          {
+            "expression": "90000-40000",
+            "expected": 50000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Tuition has a clear date next term. How is it classified in this lesson?",
+          "choices": [
+            {
+              "text": "An unforeseeable emergency",
+              "explanation": "A known date and amount can be planned."
+            },
+            {
+              "text": "A scheduled cost to prepare for",
+              "explanation": "Correct: it differs from an unexpected event."
+            },
+            {
+              "text": "New income",
+              "explanation": "It is money to pay, not money coming in."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Dung pays tuition and repairs the equipment as in the example. How much remains?",
+          "choices": [
+            {
+              "text": "300,000 VND",
+              "explanation": "Correct: both actual expenses have been deducted."
+            },
+            {
+              "text": "800,000 VND",
+              "explanation": "This was the balance before the repair."
+            },
+            {
+              "text": "1,500,000 VND",
+              "explanation": "This calculation omitted tuition."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Nothing remains after basic needs. What is the most suitable response?",
+          "choices": [
+            {
+              "text": "Borrow to make a fund label look good",
+              "explanation": "Borrowing adds an obligation; it does not automatically create safety."
+            },
+            {
+              "text": "Treat yourself as a failure",
+              "explanation": "Limited resources are not a judgment of character."
+            },
+            {
+              "text": "Acknowledge the constraint and revisit the goal when circumstances change",
+              "explanation": "Correct: goals should fit real circumstances."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Separate two examples into scheduled costs and unexpected events; no money transfer is required.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Separate known future costs from unexpected expenses.",
+          "An appropriate reserve depends on circumstances; the examples are not mandatory targets.",
+          "An earmark helps tracking but does not move money or guarantee a balance."
+        ],
+        "misconception": "Treating every large cost as an emergency, or treating a reserve label as new money.",
+        "practicePrompt": "Hà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.",
+        "solutionSteps": [
+          "The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.",
+          "The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.",
+          "The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity."
+        ],
+        "answer": "The service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes."
+      },
+      "stageId": "stage-02-stability",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.17",
+      "chapterId": "chapter-08",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Build an emergency fund in milestones",
+      "competencyId": "resilience.emergency-fund-sizing",
+      "objective": "Work out monthly essential costs, choose a milestone that suits your situation and calculate how long it takes.",
+      "body": "An emergency fund helps you cope with lost income or an urgent cost without borrowing. A clear way to size it is in months of essential costs. Essential costs are what you still have to pay if income stops: housing, basic food, transport, bills and minimum debt payments.\n\nThere is no number of months that fits everyone. People with irregular income, dependants or work in a volatile sector often need a bigger buffer. You can begin with a small milestone, then raise it gradually.\n\nA fictional example: Quân's essential costs are housing 2,500,000 VND, food 2,000,000 VND, transport 500,000 VND and bills 500,000 VND. The total is 5,500,000 VND per month. Quân's first milestone is 1 month of essentials, which is 5,500,000 VND. The next is 3 months, which is 16,500,000 VND. Setting aside 1,100,000 VND per month, Quân needs 5 months to reach the first milestone.\n\nKeep the fund somewhere you can withdraw from when needed, whose fees you understand, and separate from everyday spending money. After using the fund, record the expense correctly and plan to refill it gradually.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "5,500,000 VND = 2,500,000 + 2,000,000 + 500,000 + 500,000. 3-month milestone: 5,500,000 × 3 = 16,500,000 VND. Time to first milestone: 5,500,000 / 1,100,000 = 5 months.\n\nRemember\n• Measure an emergency fund in months of essential costs.\n• The right number of months depends on income stability and dependants.\n• Start with a small milestone and refill after using it.\n\nCommon misconception\nThinking a fund is only worth starting if it is large from day one.\n\nSelf-check — fictional scenario\nEssential costs are 6,000,000 VND per month. The first milestone is 2 months. There is already 3,000,000 VND and 1,500,000 VND is added each month. How long until the milestone?\n\nStep-by-step reasoning\n1. Milestone: 6,000,000 × 2 = 12,000,000 VND.\n2. Still needed: 12,000,000 − 3,000,000 = 9,000,000 VND.\n3. Time: 9,000,000 / 1,500,000 = 6 months.\n\nConclusion\nThe milestone is 12,000,000 VND and takes 6 more months at 1,500,000 VND per month.",
+        "arithmeticChecks": [
+          {
+            "expression": "2500000+2000000+500000+500000",
+            "expected": 5500000
+          },
+          {
+            "expression": "5500000*3",
+            "expected": 16500000
+          },
+          {
+            "expression": "5500000/1100000",
+            "expected": 5
+          },
+          {
+            "expression": "6000000*2",
+            "expected": 12000000
+          },
+          {
+            "expression": "(12000000-3000000)/1500000",
+            "expected": 6
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Essential costs are 4,000,000 VND per month and the milestone is 3 months. What is the fund target?",
+          "choices": [
+            {
+              "text": "4,000,000 VND",
+              "explanation": "This is only 1 month."
+            },
+            {
+              "text": "12,000,000 VND",
+              "explanation": "Correct: 4,000,000 × 3 = 12,000,000 VND."
+            },
+            {
+              "text": "7,000,000 VND",
+              "explanation": "This adds 3 million instead of multiplying by 3 months."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Which feature matters most for where an emergency fund is kept?",
+          "choices": [
+            {
+              "text": "The highest promised return",
+              "explanation": "Promises of high returns often come with risk or limited access."
+            },
+            {
+              "text": "Hard to withdraw so you will not spend it",
+              "explanation": "If you cannot withdraw in an urgent situation, the fund does not work."
+            },
+            {
+              "text": "Available when needed, fees understood and separate from daily spending",
+              "explanation": "Correct: it must be ready when needed and not mixed with spending."
+            }
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "You just used 1,000,000 VND from the fund to repair the motorbike you ride to work. What next?",
+          "choices": [
+            {
+              "text": "Record the real expense, then plan to refill gradually",
+              "explanation": "Correct: this is exactly the kind of moment the fund exists for."
+            },
+            {
+              "text": "Hide the withdrawal so the fund looks untouched",
+              "explanation": "Hiding the numbers makes the plan wrong."
+            },
+            {
+              "text": "Treat the fund as failed and give up",
+              "explanation": "Using the fund for an urgent need is its purpose."
+            }
+          ],
+          "correctIndex": 0
+        }
+      ],
+      "optionalAction": {
+        "text": "In Picket, add up your essential pockets to find one month of essential costs, then set a first milestone for your emergency pocket.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Measure an emergency fund in months of essential costs.",
+          "The right number of months depends on income stability and dependants.",
+          "Start with a small milestone and refill after using it."
+        ],
+        "misconception": "Thinking a fund is only worth starting if it is large from day one.",
+        "practicePrompt": "Essential costs are 6,000,000 VND per month. The first milestone is 2 months. There is already 3,000,000 VND and 1,500,000 VND is added each month. How long until the milestone?",
+        "solutionSteps": [
+          "Milestone: 6,000,000 × 2 = 12,000,000 VND.",
+          "Still needed: 12,000,000 − 3,000,000 = 9,000,000 VND.",
+          "Time: 9,000,000 / 1,500,000 = 6 months."
+        ],
+        "answer": "The milestone is 12,000,000 VND and takes 6 more months at 1,500,000 VND per month."
+      },
+      "stageId": "stage-02-stability",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -964,10 +1771,10 @@
       "sources": [
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_bill_calendar_tool_2018-11_ADA.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -984,9 +1791,10 @@
         ],
         "answer": "There is 50,000 VND unallocated in this example. A 1,200,000 VND balance does not mean that the full amount is free to spend."
       },
+      "stageId": "stage-02-stability",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -1095,10 +1903,10 @@
         "https://files.consumerfinance.gov/f/documents/cfbp_your-money-your-goals_adjust_cash_flow_tool_2018-11_ADA.pdf",
         "https://www.oecd.org/content/dam/oecd/en/publications/reports/2022/01/financial-competence-framework-for-adults-in-the-european-union_614b8b97/510f133c-en.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -1115,9 +1923,185 @@
         ],
         "answer": "The base case has a 50,000 VND shortfall if the item is bought. The 150,000 VND result belongs only to the timely-income scenario and is not guaranteed."
       },
+      "stageId": "stage-02-stability",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.18",
+      "chapterId": "chapter-09",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Personal income tax on wages: deductions and progressive brackets",
+      "competencyId": "tax.pit-on-wages-2026",
+      "objective": "Work out taxable income from wages and apply the progressive brackets in a simple example.",
+      "body": "Personal income tax on wages is not charged on the whole gross salary. First, take assessable income and subtract mandatory insurance. Then subtract the family deductions. What remains is taxable income.\n\nUnder Resolution 110/2025/UBTVQH15 adopted on 17 October 2025, from the 2026 tax period the personal deduction is 15,500,000 VND per month. Each registered dependant adds a deduction of 6,200,000 VND per month. The Personal Income Tax Law 2025 takes effect on 1 July 2026. It uses a 5-bracket monthly schedule. Up to 10 million VND is taxed at 5%; over 10 up to 30 million at 10%; over 30 up to 60 million at 20%; over 60 up to 100 million at 30%; over 100 million at 35%. Progressive by portion means each part of income is taxed only at the rate of the bracket it falls in.\n\nA fictional example: Hải earns 30,000,000 VND, which is also the contribution salary, and has 1 dependant. Insurance is 30,000,000 × 10.5% = 3,150,000 VND. Deductions are 15,500,000 + 6,200,000 = 21,700,000 VND. Taxable income is 5,150,000 VND, inside the 5% bracket. Tax is 257,500 VND. Take-home pay is 26,592,500 VND.\n\nThis lesson only explains the basic method. Bonuses, income from several sources and the annual finalisation have their own rules. Ask your payroll team or the tax authority when you need an exact figure.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Insurance: 30,000,000 × 10.5% = 3,150,000 VND. Deductions: 15,500,000 + 6,200,000 = 21,700,000 VND. Taxable: 30,000,000 − 3,150,000 − 21,700,000 = 5,150,000 VND. Tax: 5,150,000 × 5% = 257,500 VND. Take-home: 30,000,000 − 3,150,000 − 257,500 = 26,592,500 VND.\n\nRemember\n• Taxable income = assessable income − mandatory insurance − family deductions.\n• From the 2026 tax period: 15,500,000 VND for yourself and 6,200,000 VND per dependant each month.\n• Progressive by portion: each part is taxed only at its own bracket rate.\n\nCommon misconception\nBelieving that moving into a higher bracket taxes all income at the higher rate.\n\nSelf-check — fictional scenario\nA salary of 40,000,000 VND, also the contribution salary, with no dependants. Work out insurance, taxable income, tax and take-home pay.\n\nStep-by-step reasoning\n1. Insurance: 40,000,000 × 10.5% = 4,200,000 VND.\n2. Taxable: 40,000,000 − 4,200,000 − 15,500,000 = 20,300,000 VND.\n3. Bracket 1: 10,000,000 × 5% = 500,000 VND; bracket 2: 10,300,000 × 10% = 1,030,000 VND; total 1,530,000 VND.\n4. Take-home: 40,000,000 − 4,200,000 − 1,530,000 = 34,270,000 VND.\n\nConclusion\nTax is 1,530,000 VND and take-home pay is 34,270,000 VND under the lesson assumptions.",
+        "arithmeticChecks": [
+          {
+            "expression": "30000000*105/1000",
+            "expected": 3150000
+          },
+          {
+            "expression": "15500000+6200000",
+            "expected": 21700000
+          },
+          {
+            "expression": "30000000-3150000-21700000",
+            "expected": 5150000
+          },
+          {
+            "expression": "5150000*5/100",
+            "expected": 257500
+          },
+          {
+            "expression": "30000000-3150000-257500",
+            "expected": 26592500
+          },
+          {
+            "expression": "10000000*5/100+15000000*10/100",
+            "expected": 2000000
+          },
+          {
+            "expression": "40000000*105/1000",
+            "expected": 4200000
+          },
+          {
+            "expression": "40000000-4200000-15500000",
+            "expected": 20300000
+          },
+          {
+            "expression": "10000000*5/100",
+            "expected": 500000
+          },
+          {
+            "expression": "(20300000-10000000)*10/100",
+            "expected": 1030000
+          },
+          {
+            "expression": "500000+1030000",
+            "expected": 1530000
+          },
+          {
+            "expression": "40000000-4200000-1530000",
+            "expected": 34270000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Taxable income is 25,000,000 VND per month under the 5-bracket schedule. What is the tax?",
+          "choices": [
+            {
+              "text": "2,500,000 VND",
+              "explanation": "This applies 10% to everything, which ignores progressive portions."
+            },
+            {
+              "text": "2,000,000 VND",
+              "explanation": "Correct: 10,000,000 × 5% + 15,000,000 × 10% = 500,000 + 1,500,000."
+            },
+            {
+              "text": "1,250,000 VND",
+              "explanation": "This applies 5% to everything."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "From the 2026 tax period, what is the monthly personal deduction?",
+          "choices": [
+            {
+              "text": "11,000,000 VND",
+              "explanation": "This was the amount before the 2026 tax period."
+            },
+            {
+              "text": "6,200,000 VND",
+              "explanation": "This is the amount per dependant."
+            },
+            {
+              "text": "15,500,000 VND",
+              "explanation": "Correct: under Resolution 110/2025/UBTVQH15."
+            }
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Taxable income has moved into the 10% bracket. What is true?",
+          "choices": [
+            {
+              "text": "Only the part above 10,000,000 VND is taxed at 10%; the first 10,000,000 VND at 5%",
+              "explanation": "Correct: this is what progressive by portion means."
+            },
+            {
+              "text": "All income is taxed at 10%",
+              "explanation": "A higher bracket rate applies only to the part inside that bracket."
+            },
+            {
+              "text": "No tax is due",
+              "explanation": "Positive taxable income means tax is due."
+            }
+          ],
+          "correctIndex": 0
+        }
+      ],
+      "optionalAction": {
+        "text": "If you have a payslip, compare its deduction and tax lines with the method in this lesson. Send specific questions to your payroll team. You do not need to enter the payslip into Picket.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://hcc.nghean.gov.vn/tin-tong-hop/nghi-quyet-110-2025-ubtvqh15-dieu-chinh-muc-giam-tru-gia-canh-cua-thue-thu-nhap-ca-nhan-2448.html",
+        "https://pbgdpl.cantho.gov.vn/tu-ngay-0172026-nhieu-diem-moi-cua-luat-thue-thu-nhap-ca-nhan-can-luu-y",
+        "https://hanoi.baohiemxahoi.gov.vn/UserControls/Publishing/News/BinhLuan/pFormPrint.aspx?UrlListProcess=/content/tintuc/Lists/News&ItemID=35560&IsTA=False"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "Personal deduction 15,500,000 VND/month and 6,200,000 VND/month per dependant; Resolution 110/2025/UBTVQH15 adopted 2025-10-17, applies from tax period 2026",
+          "sourceId": "pit-deduction-2026",
+          "asOf": "2026-01-01"
+        },
+        {
+          "claim": "Monthly 5-bracket schedule: to 10m 5%; 10-30m 10%; 30-60m 20%; 60-100m 30%; over 100m 35%; PIT Law 2025 effective 2026-07-01",
+          "sourceId": "pit-law-2025",
+          "asOf": "2026-07-01"
+        },
+        {
+          "claim": "Employee mandatory insurance share 10.5%",
+          "sourceId": "bhxh-rates",
+          "asOf": "2025-09-08"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Taxable income = assessable income − mandatory insurance − family deductions.",
+          "From the 2026 tax period: 15,500,000 VND for yourself and 6,200,000 VND per dependant each month.",
+          "Progressive by portion: each part is taxed only at its own bracket rate."
+        ],
+        "misconception": "Believing that moving into a higher bracket taxes all income at the higher rate.",
+        "practicePrompt": "A salary of 40,000,000 VND, also the contribution salary, with no dependants. Work out insurance, taxable income, tax and take-home pay.",
+        "solutionSteps": [
+          "Insurance: 40,000,000 × 10.5% = 4,200,000 VND.",
+          "Taxable: 40,000,000 − 4,200,000 − 15,500,000 = 20,300,000 VND.",
+          "Bracket 1: 10,000,000 × 5% = 500,000 VND; bracket 2: 10,300,000 × 10% = 1,030,000 VND; total 1,530,000 VND.",
+          "Take-home: 40,000,000 − 4,200,000 − 1,530,000 = 34,270,000 VND."
+        ],
+        "answer": "Tax is 1,530,000 VND and take-home pay is 34,270,000 VND under the lesson assumptions."
+      },
+      "stageId": "stage-02-stability",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -1234,10 +2218,10 @@
         "https://www.consumerfinance.gov/ask-cfpb/what-is-a-truth-in-lending-disclosure-for-an-auto-loan-en-787/",
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_auto_loans_tool_2018-11_ADA.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -1254,9 +2238,10 @@
         ],
         "answer": "A has a 30,000 VND lower total under the stated fees. This is arithmetic for fictional contracts, not a recommendation of a loan."
       },
+      "stageId": "stage-03-protection",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -1358,10 +2343,10 @@
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_income_benefits_tool_2018-11_ADA.pdf",
         "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_auto_loans_tool_2018-11_ADA.pdf"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -1378,9 +2363,299 @@
         ],
         "answer": "The projected ending value is 320,000 VND, but the earlier shortfall is still 80,000 VND. Picket does not negotiate or extend obligations for you."
       },
+      "stageId": "stage-03-protection",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.19",
+      "chapterId": "chapter-10",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Convert interest rates to compare, and spot predatory lending",
+      "competencyId": "borrowing.rate-conversion",
+      "objective": "Convert daily or monthly borrowing costs into the same yearly unit and recognise signs of predatory lending.",
+      "body": "Loan offers may state costs per day, per month or per year. A daily number looks very small. To compare, convert to the same unit, usually percent per year. A simple conversion multiplies a monthly rate by 12, or uses 12 months of 30 days. This calculation ignores compounding, so the true cost may be even higher.\n\nA fictional example: an app advertises \"only 3,000 VND per day for each 1,000,000 VND\". Mai borrows 2,000,000 VND, so the cost is 6,000 VND per day. After 30 days, Mai pays 180,000 VND in charges. Compared with 2,000,000 VND, that is 9% per month. The simple yearly conversion is 9 × 12 = 108%.\n\nVietnam's Civil Code 2015, Article 468, says agreed interest in civil loans may not exceed 20% per year, unless another law provides otherwise. A converted cost many times above this level is a signal to stop and look closely.\n\nOther warning signs: demands for a fee before the money is released, requests for access to your contacts, pressure to sign immediately, or no clear contract. Before borrowing, read the total amount repayable, the schedule and every fee.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "3,000 × 2 = 6,000 VND per day; 6,000 × 30 = 180,000 VND per month; 180,000 / 2,000,000 = 9% per month; 9 × 12 = 108% per year by simple conversion.\n\nRemember\n• Convert borrowing costs to the same yearly unit before comparing.\n• A small daily fee can equal a very high yearly cost.\n• Upfront fees, contact-list access or pressure are signs to stop.\n\nCommon misconception\nThinking 3,000 VND per day is cheap because the number is small.\n\nSelf-check — fictional scenario\nBorrow 5,000,000 VND and repay 5,400,000 VND after 2 months. Find the cost, the monthly rate and the simple yearly conversion.\n\nStep-by-step reasoning\n1. Cost: 5,400,000 − 5,000,000 = 400,000 VND.\n2. Per month: 400,000 / 2 = 200,000 VND, or 200,000 / 5,000,000 = 4%.\n3. Simple conversion: 4 × 12 = 48% per year.\n\nConclusion\nThe cost is 400,000 VND, equal to 4% per month or about 48% per year by simple conversion.",
+        "arithmeticChecks": [
+          {
+            "expression": "3000*2",
+            "expected": 6000
+          },
+          {
+            "expression": "6000*30",
+            "expected": 180000
+          },
+          {
+            "expression": "180000*100/2000000",
+            "expected": 9
+          },
+          {
+            "expression": "9*12",
+            "expected": 108
+          },
+          {
+            "expression": "5400000-5000000",
+            "expected": 400000
+          },
+          {
+            "expression": "400000/2",
+            "expected": 200000
+          },
+          {
+            "expression": "200000*100/5000000",
+            "expected": 4
+          },
+          {
+            "expression": "4*12",
+            "expected": 48
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Interest is 2% per month. What is the simple yearly conversion?",
+          "choices": [
+            {
+              "text": "2%",
+              "explanation": "This is still the monthly rate."
+            },
+            {
+              "text": "24%",
+              "explanation": "Correct: 2 × 12 = 24%."
+            },
+            {
+              "text": "12%",
+              "explanation": "This multiplies by 6, not 12."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "A loan offer asks you to transfer an \"application fee\" before the money is released. What is the safe response?",
+          "choices": [
+            {
+              "text": "Pay the fee to speed things up",
+              "explanation": "Paying an unverified party in advance can mean losing that money."
+            },
+            {
+              "text": "Send a photo of your ID card for faster approval",
+              "explanation": "Sending documents to an unverified party increases the risk of misuse."
+            },
+            {
+              "text": "Stop, do not pay in advance, and check the lender through an official channel",
+              "explanation": "Correct: verify first and do not transfer money under pressure."
+            }
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Loan A: borrow 1,000,000 VND, repay 1,050,000 VND after 1 month. Loan B: borrow 1,000,000 VND, repay 1,100,000 VND after 2 months. Which comparison is right?",
+          "choices": [
+            {
+              "text": "Both cost 5% per month, but B has more total interest",
+              "explanation": "Correct: A costs 50,000 VND over 1 month, B costs 100,000 VND over 2 months; both 5% per month."
+            },
+            {
+              "text": "A is cheaper per month",
+              "explanation": "Per month the two are the same."
+            },
+            {
+              "text": "B is cheaper per month",
+              "explanation": "Per month the two are the same; B just lasts longer."
+            }
+          ],
+          "correctIndex": 0
+        }
+      ],
+      "optionalAction": {
+        "text": "If you already have a loan, add its repayment schedule under Bills in Picket and note the total repayable. You do not need to apply for or compare real loan products.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://baochinhphu.vn/huong-dan-ap-dung-phap-luat-ve-lai-suat-trong-giao-dich-dan-su-102248799.htm",
+        "https://www.consumerfinance.gov/ask-cfpb/what-is-a-truth-in-lending-disclosure-for-an-auto-loan-en-787/",
+        "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "Civil Code 2015 Article 468: agreed civil-loan interest may not exceed 20%/year unless another law provides otherwise",
+          "sourceId": "civil-interest-cap",
+          "asOf": "2018-12-04"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Convert borrowing costs to the same yearly unit before comparing.",
+          "A small daily fee can equal a very high yearly cost.",
+          "Upfront fees, contact-list access or pressure are signs to stop."
+        ],
+        "misconception": "Thinking 3,000 VND per day is cheap because the number is small.",
+        "practicePrompt": "Borrow 5,000,000 VND and repay 5,400,000 VND after 2 months. Find the cost, the monthly rate and the simple yearly conversion.",
+        "solutionSteps": [
+          "Cost: 5,400,000 − 5,000,000 = 400,000 VND.",
+          "Per month: 400,000 / 2 = 200,000 VND, or 200,000 / 5,000,000 = 4%.",
+          "Simple conversion: 4 × 12 = 48% per year."
+        ],
+        "answer": "The cost is 400,000 VND, equal to 4% per month or about 48% per year by simple conversion."
+      },
+      "stageId": "stage-03-protection",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.20",
+      "chapterId": "chapter-10",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Several debts: keep minimums on time, focus the extra",
+      "competencyId": "borrowing.multiple-debts",
+      "objective": "List your debts, pay every minimum on time and choose one way to direct the extra.",
+      "body": "With several debts, make a list: balance, interest rate, minimum payment and due date. The first step is to pay every minimum in full and on time. Late payments usually bring penalty fees, overdue interest and harm to your credit history.\n\nMoney left after the minimums can go to one target debt. There are two common methods. Highest-rate first directs the extra to the debt with the highest interest rate, which usually means paying less interest. Smallest-balance first directs it to the smallest debt, which clears one debt sooner and keeps motivation up. Either works, as long as you can stick with it.\n\nA fictional example: Khoa has card A with a balance of 4,000,000 VND, 2.5% interest per month and a minimum of 200,000 VND. Loan B has a balance of 6,000,000 VND, 1% interest per month and a minimum of 500,000 VND. Loan C has a balance of 1,000,000 VND, 1.5% interest per month and a minimum of 100,000 VND. Total minimums are 800,000 VND. Khoa has 1,300,000 VND per month, so 500,000 VND is extra. Using highest-rate first, Khoa pays card A 700,000 VND. First-month interest on card A is about 100,000 VND.\n\nPaying only the minimum on a credit card means the remaining balance may still be charged interest. Taking a new loan to pay an old one requires reading the total cost carefully first.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Minimums: 200,000 + 500,000 + 100,000 = 800,000 VND. Extra: 1,300,000 − 800,000 = 500,000 VND. Card A payment: 200,000 + 500,000 = 700,000 VND. First-month interest on card A: 4,000,000 × 2.5% = 100,000 VND.\n\nRemember\n• List each debt with balance, rate, minimum and due date.\n• Pay every minimum first, then direct the extra.\n• Highest-rate first usually saves interest; smallest-balance first helps motivation.\n\nCommon misconception\nPutting all money into one debt and letting the others fall behind.\n\nSelf-check — fictional scenario\nDebt X has a 3,000,000 VND balance, 2% per month and a 300,000 VND minimum. Debt Y has an 800,000 VND balance, 1% per month and a 100,000 VND minimum. You have 700,000 VND. Using smallest-balance first, how much goes to Y and what remains on Y? Ignore new interest for simplicity.\n\nStep-by-step reasoning\n1. Minimums: 300,000 + 100,000 = 400,000 VND.\n2. Extra: 700,000 − 400,000 = 300,000 VND.\n3. Pay Y: 100,000 + 300,000 = 400,000 VND; Y has 800,000 − 400,000 = 400,000 VND left.\n\nConclusion\nPay X 300,000 VND and Y 400,000 VND; Y has 400,000 VND left before new interest.",
+        "arithmeticChecks": [
+          {
+            "expression": "200000+500000+100000",
+            "expected": 800000
+          },
+          {
+            "expression": "1300000-800000",
+            "expected": 500000
+          },
+          {
+            "expression": "200000+500000",
+            "expected": 700000
+          },
+          {
+            "expression": "4000000*25/1000",
+            "expected": 100000
+          },
+          {
+            "expression": "300000+100000",
+            "expected": 400000
+          },
+          {
+            "expression": "700000-400000",
+            "expected": 300000
+          },
+          {
+            "expression": "100000+300000",
+            "expected": 400000
+          },
+          {
+            "expression": "800000-400000",
+            "expected": 400000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Minimums total 900,000 VND and you have 1,200,000 VND. How much extra can you direct?",
+          "choices": [
+            {
+              "text": "300,000 VND",
+              "explanation": "Correct: 1,200,000 − 900,000 = 300,000 VND."
+            },
+            {
+              "text": "1,200,000 VND",
+              "explanation": "This is all the money before minimums."
+            },
+            {
+              "text": "900,000 VND",
+              "explanation": "This is the minimum total, not the extra."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Where does highest-rate first send the extra money?",
+          "choices": [
+            {
+              "text": "The debt with the smallest balance",
+              "explanation": "That is smallest-balance first."
+            },
+            {
+              "text": "The debt with the highest interest rate, after all minimums are paid",
+              "explanation": "Correct: keep every debt current, then target the highest rate."
+            },
+            {
+              "text": "The debt with the most familiar name",
+              "explanation": "A familiar name has nothing to do with cost."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "What happens if you pay only the credit-card minimum each month?",
+          "choices": [
+            {
+              "text": "No more interest is charged",
+              "explanation": "Paying the minimum avoids lateness but does not remove interest on the rest."
+            },
+            {
+              "text": "The debt is erased after 12 months",
+              "explanation": "There is no such automatic write-off."
+            },
+            {
+              "text": "The remaining balance may keep being charged interest under the card terms",
+              "explanation": "Correct: read the card terms to see how interest is charged."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Add each debt payment under Bills in Picket with its due date and minimum. If you like, create an \"extra payment\" pocket for the surplus.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_auto_loans_tool_2018-11_ADA.pdf",
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "List each debt with balance, rate, minimum and due date.",
+          "Pay every minimum first, then direct the extra.",
+          "Highest-rate first usually saves interest; smallest-balance first helps motivation."
+        ],
+        "misconception": "Putting all money into one debt and letting the others fall behind.",
+        "practicePrompt": "Debt X has a 3,000,000 VND balance, 2% per month and a 300,000 VND minimum. Debt Y has an 800,000 VND balance, 1% per month and a 100,000 VND minimum. You have 700,000 VND. Using smallest-balance first, how much goes to Y and what remains on Y? Ignore new interest for simplicity.",
+        "solutionSteps": [
+          "Minimums: 300,000 + 100,000 = 400,000 VND.",
+          "Extra: 700,000 − 400,000 = 300,000 VND.",
+          "Pay Y: 100,000 + 300,000 = 400,000 VND; Y has 800,000 − 400,000 = 400,000 VND left."
+        ],
+        "answer": "Pay X 300,000 VND and Y 400,000 VND; Y has 400,000 VND left before new interest."
+      },
+      "stageId": "stage-03-protection",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -1473,10 +2748,10 @@
         "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304",
         "https://vcc.gov.vn/default.aspx?category_id=9343771e-96be-48b5-a35d-b8ea9bc1aa93&do=detail&id=04a6bd22-786c-4d56-983c-923cce86ec7c&page=news"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -1493,9 +2768,287 @@
         ],
         "answer": "The 350,000 VND is only the caller’s promise. Without a confirmed receipt of money, it is not actual income."
       },
+      "stageId": "stage-03-protection",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.21",
+      "chapterId": "chapter-11",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Recognise common scam scripts",
+      "competencyId": "safety.common-scam-scripts",
+      "objective": "Recognise common scam scripts and choose safe actions in line with official warnings.",
+      "body": "Scammers tend to reuse a few scripts. They pose as an authority or a bank and demand a transfer for \"verification\". They offer \"easy, well-paid work\" or \"tasks\", let you withdraw a little at first, then demand a large deposit. They ask to buy, rent or borrow your bank account. They send an unknown link or app, then ask for control of your phone.\n\nThe State Bank of Vietnam advised on 31 March 2025: do not give your password, OTP or card details to anyone, including bank staff. From 1 January 2025, banks do not send text messages or emails containing links. Install apps only from official stores and do not grant Accessibility permission to unknown apps. On 10 March 2026, the police warned against opening accounts to rent out, lend or sell; people who do so may face penalties or prosecution.\n\nA fictional \"task\" example: Vi deposits 200,000 VND and gets 260,000 VND back. Vi is then asked to deposit 2,000,000 VND to \"unlock commission\". If the account is blocked at this point, Vi has deposited 2,200,000 VND, received 260,000 VND and lost 1,940,000 VND. Depositing another 5,000,000 VND would make the loss 6,940,000 VND. The first withdrawal was only bait.\n\nWhen in doubt: stop, do not send more, contact your bank through an official channel, keep evidence and report to the police.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Deposited: 200,000 + 2,000,000 = 2,200,000 VND. Loss after money received: 2,200,000 − 260,000 = 1,940,000 VND. If more is deposited: 1,940,000 + 5,000,000 = 6,940,000 VND.\n\nRemember\n• Never give an OTP, password or card details to anyone, even someone claiming to be bank staff.\n• A first successful withdrawal does not prove a scheme is real.\n• Do not rent out, lend or sell your bank account.\n\nCommon misconception\nBelieving a caller who knows your name and account number must be genuine.\n\nSelf-check — fictional scenario\nHùng has 35,000,000 VND. A caller claiming to be an authority demands 30,000,000 VND be moved to a \"holding account\" for verification. If Hùng transfers it, how much remains and what guarantees its return?\n\nStep-by-step reasoning\n1. If transferred: 35,000,000 − 30,000,000 = 5,000,000 VND remains.\n2. A promise of return is not money received; the guaranteed amount is 0 VND.\n3. Safe action: stop, do not transfer, contact the authority yourself through an official channel and report it.\n\nConclusion\nHùng would keep only 5,000,000 VND with no guarantee of return; stop and verify directly.",
+        "arithmeticChecks": [
+          {
+            "expression": "200000+2000000",
+            "expected": 2200000
+          },
+          {
+            "expression": "2200000-260000",
+            "expected": 1940000
+          },
+          {
+            "expression": "1940000+5000000",
+            "expected": 6940000
+          },
+          {
+            "expression": "35000000-30000000",
+            "expected": 5000000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "A text message claiming to be your bank contains a link asking you to update details. What should you do?",
+          "choices": [
+            {
+              "text": "Tap the link because it shows the bank logo",
+              "explanation": "Logos are easy to fake, and banks have stopped sending links by text."
+            },
+            {
+              "text": "Do not tap; open the official app yourself or call the number printed on your card",
+              "explanation": "Correct: go through an official channel you already know."
+            },
+            {
+              "text": "Reply with your OTP",
+              "explanation": "Never send an OTP to anyone."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "A stranger offers 500,000 VND per month to \"borrow\" your bank account. What is true?",
+          "choices": [
+            {
+              "text": "The account may be used for fraud or money laundering, and you may face penalties or prosecution",
+              "explanation": "Correct: the police have clearly warned about this risk."
+            },
+            {
+              "text": "It is safe passive income",
+              "explanation": "The legal and financial risk falls on the account holder."
+            },
+            {
+              "text": "It is legal if only lent for one month",
+              "explanation": "A short period does not make it safe."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "An app installed from an unknown link asks for Accessibility permission. What should you do?",
+          "choices": [
+            {
+              "text": "Grant it so the app works",
+              "explanation": "This permission can let an app read and control your screen."
+            },
+            {
+              "text": "Grant it and turn it off later",
+              "explanation": "A few seconds can be enough to capture information."
+            },
+            {
+              "text": "Refuse, uninstall it and tell your bank if you entered any details",
+              "explanation": "Correct: this follows the State Bank of Vietnam's advice."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Review this week's transactions in Picket for any transfer you do not recognise. If you find one, contact your bank through its official hotline.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://sbv.gov.vn/en/w/sbv624798",
+        "https://xaydungchinhsach.chinhphu.vn/khuyen-cao-hoc-sinh-sinh-vien-khong-mo-tai-khoan-ngan-hang-de-cho-thue-cho-muon-ban-lai-119260310141959148.htm",
+        "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304",
+        "https://vcc.gov.vn/default.aspx?category_id=9343771e-96be-48b5-a35d-b8ea9bc1aa93&do=detail&id=04a6bd22-786c-4d56-983c-923cce86ec7c&page=news"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "SBV: never share OTP/passwords even with bank staff; banks stop sending links in SMS/email from 2025-01-01; do not grant Accessibility permission",
+          "sourceId": "sbv-security",
+          "asOf": "2025-03-31"
+        },
+        {
+          "claim": "Police warning: renting, lending or selling bank accounts may lead to administrative or criminal liability",
+          "sourceId": "account-rental",
+          "asOf": "2026-03-10"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Never give an OTP, password or card details to anyone, even someone claiming to be bank staff.",
+          "A first successful withdrawal does not prove a scheme is real.",
+          "Do not rent out, lend or sell your bank account."
+        ],
+        "misconception": "Believing a caller who knows your name and account number must be genuine.",
+        "practicePrompt": "Hùng has 35,000,000 VND. A caller claiming to be an authority demands 30,000,000 VND be moved to a \"holding account\" for verification. If Hùng transfers it, how much remains and what guarantees its return?",
+        "solutionSteps": [
+          "If transferred: 35,000,000 − 30,000,000 = 5,000,000 VND remains.",
+          "A promise of return is not money received; the guaranteed amount is 0 VND.",
+          "Safe action: stop, do not transfer, contact the authority yourself through an official channel and report it."
+        ],
+        "answer": "Hùng would keep only 5,000,000 VND with no guarantee of return; stop and verify directly."
+      },
+      "stageId": "stage-03-protection",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.23",
+      "chapterId": "chapter-12",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Insurance basics: read benefits, exclusions and premiums",
+      "competencyId": "protection.insurance-basics",
+      "objective": "Understand that insurance transfers part of a risk, read the key terms and work out the share you pay yourself.",
+      "body": "Insurance moves part of a financial risk to an insurer in exchange for a premium. It is most useful for risks you would struggle to carry alone, such as large medical bills. It is not a way to get rich, and it is different from a savings deposit.\n\nBefore signing, read: the benefits paid, the sum insured, the exclusions, waiting periods, the co-payment rate, the premium schedule and what happens if you stop paying early. If an adviser describes a policy as \"a high-interest savings deposit\", ask again: this is an insurance contract, so what is the surrender value if I stop early?\n\nA fictional example: a health policy has a 20% co-payment. Eligible treatment costs 10,000,000 VND. You pay 2,000,000 VND yourself and the insurer pays 8,000,000 VND if the cost is covered. If the annual premium is 6,000,000 VND, you need to set aside 500,000 VND per month. Paid for 15 years, total premiums are 90,000,000 VND.\n\nVietnam's Insurance Business Law 2022, Article 35, gives buyers of life or health contracts with a term over 1 year 21 days to reconsider after receiving the contract. Use this time to read carefully. Buy for a need, not under pressure.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "You pay: 10,000,000 × 20% = 2,000,000 VND; insurer pays: 10,000,000 − 2,000,000 = 8,000,000 VND. Premium: 6,000,000 / 12 = 500,000 VND per month; 6,000,000 × 15 = 90,000,000 VND in total.\n\nRemember\n• Insurance transfers part of a risk; it is not a wealth-building tool.\n• Read benefits, exclusions, waiting periods, co-payment and surrender value.\n• Life and health contracts over 1 year have a 21-day reconsideration period.\n\nCommon misconception\nTreating an investment-linked insurance policy as identical to a savings account.\n\nSelf-check — fictional scenario\nA premium of 4,800,000 VND per year is paid once a year. How much should be set aside each month? What are total premiums over 10 years?\n\nStep-by-step reasoning\n1. Per month: 4,800,000 / 12 = 400,000 VND.\n2. Total over 10 years: 4,800,000 × 10 = 48,000,000 VND.\n3. Compare total premiums with the benefits you actually need before deciding it fits.\n\nConclusion\nSet aside 400,000 VND per month; total premiums over 10 years are 48,000,000 VND.",
+        "arithmeticChecks": [
+          {
+            "expression": "10000000*20/100",
+            "expected": 2000000
+          },
+          {
+            "expression": "10000000-2000000",
+            "expected": 8000000
+          },
+          {
+            "expression": "6000000/12",
+            "expected": 500000
+          },
+          {
+            "expression": "6000000*15",
+            "expected": 90000000
+          },
+          {
+            "expression": "4800000/12",
+            "expected": 400000
+          },
+          {
+            "expression": "4800000*10",
+            "expected": 48000000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "A policy has a 30% co-payment and the eligible cost is 5,000,000 VND. How much do you pay yourself?",
+          "choices": [
+            {
+              "text": "1,500,000 VND",
+              "explanation": "Correct: 5,000,000 × 30% = 1,500,000 VND."
+            },
+            {
+              "text": "3,500,000 VND",
+              "explanation": "This is the insurer's share."
+            },
+            {
+              "text": "5,000,000 VND",
+              "explanation": "This is the whole cost."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Which contracts get the 21-day reconsideration period under the Insurance Business Law 2022?",
+          "choices": [
+            {
+              "text": "Every contract, including 1-year vehicle cover",
+              "explanation": "The rule does not apply to every type of contract."
+            },
+            {
+              "text": "Life or health contracts with a term over 1 year",
+              "explanation": "Correct: under Article 35 of the Insurance Business Law 2022."
+            },
+            {
+              "text": "Only contracts bought online",
+              "explanation": "The sales channel does not decide this right."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "An adviser says the policy is \"a high-interest savings deposit\". What should you do?",
+          "choices": [
+            {
+              "text": "Sign now because the interest is high",
+              "explanation": "Signing before you understand the product is risky."
+            },
+            {
+              "text": "Send an ID photo first to hold a place",
+              "explanation": "You do not need to send documents to \"hold a place\"."
+            },
+            {
+              "text": "Read carefully: it is insurance; ask about benefits, premiums and the surrender value if you stop early",
+              "explanation": "Correct: tell insurance and deposits apart before deciding."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "If you have an insurance policy, add its premium date under Bills in Picket and create a pocket for the annual premium divided by 12.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://thoibaotaichinhvietnam.vn/nen-su-dung-dac-quyen-21-ngay-khi-mua-bao-hiem-nhan-tho-123293.html",
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "Insurance Business Law 08/2022/QH15 Article 35: 21-day free-look for life/health contracts with a term over 1 year",
+          "sourceId": "insurance-free-look",
+          "asOf": "2023-03-13"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Insurance transfers part of a risk; it is not a wealth-building tool.",
+          "Read benefits, exclusions, waiting periods, co-payment and surrender value.",
+          "Life and health contracts over 1 year have a 21-day reconsideration period."
+        ],
+        "misconception": "Treating an investment-linked insurance policy as identical to a savings account.",
+        "practicePrompt": "A premium of 4,800,000 VND per year is paid once a year. How much should be set aside each month? What are total premiums over 10 years?",
+        "solutionSteps": [
+          "Per month: 4,800,000 / 12 = 400,000 VND.",
+          "Total over 10 years: 4,800,000 × 10 = 48,000,000 VND.",
+          "Compare total premiums with the benefits you actually need before deciding it fits."
+        ],
+        "answer": "Set aside 400,000 VND per month; total premiums over 10 years are 48,000,000 VND."
+      },
+      "stageId": "stage-03-protection",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     },
@@ -1603,10 +3156,10 @@
       "sources": [
         "https://consumer.ftc.gov/articles/getting-and-out-free-trials-auto-renewals-and-negative-option-subscriptions"
       ],
-      "reviewedAt": "2026-10-23",
-      "reviewType": "author-source-and-arithmetic-check",
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
       "independentReviewedAt": null,
-      "status": "authored-not-independent-review",
+      "status": "self-reviewed-pending-owner-approval",
       "studySupport": {
         "synthetic": true,
         "keyTakeaways": [
@@ -1623,21 +3176,1126 @@
         ],
         "answer": "The assumed total is 148,000 VND per month and 1,776,000 VND for 12 months. A Picket reminder does not prove that charging has stopped."
       },
+      "stageId": "stage-03-protection",
       "translationLocale": "en-US",
       "translationVersion": 1,
-      "translationStatus": "authored-not-independent-review",
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.25",
+      "chapterId": "chapter-12",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Consumer rights and evidence-based complaints",
+      "competencyId": "consumer.rights-and-complaints",
+      "objective": "Know basic consumer rights and the steps of a complaint backed by evidence.",
+      "body": "Vietnam's Consumer Protection Law 2023 took effect on 1 July 2024. Sellers must not give false or misleading information about goods or transaction terms. Sellers must not harass you with repeated unwanted offers, or force you to buy. When goods do not match what was registered, advertised or promised, consumers may request an exchange or refund under the rules.\n\nAn effective complaint needs evidence. Keep the receipt, photos of the product, screenshots of the listing and your messages with the seller. Contact the seller first, describe the problem and state what you want. If it is not resolved, you can escalate to the e-commerce platform, a consumer protection organisation or the regulator. For card or e-wallet payments, ask the payment provider through its official channel.\n\nA fictional example: Thảo buys headphones for 650,000 VND plus 30,000 VND delivery, 680,000 VND in total. The wrong model arrives. If the seller refunds only the item price, Thảo receives 650,000 VND and still loses the 30,000 VND delivery fee. Thảo records the refund only when the money actually arrives.\n\nBe careful with strangers who message you offering \"refund help\" and then ask for a fee or OTP. Official complaint channels do not need your OTP.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Paid: 650,000 + 30,000 = 680,000 VND. If only the item price is refunded, the unrefunded part is 680,000 − 650,000 = 30,000 VND.\n\nRemember\n• Goods that do not match the promise may be exchanged or refunded under the rules.\n• Keep receipts, photos and messages before complaining.\n• Contact the seller first, then the platform, a consumer organisation or the regulator.\n\nCommon misconception\nBelieving you must pay a \"helper\" a fee to get a refund.\n\nSelf-check — fictional scenario\nYou buy two items for 240,000 VND and 360,000 VND with 20,000 VND delivery. You return the 360,000 VND item and receive exactly 360,000 VND back. What is your final real spending?\n\nStep-by-step reasoning\n1. Paid: 240,000 + 360,000 + 20,000 = 620,000 VND.\n2. Refund received: 360,000 VND.\n3. Real spending: 620,000 − 360,000 = 260,000 VND.\n\nConclusion\nReal spending is 260,000 VND, covering the item you kept and delivery.",
+        "arithmeticChecks": [
+          {
+            "expression": "650000+30000",
+            "expected": 680000
+          },
+          {
+            "expression": "680000-650000",
+            "expected": 30000
+          },
+          {
+            "expression": "240000+360000+20000",
+            "expected": 620000
+          },
+          {
+            "expression": "620000-360000",
+            "expected": 260000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "The goods differ from the advertised description. What is a sensible first step?",
+          "choices": [
+            {
+              "text": "Keep the receipt and photos and contact the seller with a specific request",
+              "explanation": "Correct: evidence and a clear request make resolution faster."
+            },
+            {
+              "text": "Post the seller's personal details online",
+              "explanation": "This could create legal trouble for you."
+            },
+            {
+              "text": "Pay a fee to a stranger promising refund help",
+              "explanation": "This is a common scam script."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "The seller agrees to refund 650,000 VND but the money has not arrived. What should you do in Picket?",
+          "choices": [
+            {
+              "text": "Record the income now",
+              "explanation": "A promise is not money received."
+            },
+            {
+              "text": "Wait for the money before recording the refund; you may add a note that it is pending",
+              "explanation": "Correct: record it only when the money actually arrives."
+            },
+            {
+              "text": "Delete the original purchase",
+              "explanation": "The purchase happened and should stay recorded."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "A seller keeps calling with offers after you have refused. According to the lesson, what is this?",
+          "choices": [
+            {
+              "text": "Normal behaviour that is always allowed",
+              "explanation": "The 2023 law bans unwanted harassment."
+            },
+            {
+              "text": "Only wrong if the calls are at night",
+              "explanation": "The law is not limited to call times."
+            },
+            {
+              "text": "A prohibited practice when it repeatedly disturbs consumers against their wishes",
+              "explanation": "Correct: this is one of the prohibited practices."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "When you buy something, attach a photo of the receipt to the transaction in Picket so you have evidence if you need to complain later.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://pbgdpl.cantho.gov.vn/bao-ve-tot-hon-quyen-loi-nguoi-tieu-dung",
+        "https://vcc.gov.vn/default.aspx?category_id=9343771e-96be-48b5-a35d-b8ea9bc1aa93&do=detail&id=04a6bd22-786c-4d56-983c-923cce86ec7c&page=news",
+        "https://consumer.ftc.gov/articles/getting-and-out-free-trials-auto-renewals-and-negative-option-subscriptions"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "Consumer Protection Law 2023 effective 2024-07-01; bans misleading information, harassment and coercion",
+          "sourceId": "consumer-law-2023",
+          "asOf": "2024-07-01"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Goods that do not match the promise may be exchanged or refunded under the rules.",
+          "Keep receipts, photos and messages before complaining.",
+          "Contact the seller first, then the platform, a consumer organisation or the regulator."
+        ],
+        "misconception": "Believing you must pay a \"helper\" a fee to get a refund.",
+        "practicePrompt": "You buy two items for 240,000 VND and 360,000 VND with 20,000 VND delivery. You return the 360,000 VND item and receive exactly 360,000 VND back. What is your final real spending?",
+        "solutionSteps": [
+          "Paid: 240,000 + 360,000 + 20,000 = 620,000 VND.",
+          "Refund received: 360,000 VND.",
+          "Real spending: 620,000 − 360,000 = 260,000 VND."
+        ],
+        "answer": "Real spending is 260,000 VND, covering the item you kept and delivery."
+      },
+      "stageId": "stage-03-protection",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.26",
+      "chapterId": "chapter-13",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Compound interest: interest that earns interest",
+      "competencyId": "saving.compound-interest",
+      "objective": "Tell simple and compound interest apart and calculate a balance over several compounding periods.",
+      "body": "Simple interest is calculated only on the original principal. Compound interest is calculated on the principal plus interest already added. Over time the gap between the two grows. That is why starting early and staying consistent often matters more than one large contribution.\n\nA fictional example: Phúc has 10,000,000 VND at an assumed rate of 6% per year, compounded once a year. In year one, interest is 600,000 VND and the balance becomes 10,600,000 VND. In year two, interest is calculated on 10,600,000 VND, so it is 636,000 VND and the balance becomes 11,236,000 VND. With simple interest, after 2 years Phúc would have 11,200,000 VND. The 36,000 VND difference is interest earned on interest. Over many years the difference becomes much larger.\n\nCompounding also works in reverse with debt. An unpaid balance with interest added on top grows faster over time.\n\nThe rate in this lesson is an assumption for practising the calculation, not a promise of returns. Real rates depend on the product, term and timing, and can change.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Year 1: 10,000,000 × 6% = 600,000 VND. Year 2: 10,600,000 × 6% = 636,000 VND; 10,600,000 + 636,000 = 11,236,000 VND. Simple: 10,000,000 + 2 × 600,000 = 11,200,000 VND. Difference: 36,000 VND.\n\nRemember\n• Compound interest earns interest on interest already added.\n• Time and consistency make compounding more visible.\n• With debt, compounding makes the amount owed grow faster.\n\nCommon misconception\nThinking compound interest differs so little from simple interest that it does not matter.\n\nSelf-check — fictional scenario\n20,000,000 VND at an assumed 5% per year, compounded yearly. Find the balance after 3 years.\n\nStep-by-step reasoning\n1. Year 1: 20,000,000 × 105% = 21,000,000 VND.\n2. Year 2: 21,000,000 × 105% = 22,050,000 VND.\n3. Year 3: 22,050,000 × 105% = 23,152,500 VND.\n\nConclusion\nAfter 3 years the balance is 23,152,500 VND under the lesson assumptions.",
+        "arithmeticChecks": [
+          {
+            "expression": "10000000*6/100",
+            "expected": 600000
+          },
+          {
+            "expression": "10600000*6/100",
+            "expected": 636000
+          },
+          {
+            "expression": "10600000+636000",
+            "expected": 11236000
+          },
+          {
+            "expression": "10000000+2*600000",
+            "expected": 11200000
+          },
+          {
+            "expression": "11236000-11200000",
+            "expected": 36000
+          },
+          {
+            "expression": "20000000*105/100",
+            "expected": 21000000
+          },
+          {
+            "expression": "21000000*105/100",
+            "expected": 22050000
+          },
+          {
+            "expression": "22050000*105/100",
+            "expected": 23152500
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "5,000,000 VND at an assumed 10% per year, compounded yearly. How much after 2 years?",
+          "choices": [
+            {
+              "text": "6,000,000 VND",
+              "explanation": "This is simple interest: 5,000,000 + 2 × 500,000."
+            },
+            {
+              "text": "6,050,000 VND",
+              "explanation": "Correct: 5,500,000 × 110% = 6,050,000 VND."
+            },
+            {
+              "text": "5,500,000 VND",
+              "explanation": "This is only after 1 year."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "How does compound interest differ from simple interest?",
+          "choices": [
+            {
+              "text": "Interest is also earned on interest already added to the principal",
+              "explanation": "Correct: that is the definition of compounding."
+            },
+            {
+              "text": "Interest is always double",
+              "explanation": "There is no doubling rule."
+            },
+            {
+              "text": "There is no risk",
+              "explanation": "How interest is calculated does not remove product risk."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "An unpaid card balance has interest added to it. How does compounding affect it?",
+          "choices": [
+            {
+              "text": "It does not affect the debt",
+              "explanation": "Added interest changes the balance."
+            },
+            {
+              "text": "It makes the debt shrink",
+              "explanation": "Without payments the debt does not shrink."
+            },
+            {
+              "text": "It makes the debt grow faster over time",
+              "explanation": "Correct: compounding works against you as a borrower."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Create a savings-goal pocket in Picket with a regular monthly amount; check it after each month to see what has built up.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_savings_plan_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Compound interest earns interest on interest already added.",
+          "Time and consistency make compounding more visible.",
+          "With debt, compounding makes the amount owed grow faster."
+        ],
+        "misconception": "Thinking compound interest differs so little from simple interest that it does not matter.",
+        "practicePrompt": "20,000,000 VND at an assumed 5% per year, compounded yearly. Find the balance after 3 years.",
+        "solutionSteps": [
+          "Year 1: 20,000,000 × 105% = 21,000,000 VND.",
+          "Year 2: 21,000,000 × 105% = 22,050,000 VND.",
+          "Year 3: 22,050,000 × 105% = 23,152,500 VND."
+        ],
+        "answer": "After 3 years the balance is 23,152,500 VND under the lesson assumptions."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.27",
+      "chapterId": "chapter-13",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Term deposits and early withdrawal",
+      "competencyId": "saving.term-deposits",
+      "objective": "Calculate interest held to maturity, understand the cost of early withdrawal and match the term to when you may need the money.",
+      "body": "Term deposits usually pay a higher rate than demand deposits, in exchange for your commitment to leave the money until the term ends. If you withdraw early, interest is usually much lower than if you hold to maturity. The exact rate is set by each institution's terms, so read them before depositing.\n\nA fictional example: Trang deposits 50,000,000 VND for a 12-month term at an assumed 5% per year. Held to maturity, interest is 2,500,000 VND. If Trang needs the money after 6 months and the terms give an early-withdrawal rate of 0.5% per year, interest is only 50,000,000 × 0.5% × 6/12 = 125,000 VND. Trang gives up 2,375,000 VND compared with holding to maturity. The principal is still there, but the interest falls sharply.\n\nSo the term should match when you might need the money. An emergency fund that must be reachable quickly should not sit entirely in one long-term deposit. Some people split money into several deposits with different maturity dates so one part is always maturing soon.\n\nBefore depositing, read: the rate, the term, early-withdrawal conditions and what happens at maturity, such as automatic renewal. This lesson does not suggest any specific institution or product.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Held to maturity: 50,000,000 × 5% = 2,500,000 VND. Withdrawn after 6 months: 50,000,000 × 0.5% × 6/12 = 125,000 VND. Given up: 2,500,000 − 125,000 = 2,375,000 VND.\n\nRemember\n• Interest held to maturity = principal × annual rate × time in years.\n• Early withdrawal usually cuts interest sharply.\n• Match the term to when you may need the money.\n\nCommon misconception\nBelieving early withdrawal still earns the full rate for the time already deposited.\n\nSelf-check — fictional scenario\nA deposit of 24,000,000 VND for 12 months at an assumed 4.8% per year. Calculate interest held to maturity, and after 3 months with an early-withdrawal rate of 0.2% per year.\n\nStep-by-step reasoning\n1. Held to maturity: 24,000,000 × 4.8% = 1,152,000 VND.\n2. Withdrawn after 3 months: 24,000,000 × 0.2% × 3/12 = 12,000 VND.\n3. Comparison: early withdrawal earns only a tiny part of the maturity interest.\n\nConclusion\nHolding to maturity earns 1,152,000 VND; withdrawing after 3 months earns only 12,000 VND under the assumptions.",
+        "arithmeticChecks": [
+          {
+            "expression": "50000000*5/100",
+            "expected": 2500000
+          },
+          {
+            "expression": "50000000*5/1000*6/12",
+            "expected": 125000
+          },
+          {
+            "expression": "2500000-125000",
+            "expected": 2375000
+          },
+          {
+            "expression": "24000000*48/1000",
+            "expected": 1152000
+          },
+          {
+            "expression": "24000000*2/1000*3/12",
+            "expected": 12000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "You deposit 30,000,000 VND for 12 months at an assumed 6% per year and hold to maturity. How much interest?",
+          "choices": [
+            {
+              "text": "1,800,000 VND",
+              "explanation": "Correct: 30,000,000 × 6% = 1,800,000 VND."
+            },
+            {
+              "text": "180,000 VND",
+              "explanation": "This is 0.6%, one digit off."
+            },
+            {
+              "text": "6,000,000 VND",
+              "explanation": "This is 20%, not 6%."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Why not keep an entire emergency fund in one long-term deposit?",
+          "choices": [
+            {
+              "text": "Because deposits always lose principal",
+              "explanation": "Early withdrawal usually affects interest, not principal."
+            },
+            {
+              "text": "Early withdrawal may earn only a low rate under the terms",
+              "explanation": "Correct: an emergency fund must be reachable with little loss."
+            },
+            {
+              "text": "Because long terms are prohibited",
+              "explanation": "There is no such rule."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "What should you read before making a term deposit?",
+          "choices": [
+            {
+              "text": "The colour of the card",
+              "explanation": "This does not affect your money."
+            },
+            {
+              "text": "How many other people deposited",
+              "explanation": "Popularity does not replace the terms."
+            },
+            {
+              "text": "The rate, term, early-withdrawal conditions and what happens at maturity",
+              "explanation": "Correct: these terms decide what you receive."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "If you have a term deposit, add its maturity date under Bills in Picket as a reminder to decide before that day.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf",
+        "https://vnba.org.vn/vi/han-muc-chi-tra-tien-bao-hiem-tien-gui-tang-len-350-trieu-dong-tu-ngay-13-7-2026-22749.htm",
+        "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Interest held to maturity = principal × annual rate × time in years.",
+          "Early withdrawal usually cuts interest sharply.",
+          "Match the term to when you may need the money."
+        ],
+        "misconception": "Believing early withdrawal still earns the full rate for the time already deposited.",
+        "practicePrompt": "A deposit of 24,000,000 VND for 12 months at an assumed 4.8% per year. Calculate interest held to maturity, and after 3 months with an early-withdrawal rate of 0.2% per year.",
+        "solutionSteps": [
+          "Held to maturity: 24,000,000 × 4.8% = 1,152,000 VND.",
+          "Withdrawn after 3 months: 24,000,000 × 0.2% × 3/12 = 12,000 VND.",
+          "Comparison: early withdrawal earns only a tiny part of the maturity interest."
+        ],
+        "answer": "Holding to maturity earns 1,152,000 VND; withdrawing after 3 months earns only 12,000 VND under the assumptions."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.24",
+      "chapterId": "chapter-13",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Deposit insurance: the limit and what is not a deposit",
+      "competencyId": "saving.deposit-insurance",
+      "objective": "Understand the current deposit-insurance limit and tell deposits apart from other products sold at banks.",
+      "body": "Deposit Insurance of Vietnam pays depositors when a participating institution becomes subject to an insurance payout. The amount paid has a limit. Under Circular 05/2026/TT-NHNN, from 13 July 2026, the limit is 350,000,000 VND for all insured deposits of one person at one institution, including principal and interest. Before that, the limit was 125,000,000 VND under Decision 32/2021/QĐ-TTg. The new limit is 225,000,000 VND higher.\n\nThe part above the limit is not erased immediately; it is handled through the institution's asset-resolution process. So people with large balances at one place should know which part is within the limit.\n\nA fictional example: Châu has 400,000,000 VND principal and 20,000,000 VND interest at one institution, 420,000,000 VND in total. The part within the limit is 350,000,000 VND. The excess is 70,000,000 VND.\n\nNot every product sold at a bank counter is a deposit. Fund certificates, bonds and insurance contracts work differently. When offered a product with \"a higher rate than savings\", the first question is: is this a deposit? Read the documents before signing.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Total: 400,000,000 + 20,000,000 = 420,000,000 VND. Above the limit: 420,000,000 − 350,000,000 = 70,000,000 VND. Limit increase: 350,000,000 − 125,000,000 = 225,000,000 VND.\n\nRemember\n• From 13 July 2026 the limit is 350,000,000 VND per person per institution, principal and interest.\n• Amounts above the limit are handled through the institution's asset resolution.\n• Investment or insurance products sold at banks are not deposits.\n\nCommon misconception\nBelieving everything bought at a bank counter is covered by deposit insurance.\n\nSelf-check — fictional scenario\nYou hold 200,000,000 VND at institution A and 380,000,000 VND (including interest) at institution B. Is either above the 350,000,000 VND limit, and by how much?\n\nStep-by-step reasoning\n1. A: 200,000,000 VND is below 350,000,000 VND, so it is within the limit.\n2. B: 380,000,000 − 350,000,000 = 30,000,000 VND above the limit.\n3. Together 200,000,000 + 380,000,000 = 580,000,000 VND, but the limit applies to each institution separately.\n\nConclusion\nA is within the limit; B is 30,000,000 VND above it.",
+        "arithmeticChecks": [
+          {
+            "expression": "400000000+20000000",
+            "expected": 420000000
+          },
+          {
+            "expression": "420000000-350000000",
+            "expected": 70000000
+          },
+          {
+            "expression": "350000000-125000000",
+            "expected": 225000000
+          },
+          {
+            "expression": "380000000-350000000",
+            "expected": 30000000
+          },
+          {
+            "expression": "200000000+380000000",
+            "expected": 580000000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "From 13 July 2026, what is the maximum for one person at one institution?",
+          "choices": [
+            {
+              "text": "125,000,000 VND",
+              "explanation": "This was the old limit before 13 July 2026."
+            },
+            {
+              "text": "350,000,000 VND",
+              "explanation": "Correct: under Circular 05/2026/TT-NHNN."
+            },
+            {
+              "text": "No limit",
+              "explanation": "Deposit insurance has a limit."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "You have 300,000,000 VND principal and 10,000,000 VND interest at a participating institution. Is this within the limit?",
+          "choices": [
+            {
+              "text": "Yes, the 310,000,000 VND total is below 350,000,000 VND",
+              "explanation": "Correct: the limit counts both principal and interest."
+            },
+            {
+              "text": "No, because interest does not count",
+              "explanation": "The limit includes principal and interest."
+            },
+            {
+              "text": "Only 125,000,000 VND is insured",
+              "explanation": "This is the old limit."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "A product at a bank counter promises more than savings. What should the first question be?",
+          "choices": [
+            {
+              "text": "What gift comes with it?",
+              "explanation": "A gift does not change what the product is."
+            },
+            {
+              "text": "How many people have bought it?",
+              "explanation": "Popularity does not prove the product suits you."
+            },
+            {
+              "text": "Is this a deposit, or an investment or insurance product?",
+              "explanation": "Correct: the product type decides its protections and risks."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "In Picket, name each wallet after the institution that holds it so you can see the total at each place. You do not need to enter account numbers.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://vnba.org.vn/vi/han-muc-chi-tra-tien-bao-hiem-tien-gui-tang-len-350-trieu-dong-tu-ngay-13-7-2026-22749.htm",
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "Deposit-insurance payout limit 350,000,000 VND per person per participating institution (principal + interest) from 2026-07-13 under Circular 05/2026/TT-NHNN; previously 125,000,000 VND",
+          "sourceId": "deposit-insurance-2026",
+          "asOf": "2026-07-13"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "From 13 July 2026 the limit is 350,000,000 VND per person per institution, principal and interest.",
+          "Amounts above the limit are handled through the institution's asset resolution.",
+          "Investment or insurance products sold at banks are not deposits."
+        ],
+        "misconception": "Believing everything bought at a bank counter is covered by deposit insurance.",
+        "practicePrompt": "You hold 200,000,000 VND at institution A and 380,000,000 VND (including interest) at institution B. Is either above the 350,000,000 VND limit, and by how much?",
+        "solutionSteps": [
+          "A: 200,000,000 VND is below 350,000,000 VND, so it is within the limit.",
+          "B: 380,000,000 − 350,000,000 = 30,000,000 VND above the limit.",
+          "Together 200,000,000 + 380,000,000 = 580,000,000 VND, but the limit applies to each institution separately."
+        ],
+        "answer": "A is within the limit; B is 30,000,000 VND above it."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.28",
+      "chapterId": "chapter-14",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Inflation and purchasing power",
+      "competencyId": "investing.inflation-real-return",
+      "objective": "Explain how inflation reduces purchasing power and estimate real return by approximate subtraction.",
+      "body": "Inflation is when prices in general rise over time. The same amount of money buys fewer goods. So when judging interest, compare it with how fast prices rise. Real return is approximately the nominal rate minus the inflation rate.\n\nA fictional example with assumed rates: a basket of goods costs 1,000,000 VND today and its price rises 4% over 1 year to 1,040,000 VND. If you deposit 1,000,000 VND at 5%, after 1 year you have 1,050,000 VND, enough for the basket with 10,000 VND left. Purchasing power rose about 1%. If the rate is only 3%, you have 1,030,000 VND, 10,000 VND short of the same basket. The amount grew, but purchasing power fell.\n\nHolding all money as cash for many years while prices rise also erodes purchasing power, even though the number stays the same. Still, money for near-term spending and the emergency fund needs to be safe and easy to reach; that is a deliberate trade-off.\n\nBudgets need updating too. If food prices rise, last year's food pocket limit may no longer be enough.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Basket: 1,000,000 × 104% = 1,040,000 VND. At 5%: 1,000,000 × 105% = 1,050,000 VND, 10,000 VND left. At 3%: 1,000,000 × 103% = 1,030,000 VND, 10,000 VND short.\n\nRemember\n• Inflation means the same money buys less.\n• Real return is roughly the nominal rate minus inflation.\n• Update budget limits when prices change.\n\nCommon misconception\nBelieving an unchanged amount of money means unchanged value.\n\nSelf-check — fictional scenario\nTuition is 20,000,000 VND now and assumed to rise 5% per year. What will it be after 2 years?\n\nStep-by-step reasoning\n1. Year 1: 20,000,000 × 105% = 21,000,000 VND.\n2. Year 2: 21,000,000 × 105% = 22,050,000 VND.\n3. A savings goal for tuition should use the 2-year figure.\n\nConclusion\nAfter 2 years tuition is about 22,050,000 VND under the assumption.",
+        "arithmeticChecks": [
+          {
+            "expression": "1000000*104/100",
+            "expected": 1040000
+          },
+          {
+            "expression": "1000000*105/100",
+            "expected": 1050000
+          },
+          {
+            "expression": "1050000-1040000",
+            "expected": 10000
+          },
+          {
+            "expression": "1000000*103/100",
+            "expected": 1030000
+          },
+          {
+            "expression": "1040000-1030000",
+            "expected": 10000
+          },
+          {
+            "expression": "20000000*105/100",
+            "expected": 21000000
+          },
+          {
+            "expression": "21000000*105/100",
+            "expected": 22050000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "The interest rate is 6% per year and assumed inflation is 4%. What is the approximate real return?",
+          "choices": [
+            {
+              "text": "10%",
+              "explanation": "This adds instead of subtracting."
+            },
+            {
+              "text": "2%",
+              "explanation": "Correct: 6% − 4% ≈ 2%."
+            },
+            {
+              "text": "6%",
+              "explanation": "This is the nominal rate before rising prices."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "A 500,000 VND basket rises in price by 10%. How much is needed next year?",
+          "choices": [
+            {
+              "text": "550,000 VND",
+              "explanation": "Correct: 500,000 × 110% = 550,000 VND."
+            },
+            {
+              "text": "510,000 VND",
+              "explanation": "This is a 2% rise."
+            },
+            {
+              "text": "600,000 VND",
+              "explanation": "This is a 20% rise."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "What happens if all money is held as cash for years while prices rise?",
+          "choices": [
+            {
+              "text": "Purchasing power certainly rises",
+              "explanation": "Rising prices mean the same money buys less."
+            },
+            {
+              "text": "Nothing changes",
+              "explanation": "Inflation does affect purchasing power."
+            },
+            {
+              "text": "Purchasing power may fall even though the amount stays the same",
+              "explanation": "Correct: the number stays the same but buys less."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Compare one budget pocket in Picket with the same period last year. If prices have risen, adjust the limit to real spending.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Inflation means the same money buys less.",
+          "Real return is roughly the nominal rate minus inflation.",
+          "Update budget limits when prices change."
+        ],
+        "misconception": "Believing an unchanged amount of money means unchanged value.",
+        "practicePrompt": "Tuition is 20,000,000 VND now and assumed to rise 5% per year. What will it be after 2 years?",
+        "solutionSteps": [
+          "Year 1: 20,000,000 × 105% = 21,000,000 VND.",
+          "Year 2: 21,000,000 × 105% = 22,050,000 VND.",
+          "A savings goal for tuition should use the 2-year figure."
+        ],
+        "answer": "After 2 years tuition is about 22,050,000 VND under the assumption."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.29",
+      "chapterId": "chapter-14",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Risk, return and diversification",
+      "competencyId": "investing.risk-and-diversification",
+      "objective": "Explain the link between risk and return, the role of diversification and time horizon, without suggesting any specific product.",
+      "body": "Higher potential return usually comes with higher risk. Risk here means the value can rise and fall sharply, including falling below what you put in. No legal investment offers high returns with no risk at all.\n\nTime horizon matters. Money needed in the next few months should be somewhere stable and easy to withdraw. Money for goals many years away can tolerate more ups and downs, if you understand the risk. Before thinking about investing, many people complete their emergency fund and reduce high-interest debt.\n\nDiversification means not putting everything in one place. A fictional example: you have 10,000,000 VND. Approach A puts it all into one asset; if that asset falls 40%, 6,000,000 VND remains. Approach B splits it into 5 equal parts of 2,000,000 VND. One part falls 40% to 1,200,000 VND, and four parts stay flat. The total is 9,200,000 VND. Diversification limits the damage from one asset, but does not remove risk when the whole market falls.\n\nFees also reduce returns: a 2% annual fee on 10,000,000 VND is 200,000 VND. Vietnam's State Securities Commission advises caution with offers of high returns and checking whether a firm is licensed. This lesson is not investment advice.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Approach A: 10,000,000 × 60% = 6,000,000 VND. Approach B: 10,000,000 / 5 = 2,000,000 VND each; 2,000,000 × 60% = 1,200,000 VND; 1,200,000 + 4 × 2,000,000 = 9,200,000 VND. Fee: 10,000,000 × 2% = 200,000 VND.\n\nRemember\n• Higher potential return comes with higher risk.\n• Your time horizon decides how much fluctuation you can accept.\n• Diversification limits damage from one asset but does not remove all risk.\n\nCommon misconception\nBelieving diversification guarantees you will never lose money.\n\nSelf-check — fictional scenario\n12,000,000 VND is split equally across 4 assets. One falls 30%, one rises 10% and two stay flat. What is the total?\n\nStep-by-step reasoning\n1. Each part: 12,000,000 / 4 = 3,000,000 VND.\n2. Fallen part: 3,000,000 × 70% = 2,100,000 VND; risen part: 3,000,000 × 110% = 3,300,000 VND.\n3. Total: 2,100,000 + 3,300,000 + 2 × 3,000,000 = 11,400,000 VND.\n\nConclusion\nThe total is 11,400,000 VND, 600,000 VND below the start.",
+        "arithmeticChecks": [
+          {
+            "expression": "10000000*60/100",
+            "expected": 6000000
+          },
+          {
+            "expression": "10000000/5",
+            "expected": 2000000
+          },
+          {
+            "expression": "2000000*60/100",
+            "expected": 1200000
+          },
+          {
+            "expression": "1200000+4*2000000",
+            "expected": 9200000
+          },
+          {
+            "expression": "10000000*2/100",
+            "expected": 200000
+          },
+          {
+            "expression": "9000000/3*50/100+2*9000000/3",
+            "expected": 7500000
+          },
+          {
+            "expression": "12000000/4",
+            "expected": 3000000
+          },
+          {
+            "expression": "3000000*70/100",
+            "expected": 2100000
+          },
+          {
+            "expression": "3000000*110/100",
+            "expected": 3300000
+          },
+          {
+            "expression": "2100000+3300000+2*3000000",
+            "expected": 11400000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "What usually comes with higher potential return?",
+          "choices": [
+            {
+              "text": "Higher risk of price swings",
+              "explanation": "Correct: this is the risk-return relationship."
+            },
+            {
+              "text": "A state guarantee",
+              "explanation": "Investment products do not carry a state guarantee of returns."
+            },
+            {
+              "text": "No fees",
+              "explanation": "Fees are not directly tied to potential return."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "How should money needed in the next 6 months be kept?",
+          "choices": [
+            {
+              "text": "In a highly volatile asset to grow quickly",
+              "explanation": "It could fall just when you need it."
+            },
+            {
+              "text": "Somewhere stable that you can withdraw from when needed",
+              "explanation": "Correct: a short horizon puts stability first."
+            },
+            {
+              "text": "With an acquaintance who will invest it for you",
+              "explanation": "Responsibility and risk are unclear."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "9,000,000 VND is split equally across 3 assets; one falls 50% and the other two stay flat. What is the total?",
+          "choices": [
+            {
+              "text": "4,500,000 VND",
+              "explanation": "This is if all 9,000,000 VND fell 50%."
+            },
+            {
+              "text": "9,000,000 VND",
+              "explanation": "This ignores the fall."
+            },
+            {
+              "text": "7,500,000 VND",
+              "explanation": "Correct: 1,500,000 + 3,000,000 + 3,000,000 = 7,500,000 VND."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "You do not need to invest to finish this lesson. In Picket, check your emergency pocket and any high-interest debts before considering any investment.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf",
+        "https://xaydungchinhsach.chinhphu.vn/canh-bao-rui-ro-khi-tham-gia-san-giao-dich-chung-khoan-truc-tuyen-119220630163102206.htm"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Higher potential return comes with higher risk.",
+          "Your time horizon decides how much fluctuation you can accept.",
+          "Diversification limits damage from one asset but does not remove all risk."
+        ],
+        "misconception": "Believing diversification guarantees you will never lose money.",
+        "practicePrompt": "12,000,000 VND is split equally across 4 assets. One falls 30%, one rises 10% and two stay flat. What is the total?",
+        "solutionSteps": [
+          "Each part: 12,000,000 / 4 = 3,000,000 VND.",
+          "Fallen part: 3,000,000 × 70% = 2,100,000 VND; risen part: 3,000,000 × 110% = 3,300,000 VND.",
+          "Total: 2,100,000 + 3,300,000 + 2 × 3,000,000 = 11,400,000 VND."
+        ],
+        "answer": "The total is 11,400,000 VND, 600,000 VND below the start."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.22",
+      "chapterId": "chapter-14",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Spot suspicious investment offers",
+      "competencyId": "investing.fraud-red-flags",
+      "objective": "Recognise the signs of fraudulent investment offers and know how to check before sending money.",
+      "body": "Fraudulent investment offers tend to share a few signs. They promise high, fixed returns, even \"no risk\". They push you to join now. They pay commission for bringing in others. They use platforms or apps with unclear licensing. They let you withdraw small amounts at first, then demand an extra \"fee\" or \"tax\" before a large withdrawal.\n\nVietnam's State Securities Commission advised on 30 June 2022: be very cautious with offers of high interest or returns. Securities companies operating in Vietnam must be licensed by the Commission. Trading on unregulated platforms is at the investor's own risk.\n\nA fictional example: a group promises 3% per week. By simple conversion, 3 × 52 = 156% per year, which is abnormally high. Suppose 100 people each put in 10,000,000 VND, a total of 1,000,000,000 VND. If the group pays \"returns\" of 2.5% per week out of that same money, it pays out 25,000,000 VND each week. Without newcomers, the pool runs dry after 40 weeks. Such schemes live on money from people who join later.\n\nBefore sending money: wait at least a day, look up the firm yourself on the regulator's official site, and never give anyone your OTP or password. If you have already sent money, stop paying in, keep evidence, tell your bank and report to the police.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "3 × 52 = 156% per year. Total in: 100 × 10,000,000 = 1,000,000,000 VND. Weekly \"returns\": 1,000,000,000 × 2.5% = 25,000,000 VND. Pool exhausted: 1,000,000,000 / 25,000,000 = 40 weeks.\n\nRemember\n• High, fixed promised returns and pressure are warning signs.\n• Check licensing on the regulator's official site.\n• Being asked to pay more before withdrawing is a clear fraud sign.\n\nCommon misconception\nBelieving a first successful withdrawal proves the platform is real.\n\nSelf-check — fictional scenario\nYou deposit 5,000,000 VND. The app shows a \"profit\" of 1,500,000 VND. You manage to withdraw 500,000 VND. How much real money has come back and how much is still outside?\n\nStep-by-step reasoning\n1. Money back in your account: 500,000 VND.\n2. Still outside: 5,000,000 − 500,000 = 4,500,000 VND.\n3. The displayed 5,000,000 + 1,500,000 = 6,500,000 VND is not money you hold.\n\nConclusion\nOnly 500,000 VND has come back; 4,500,000 VND is still outside and the 6,500,000 VND figure is only a display.",
+        "arithmeticChecks": [
+          {
+            "expression": "3*52",
+            "expected": 156
+          },
+          {
+            "expression": "100*10000000",
+            "expected": 1000000000
+          },
+          {
+            "expression": "1000000000*25/1000",
+            "expected": 25000000
+          },
+          {
+            "expression": "1000000000/25000000",
+            "expected": 40
+          },
+          {
+            "expression": "5000000-500000",
+            "expected": 4500000
+          },
+          {
+            "expression": "5000000+1500000",
+            "expected": 6500000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "A chat group promises 3% per week and some people have withdrawn money. What is a sensible conclusion?",
+          "choices": [
+            {
+              "text": "A few withdrawals do not prove the scheme is legal; check licensing",
+              "explanation": "Correct: small early withdrawals are often bait."
+            },
+            {
+              "text": "It is certainly safe",
+              "explanation": "Promises and a few withdrawals are not evidence of safety."
+            },
+            {
+              "text": "Invite more people to earn commission",
+              "explanation": "Inviting others may pull them into losses."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "A platform demands a new \"tax fee\" before you can withdraw. What should you do?",
+          "choices": [
+            {
+              "text": "Pay it to get your money back",
+              "explanation": "This is a common way to extract more money."
+            },
+            {
+              "text": "Stop paying in, keep evidence, tell your bank and report to the police",
+              "explanation": "Correct: stop transferring and report to the authorities."
+            },
+            {
+              "text": "Borrow from relatives to pay it",
+              "explanation": "Borrowing more makes the loss bigger."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "3% per week, converted simply to a year (52 weeks), is how much?",
+          "choices": [
+            {
+              "text": "36%",
+              "explanation": "This multiplies by 12, which is for monthly rates."
+            },
+            {
+              "text": "3%",
+              "explanation": "This is still the weekly rate."
+            },
+            {
+              "text": "156%",
+              "explanation": "Correct: 3 × 52 = 156%."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "In Picket, record income only when money actually reaches your account. A \"profit\" figure shown in someone else's app is not income.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://xaydungchinhsach.chinhphu.vn/canh-bao-rui-ro-khi-tham-gia-san-giao-dich-chung-khoan-truc-tuyen-119220630163102206.htm",
+        "https://sbv.gov.vn/en/w/sbv624798",
+        "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "citedFigures": [
+        {
+          "claim": "State Securities Commission: be very cautious with offers of high returns; securities companies in Vietnam must be licensed",
+          "sourceId": "ssc-warning",
+          "asOf": "2022-06-30"
+        }
+      ],
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "High, fixed promised returns and pressure are warning signs.",
+          "Check licensing on the regulator's official site.",
+          "Being asked to pay more before withdrawing is a clear fraud sign."
+        ],
+        "misconception": "Believing a first successful withdrawal proves the platform is real.",
+        "practicePrompt": "You deposit 5,000,000 VND. The app shows a \"profit\" of 1,500,000 VND. You manage to withdraw 500,000 VND. How much real money has come back and how much is still outside?",
+        "solutionSteps": [
+          "Money back in your account: 500,000 VND.",
+          "Still outside: 5,000,000 − 500,000 = 4,500,000 VND.",
+          "The displayed 5,000,000 + 1,500,000 = 6,500,000 VND is not money you hold."
+        ],
+        "answer": "Only 500,000 VND has come back; 4,500,000 VND is still outside and the 6,500,000 VND figure is only a display."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
+      "translationSourceLocale": "vi-VN",
+      "translationIndependentReviewedAt": null
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.30",
+      "chapterId": "chapter-14",
+      "version": 1,
+      "locale": "en-US",
+      "title": "Periodic financial review",
+      "competencyId": "planning.periodic-review",
+      "objective": "Calculate three simple indicators for a financial review and know when to update your plan.",
+      "body": "A financial plan needs regular review, because income, prices and goals all change. A review each quarter or each year can use three simple numbers.\n\nThe first is net worth: total assets minus total debts. The second is the savings rate: the amount set aside divided by take-home pay. The third is emergency months: the emergency fund divided by monthly essential costs. These numbers do not grade you. They show whether the trend is improving or needs adjusting.\n\nA fictional example: Hà has 25,000,000 VND in wallets, 40,000,000 VND in deposits and a motorbike estimated at 15,000,000 VND. Total assets are 80,000,000 VND. Hà owes 12,000,000 VND, so net worth is 68,000,000 VND. Hà sets aside 1,800,000 VND from 12,000,000 VND take-home pay, a savings rate of 15%. An emergency fund of 18,000,000 VND against essential costs of 6,000,000 VND is 3 months.\n\nBesides the regular schedule, review after a big change: a new job, moving home, marriage, a child or lower income. Then revisit the budget, emergency fund, insurance, debts and the order of your goals.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Assets: 25,000,000 + 40,000,000 + 15,000,000 = 80,000,000 VND. Net worth: 80,000,000 − 12,000,000 = 68,000,000 VND. Savings rate: 1,800,000 / 12,000,000 = 15%. Emergency: 18,000,000 / 6,000,000 = 3 months.\n\nRemember\n• Net worth = total assets − total debts.\n• Savings rate = amount set aside / take-home pay.\n• Emergency months = emergency fund / monthly essential costs.\n\nCommon misconception\nTreating these indicators as a personal grade rather than a way to track trends.\n\nSelf-check — fictional scenario\nAssets are 30,000,000 VND in deposits and 20,000,000 VND in cash; debts are 8,000,000 VND. The emergency fund is 10,000,000 VND and essential costs are 5,000,000 VND. 2,400,000 VND is set aside from 16,000,000 VND take-home pay. Calculate the three indicators.\n\nStep-by-step reasoning\n1. Assets: 30,000,000 + 20,000,000 = 50,000,000 VND; net worth: 50,000,000 − 8,000,000 = 42,000,000 VND.\n2. Emergency: 10,000,000 / 5,000,000 = 2 months.\n3. Savings rate: 2,400,000 / 16,000,000 = 15%.\n\nConclusion\nNet worth 42,000,000 VND, 2 emergency months and a 15% savings rate.",
+        "arithmeticChecks": [
+          {
+            "expression": "25000000+40000000+15000000",
+            "expected": 80000000
+          },
+          {
+            "expression": "80000000-12000000",
+            "expected": 68000000
+          },
+          {
+            "expression": "1800000*100/12000000",
+            "expected": 15
+          },
+          {
+            "expression": "18000000/6000000",
+            "expected": 3
+          },
+          {
+            "expression": "30000000+20000000",
+            "expected": 50000000
+          },
+          {
+            "expression": "50000000-8000000",
+            "expected": 42000000
+          },
+          {
+            "expression": "10000000/5000000",
+            "expected": 2
+          },
+          {
+            "expression": "2400000*100/16000000",
+            "expected": 15
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Assets are 50,000,000 VND and debts 20,000,000 VND. What is net worth?",
+          "choices": [
+            {
+              "text": "70,000,000 VND",
+              "explanation": "This adds debts instead of subtracting."
+            },
+            {
+              "text": "30,000,000 VND",
+              "explanation": "Correct: 50,000,000 − 20,000,000 = 30,000,000 VND."
+            },
+            {
+              "text": "20,000,000 VND",
+              "explanation": "This is total debt."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Take-home pay is 10,000,000 VND and 1,000,000 VND is set aside. What is the savings rate?",
+          "choices": [
+            {
+              "text": "10%",
+              "explanation": "Correct: 1,000,000 / 10,000,000 = 10%."
+            },
+            {
+              "text": "1%",
+              "explanation": "The division is off by one digit."
+            },
+            {
+              "text": "100%",
+              "explanation": "This would mean saving everything."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "After a big change such as a new job or a child, what should you do?",
+          "choices": [
+            {
+              "text": "Keep the old plan unchanged",
+              "explanation": "New circumstances may make the old plan unsuitable."
+            },
+            {
+              "text": "Delete all old data",
+              "explanation": "Old data helps you compare trends."
+            },
+            {
+              "text": "Review the budget, emergency fund, insurance and goals",
+              "explanation": "Correct: update the plan for the new circumstances."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Pick one day each quarter to open Picket, look at the total of your budget pockets, upcoming Bills and goal progress; write down the three numbers from this lesson.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.g20.utoronto.ca/2016/Core-Competencies-Framework-Adults.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_SMART-goals_tool_2018-11.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-11-05",
+      "reviewType": "author-self-review-checklist-v2-not-independent",
+      "independentReviewedAt": null,
+      "status": "self-reviewed-pending-owner-approval",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Net worth = total assets − total debts.",
+          "Savings rate = amount set aside / take-home pay.",
+          "Emergency months = emergency fund / monthly essential costs."
+        ],
+        "misconception": "Treating these indicators as a personal grade rather than a way to track trends.",
+        "practicePrompt": "Assets are 30,000,000 VND in deposits and 20,000,000 VND in cash; debts are 8,000,000 VND. The emergency fund is 10,000,000 VND and essential costs are 5,000,000 VND. 2,400,000 VND is set aside from 16,000,000 VND take-home pay. Calculate the three indicators.",
+        "solutionSteps": [
+          "Assets: 30,000,000 + 20,000,000 = 50,000,000 VND; net worth: 50,000,000 − 8,000,000 = 42,000,000 VND.",
+          "Emergency: 10,000,000 / 5,000,000 = 2 months.",
+          "Savings rate: 2,400,000 / 16,000,000 = 15%."
+        ],
+        "answer": "Net worth 42,000,000 VND, 2 emergency months and a 15% savings rate."
+      },
+      "stageId": "stage-04-growth",
+      "translationLocale": "en-US",
+      "translationVersion": 1,
+      "translationStatus": "self-reviewed-pending-owner-approval",
       "translationSourceLocale": "vi-VN",
       "translationIndependentReviewedAt": null
     }
   ],
-  "editorialRevision": 2,
+  "editorialRevision": 3,
   "supplementAuthoredAt": "2026-10-27",
   "supplementReviewType": "author-source-and-arithmetic-check-not-independent-review",
+  "extensionAuthoredAt": "2026-11-05",
+  "extensionReviewType": "author-self-review-checklist-v2-not-independent",
+  "extensionChecklist": "docs/learning/REVIEW_CHECKLIST_V2_20261105.md",
   "translationLocale": "en-US",
   "translationVersion": 1,
-  "translationStatus": "authored-not-independent-review",
+  "translationStatus": "self-reviewed-pending-owner-approval",
   "translationSource": "PICKET_FINANCIAL_CURRICULUM_VI_V1.json",
   "translationSourceLocale": "vi-VN",
   "translationAuthoredAt": "2026-10-23",
+  "translationExtendedAt": "2026-11-05",
   "translationIndependentReviewedAt": null
 }

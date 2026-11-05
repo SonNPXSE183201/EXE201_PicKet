@@ -28,11 +28,11 @@ Biết tiền thực nhận, ghi chép đúng và chia tiền vào từng túi.
 
 **Năng lực:** income.gross-to-net  
 **Mục tiêu:** Đọc phiếu lương, tách các khoản trừ và lập kế hoạch từ tiền thực nhận.  
-**Trạng thái:** self-reviewed-pending-owner-approval · reviewedAt: 2026-11-05 · 235 đơn vị cách trắng trong thân bài
+**Trạng thái:** self-reviewed-pending-owner-approval · reviewedAt: 2026-11-05 · 238 đơn vị cách trắng trong thân bài
 
 Lương ghi trong hợp đồng thường là lương gộp. Tiền về tài khoản là tiền thực nhận. Ở giữa là các khoản trừ, như bảo hiểm bắt buộc và thuế thu nhập cá nhân nếu có. Kế hoạch chi tiêu nên bắt đầu từ tiền thực nhận, vì đó là số bạn thật sự dùng được.
 
-Với người lao động thuộc diện đóng bảo hiểm bắt buộc, phần người lao động đóng thường là 10,5% tiền lương làm căn cứ đóng: 8% bảo hiểm xã hội, 1,5% bảo hiểm y tế và 1% bảo hiểm thất nghiệp. Bảo hiểm xã hội Hà Nội nêu các tỷ lệ này ngày 8/9/2025. Lương làm căn cứ đóng có thể khác lương gộp và có mức trần, nên hãy xem phiếu lương thay vì tự đoán.
+Với người lao động thuộc diện đóng bảo hiểm bắt buộc, phần người lao động đóng thường là 10,5% tiền lương làm căn cứ đóng. Trong đó có 8% bảo hiểm xã hội, 1,5% bảo hiểm y tế và 1% bảo hiểm thất nghiệp. Bảo hiểm xã hội Hà Nội nêu các tỷ lệ này ngày 8/9/2025. Lương làm căn cứ đóng có thể khác lương gộp và có mức trần, nên hãy xem phiếu lương thay vì tự đoán.
 
 Ví dụ hư cấu: Lan có lương gộp 12.000.000đ, cũng là lương đóng bảo hiểm. Khoản bảo hiểm là 12.000.000 × 10,5% = 1.260.000đ. Phần còn lại là 10.740.000đ. Số này thấp hơn mức giảm trừ bản thân 15.500.000đ mỗi tháng áp dụng từ kỳ tính thuế 2026, nên trong ví dụ Lan chưa phát sinh thuế từ tiền lương. Tiền thực nhận là 10.740.000đ.
 
@@ -1080,11 +1080,11 @@ Giải hai kịch bản minh họa và viết một điều có thể khiến k�
 
 **Năng lực:** tax.pit-on-wages-2026  
 **Mục tiêu:** Tính thu nhập tính thuế từ tiền lương và áp dụng biểu lũy tiến từng phần trong một ví dụ đơn giản.  
-**Trạng thái:** self-reviewed-pending-owner-approval · reviewedAt: 2026-11-05 · 237 đơn vị cách trắng trong thân bài
+**Trạng thái:** self-reviewed-pending-owner-approval · reviewedAt: 2026-11-05 · 239 đơn vị cách trắng trong thân bài
 
 Thuế thu nhập cá nhân từ tiền lương không tính trên toàn bộ lương gộp. Trước hết, lấy thu nhập chịu thuế trừ bảo hiểm bắt buộc. Sau đó trừ giảm trừ gia cảnh. Phần còn lại là thu nhập tính thuế.
 
-Theo Nghị quyết 110/2025/UBTVQH15 thông qua ngày 17/10/2025, từ kỳ tính thuế 2026, mức giảm trừ cho bản thân là 15.500.000đ mỗi tháng. Mỗi người phụ thuộc đã đăng ký được giảm trừ 6.200.000đ mỗi tháng. Luật Thuế thu nhập cá nhân 2025 có hiệu lực từ 1/7/2026 dùng biểu 5 bậc theo tháng: đến 10 triệu đồng chịu 5%; trên 10 đến 30 triệu chịu 10%; trên 30 đến 60 triệu chịu 20%; trên 60 đến 100 triệu chịu 30%; trên 100 triệu chịu 35%. Lũy tiến từng phần nghĩa là mỗi phần thu nhập chỉ chịu thuế suất của bậc chứa phần đó.
+Theo Nghị quyết 110/2025/UBTVQH15 thông qua ngày 17/10/2025, từ kỳ tính thuế 2026, mức giảm trừ cho bản thân là 15.500.000đ mỗi tháng. Mỗi người phụ thuộc đã đăng ký được giảm trừ 6.200.000đ mỗi tháng. Luật Thuế thu nhập cá nhân 2025 có hiệu lực từ 1/7/2026. Luật dùng biểu 5 bậc tính theo tháng. Đến 10 triệu đồng chịu 5%; trên 10 đến 30 triệu chịu 10%; trên 30 đến 60 triệu chịu 20%; trên 60 đến 100 triệu chịu 30%; trên 100 triệu chịu 35%. Lũy tiến từng phần nghĩa là mỗi phần thu nhập chỉ chịu thuế suất của bậc chứa phần đó.
 
 Ví dụ hư cấu: Hải có lương 30.000.000đ, cũng là lương đóng bảo hiểm, và 1 người phụ thuộc. Bảo hiểm là 30.000.000 × 10,5% = 3.150.000đ. Giảm trừ là 15.500.000 + 6.200.000 = 21.700.000đ. Thu nhập tính thuế là 5.150.000đ, nằm trong bậc 5%. Thuế là 257.500đ. Tiền thực nhận là 26.592.500đ.
 

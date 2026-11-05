@@ -48,10 +48,10 @@ test("unavailable storage stays recoverable without clearing drafts or recording
  const app=harness(true);app.render();await settle();(app.button("retryStorage").props.onPress as ()=>void)();await settle();assert.ok(app.button("retryStorage"));assert.deepEqual(app.counts(),{completions:0,clears:0});
 });
 
-test("late initial progress does not overwrite a newer subscription snapshot",async()=>{const app=harness();let release!:(v:unknown)=>void;const held=new Promise(done=>{release=done;});app.setLoad(()=>held);app.render();app.setLoad(async()=>({version:1,completed:[{}]}));app.notify();await settle();assert.match(app.viewText(),/1\/12/);release({version:1,completed:[]});await settle();assert.match(app.viewText(),/1\/12/);});
+test("late initial progress does not overwrite a newer subscription snapshot",async()=>{const app=harness();let release!:(v:unknown)=>void;const held=new Promise(done=>{release=done;});app.setLoad(()=>held);app.render();app.setLoad(async()=>({version:1,completed:[{}]}));app.notify();await settle();assert.match(app.viewText(),/Review1\/1\. Lesson/);release({version:1,completed:[]});await settle();assert.match(app.viewText(),/Review1\/1\. Lesson/);});
 
 test("superseded review refresh cannot restore an already completed review",async()=>{const app=harness();let release!:(v:unknown[])=>void;const held=new Promise<unknown[]>(done=>{release=done;});app.setReviews(()=>held);app.render();await settle();app.setReviews(async()=>[]);app.foreground();await settle();release([{lessonId:"lesson",version:1,offset:7,dueDay:"2026-10-01"}]);await settle();assert.throws(()=>app.button("reviewOpen"));});
 
 test("a superseded subscription read error does not hide a newer successful progress load",async()=>{
- const app=harness();app.render();await settle();let reject!:(error:Error)=>void;const held=new Promise((_done,fail)=>{reject=fail;});app.setLoad(()=>held);app.notify();app.setLoad(async()=>({version:1,completed:[{}]}));app.notify();await settle();reject(Error("Old read failed"));await settle();assert.match(app.viewText(),/1\/12/);assert.throws(()=>app.button("retryStorage"));
+ const app=harness();app.render();await settle();let reject!:(error:Error)=>void;const held=new Promise((_done,fail)=>{reject=fail;});app.setLoad(()=>held);app.notify();app.setLoad(async()=>({version:1,completed:[{}]}));app.notify();await settle();reject(Error("Old read failed"));await settle();assert.match(app.viewText(),/Review1\/1\. Lesson/);assert.throws(()=>app.button("retryStorage"));
 });

@@ -13,5 +13,5 @@ test("milestones derive from unique owner progress without adding rewards",()=>{
 test("skipping never requires spending and does not remove earned lesson milestones",()=>{
   const completed=curriculum.lessons.map(row=>({owner:"ownerA",lessonId:row.lessonId,version:row.version,xp:20}));
   const result=learningMilestones("ownerA",completed,[{owner:"ownerA",action:"review-records",weekStart:"2026-10-19",skipped:true,xp:0}]);
-  assert.equal(result.xp,240);assert.ok(result.badges.includes("allLessons"));assert.ok(!result.badges.includes("practicedWeek"));
+  assert.equal(result.xp,curriculum.lessons.length*20);assert.ok(result.badges.includes("allLessons"));assert.ok(!result.badges.includes("practicedWeek"));
 });

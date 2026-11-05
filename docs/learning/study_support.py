@@ -10,10 +10,20 @@ HEADINGS = {
 }
 
 
-def apply_study_support(lessons, locale, append_checks=True):
+def apply_study_support(lessons, locale, append_checks=True, extra_entries=()):
+    """Attach study support to every lesson.
+
+    study_support.v1.json holds the original 12 entries; ``extra_entries``
+    (same shape) come from curriculum_v2_extension.py so new lessons keep their
+    VI/EN support next to the lesson text.
+    """
     data = json.loads((ROOT / 'study_support.v1.json').read_text(encoding='utf-8'))
     entries = {entry['lessonId']: entry for entry in data['lessons']}
-    assert len(entries) == len(lessons) == 12
+    assert len(entries) == 12
+    for entry in extra_entries:
+        assert entry['lessonId'] not in entries, entry['lessonId']
+        entries[entry['lessonId']] = entry
+    assert len(entries) == len(lessons)
     assert set(entries) == {lesson['lessonId'] for lesson in lessons}
     labels = HEADINGS[locale]
     for lesson in lessons:
@@ -35,8 +45,11 @@ def apply_study_support(lessons, locale, append_checks=True):
 
 
 def editorial_metadata(course):
-    course.update(editorialRevision=2, supplementAuthoredAt='2026-10-27',
-                  supplementReviewType='author-source-and-arithmetic-check-not-independent-review')
+    course.update(editorialRevision=3, supplementAuthoredAt='2026-10-27',
+                  supplementReviewType='author-source-and-arithmetic-check-not-independent-review',
+                  extensionAuthoredAt='2026-11-05',
+                  extensionReviewType='author-self-review-checklist-v2-not-independent',
+                  extensionChecklist='docs/learning/REVIEW_CHECKLIST_V2_20261105.md')
 
 
 def markdown_example(description, locale):

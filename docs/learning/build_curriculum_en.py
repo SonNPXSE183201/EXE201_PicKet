@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 from study_support import apply_study_support, markdown_example, write_app_copy
+import curriculum_v2_extension as ext
 
 ROOT = Path(__file__).parent
 translations = []
@@ -194,55 +195,89 @@ q('Both subscriptions retain their prices for 12 months as in the example. What 
 q('Picket flags service B for review. Can charges already be considered stopped?', ['Yes, as soon as it is flagged','Yes, after any one-day pause','Not yet; cancel and confirm through the provider or management channel'], ['A Picket note does not control an external service.','A self-chosen pause does not change the contract.','Correct: update the schedule only once the actual result is known.'])],
 'Review the price and renewal date of an example or existing subscription; you may skip and should not sign up for another one.')
 
+MONTHS = {m: i for i, m in enumerate(['January','February','March','April','May','June','July','August','September','October','November','December'], 1)}
+
+def normalize_dates(text):
+    """Turn '13 July 2026' into '13/7/2026' so numeric parity matches Vietnamese d/m/yyyy."""
+    return re.sub(r'\b(\d{1,2}) (' + '|'.join(MONTHS) + r') (\d{4})\b', lambda m: f"{m.group(1)}/{MONTHS[m.group(2)]}/{m.group(3)}", text)
+
+def numbers(text):
+    return [re.sub('[.,]', '', n.rstrip('.,')) for n in re.findall(r'[0-9][0-9.,]*', normalize_dates(text))]
+
+def translation_map():
+    """Old lessons map by their original position; v2 lessons come from the extension module."""
+    tmap = {ext.lesson_id(i + 1): t for i, t in enumerate(translations)}
+    for item in ext.NEW_LESSONS:
+        e = item['en']
+        tmap[ext.lesson_id(item['n'])] = dict(title=e['title'], objective=e['objective'], body=e['body'].strip(), example=e['example'],
+            questions=[q(prompt, choices, explanations) for prompt, choices, explanations in e['questions']], action=e['action'])
+    return tmap
+
 def main():
     source_path=ROOT/'PICKET_FINANCIAL_CURRICULUM_VI_V1.json'
     source_bytes=source_path.read_bytes()
     vi=json.loads(source_bytes)
     en=copy.deepcopy(vi)
-    assert len(translations)==len(vi['lessons'])==12
-    en.update(locale='en-US',curriculumId='picket.financial.en.v1',translationLocale='en-US',translationVersion=1,translationStatus='authored-not-independent-review',translationSource='PICKET_FINANCIAL_CURRICULUM_VI_V1.json',translationSourceLocale='vi-VN',translationAuthoredAt='2026-10-23',translationIndependentReviewedAt=None)
-    en['reviewedAtSemantics']='Author source/arithmetic review date; neither independent translation nor financial-content approval.'
-    en['publicationGate']['required']=['Independent financial-content review','Vietnamese-context legal/safety review for borrowing and digital safety','Independent English translation and terminology review against the Vietnamese source','Accessibility and pilot comprehension review','Android large-font/TalkBack/offline checks']
+    tmap=translation_map()
+    assert len(translations)==12 and len(tmap)==len(vi['lessons'])==30
+    status=ext.REVIEW_STATUS
+    en.update(locale='en-US',curriculumId='picket.financial.en.v1',translationLocale='en-US',translationVersion=1,translationStatus=status,translationSource='PICKET_FINANCIAL_CURRICULUM_VI_V1.json',translationSourceLocale='vi-VN',translationAuthoredAt='2026-10-23',translationExtendedAt=ext.EXTENSION_DATE,translationIndependentReviewedAt=None)
+    en['reviewedAtSemantics']='Author self-review date against REVIEW_CHECKLIST_V2_20261105.md; neither independent translation nor financial-content approval.'
+    en['publicationGate']['required']=['Owner approval of the v2 self-review checklist (docs/learning/REVIEW_CHECKLIST_V2_20261105.md)','Independent financial-content review','Vietnamese-context legal/safety review for borrowing, tax, insurance and digital safety','Re-verification of dated figures (tax, deposit insurance, social insurance) before each release','Independent English translation and terminology review against the Vietnamese source','Accessibility and pilot comprehension review','Android large-font/TalkBack/offline checks']
     en['sourceUse']='Source concepts inform objectives. Scenarios and calculations originate in the Vietnamese Picket curriculum. This is an original English editorial translation, not an official translation or endorsement of source organizations. No US/EU legal rights are imported into Vietnam.'
+    en['stages']=ext.stages_for('en')
+    assert [s['stageId'] for s in en['stages']]==[s['stageId'] for s in vi['stages']]
+    assert [s['lessonIds'] for s in en['stages']]==[s['lessonIds'] for s in vi['stages']]
     count=0
-    for original,l,t in zip(vi['lessons'],en['lessons'],translations):
-        l.update(locale='en-US',title=t['title'],objective=t['objective'],body=t['body'],translationLocale='en-US',translationVersion=1,translationStatus='authored-not-independent-review',translationSourceLocale='vi-VN',translationIndependentReviewedAt=None)
+    for original,l in zip(vi['lessons'],en['lessons']):
+        t=tmap[l['lessonId']]
+        l.update(locale='en-US',title=t['title'],objective=t['objective'],body=t['body'],translationLocale='en-US',translationVersion=1,translationStatus=status,translationSourceLocale='vi-VN',translationIndependentReviewedAt=None)
         l['workedExample']['description']=t['example']
         l['optionalAction']['text']=t['action']
-        for old,new in zip(original['questions'],t['questions']):
+        questions=copy.deepcopy(t['questions'])
+        for old,new in zip(original['questions'],questions):
             new['correctIndex']=old['correctIndex']
             assert len(new['choices'])==3
-        l['questions']=t['questions']
-        for key in ['lessonId','chapterId','version','competencyId','sources','reviewedAt','status','independentReviewedAt']:
+        l['questions']=questions
+        for key in ['lessonId','chapterId','stageId','version','competencyId','sources','reviewedAt','status','independentReviewedAt']:
             assert original[key]==l[key],(key,l['lessonId'])
+        assert original.get('citedFigures')==l.get('citedFigures')
         assert l['workedExample']['arithmeticChecks']==original['workedExample']['arithmeticChecks']
         assert l['workedExample']['currency']==original['workedExample']['currency']=='VND'
-        assert [q['correctIndex'] for q in l['questions']]==[q['correctIndex'] for q in original['questions']]
+        assert [x['correctIndex'] for x in l['questions']]==[x['correctIndex'] for x in original['questions']]
         assert len(l['questions'])==3
         for c in l['workedExample']['arithmeticChecks']:
             assert re.fullmatch('[0-9+*/(). -]+',c['expression'])
             assert eval(c['expression'],{'__builtins__':{}},{})==c['expected']
             count+=1
         assert not re.findall(r'\{\{[^}]+\}\}',l['body'])
-        numbers=lambda s: [re.sub('[.,]','',n.rstrip('.,')) for n in re.findall(r'[0-9][0-9.,]*',s)]
-        assert numbers(original['body'])==numbers(l['body']), ('body numeric sequence',l['lessonId'])
-    apply_study_support(en['lessons'], 'en', append_checks=False)
+        assert numbers(original['body'])==numbers(l['body']), ('body numeric sequence',l['lessonId'],numbers(original['body']),numbers(l['body']))
+    apply_study_support(en['lessons'], 'en', append_checks=False, extra_entries=ext.support_entries())
     assert en['publicationGate']['publishable'] is False
     assert source_path.read_bytes()==source_bytes
+    question_count=sum(len(l['questions']) for l in en['lessons'])
     (ROOT/'PICKET_FINANCIAL_CURRICULUM_EN_V1.json').write_text(json.dumps(en,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     write_app_copy(en, 'en')
-    lines=['# Picket — Financial education curriculum, English v1','','Editorial translation of the full Vietnamese v1 curriculum, authored 2026-10-23. **authored-not-independent-review**. This is not independently approved or publishable content.','','Translation locale: `en-US`; translation version: `1`; source locale: `vi-VN`. Lesson IDs intentionally remain identical to the Vietnamese source, including their `.vi.` segment: identify a localized lesson by `(lessonId, locale, version)`, not the ID alone.','','`correctIndex` is zero-based. Every choice includes its own explanation. `reviewedAt` means author source/arithmetic review, not independent financial or translation approval. All money remains VND; English does not imply conversion to USD.','','## Publication gates','']+['- '+x for x in en['publicationGate']['required']]+['','The source curriculum was designed for adults and the Vietnamese context. No foreign legal right, cancellation period, regulatory approval or educational effectiveness is asserted. Timing and comprehension need learner testing.','']
-    lines[2:2] = ['> [Current project status](../PROJECT_STATUS.md). Editorial revision 2, 27 October 2026: 12 fictional self-checks and worked solutions in VI/EN; existing lesson IDs and quiz answer ordering are preserved.', '']
+    lines=['# Picket — Financial education curriculum, English v1','',f'Editorial translation of the full Vietnamese curriculum, authored 2026-10-23 and extended {ext.EXTENSION_DATE}. **{status}**. This is not independently approved or publishable content.','','Translation locale: `en-US`; translation version: `1`; source locale: `vi-VN`. Lesson IDs intentionally remain identical to the Vietnamese source, including their `.vi.` segment: identify a localized lesson by `(lessonId, locale, version)`, not the ID alone.','','`correctIndex` is zero-based. Every choice includes its own explanation. `reviewedAt` is the author self-review date, not independent approval. `citedFigures` lists the source and date behind each regulatory number.','']
+    lines[2:2] = ['> [Current project status](../PROJECT_STATUS.md). Editorial revision 3, 5 November 2026: a four-stage path with 18 new lessons (13–30); existing lesson IDs and quiz answer ordering are preserved. [Self-review checklist](REVIEW_CHECKLIST_V2_20261105.md).', '']
+    stage_titles={s['stageId']:s for s in en['stages']}
+    current=None
     for l in en['lessons']:
-        lines += [f"## {l['lessonId']} — {l['title']}",'',f"**Chapter:** {l['chapterId']} · **Competency:** {l['competencyId']}  ",f"**Objective:** {l['objective']}  ",'**Status:** authored-not-independent-review · locale: en-US · translationVersion: 1','',l['body'],'','### Worked example','',markdown_example(l['workedExample']['description'], 'en'),'']
+        if l['stageId']!=current:
+            current=l['stageId']; st=stage_titles[current]
+            lines += [f"# Stage {st['order']}: {st['title']}",'',st['summary'],'']
+        lines += [f"## {l['lessonId']} — {l['title']}",'',f"**Chapter:** {l['chapterId']} · **Stage:** {l['stageId']} · **Competency:** {l['competencyId']}  ",f"**Objective:** {l['objective']}  ",f"**Status:** {status} · locale: en-US · translationVersion: 1",'',l['body'],'','### Worked example','',markdown_example(l['workedExample']['description'], 'en'),'']
         lines += [f"- `{c['expression']} = {c['expected']}`" for c in l['workedExample']['arithmeticChecks']]
         lines += ['','### Practice scenarios','']
         for i,qv in enumerate(l['questions'],1):
             lines += [f"**{i}. {qv['prompt']}**",'']+[f"- {chr(65+j)}. {c['text']} — {c['explanation']}" for j,c in enumerate(qv['choices'])]+[f"Answer: **{chr(65+qv['correctIndex'])}** (`correctIndex: {qv['correctIndex']}`).",'']
-        lines += ['### Optional action','',l['optionalAction']['text']+' You may skip. No spending, financial-product signup, OTP or submission to AI is required.','','### Sources','']+[f'- [Primary reference]({u})' for u in l['sources']]+['']
-    lines += ['## Translation consistency checks','',f'- 12 translated bodies, 36 questions and 108 choice explanations; {count} arithmetic checks passed.','- IDs, chapter/competency IDs, version, correct answer positions, source URLs, currencies and arithmetic expressions/results match Vietnamese v1 exactly.','- No placeholders occur in the source or translated lesson text; no placeholder substitution was introduced.','- Source VI files were not modified; regeneration writes only EN artifacts.','- Independent financial, language and safety review and learner pilot remain outstanding.','']
+        lines += ['### Optional action','',l['optionalAction']['text']+' You may skip. No spending, financial-product signup, OTP or submission to AI is required.','']
+        if l.get('citedFigures'):
+            lines += ['### Dated figures and sources','']+[f"- {f['claim']} — source `{f['sourceId']}`, as of {f['asOf']}" for f in l['citedFigures']]+['']
+        lines += ['### Sources','']+[f'- [Primary reference]({u})' for u in l['sources']]+['']
+    lines += ['## Translation consistency checks','',f"- {len(en['lessons'])} translated bodies, {question_count} questions and {question_count*3} choice explanations; {count} arithmetic checks passed.",'- IDs, chapter/stage/competency IDs, version, correct answer positions, source URLs, cited figures, currencies and arithmetic expressions/results match the Vietnamese source exactly.','- Every numeric token in each body matches the Vietnamese body in order (English "13 July 2026" dates are normalised to d/m/yyyy before comparing).','- Source VI files were not modified; regeneration writes only EN artifacts.','- Independent financial, language and safety review and learner pilot remain outstanding.','']
     (ROOT/'PICKET_FINANCIAL_CURRICULUM_EN_V1.md').write_text('\n'.join(lines),encoding='utf-8')
-    print(json.dumps(dict(lessons=12,questions=36,explanations=108,arithmeticChecks=count,reviewStatus=en['status'],publishable=False)))
+    print(json.dumps(dict(lessons=len(en['lessons']),questions=question_count,explanations=question_count*3,arithmeticChecks=count,reviewStatus=en['status'],publishable=False)))
 
 if __name__=='__main__':
     main()
