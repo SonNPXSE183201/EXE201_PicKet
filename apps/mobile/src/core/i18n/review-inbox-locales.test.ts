@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { commonEn, commonVi } from "../core/i18n/common-resources";
-import { createAppI18n } from "../core/i18n/instance";
+import { commonEn, commonVi } from "./common-resources";
+import { createAppI18n } from "./instance";
 
 test("common translations cover every Vietnamese key", () => {
   for (const key of Object.keys(commonVi) as (keyof typeof commonVi)[]) {
