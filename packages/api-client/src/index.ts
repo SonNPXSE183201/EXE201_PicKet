@@ -853,6 +853,12 @@ export class PicketApiClient {
   adminPayments<T=Record<string,unknown>>(accessToken:string,filters:Record<string,string>={}):Promise<T> {
     return this.request(`/v1/admin/payments?${new URLSearchParams(filters)}`,{headers:this.authHeaders(accessToken)});
   }
+  adminRevenue<T=Record<string,unknown>>(accessToken:string,filters:Record<string,string>={}):Promise<T> {
+    return this.request(`/v1/admin/revenue?${new URLSearchParams(filters)}`,{headers:this.authHeaders(accessToken)});
+  }
+  adminRevenueAdjust(accessToken:string,body:{ledgerId:number;amountVnd:number;kind:'refund'|'adjustment';reason:string;externalRef?:string}):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/revenue',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
+  }
   adminPermissions<T=Record<string,unknown>>(accessToken:string,userId?:string):Promise<T> {
     return this.request(`/v1/admin/permissions${userId?`?userId=${encodeURIComponent(userId)}`:''}`,{headers:this.authHeaders(accessToken)});
   }

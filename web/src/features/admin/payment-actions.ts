@@ -53,3 +53,21 @@ export async function savePermissionGroup(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect(`${path}&saved=1`);
 }
+export async function adjustRevenue(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  const ledgerId = Number(form.get("ledgerId"));
+  const path = `/admin/revenue?id=${ledgerId}`;
+  try {
+    await api.adminRevenueAdjust(accessToken, {
+      ledgerId,
+      amountVnd: Number(form.get("amountVnd")),
+      kind: form.get("kind") === "adjustment" ? "adjustment" : "refund",
+      reason: String(form.get("reason") ?? ""),
+      externalRef: String(form.get("externalRef") ?? "") || undefined,
+    });
+  } catch {
+    redirect(`${path}&error=adjust`);
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`${path}&saved=1`);
+}

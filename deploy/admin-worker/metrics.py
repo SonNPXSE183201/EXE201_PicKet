@@ -100,3 +100,41 @@ def parse_sales_zip(payload, month):
                 key = (day.isoformat(), currency, metric)
                 result[key] = result.get(key, Decimal(0)) + abs(amount)
     return [{'day': day, 'dimension': currency, 'metric': metric, 'value': str(value), 'timezone': 'UTC'} for (day, currency, metric), value in result.items()]
+
+
+ORDER_NUMBER = re.compile(r'GPA\.[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{5}(?:\.\.[0-9]+)?')
+
+
+def parse_sales_orders(payload, month):
+    """Per-order rows for the revenue ledger (source of truth for Google amounts).
+
+    Reuses the aggregate parser's validation, so a malformed report is rejected
+    atomically before anything is written. Reports without an Order Number
+    column produce no ledger rows (aggregates still work).
+    """
+    parse_sales_zip(payload, month)
+    orders = []
+    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+        for entry in [item for item in archive.infolist() if item.filename.endswith('.csv')]:
+            content = archive.read(entry)
+            reader = csv.DictReader(io.StringIO(content.decode('utf-16' if content.startswith((b'\xff\xfe', b'\xfe\xff')) else 'utf-8-sig')))
+            if 'Order Number' not in (reader.fieldnames or []):
+                continue
+            for row in reader:
+                if row['Package ID'] != 'com.picket.mobile':
+                    continue
+                number = row['Order Number'].strip()
+                if not ORDER_NUMBER.fullmatch(number):
+                    raise ValueError('Invalid order number')
+                stamp = (row.get('Order Charged Timestamp') or '').strip()
+                charged = (dt.datetime.fromtimestamp(int(stamp), dt.timezone.utc).isoformat()
+                           if stamp.isdigit() else f"{row['Order Charged Date']}T00:00:00+00:00")
+                orders.append({
+                    'orderNumber': number,
+                    'status': row['Financial Status'].strip().lower(),
+                    'currency': row['Currency of Sale'],
+                    'amount': row['Charged Amount'].replace(',', ''),
+                    'chargedAt': charged,
+                    'sku': (row.get('SKU ID') or '').strip() or None,
+                })
+    return orders

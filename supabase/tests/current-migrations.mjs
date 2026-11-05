@@ -8,6 +8,7 @@ const suites = [
   "admin-revision-conflicts",
   "payos-auth-permissions",
   "payos-expiry-hardening",
+  "revenue-ledger",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",

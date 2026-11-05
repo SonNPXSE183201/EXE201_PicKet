@@ -46,12 +46,16 @@ if __name__ == '__main__':
     unittest.main()
 
 class SalesTests(unittest.TestCase):
-    def report(self, amount='1000', status='Charged', currency='VND', day='2026-10-01'):
+    def report(self, amount='1000', status='Charged', currency='VND', day='2026-10-01', order=None):
         import zipfile
         stream = io.StringIO()
-        writer = csv.DictWriter(stream, fieldnames=['Package ID','Order Charged Date','Financial Status','Currency of Sale','Charged Amount'])
+        fields = ['Package ID','Order Charged Date','Financial Status','Currency of Sale','Charged Amount'] + (['Order Number','SKU ID','Order Charged Timestamp'] if order else [])
+        writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
-        writer.writerow({'Package ID':'com.picket.mobile','Order Charged Date':day,'Financial Status':status,'Currency of Sale':currency,'Charged Amount':amount})
+        row = {'Package ID':'com.picket.mobile','Order Charged Date':day,'Financial Status':status,'Currency of Sale':currency,'Charged Amount':amount}
+        if order:
+            row.update({'Order Number':order,'SKU ID':'picket_plus_monthly','Order Charged Timestamp':'1761955200'})
+        writer.writerow(row)
         output = io.BytesIO()
         with zipfile.ZipFile(output, 'w') as archive:
             archive.writestr('sales.csv', stream.getvalue().encode())
@@ -72,3 +76,16 @@ class SalesTests(unittest.TestCase):
         for fields in [{'amount':'NaN'}, {'amount':'-2'}, {'currency':'email@example.test'}, {'day':'2026-09-01'}, {'status':'Unknown'}]:
             with self.assertRaises(ValueError):
                 parse_sales_zip(self.report(**fields), '2026-10-01')
+
+
+class SalesOrderTests(SalesTests):
+    def test_orders_carry_reference_amount_and_sku(self):
+        from metrics import parse_sales_orders
+        rows = parse_sales_orders(self.report('19,000', order='GPA.1234-5678-9012-34567'), '2026-10-01')
+        self.assertEqual(rows, [{'orderNumber':'GPA.1234-5678-9012-34567','status':'charged','currency':'VND','amount':'19000','chargedAt':'2025-11-01T00:00:00+00:00','sku':'picket_plus_monthly'}])
+        self.assertEqual(parse_sales_orders(self.report(), '2026-10-01'), [])
+
+    def test_forged_order_number_is_rejected(self):
+        from metrics import parse_sales_orders
+        with self.assertRaises(ValueError):
+            parse_sales_orders(self.report(order='GPA.1; drop'), '2026-10-01')

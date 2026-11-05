@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 import socket
 import ssl
-from metrics import apk_log_metric, parse_play_installs, parse_sales_zip, newest_database_backup
+from metrics import apk_log_metric, parse_play_installs, parse_sales_orders, parse_sales_zip, newest_database_backup
 
 STATE = Path(os.getenv('ADMIN_WORKER_STATE', '/state/state.json'))
 
@@ -185,7 +185,11 @@ def play_financial(state):
         checksum = hashlib.sha256(response.content).hexdigest()
         if state.get(key) != checksum:
             rows = parse_sales_zip(response.content, month.isoformat())
+            orders = parse_sales_orders(response.content, month.isoformat())
             ingest('google_play_financial', rows, month=month.isoformat(), checkpoint=checksum, message='Estimated charged/refunded amounts by original currency; not payout or accounting totals')
+            if orders:
+                # Confirms estimated ledger rows by Order Number; idempotent per order.
+                call_rpc('revenue_ingest_play_report', {'p_rows': orders, 'p_report': f'{key}#{checksum[:16]}'})
             state[key] = checksum
 
 

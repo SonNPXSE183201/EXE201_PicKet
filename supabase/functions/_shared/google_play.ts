@@ -113,6 +113,21 @@ export async function verifyPlayPurchase(
     p_ack: acknowledgementState,
   });
   if (metadataError) throw new Error("Purchase metadata record failed");
+  // Revenue ledger: each successful Google order is recorded once as an
+  // estimate; the monthly sales report later confirms the charged amount.
+  // A ledger failure must never block the customer's entitlement.
+  const orderId = line.latestSuccessfulOrderId ?? purchase.latestOrderId;
+  if (active && typeof orderId === "string" && orderId.length > 0) {
+    const { error: revenueError } = await admin().rpc("revenue_record_play_order", {
+      p_order_id: orderId,
+      p_user: userId,
+      p_product: line.productId,
+      p_hash: await sha256(purchaseToken),
+      p_is_test: purchase.testPurchase !== undefined && purchase.testPurchase !== null,
+      p_occurred: null,
+    });
+    if (revenueError) console.error("Revenue ledger write deferred");
+  }
   return {
     verified: true,
     active,

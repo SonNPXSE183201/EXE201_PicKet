@@ -82,6 +82,8 @@ function createMockApiClient(): PicketApiClient {
       {sku:'picket_pro_yearly',tier:'pro',months:12,amount:499000},
     ],orders:[]};},
     async adminPayments() {return {total:0,series:[],orders:[],events:[]};},
+    async adminRevenue() {return {confirmedVnd:0,estimatedVnd:0,reviewVnd:0,unconverted:[],bySource:[],series:[],entries:[],history:[]};},
+    async adminRevenueAdjust() {return {};},
     async adminPermissions() {return {catalog:[{code:'revenue.read',description:'Xem doanh thu'}],rules:[],groups:[]};},
     async listBills() {
       return { bills: [] };
