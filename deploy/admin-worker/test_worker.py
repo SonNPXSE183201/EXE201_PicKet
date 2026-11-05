@@ -96,3 +96,13 @@ class ReleaseReadbackTests(unittest.TestCase):
             worker.release_readback()
             rpc.assert_called_once()
             self.assertEqual(rpc.call_args.args[1]['p_source'], 'landing_probe')
+
+    def test_readback_failure_never_breaks_the_cycle_and_sends_a_user_agent(self):
+        with patch.object(worker, 'release_readback', side_effect=OSError('403')):
+            worker.safe_release_readback()
+        from unittest.mock import MagicMock
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"versionCode":28,"sha256":"a","bytes":1}'
+        with patch.dict(worker.os.environ, {'PLAY_TRACK_READBACK': 'false'}),                 patch.object(worker.urllib.request, 'urlopen', return_value=response) as send,                 patch.object(worker, 'call_rpc'):
+            worker.release_readback()
+            self.assertEqual(send.call_args.args[0].get_header('User-agent'), worker.WORKER_UA)

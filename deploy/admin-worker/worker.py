@@ -39,6 +39,10 @@ def source_failure(source, message, status='error'):
     ingest(source, [], status=status, message=message)
 
 
+# Public sites sit behind bot filtering that rejects the default urllib agent.
+WORKER_UA = 'PicketAdminWorker/1.0 (+https://picketfinance.com)'
+
+
 def health():
     config = json.loads(call_rpc('admin_worker_config', {}))
     timeout = config.get('probeTimeoutSeconds', 8)
@@ -46,7 +50,7 @@ def health():
     for component, url in [('api', 'http://api:8080/health'), ('web', 'http://web:3000/login'), ('landing', 'https://picketfinance.com/release.json'), ('ocr', 'http://ocr-provider:8000/health')]:
         start = time.monotonic()
         try:
-            with urllib.request.urlopen(url, timeout=timeout) as response:
+            with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': WORKER_UA}), timeout=timeout) as response:
                 ok = response.status == 200
             samples.append({'component': component, 'status': 'ok' if ok else 'down', 'latencyMs': min(120000, round((time.monotonic()-start)*1000)), 'message': 'HTTP probe'})
         except Exception:
@@ -234,10 +238,7 @@ def cycle():
     except (FileNotFoundError, ValueError):
         state = {}
     health()
-    try:
-        release_readback()
-    except Exception:
-        source_failure('release_readback', 'Release readback unavailable; registry unchanged')
+    safe_release_readback()
     for source, run in [('google_play_installs', play_reports), ('apk_access', apk_logs), ('google_play_vitals', play_vitals), ('google_play_financial', play_financial)]:
         try:
             run(state)
@@ -276,7 +277,7 @@ def release_readback():
     Play is read through a temporary edit that is always deleted and never
     committed, so closed testing and every other track stay untouched.
     """
-    request = urllib.request.Request('https://picketfinance.com/release.json', headers={'Accept': 'application/json', 'Cache-Control': 'no-cache'})
+    request = urllib.request.Request('https://picketfinance.com/release.json', headers={'Accept': 'application/json', 'Cache-Control': 'no-cache', 'User-Agent': WORKER_UA})
     with urllib.request.urlopen(request, timeout=15) as response:
         manifest = json.loads(response.read(65536))
     call_rpc('release_readback', {'p_source': 'landing_probe', 'p_rows': [{
@@ -298,6 +299,14 @@ def release_readback():
     finally:
         session.delete(f'{base}/{edit_id}', timeout=30)
     call_rpc('release_readback', {'p_source': 'play_api', 'p_rows': rows})
+
+
+def safe_release_readback():
+    """Readback is advisory: a failure must never abort the ingestion cycle."""
+    try:
+        release_readback()
+    except Exception:
+        print('Release readback unavailable; registry unchanged', flush=True)
 
 
 def reconcile_payos():
