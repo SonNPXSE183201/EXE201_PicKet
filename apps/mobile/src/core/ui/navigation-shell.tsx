@@ -12,6 +12,8 @@ import { useAuth } from "@/features/auth/auth-context";
 import { AccessiblePressable as Pressable } from "./accessible-pressable";
 import { AppIcon, type IconName } from "./app-icon";
 
+const dockLayout = { inset: 16, height: 68, bottom: 14, cameraSize: 56 } as const;
+
 const destinations: { path: "/" | "/transactions" | "/capture" | "/planning" | "/profile"; label: string; english: string; icon: IconName }[] = [
   { path: "/", label: "Nhà", english: "Home", icon: "home-outline" },
   { path: "/transactions", label: "Chi tiêu", english: "Spending", icon: "wallet-outline" },
@@ -36,7 +38,7 @@ export function NavigationShell() {
     return () => { show.remove(); hide.remove(); };
   }, []);
   if (keyboardVisible || (!session && !localMode) || !dockVisibleOn(pathname)) return null;
-  return <View accessibilityRole="tablist" style={[styles.bar, { bottom: Math.max(12, insets.bottom) }]}><View pointerEvents="none" accessible={false} style={styles.tray} />
+  return <View accessibilityRole="tablist" style={[styles.bar, { bottom: Math.max(dockLayout.bottom, insets.bottom) }]}><View pointerEvents="none" accessible={false} style={styles.tray} />
     {destinations.map((item) => {
       const camera = item.path === "/capture";
       const active = pathname === item.path || (item.path === "/planning" && pathname === "/budgets");
@@ -51,12 +53,12 @@ export function NavigationShell() {
 
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  bar: { position: "absolute", left: 12, right: 12, maxWidth: 600, alignSelf: "center", flexDirection: "row", paddingHorizontal: 5, paddingBottom: 5, paddingTop: 29 },
-  tray: { position: "absolute", top: 24, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottomRightRadius: 30, borderBottomLeftRadius: 16, shadowColor: colors.camera, shadowOffset: { width: 0, height: 8 }, shadowOpacity: .16, shadowRadius: 18, boxShadow: [{ offsetX: 0, offsetY: 8, blurRadius: 18, color: colors.camera + "29" }] },
-  destination: { flex: 1, minHeight: 52, alignItems: "center", justifyContent: "center", gap: 2, paddingVertical: 4, borderRadius: 20, overflow: "hidden", marginHorizontal: 2 },
+  bar: { position: "absolute", left: dockLayout.inset, right: dockLayout.inset, height: dockLayout.height, maxWidth: 600, alignSelf: "center", flexDirection: "row", paddingHorizontal: 5, paddingBottom: 4, paddingTop: 20 },
+  tray: { position: "absolute", top: 12, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottomRightRadius: 30, borderBottomLeftRadius: 16, shadowColor: colors.camera, shadowOffset: { width: 0, height: 8 }, shadowOpacity: .16, shadowRadius: 18, boxShadow: [{ offsetX: 0, offsetY: 8, blurRadius: 18, color: colors.camera + "29" }] },
+  destination: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", gap: 2, paddingVertical: 2, borderRadius: 20, overflow: "hidden", marginHorizontal: 2 },
   indicator: { width: 56, height: 32, borderRadius: 20, overflow: "hidden", alignItems: "center", justifyContent: "center" },
   indicatorActive: { backgroundColor: colors.selectedSurface, borderRadius: 20, overflow: "hidden" },
-  camera: { width: 60, height: 60, marginTop: -30, marginBottom: 1, borderWidth: 5, borderColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomRightRadius: 24, borderBottomLeftRadius: 10, transform: [{ rotate: "-3deg" }], backgroundColor: colors.camera, alignItems: "center", justifyContent: "center", shadowColor: colors.camera, shadowOffset: { width: 0, height: 5 }, shadowOpacity: .25, shadowRadius: 12, elevation: 6 },
+  camera: { width: dockLayout.cameraSize, height: dockLayout.cameraSize, marginTop: -28, marginBottom: 1, borderWidth: 5, borderColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomRightRadius: 24, borderBottomLeftRadius: 10, transform: [{ rotate: "-3deg" }], backgroundColor: colors.camera, alignItems: "center", justifyContent: "center", shadowColor: colors.camera, shadowOffset: { width: 0, height: 5 }, shadowOpacity: .25, shadowRadius: 12, elevation: 6 },
   label: { color: colors.muted, fontFamily: "PicketDisplay", fontSize: 11, lineHeight: 16, textAlign: "center" },
   activeLabel: { color: colors.selectedText },
 });

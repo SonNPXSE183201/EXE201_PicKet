@@ -30,6 +30,16 @@ export const spacing = {
   large: 32,
 } as const;
 
+/** Fixed mobile geometry from the 360 px Final UI reference. */
+export const mobileLayout = {
+  screenWidth: 360,
+  screenInset: 20,
+  dockInset: 16,
+  dockHeight: 68,
+  dockBottom: 14,
+  floatingActionSize: 56,
+} as const;
+
 export const typography = {
   display: { fontSize: 29, lineHeight: 35, fontWeight: "800" },
   title: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
