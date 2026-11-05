@@ -1,3 +1,4 @@
+import { SwipeableRow } from "@/core/ui/swipeable-row";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import type { Transaction } from "@picket/domain";
@@ -42,11 +43,12 @@ export function signedAmount(kind: string, amount: number, currency: string | un
 }
 
 /** One day = one receipt paper (Figma Ngày …). */
-export function DayPaper({ label, total, currency, rows, categories, accountNames, accountCurrency, onOpen, prefix }: {
-  label: string; total: number; currency?: string; rows: Transaction[]; categories: Category[]; accountNames: Map<string, string>; accountCurrency: Map<string, string>; onOpen(id: string): void; prefix?: string;
+export function DayPaper({ label, total, currency, rows, categories, accountNames, accountCurrency, onOpen, onArchive, prefix }: {
+  label: string; total: number; currency?: string; rows: Transaction[]; categories: Category[]; accountNames: Map<string, string>; accountCurrency: Map<string, string>; onOpen(id: string): void; onArchive?(item: Transaction): void; prefix?: string;
 }) {
   const { colors } = useMobileStyles(() => ({}));
   const { language } = useAppTheme();
+  const archiveLabel = useFigmaCopy()("archiveConfirm");
   const categoryById = new Map(categories.map((item) => [item.id, item]));
   return <View style={figmaShadow("paper")}>
     <View style={{ backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 14, paddingBottom: 12, paddingHorizontal: 16, gap: 8 }}>
@@ -58,8 +60,9 @@ export function DayPaper({ label, total, currency, rows, categories, accountName
         const category = categoryById.get(item.categoryId ?? "");
         const tile = categoryTile(category?.icon ?? null, category?.name || item.title, item.kind === "income", colors);
         const color = item.kind === "expense" ? colors.expense : item.kind === "transfer" ? colors.primary : colors.income;
-        return <TransactionRow key={item.id} tileColor={tile.color} tile={<AppIcon name={tile.name} size={18} color={colors.text} />} title={item.title}
+        const row = <TransactionRow key={item.id} tileColor={tile.color} tile={<AppIcon name={tile.name} size={18} color={colors.text} />} title={item.title}
           meta={`${category?.name ?? ""}${category ? " · " : ""}${accountNames.get(item.accountId) ?? ""}`} amount={signedAmount(item.kind, item.amount, accountCurrency.get(item.accountId), language)} amountColor={color} onPress={() => onOpen(item.id)} />;
+        return onArchive ? <SwipeableRow key={item.id} actionLabel={archiveLabel} onAction={() => onArchive(item)}>{row}</SwipeableRow> : row;
       })}
     </View>
     <ReceiptEdge direction="bottom" />
@@ -74,9 +77,9 @@ export function dayTotal(rows: Transaction[], accountCurrency: Map<string, strin
 export function MonthSwitcher({ label, onPrev, onNext, onLabel, prevLabel, nextLabel }: { label: string; onPrev(): void; onNext(): void; onLabel(): void; prevLabel: string; nextLabel: string }) {
   const { colors } = useMobileStyles(() => ({}));
   const btn = { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.paper, alignItems: "center" as const, justifyContent: "center" as const };
-  return <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+  return <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
     <Pressable accessibilityRole="button" accessibilityLabel={prevLabel} onPress={onPrev} style={btn}><AppIcon name="chevron-left" size={16} color={colors.text} /></Pressable>
-    <Pressable accessibilityRole="button" onPress={onLabel}><Text style={[figmaType.bodyStrong, { color: colors.text }]}>{label}</Text></Pressable>
+    <Pressable accessibilityRole="button" onPress={onLabel} style={{ minHeight: 32, justifyContent: "center" }}><Text style={[figmaType.bodyStrong, { color: colors.text }]}>{label}</Text></Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel={nextLabel} onPress={onNext} style={btn}><AppIcon name="chevron-right" size={16} color={colors.text} /></Pressable>
   </View>;
 }

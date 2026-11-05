@@ -29,6 +29,7 @@ function harness(){
  "@/features/auth/auth-context":{useAuth:()=>({session:{user:{id:owner},access_token:owner},localMode:false})},
  "@/features/bills/bills-context":{useBills:()=>({bills:[]})},"@/features/budgets/budgets-context":{useBudgets:()=>({budgets:[]})},"@/features/subscriptions/subscriptions-context":{useSubscriptions:()=>({subscriptions:[]})},
  "@/features/transactions/use-transaction-history":{useTransactionHistory:()=>({transactions:[],loading:false})},"@/features/transactions/use-spending-splits":{useSpendingSplits:()=>({splits:[]})},"@/features/notifications/use-reminder-periods":{useReminderPeriods:()=>({periodsReady:true})},
+ "@/features/sync/use-pull-refresh":{usePullRefresh:()=>async()=>undefined},
  "@/features/notifications/keepsake-source":{loadReminderKeepsakes:async()=>owner==="A"?[{id:"private-A"}]:[]},
  "@/features/notifications/reminders":{collectReminders:(input:{keepsakes:unknown[]})=>{seenKeepsakes=input.keepsakes;return [];},remindersEnabled:async()=>false,readReminderIds:async()=>[],setRemindersEnabled:async()=>{writes++;await held;return true;},scheduleUserReminders:async()=>{schedules++;}},
  "@/core/ui/picket-ui":{PicketScreen:"Screen"},

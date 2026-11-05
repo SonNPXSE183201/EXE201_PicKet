@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { useState } from "react";
 import { HomeWeeklyRhythm } from "@/features/cashflow/home-weekly-rhythm";
 import { PicketText as Text } from "@/core/ui/picket-text";
@@ -31,6 +32,7 @@ export default function HomeScreen() {
 }
 
 function HomeContent({ initialMonth }: { initialMonth?: string }) {
+  const pullRefresh = usePullRefresh();
   const { colors, styles } = useMobileStyles(createStyles);
   const { language } = useAppTheme();
   const { t } = useTranslation("overview");
@@ -54,7 +56,7 @@ function HomeContent({ initialMonth }: { initialMonth?: string }) {
   };
   const money = (value: number, currency?: string) => hideBalance ? "••••••" : currency ? formatMoney(value,language,currency) : "—";
   const totalText = (field:"balance"|"income"|"expense") => totals.map(row=>money(row[field],row.currency)).join("\n") || "—";
-  if (authLoading || ((session || localMode) && !profile && (profileLoading || accountsLoading))) return <View accessibilityLabel={t("loading")} accessibilityState={{ busy: true }} style={styles.root}><PicketScreen>
+  if (authLoading || ((session || localMode) && !profile && (profileLoading || accountsLoading))) return <View accessibilityLabel={t("loading")} accessibilityState={{ busy: true }} style={styles.root}><PicketScreen onRefresh={pullRefresh}>
     <HomeHeader title={t("homeToday", { name: profile?.displayName?.trim().split(/\s+/).pop() || t("friend") })} dateText={new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long" })} bell={t("notifications")} />
     <HomeHeroSkeleton label={t("balance")} />
     <View style={styles.block}><SectionHeader overline={t("rhythmTitle")} title={t("rhythmWeekLoading")} /><WeeklySkeleton /></View>
@@ -85,7 +87,7 @@ function HomeContent({ initialMonth }: { initialMonth?: string }) {
       meta: [category?.name, account?.name].filter(Boolean).join(" · ") || new Date(item.occurredAt).toLocaleDateString(localeFor(language), { timeZone }),
       amount: account?.currencyCode ? `${sign}${formatMoney(item.amount, language, account.currencyCode)}` : "—" };
   });
-  return <View style={styles.root}><PicketScreen>
+  return <View style={styles.root}><PicketScreen onRefresh={pullRefresh}>
     <HomeHeader title={t("homeToday", { name: profile?.displayName?.trim().split(/\s+/).pop() || t("friend") })} dateText={new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long", timeZone })} bell={t("notifications")} />
     <HomeHero label={t("balance")} balance={totalText("balance")} lines={Math.max(1, totals.length)} hidden={hideBalance} onToggle={toggleBalance} toggleLabel={hideBalance ? t("showBalance") : t("hideBalance")} wallets={accounts.length === 1 ? undefined : t("homeWallets", { count: accounts.length })} onWallets={() => router.navigate(routes.accounts)} stub={stub} />
     {(!summary || summary.unscopedTransactionIds.length>0) && <Text accessibilityRole="alert" style={{color:colors.expense}}>{t("summaryError")}</Text>}

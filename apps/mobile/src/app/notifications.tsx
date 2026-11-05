@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { notificationScreenCopy } from "@/features/notifications/notification-screen-copy";
 import { useReminderCalendar } from "@/features/notifications/use-reminder-calendar";
@@ -38,6 +39,7 @@ import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { useReminderPeriods } from "@/features/notifications/use-reminder-periods";
 
 export default function NotificationsScreen() {
+  const pullRefresh = usePullRefresh();
   const { t: tx } = useTranslation("notifications");
   const { language } = useAppTheme();
   const { colors, styles } = useMobileStyles(createStyles);
@@ -269,7 +271,7 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <PicketScreen>
+    <PicketScreen onRefresh={pullRefresh}>
       <TopAppBar title={tx("Thông báo")} />
 
       {message && (

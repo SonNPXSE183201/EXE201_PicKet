@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { useMgmtCopy } from "@/features/management/management-copy";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useTranslation } from "react-i18next";
@@ -21,6 +22,7 @@ import { useBills } from "@/features/bills/bills-context";
 const monthCloseScene = require("../../../assets/management/month-close-scene.png");
 
 export default function BillsScreen() {
+  const pullRefresh = usePullRefresh();
   const { t, i18n } = useTranslation("bills");
   const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
@@ -45,15 +47,15 @@ export default function BillsScreen() {
 
   const header = <TopAppBar title={m.billsTitle} action={<IconButton icon="plus" label={m.addBill} variant="surface" onPress={add} />} />;
 
-  if (loading && !activeBills.length) return <PicketScreen>{header}<View accessibilityLabel={t("loading")} style={styles.block}><Skeleton height={44} radius={12} /><Skeleton height={120} radius={18} style={{ marginTop: 14 }} /><Skeleton height={120} radius={18} style={{ marginTop: 14 }} /></View></PicketScreen>;
+  if (loading && !activeBills.length) return <PicketScreen onRefresh={pullRefresh}>{header}<View accessibilityLabel={t("loading")} style={styles.block}><Skeleton height={44} radius={12} /><Skeleton height={120} radius={18} style={{ marginTop: 14 }} /><Skeleton height={120} radius={18} style={{ marginTop: 14 }} /></View></PicketScreen>;
 
-  if (!loading && activeBills.length === 0) return <PicketScreen>{header}
+  if (!loading && activeBills.length === 0) return <PicketScreen onRefresh={pullRefresh}>{header}
     {error ? <ConnectionNotice hasData={false} onRetry={() => void refresh()} /> : null}
     <ManagementEmpty art={monthCloseScene} title={t("emptyTitle")} body={t("emptyDescription")} action={<FigmaButton variant="outline" size="medium" label={t("emptyAction")} onPress={add} />} />
   </PicketScreen>;
 
   return (
-    <PicketScreen>
+    <PicketScreen onRefresh={pullRefresh}>
       {header}
       {error ? <ConnectionNotice hasData={bills.length > 0} onRetry={() => void refresh()} /> : null}
       <View style={[styles.summary, styles.block]}>

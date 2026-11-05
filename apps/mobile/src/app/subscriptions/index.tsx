@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { useMgmtCopy } from "@/features/management/management-copy";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
@@ -20,6 +21,7 @@ import { useSubscriptions } from "@/features/subscriptions/subscriptions-context
 import { partitionSubscriptions } from "@/features/subscriptions/subscription-list";
 
 export default function SubscriptionsScreen() {
+  const pullRefresh = usePullRefresh();
   const { t, i18n } = useTranslation("subscriptions");
   const language = normalizeLanguage(i18n.resolvedLanguage ?? i18n.language);
   const m = useMgmtCopy();
@@ -40,8 +42,8 @@ export default function SubscriptionsScreen() {
   const add = () => router.push(routes.newSubscription);
   const header = <TopAppBar title={m.subsTitle} action={<IconButton icon="plus" label={m.addSub} variant="surface" onPress={add} />} />;
 
-  if (loading && subscriptions.length === 0) return <PicketScreen>{header}<View accessibilityLabel={t("loading")} style={styles.block}><Skeleton height={120} radius={18} /><Skeleton height={150} radius={18} style={{ marginTop: 20 }} /></View></PicketScreen>;
-  if (!loading && active.length === 0 && paused.length === 0) return <PicketScreen>{header}
+  if (loading && subscriptions.length === 0) return <PicketScreen onRefresh={pullRefresh}>{header}<View accessibilityLabel={t("loading")} style={styles.block}><Skeleton height={120} radius={18} /><Skeleton height={150} radius={18} style={{ marginTop: 20 }} /></View></PicketScreen>;
+  if (!loading && active.length === 0 && paused.length === 0) return <PicketScreen onRefresh={pullRefresh}>{header}
     {error ? <ConnectionNotice hasData={false} onRetry={() => void refresh()} /> : null}
     <ManagementEmpty art="receipt" title={t("emptyTitle")} body={t("emptyDescription")} action={<FigmaButton variant="outline" size="medium" label={t("emptyAction")} onPress={add} />} />
   </PicketScreen>;
@@ -71,7 +73,7 @@ export default function SubscriptionsScreen() {
   );
 
   return (
-    <PicketScreen>
+    <PicketScreen onRefresh={pullRefresh}>
       {header}
       {error ? <ConnectionNotice hasData={subscriptions.length > 0} onRetry={() => void refresh()} /> : null}
       <View style={[styles.block, figmaShadow("paper")]}>

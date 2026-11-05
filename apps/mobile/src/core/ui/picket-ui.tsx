@@ -8,21 +8,22 @@ import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { spacing } from "@/core/ui/mobile-palette";
 import type { PropsWithChildren, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewStyle } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { AppIcon, type IconName } from "./app-icon";
+import { useKeyboardAvoidingScroll, useKeyboardHeight } from "./keyboard-avoiding-scroll";
 import { floatingActionBottom, floatingActionIconOnly } from "./floating-action-layout";
 
 import { AccessiblePressable as Pressable } from "./accessible-pressable";
 
-export function PicketScreen({ children }: PropsWithChildren) {
+export function PicketScreen({ children, onRefresh }: PropsWithChildren<{ onRefresh?: () => void | Promise<unknown> }>) {
   const { styles } = useMobileStyles(createStyles);
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <PicketScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <PicketScrollView onRefresh={onRefresh} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {children}
       </PicketScrollView>
       </KeyboardAvoidingView>
@@ -57,7 +58,10 @@ export function ActionSheet({ title, visible, onClose, children }: PropsWithChil
   const { t } = useTranslation("common");
   const { styles } = useMobileStyles(createStyles);
   const insets = useSafeAreaInsets();
-  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.sheetBackdrop}><Pressable accessibilityLabel={t("Đóng biểu mẫu")} onPress={onClose} style={StyleSheet.absoluteFill} /><View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: Math.max(16, insets.bottom) }]}><View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.sheetHandle} /><View style={styles.sheetHeading}><Text accessibilityRole="header" style={styles.sheetTitle}>{title}</Text><IconButton icon="close" label={t("Đóng biểu mẫu")} onPress={onClose} /></View><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.sheetContent}>{children}</ScrollView></View></KeyboardAvoidingView></Modal>;
+  const keyboardHeight = useKeyboardHeight();
+  const scroller = useRef<ScrollView>(null);
+  const keyboard = useKeyboardAvoidingScroll(scroller);
+  return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={[styles.sheetBackdrop, { paddingBottom: keyboardHeight }]}><Pressable accessibilityLabel={t("Đóng biểu mẫu")} onPress={onClose} style={StyleSheet.absoluteFill} /><View accessibilityViewIsModal style={[styles.sheet, { paddingBottom: keyboardHeight ? 16 : Math.max(16, insets.bottom) }]}><View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.sheetHandle} /><View style={styles.sheetHeading}><Text accessibilityRole="header" style={styles.sheetTitle}>{title}</Text><IconButton icon="close" label={t("Đóng biểu mẫu")} onPress={onClose} /></View><ScrollView ref={scroller} onScroll={keyboard.onScroll} onTouchEnd={() => setTimeout(keyboard.reveal, 250)} scrollEventThrottle={16} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={styles.sheetContent}>{children}</ScrollView></View></KeyboardAvoidingView></Modal>;
 }
 
 export function FloatingAction({ label, icon = "plus", iconOnly = false, onPress }: { label: string; icon?: IconName; iconOnly?: boolean; onPress(): void }) {

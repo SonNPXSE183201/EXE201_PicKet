@@ -19,11 +19,8 @@ test("shared pressable enforces a 48 dp minimum touch target", () => {
   assert.match(source, /minimumTouchTarget\s*=\s*48/);
   assert.match(source, /minHeight:\s*minimumTouchTarget/);
   assert.match(source, /minWidth:\s*minimumTouchTarget/);
-  assert.match(
-    source,
-    /typeof style === "function" \? style\(state\) : style,\s*styles\.minimumTarget/,
-    "the minimum target style must be applied after caller styles so it cannot be overridden",
-  );
+  assert.match(source, /compactW|compactH/, "visually compact controls keep their Figma size and extend the touch area with hitSlop");
+  assert.match(source, /hitSlop/);
 });
 
 test("screens do not import React Native Pressable directly", () => {

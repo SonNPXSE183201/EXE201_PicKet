@@ -1,3 +1,5 @@
+import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { paperControl, paperShape } from "@/core/theme/paper-foundations";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
@@ -11,11 +13,11 @@ import { useProfile } from "@/features/profile/profile-context";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { StyleSheet, View } from "react-native";
+import { Modal, StyleSheet, View } from "react-native";
 import { routes } from "@/core/navigation/routes";
 import { filterTransactions } from "@/core/sync/filter-transactions";
 import { AppIcon } from "@/core/ui/app-icon";
-import { Chip, Skeleton } from "@/core/ui/figma-ui";
+import { Chip, FigmaButton, Skeleton } from "@/core/ui/figma-ui";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { ChoiceChip, ConnectionNotice, FloatingAction, IconButton, MenuRow, PicketScreen, Surface } from "@/core/ui/picket-ui";
 import { useAccounts } from "@/features/accounts/accounts-context";
@@ -43,6 +45,7 @@ export default function TransactionsScreen() {
 const KINDS: [string, "all" | "expense" | "incomeKind" | "transfer" | "refund"][] = [["", "all"], ["expense", "expense"], ["income", "incomeKind"], ["transfer", "transfer"], ["refund", "refund"]];
 
 function TransactionsContent({ params }: { params: TransactionRouteParams }) {
+  const pullRefresh = usePullRefresh();
   const { colors, styles } = useMobileStyles(createStyles);
   const { language } = useAppTheme();
   const { t } = useTranslation("transactions");
@@ -64,7 +67,9 @@ function TransactionsContent({ params }: { params: TransactionRouteParams }) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const { session, localMode } = useAuth();
   const { accounts } = useAccounts();
-  const { categories, error, loading, refresh, transactions } = useTransactions();
+  const { archive, categories, error, loading, refresh, transactions } = useTransactions();
+  const [archiving, setArchiving] = useState<(typeof transactions)[number] | null>(null);
+  const [archiveError, setArchiveError] = useState(false);
   const { flush, lastSyncedAt, pendingCount, syncing } = useSync();
 
   useEffect(() => {
@@ -111,7 +116,7 @@ function TransactionsContent({ params }: { params: TransactionRouteParams }) {
 
   return (
     <View style={styles.root}>
-      <PicketScreen>
+      <PicketScreen onRefresh={pullRefresh}>
         <View style={styles.page}>
           <View style={styles.appBar}>
             <Text accessibilityRole="header" style={styles.title}>{t("Chi tiêu")}</Text>
@@ -217,11 +222,26 @@ function TransactionsContent({ params }: { params: TransactionRouteParams }) {
             days.map((group) => (
               <DayPaper key={group.key} label={selectedDay ? dayLabel(group.key, language, group.today, false) : group.label} prefix={selectedDay ? copy("viewing") : undefined}
                 total={dayTotal(group.rows, accountCurrency, currency)} currency={currency} rows={group.rows} categories={categories} accountNames={accountNames} accountCurrency={accountCurrency}
-                onOpen={(id) => router.push(routes.transaction(id))} />
+                onOpen={(id) => router.push(routes.transaction(id))} onArchive={(item) => { setArchiveError(false); setArchiving(item); }} />
             ))
           )}
         </View>
       </PicketScreen>
+      <Modal transparent animationType="fade" visible={archiving !== null} onRequestClose={() => setArchiving(null)}>
+        <View style={styles.backdrop}>
+          <View accessibilityViewIsModal style={styles.dialog}>
+            <Text accessibilityRole="header" style={[figmaType.titleSection, { fontSize: 18, color: colors.text }]}>{copy("archiveTitle")}</Text>
+            <Text style={[figmaType.bodySmall, { color: archiveError ? colors.expense : colors.muted }]}>{archiveError ? t("Không xóa được. Dữ liệu có thể đã đổi trên thiết bị khác.") : copy("archiveBody", { amount: formatMoney(Number(archiving?.amount ?? 0), language, currency), pocket: "" })}</Text>
+            <View style={styles.dialogActions}>
+              <FigmaButton variant="text" size="medium" label={copy("later")} onPress={() => setArchiving(null)} />
+              <FigmaButton size="medium" label={copy("archiveConfirm")} onPress={() => {
+                const target = archiving; if (!target) return;
+                void archive(target.id, target.version).then(() => setArchiving(null)).catch((error: unknown) => { if (isOfflineQueuedError(error)) setArchiving(null); else setArchiveError(true); });
+              }} />
+            </View>
+          </View>
+        </View>
+      </Modal>
       {!initialLoading && <FloatingAction iconOnly label={t("Thêm giao dịch")} onPress={() => router.push(routes.newTransaction)} />}
     </View>
   );
@@ -230,6 +250,9 @@ function TransactionsContent({ params }: { params: TransactionRouteParams }) {
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
+    backdrop: { flex: 1, backgroundColor: "rgba(48,33,50,0.45)", alignItems: "center", justifyContent: "center", padding: 28 },
+    dialog: { alignSelf: "stretch", backgroundColor: colors.paper, borderRadius: 28, padding: 24, gap: 12 },
+    dialogActions: { flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: 8, marginTop: 8 },
     page: { gap: 20, paddingTop: 8 },
     appBar: { flexDirection: "row", alignItems: "center", gap: 10 },
     title: { ...figmaType.display, flex: 1, color: colors.text },

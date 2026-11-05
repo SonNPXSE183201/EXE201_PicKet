@@ -45,7 +45,7 @@ export function NavigationShell() {
       const active = pathname === item.path || (item.path === "/planning" && pathname === "/budgets");
       const label = language === "vi" ? (profileTab ? profile?.displayName?.trim().split(/\s+/).pop() || item.label : item.label) : item.english;
       const initial = (profile?.displayName?.trim().split(/\s+/).pop() || label).charAt(0).toUpperCase();
-      return <Pressable clipFeedback={!camera} key={item.path} accessibilityRole={camera ? "button" : "tab"} accessibilityLabel={label} accessibilityState={camera ? undefined : { selected: active }} android_ripple={camera ? undefined : { color: colors.selectedSurface + "55", borderless: false }} onPress={() => { if (!active) void navigate(item.path as Href); }} hitSlop={camera ? { top: 22 } : 0} style={camera ? styles.cameraDestination : styles.destination}>
+      return <Pressable clipFeedback={false} key={item.path} accessibilityRole={camera ? "button" : "tab"} accessibilityLabel={label} accessibilityState={camera ? undefined : { selected: active }} onPress={() => { if (!active) void navigate(item.path as Href); }} hitSlop={camera ? { top: 22 } : 0} style={camera ? styles.cameraDestination : styles.destination}>
         {camera ? <View style={styles.camera}><AppIcon name={item.icon} size={24} color={colors.camera} /></View>
           : <View style={[styles.indicator, active && styles.indicatorActive]}>{profileTab ? <View style={styles.avatar}><Text style={styles.avatarText}>{initial}</Text></View> : <AppIcon name={item.icon} size={20} color={active ? colors.onPrimary : colors.muted} />}</View>}
         <Text style={[styles.label, active && styles.activeLabel, camera && styles.cameraLabel]}>{label}</Text>

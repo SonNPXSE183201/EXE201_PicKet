@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
@@ -75,6 +76,7 @@ function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry
 export default function ReviewInboxScreen() {
   const { colors, styles } = useMobileStyles(createStyles);
   const copy = useFigmaCopy();
+  const pullRefresh = usePullRefresh();
   const { session, localMode } = useAuth();
   const { profile } = useProfile();
   const timeZone = profile?.timezone ?? "Asia/Ho_Chi_Minh";
@@ -109,7 +111,7 @@ export default function ReviewInboxScreen() {
   }
   const options = (item: Transaction) => categories.filter((category) => category.kind === item.kind || category.kind === "both").map((category) => { const t = categoryTile(category.icon, category.name, item.kind === "income", colors); return { id: category.id, name: category.name, icon: t.name, tint: t.color }; });
 
-  return <FigmaScreen>
+  return <FigmaScreen onRefresh={pullRefresh}>
     <ChildBar title={copy("reviewTitle")} />
     {session && <ReceiptReviews key={`${session.user.id}:${receiptAttempt}`} accessToken={session.access_token} onRetry={() => setReceiptAttempt((n) => n + 1)} />}
     {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><ErrorLine>{error} Chạm để thử lại.</ErrorLine></Pressable>}

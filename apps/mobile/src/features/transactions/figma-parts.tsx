@@ -1,3 +1,4 @@
+import { FlatField } from "@/core/ui/picket-text-input";
 import type { PropsWithChildren, ReactNode } from "react";
 import { View, type StyleProp, type ViewStyle } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,11 +25,11 @@ export function ChildBar({ title, onBack, backDisabled, action, closeIcon }: { t
 }
 
 /** Scroll screen with an optional pinned bottom bar (primary action). */
-export function FigmaScreen({ children, footer, gap = 20 }: PropsWithChildren<{ footer?: ReactNode; gap?: number }>) {
+export function FigmaScreen({ children, footer, gap = 20, onRefresh }: PropsWithChildren<{ footer?: ReactNode; gap?: number; onRefresh?: () => void | Promise<unknown> }>) {
   const { colors } = useMobileStyles(() => ({}));
   const insets = useSafeAreaInsets();
   return <SafeAreaView style={{ flex: 1, backgroundColor: colors.canvas }}>
-    <PicketScrollView contentContainerStyle={{ gap, paddingTop: 16, paddingBottom: footer ? 96 : 24 }}>{children}</PicketScrollView>
+    <PicketScrollView onRefresh={onRefresh} contentContainerStyle={{ gap, paddingTop: 16, paddingBottom: footer ? 96 : 24 }}>{children}</PicketScrollView>
     {footer ? <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, paddingHorizontal: 20, paddingTop: 12, paddingBottom: Math.max(16, insets.bottom), backgroundColor: colors.canvas }}>{footer}</View> : null}
   </SafeAreaView>;
 }
@@ -46,7 +47,7 @@ export function FormRow({ icon, label, value, onPress, trailing, tone, children,
     <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: tone === "warning" ? colors.warningSurface : colors.selectedSurface, alignItems: "center", justifyContent: "center" }}><AppIcon name={icon} size={18} color={colors.text} /></View>
     <View style={{ flex: 1, minWidth: 1 }}>
       <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{label}</Text>
-      {children ?? <Text numberOfLines={1} style={{ fontSize: 15, lineHeight: 22, fontWeight: "800", color: colors.text }}>{value}</Text>}
+      {children ? <FlatField>{children}</FlatField> : <Text numberOfLines={1} style={{ fontSize: 15, lineHeight: 22, fontWeight: "800", color: colors.text }}>{value}</Text>}
     </View>
     {trailing ?? (onPress ? <AppIcon name="chevron-right" size={20} color={colors.text} /> : null)}
   </View>;
@@ -59,7 +60,7 @@ export function AmountPaper({ overline, children, footer }: { overline: string; 
   return <View style={figmaShadow("paper")}>
     <View style={{ backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 20, paddingBottom: 14, paddingHorizontal: 16, alignItems: "center", gap: 6 }}>
       <Overline>{overline}</Overline>
-      {children}
+      <FlatField>{children}</FlatField>
       <View style={{ alignSelf: "stretch", marginTop: 6 }}><ReceiptDivider /></View>
       {footer}
     </View>

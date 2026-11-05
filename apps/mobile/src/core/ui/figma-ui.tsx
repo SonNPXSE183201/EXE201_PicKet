@@ -10,8 +10,12 @@ import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 /** Soft Figma drop shadows (stub, paper, camera, dock) as RN boxShadow. */
 export function figmaShadow(name: keyof typeof figmaShadows, tint?: string): ViewStyle {
   const s = figmaShadows[name];
-  const alpha = Math.round(s.opacity * 255).toString(16).padStart(2, "0");
-  return { boxShadow: [{ offsetX: 0, offsetY: s.offsetY, blurRadius: s.radius, color: (tint ?? s.color) + alpha }] };
+  const hex = (opacity: number) => Math.round(Math.min(1, opacity) * 255).toString(16).padStart(2, "0");
+  // Device screens render the 7% Figma shadow almost invisibly, so paper/stub get a slightly firmer ambient layer plus a tight contact shadow.
+  const lift = name === "paper" || name === "stub" ? 1.6 : 1;
+  const layers: { offsetX: number; offsetY: number; blurRadius: number; color: string }[] = [{ offsetX: 0, offsetY: s.offsetY, blurRadius: s.radius, color: (tint ?? s.color) + hex(s.opacity * lift) }];
+  if (lift > 1) layers.push({ offsetX: 0, offsetY: 1, blurRadius: 2, color: (tint ?? s.color) + hex(0.08) });
+  return { boxShadow: layers };
 }
 
 export const figmaText = figmaType;
@@ -48,7 +52,7 @@ export function FigmaButton({ label, onPress, variant = "primary", size = "large
   const bg = variant === "primary" ? colors.primary : variant === "secondary" ? colors.selectedSurface : variant === "outline" ? colors.surface : "transparent";
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
     style={({ pressed }) => [styles.button, { height: size === "large" ? 48 : 40, backgroundColor: bg }, variant === "outline" && { borderWidth: 1, borderColor: colors.border }, fullWidth && { alignSelf: "stretch" }, (disabled || busy) && { opacity: .5 }, pressed && { opacity: .75 }, style]}>
-    {icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text style={[figmaType.button, { color: fg }]}>{label}</Text>
+    {icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text numberOfLines={1} style={[figmaType.button, { color: fg, flexShrink: 0 }]}>{label}</Text>
   </Pressable>;
 }
 

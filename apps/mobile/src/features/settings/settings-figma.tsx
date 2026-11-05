@@ -1,3 +1,4 @@
+import { FlatField } from "@/core/ui/picket-text-input";
 import type { PropsWithChildren, ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { figmaType } from "@picket/design-tokens";
@@ -47,7 +48,7 @@ export function FieldRow({ icon, meta, title, onPress, trailing, tone = "default
     <View style={styles.tile}><AppIcon name={icon} size={20} color={colors.text} /></View>
     <View style={styles.rowText}>
       {meta ? <Text numberOfLines={1} style={{ color: colors.muted, fontWeight: "600", fontSize: 11, lineHeight: 16 }}>{meta}</Text> : null}
-      {children ?? <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{title}</Text>}
+      {children ? <FlatField>{children}</FlatField> : <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{title}</Text>}
     </View>
     {end}
   </>;

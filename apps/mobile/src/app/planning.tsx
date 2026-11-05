@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { paperControl , paperShape } from "@/core/theme/paper-foundations";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
@@ -35,6 +36,7 @@ const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()
 type ReviewSnapshot = { scope: string; transactions: unknown; allocations: unknown; budgets: unknown; limits: unknown };
 
 export default function PlanningScreen() {
+  const pullRefresh = usePullRefresh();
   const {t,i18n}=useTranslation("planning");
   const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
   const money=(amount:number)=>formatMoney(amount,language,"VND");
@@ -139,7 +141,7 @@ export default function PlanningScreen() {
     catch { if(isCurrent())setMessage("thresholdFailed"); }
     finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
-  return <PicketScreen>
+  return <PicketScreen onRefresh={pullRefresh}>
     <TopAppBar title={t("title")} back={false} />
     <Text style={styles.subtitle}>{localMode ? t("deviceSubtitle") : t("cloudSubtitle")}</Text>
     {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}

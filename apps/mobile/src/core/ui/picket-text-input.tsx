@@ -1,13 +1,19 @@
-import { paperControl, paperShape } from "@/core/theme/paper-foundations";
 import { isLoaded } from "expo-font";
+import { paperTextStyle } from "@/core/theme/paper-text-style";
 
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { useLayoutEffect, useRef, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 import { formatMoneyInput } from "./money-input";
 import { editNativeMoneyInput, shouldReleaseMoneySelection } from "./native-money-input";
 import { DateField } from "./date-field";
+
+const FlatFieldContext = createContext(false);
+/** Inputs inside a Figma FieldRow sit flat on the paper (label above, bare value, underline on focus). */
+export function FlatField({ children }: { children: ReactNode }) {
+  return <FlatFieldContext.Provider value>{children}</FlatFieldContext.Provider>;
+}
 
 /** Shared focus, selection and disabled styling; screen-specific amount layouts stay intact. */
 export function PicketTextInput({
@@ -21,6 +27,8 @@ export function PicketTextInput({
   ...props
 }: TextInputProps & { money?: boolean; date?: boolean; borderless?: boolean }) {
   const { colors, styles, theme } = useMobileStyles(createStyles);
+  // Hero amount inputs (>= 24pt) are bare numbers on the paper, like inside a FieldRow.
+  const flat = useContext(FlatFieldContext) || ((StyleSheet.flatten(style) as { fontSize?: number } | undefined)?.fontSize ?? 0) >= 24;
   const [focused, setFocused] = useState(false);
   const previousDisplay = useRef(formatMoneyInput(props.value ?? ""));
   const changeSelection = useRef<unknown>(undefined);
@@ -45,7 +53,7 @@ export function PicketTextInput({
   return (
     <TextInput
       {...props}
-      underlineColorAndroid={props.underlineColorAndroid ?? (borderless ? "transparent" : undefined)}
+      underlineColorAndroid={props.underlineColorAndroid ?? (borderless || flat ? "transparent" : undefined)}
       keyboardAppearance={props.keyboardAppearance ?? theme}
       selection={props.selection ?? (money ? moneySelection : undefined)}
       onSelectionChange={(event) => {
@@ -84,7 +92,9 @@ export function PicketTextInput({
       style={[
         styles.input,
         style,
-        focused && !borderless && styles.focused,
+        flat && styles.flat,
+        flat && focused && styles.flatFocused,
+        focused && !borderless && !flat && styles.focused,
         borderless && { borderWidth: 0, borderColor: "transparent", backgroundColor: "transparent" },
         editable === false && styles.disabled,
       ]}
@@ -95,18 +105,19 @@ export function PicketTextInput({
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
     input: {
-      fontWeight: "400",
-      fontFamily: isLoaded("PicketDisplay") ? "PicketDisplay" : undefined,
+      // Figma field: white paper, 1px border, 14/700 Nunito value, 11-12/600 muted placeholder.
+      ...paperTextStyle({ fontSize: 14, fontWeight: "700", lineHeight: 21 }, isLoaded("PicketDisplay")),
       borderWidth: 1,
-      borderColor: colors.controlBorder,
-      backgroundColor: colors.surface,
-      minHeight: paperControl.height,
+      borderColor: colors.border,
+      backgroundColor: colors.paper,
+      minHeight: 52,
       paddingHorizontal: 16,
       paddingVertical: 10,
-      color: colors.ink,
-      fontSize: 16,
-      borderRadius: paperShape.input,
+      color: colors.text,
+      borderRadius: 16,
     },
-    focused: { borderColor: colors.focusRing, borderWidth: 2 },
-    disabled: { backgroundColor: colors.disabledSurface, color: colors.disabledText },
+    flat: { borderWidth: 0, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: "transparent", minHeight: 24, height: undefined, paddingHorizontal: 0, paddingVertical: 0, borderRadius: 0 },
+    flatFocused: { borderBottomColor: colors.primary, borderBottomWidth: 1.5 },
+    focused: { borderColor: colors.primary, borderWidth: 1.5, backgroundColor: colors.paper },
+    disabled: { backgroundColor: colors.elevated, color: colors.muted },
   });

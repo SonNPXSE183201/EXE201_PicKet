@@ -18,7 +18,7 @@ export function WeeklyDayBars({ days, today, selected, hidden = false, onSelect,
     const future = day.expense === null;
     const active = day.day === selected;
     const level = future ? 0 : Math.min(1, (day.expense ?? 0) / maximum);
-    return <Pressable key={day.day} accessibilityRole="radio" accessibilityState={{ checked: active, disabled: future }} accessibilityLabel={label(day, index)} disabled={future} onPress={() => onSelect(day.day)} hitSlop={0} style={{ width: 44, alignItems: "center", gap: 6, minHeight: 44 }}>
+    return <Pressable key={day.day} accessibilityRole="radio" accessibilityState={{ checked: active, disabled: future }} accessibilityLabel={label(day, index)} disabled={future} onPress={() => onSelect(day.day)} hitSlop={0} style={{ flex: 1, minWidth: 0, alignItems: "center", gap: 6, minHeight: 44 }}>
       {!future && <Text style={[figmaType.micro, { color: active ? colors.primary : colors.muted }]}>{hidden ? "•••" : compact(day.expense ?? 0)}</Text>}
       <View style={{ width: 26, height: 52, borderRadius: 13, overflow: "hidden", justifyContent: "flex-end", backgroundColor: active ? colors.selectedSurface : colors.border }}>
         {level > 0 && !hidden && <View style={{ width: 26, height: Math.max(26, Math.round(52 * level)), borderRadius: 13, backgroundColor: active ? colors.primary : colors.pocketLilac }} />}

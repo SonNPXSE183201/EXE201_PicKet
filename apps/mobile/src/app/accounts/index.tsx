@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
@@ -19,6 +20,7 @@ import { useProfile } from "@/features/profile/profile-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function AccountsScreen() {
+  const pullRefresh = usePullRefresh();
   const { colors, styles } = useMobileStyles(createStyles);
   const { language } = useAppTheme();
 
@@ -64,7 +66,7 @@ export default function AccountsScreen() {
 
   return (
     <View style={styles.root}>
-      <PicketScreen>
+      <PicketScreen onRefresh={pullRefresh}>
         <View style={styles.block}>
           <TopAppBar title="Ví của bạn" action={<IconButton icon="plus" label="Thêm tài khoản" variant="surface" onPress={() => router.push(routes.newAccount)} />} />
         </View>
