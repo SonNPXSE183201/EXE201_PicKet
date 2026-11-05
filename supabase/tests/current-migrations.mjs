@@ -11,6 +11,7 @@ const suites = [
   "revenue-ledger",
   "billing-promotions",
   "app-announcements",
+  "app-releases",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",

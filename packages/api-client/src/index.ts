@@ -869,6 +869,12 @@ export class PicketApiClient {
   saveAnnouncement(accessToken:string,announcement:Record<string,unknown>,reason:string):Promise<Record<string,unknown>> {
     return this.request('/v1/admin/announcements',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({announcement,reason})});
   }
+  adminReleases<T=Record<string,unknown>>(accessToken:string):Promise<T> {
+    return this.request('/v1/admin/releases',{headers:this.authHeaders(accessToken)});
+  }
+  saveRelease(accessToken:string,release:Record<string,unknown>,reason:string):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/releases',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({release,reason})});
+  }
   adminPromotions<T=Record<string,unknown>>(accessToken:string):Promise<T> {
     return this.request('/v1/admin/promotions',{headers:this.authHeaders(accessToken)});
   }

@@ -44,6 +44,7 @@ export function AppUpdateSection() {
       <Text accessibilityLiveRegion="polite" style={styles.description}>{description}</Text>
       {busy && <ActivityIndicator color={colors.link} accessibilityLabel={t(state.phase === "checking" ? "checkingLabel" : state.phase === "opening-installer" ? "installerLabel" : "downloadingLabel")} />}
       {state.phase === "downloading" && <View accessibilityRole="progressbar" accessibilityLabel={t("progress")} accessibilityValue={{ min: 0, max: 100, now: state.progress }}><Text style={styles.percent}>{state.progress}%</Text></View>}
+      {state.phase === "available" && state.release?.required && <Text accessibilityRole="alert" style={styles.description}>{t("required")}</Text>}
       {state.phase === "available" && <Action label={t("download")} onPress={() => void controller.download()} />}
       {state.phase === "downloading" && <Action label={t("cancel")} secondary onPress={() => controller.cancel()} />}
       {state.phase === "permission" && <Action label={t("allow")} onPress={permissions} />}

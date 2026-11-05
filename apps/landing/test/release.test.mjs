@@ -48,3 +48,11 @@ test('renders truthful release data without unresolved tokens', async () => {
   assert.ok(!html.includes('{{'));
   assert.throws(() => renderRelease('{{UNKNOWN}}', valid));
 });
+
+test('registry manifest becomes release.json without unknown fields', async () => {
+  const { releaseFromRegistry } = await api();
+  const out = releaseFromRegistry({ ...valid, minSupportedVersionCode: 1, internalNote: 'x' });
+  assert.deepEqual(Object.keys(out).sort(), [...Object.keys(valid), 'minSupportedVersionCode'].sort());
+  assert.throws(() => releaseFromRegistry({ ...valid, minSupportedVersionCode: 5 }), /minimum/);
+  assert.throws(() => releaseFromRegistry({ ...valid, abi: 'x86_64' }));
+});

@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "test:coverage": "node --experimental-test-coverage --test-coverage-include=src/release.mjs --test test/*.test.mjs",
-    "build": "node scripts/build.mjs"
+    "build": "node scripts/build.mjs",
+    "sync:release": "node scripts/sync-release.mjs"
   }
 }

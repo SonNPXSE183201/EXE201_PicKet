@@ -147,3 +147,33 @@ export async function saveAnnouncementAction(form: FormData) {
   revalidatePath("/", "layout");
   redirect("/admin/announcements?saved=1");
 }
+export async function saveReleaseAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  const id = String(form.get("id") ?? "");
+  const text = (key: string) => String(form.get(key) ?? "").trim();
+  const int = (key: string) => (text(key) ? Number(text(key)) : null);
+  try {
+    await api.saveRelease(
+      accessToken,
+      {
+        ...(id ? { id, revision: Number(form.get("revision")) } : { channel: text("channel") }),
+        versionName: text("versionName"),
+        versionCode: int("versionCode"),
+        ...(form.has("status") ? { status: text("status") } : {}),
+        sha256: text("sha256").toLowerCase(),
+        bytes: int("bytes"),
+        filename: text("filename"),
+        abi: text("abi"),
+        minSdk: int("minSdk"),
+        minSupportedCode: int("minSupportedCode"),
+        notesVi: text("notesVi"),
+        notesEn: text("notesEn"),
+      },
+      text("reason"),
+    );
+  } catch {
+    redirect(`/admin/releases?${id ? `edit=${id}&` : ""}error=save`);
+  }
+  revalidatePath("/admin", "layout");
+  redirect("/admin/releases?saved=1");
+}

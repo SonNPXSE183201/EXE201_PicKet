@@ -234,6 +234,10 @@ def cycle():
     except (FileNotFoundError, ValueError):
         state = {}
     health()
+    try:
+        release_readback()
+    except Exception:
+        source_failure('release_readback', 'Release readback unavailable; registry unchanged')
     for source, run in [('google_play_installs', play_reports), ('apk_access', apk_logs), ('google_play_vitals', play_vitals), ('google_play_financial', play_financial)]:
         try:
             run(state)
@@ -246,6 +250,54 @@ def cycle():
     temporary = STATE.with_suffix('.tmp')
     temporary.write_text(json.dumps(state))
     os.replace(temporary, STATE)
+
+
+PLAY_TRACKS = {'internal': 'play_internal', 'alpha': 'play_alpha', 'beta': 'play_beta', 'production': 'play_production'}
+
+
+def play_track_rows(tracks):
+    """Map Publisher API tracks to registry rows. Unknown/custom tracks are ignored."""
+    rows = []
+    for track in tracks:
+        channel = PLAY_TRACKS.get(track.get('track'))
+        if not channel:
+            continue
+        for release in track.get('releases', []):
+            for code in release.get('versionCodes', []):
+                if str(code).isdigit():
+                    rows.append({'channel': channel, 'versionCode': int(code), 'status': release.get('status'),
+                                 'name': release.get('name'), 'userFraction': release.get('userFraction')})
+    return rows
+
+
+def release_readback():
+    """Read-only checks: the public landing manifest and (opt-in) Play tracks.
+
+    Play is read through a temporary edit that is always deleted and never
+    committed, so closed testing and every other track stay untouched.
+    """
+    request = urllib.request.Request('https://picketfinance.com/release.json', headers={'Accept': 'application/json', 'Cache-Control': 'no-cache'})
+    with urllib.request.urlopen(request, timeout=15) as response:
+        manifest = json.loads(response.read(65536))
+    call_rpc('release_readback', {'p_source': 'landing_probe', 'p_rows': [{
+        'versionCode': manifest.get('versionCode'), 'sha256': manifest.get('sha256'), 'bytes': manifest.get('bytes')}]})
+    if os.getenv('PLAY_TRACK_READBACK') != 'true':
+        return
+    import google.auth
+    from google.auth.transport.requests import AuthorizedSession
+    credentials, _ = google.auth.default(scopes=['https://www.googleapis.com/auth/androidpublisher'])
+    session = AuthorizedSession(credentials)
+    base = 'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.picket.mobile/edits'
+    edit = session.post(base, json={}, timeout=30)
+    edit.raise_for_status()
+    edit_id = edit.json()['id']
+    try:
+        tracks = session.get(f'{base}/{edit_id}/tracks', timeout=30)
+        tracks.raise_for_status()
+        rows = play_track_rows(tracks.json().get('tracks', []))
+    finally:
+        session.delete(f'{base}/{edit_id}', timeout=30)
+    call_rpc('release_readback', {'p_source': 'play_api', 'p_rows': rows})
 
 
 def reconcile_payos():

@@ -434,6 +434,8 @@ class SupabaseGateway {
       'promotion_save',
       'announcement_list',
       'announcement_save',
+      'release_list',
+      'release_save',
       'permission_list',
       'permission_update',
       'permission_group_update',
@@ -454,6 +456,24 @@ class SupabaseGateway {
       throw const GatewayException(502, 'Invalid payment response.');
     }
     return value;
+  }
+
+  /// Public, read-only manifest of the live landing APK.
+  Future<Map<String, dynamic>?> landingRelease() async {
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/release_landing_manifest'),
+          headers: {
+            'apikey': config.supabasePublishableKey,
+            HttpHeaders.acceptHeader: ContentType.json.mimeType,
+            HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+          },
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 10));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    return value is Map<String, dynamic> ? value : null;
   }
 
   /// Public announcement feed. A signed-in caller is targeted by plan; a

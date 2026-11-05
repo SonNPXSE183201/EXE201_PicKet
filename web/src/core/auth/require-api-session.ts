@@ -89,6 +89,8 @@ function createMockApiClient(): PicketApiClient {
     async announcements() {return {maintenance:{active:false,notice:''},items:[]};},
     async adminAnnouncements() {return {announcements:[],promotions:[],incidents:[]};},
     async saveAnnouncement() {return {};},
+    async adminReleases() {return {live:{},releases:[],warnings:[]};},
+    async saveRelease() {return {};},
     async adminPermissions() {return {catalog:[{code:'revenue.read',description:'Xem doanh thu'}],rules:[],groups:[]};},
     async listBills() {
       return { bills: [] };

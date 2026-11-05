@@ -48,3 +48,13 @@ test("installed footer follows English without altering version identity",async(
   assert.equal((await load()).installedVersionLabel(installed,"en"),"Version 1.0.2 (3)");
   assert.equal((await load()).installedVersionLabel(null,"en"),"Installed version unavailable");
 });
+
+test("a registry minimum above the installed build marks the update as required", async () => {
+  const policy = await load();
+  const required = policy.resolveAppUpdate({ ...release, minSupportedVersionCode: 4 }, installed);
+  assert.equal(required.kind === "available" && required.release.required, true);
+  const optional = policy.resolveAppUpdate({ ...release, minSupportedVersionCode: 3 }, installed);
+  assert.equal(optional.kind === "available" && optional.release.required, false);
+  const bogus = policy.resolveAppUpdate({ ...release, minSupportedVersionCode: 99 }, installed);
+  assert.equal(bogus.kind === "available" && bogus.release.required, false);
+});

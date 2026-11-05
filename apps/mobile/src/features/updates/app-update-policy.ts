@@ -1,7 +1,7 @@
 export const APP_RELEASE_ORIGIN = "https://picket.51-79-207-154.sslip.io";
 export const APP_RELEASE_URL = `${APP_RELEASE_ORIGIN}/release.json`;
 export type InstalledApp = { version: string; versionCode: number; packageName: string; sdk: number; abis: string[]; playStore: boolean };
-export type AppRelease = { version: string; versionCode: number; publishedAt: string; filename: string; abi: string; minSdk: number; packageName: string; bytes: number; sha256: string; downloadUrl: string };
+export type AppRelease = { version: string; versionCode: number; publishedAt: string; filename: string; abi: string; minSdk: number; packageName: string; bytes: number; sha256: string; downloadUrl: string; required?: boolean };
 export type AppUpdateResult = { kind: "available"; release: AppRelease } | { kind: "current" | "unsupported" | "play-store" };
 
 export function resolveAppUpdate(input: unknown, installed: InstalledApp): AppUpdateResult {
@@ -24,7 +24,10 @@ export function resolveAppUpdate(input: unknown, installed: InstalledApp): AppUp
   return { kind: "available", release: { version: value.version, versionCode: value.versionCode as number,
     publishedAt: value.publishedAt, filename: value.filename, abi: value.abi, minSdk: value.minSdk as number,
     packageName: value.packageName, bytes: value.bytes as number, sha256: value.sha256,
-    downloadUrl: `${APP_RELEASE_ORIGIN}/downloads/${value.filename}` } };
+    downloadUrl: `${APP_RELEASE_ORIGIN}/downloads/${value.filename}`,
+    // The registry may mark older builds as unsupported (minSupportedVersionCode).
+    required: typeof value.minSupportedVersionCode === "number" && Number.isSafeInteger(value.minSupportedVersionCode)
+      && value.minSupportedVersionCode <= (value.versionCode as number) && installed.versionCode < value.minSupportedVersionCode } };
 }
 
 export function installedVersionLabel(app: Pick<InstalledApp, "version" | "versionCode"> | null, language: "vi" | "en" = "vi"): string {

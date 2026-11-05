@@ -39,3 +39,17 @@ export function renderRelease(template, release) {
     return values[key];
   });
 }
+
+const MANIFEST_KEYS = ['version','versionCode','publishedAt','filename','abi','minSdk','packageName','bytes','sha256','minSupportedVersionCode'];
+
+/** Normalises the registry manifest (GET /v1/releases/landing) into release.json. */
+export function releaseFromRegistry(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid registry manifest.');
+  const release = Object.fromEntries(MANIFEST_KEYS.filter((key) => value[key] !== undefined && value[key] !== null).map((key) => [key, value[key]]));
+  if (release.minSupportedVersionCode !== undefined
+    && (!Number.isSafeInteger(release.minSupportedVersionCode) || release.minSupportedVersionCode < 1 || release.minSupportedVersionCode > release.versionCode)) {
+    throw new Error('Invalid minimum supported version.');
+  }
+  const { downloadUrl: _ignored, ...checked } = validateRelease(release);
+  return checked;
+}

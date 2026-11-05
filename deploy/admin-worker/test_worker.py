@@ -76,3 +76,23 @@ class PaymentReconciliationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 worker.reconcile_payos()
             send.assert_not_called()
+
+
+class ReleaseReadbackTests(unittest.TestCase):
+    def test_play_tracks_map_to_registry_channels_only(self):
+        rows = worker.play_track_rows([
+            {'track': 'alpha', 'releases': [{'status': 'completed', 'versionCodes': ['28'], 'name': '1.0.14 (28)'}]},
+            {'track': 'internal', 'releases': [{'status': 'inProgress', 'versionCodes': ['31'], 'userFraction': 0.5, 'name': '1.0.16'}]},
+            {'track': 'custom-qa', 'releases': [{'status': 'completed', 'versionCodes': ['99']}]},
+        ])
+        self.assertEqual([r['channel'] for r in rows], ['play_alpha', 'play_internal'])
+        self.assertEqual(rows[1]['userFraction'], 0.5)
+
+    def test_play_readback_is_opt_in_and_landing_is_always_checked(self):
+        from unittest.mock import MagicMock
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"versionCode":28,"sha256":"a","bytes":1}'
+        with patch.dict(worker.os.environ, {'PLAY_TRACK_READBACK': 'false'}),                 patch.object(worker.urllib.request, 'urlopen', return_value=response),                 patch.object(worker, 'call_rpc') as rpc:
+            worker.release_readback()
+            rpc.assert_called_once()
+            self.assertEqual(rpc.call_args.args[1]['p_source'], 'landing_probe')
