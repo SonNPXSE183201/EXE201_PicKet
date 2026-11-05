@@ -103,7 +103,7 @@ function TransactionsContent({ params }: { params: TransactionRouteParams }) {
     <View style={styles.root}>
       <PicketScreen>
         <TopAppBar
-          title={t("Giao dịch")}
+          title={t("Chi tiêu")}
           back={false}
           action={
             <View style={{ flexDirection: "row" }}>

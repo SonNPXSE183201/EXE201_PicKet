@@ -350,7 +350,7 @@ export default function NewTransactionScreen() {
 
   return (
     <PicketScreen>
-      <TopAppBar title={tx("Ghi chép giao dịch")} subtitle={tx("Ghi lại khoản thu hoặc chi của bạn.")} />
+      <TopAppBar title={tx("Thêm giao dịch")} subtitle={tx("Ghi lại khoản thu hoặc chi của bạn.")} />
 
       {loadingDraft && <ActivityIndicator accessibilityLabel={tx("Đang tải bản nháp hóa đơn")} color={colors.link} />}
 
