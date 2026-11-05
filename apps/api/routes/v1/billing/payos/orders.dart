@@ -12,7 +12,13 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
     if (request.method == HttpMethod.post) {
       if (!service.enabled) return apiError(503, 'PayOS is not configured.');
       final input = jsonDecode(await readLimitedBody(request, 2048));
-      if (input is! Map || input.length != 1 || input['sku'] is! String) {
+      final code = input is Map ? input['code'] : null;
+      if (input is! Map ||
+          input['sku'] is! String ||
+          input.keys.any((k) => k != 'sku' && k != 'code') ||
+          (code != null &&
+              (code is! String ||
+                  !RegExp(r'^[A-Za-z0-9_-]{3,32}$').hasMatch(code)))) {
         throw const FormatException('Invalid checkout request.');
       }
       final key = request.headers['idempotency-key'];
@@ -22,6 +28,7 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
       final order = await gateway.paymentRpc(token, 'payment_reserve', {
         'p_sku': input['sku'],
         'p_key': key,
+        if (code != null) 'p_code': code,
       });
       try {
         final older = order['supersede'];

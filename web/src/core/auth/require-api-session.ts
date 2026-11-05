@@ -84,6 +84,8 @@ function createMockApiClient(): PicketApiClient {
     async adminPayments() {return {total:0,series:[],orders:[],events:[]};},
     async adminRevenue() {return {confirmedVnd:0,estimatedVnd:0,reviewVnd:0,unconverted:[],bySource:[],series:[],entries:[],history:[]};},
     async adminRevenueAdjust() {return {};},
+    async adminPromotions() {return {catalog:[],promotions:[]};},
+    async savePromotion() {return {};},
     async adminPermissions() {return {catalog:[{code:'revenue.read',description:'Xem doanh thu'}],rules:[],groups:[]};},
     async listBills() {
       return { bills: [] };

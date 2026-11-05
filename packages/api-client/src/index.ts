@@ -844,8 +844,8 @@ export class PicketApiClient {
   paymentCustomer(accessToken:string,id?:string):Promise<import('@picket/domain').PaymentCustomer> {
     return this.request(`/v1/billing/payos/${id?`order?id=${encodeURIComponent(id)}`:'orders'}`,{headers:this.authHeaders(accessToken)});
   }
-  paymentCheckout(accessToken:string,sku:string,key:string):Promise<import('@picket/domain').PaymentCustomer> {
-    return this.request('/v1/billing/payos/orders',{method:'POST',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},body:JSON.stringify({sku})});
+  paymentCheckout(accessToken:string,sku:string,key:string,code?:string):Promise<import('@picket/domain').PaymentCustomer> {
+    return this.request('/v1/billing/payos/orders',{method:'POST',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},body:JSON.stringify(code?{sku,code}:{sku})});
   }
   paymentAction(accessToken:string,id:string,action:'refresh'|'cancel'):Promise<import('@picket/domain').PaymentCustomer> {
     return this.request(`/v1/billing/payos/order?id=${encodeURIComponent(id)}`,{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({action})});
@@ -858,6 +858,12 @@ export class PicketApiClient {
   }
   adminRevenueAdjust(accessToken:string,body:{ledgerId:number;amountVnd:number;kind:'refund'|'adjustment';reason:string;externalRef?:string}):Promise<Record<string,unknown>> {
     return this.request('/v1/admin/revenue',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
+  }
+  adminPromotions<T=Record<string,unknown>>(accessToken:string):Promise<T> {
+    return this.request('/v1/admin/promotions',{headers:this.authHeaders(accessToken)});
+  }
+  savePromotion(accessToken:string,promotion:Record<string,unknown>,reason:string):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/promotions',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({promotion,reason})});
   }
   adminPermissions<T=Record<string,unknown>>(accessToken:string,userId?:string):Promise<T> {
     return this.request(`/v1/admin/permissions${userId?`?userId=${encodeURIComponent(userId)}`:''}`,{headers:this.authHeaders(accessToken)});

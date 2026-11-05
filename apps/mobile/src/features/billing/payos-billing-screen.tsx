@@ -14,6 +14,7 @@ import {
 import { picketApi } from "@/core/api/client";
 import { useAuth } from "@/features/auth/auth-context";
 import {
+  AuthField,
   AuthMessage,
   AuthScreen,
   PrimaryButton,
@@ -40,6 +41,7 @@ function PayosBillingContent({ token }: { token: string }) {
   const [tier, setTier] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [confirmSku, setConfirmSku] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
   const verified = useRef(new Set<string>());
   const key = useRef(new Map<string, string>()),
     active = useRef(true);
@@ -133,11 +135,14 @@ function PayosBillingContent({ token }: { token: string }) {
   const open = data ? openPaymentOrder(data.orders, now) : undefined;
   function checkout(sku: string) {
     setConfirmSku(null);
+    const code = promoCode.trim().toUpperCase() || undefined;
+    // A retry reuses the key only for the same plan and the same code.
+    const scope = `${sku}|${code ?? ""}`;
     void run(async () => {
-      const requestKey = key.current.get(sku) ?? Crypto.randomUUID();
-      key.current.set(sku, requestKey);
-      const result = await picketApi!.paymentCheckout(token, sku, requestKey);
-      key.current.delete(sku);
+      const requestKey = key.current.get(scope) ?? Crypto.randomUUID();
+      key.current.set(scope, requestKey);
+      const result = await picketApi!.paymentCheckout(token, sku, requestKey, code);
+      key.current.delete(scope);
       return result;
     });
   }
@@ -151,13 +156,36 @@ function PayosBillingContent({ token }: { token: string }) {
       {tier && tier !== "free" && <Text>{t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}</Text>}
       {!data && <Text>{t('Đang tải…')}</Text>}
       {data && !data.catalog.length && <Text>{t('Các gói PayOS chưa mở bán.')}</Text>}
+      {!!data?.catalog.length && tier === "free" && (
+        <AuthField
+          value={promoCode}
+          onChangeText={setPromoCode}
+          placeholder={t("Mã ưu đãi (nếu có)")}
+          autoCapitalize="characters"
+          maxLength={32}
+        />
+      )}
       {data?.catalog.map((plan) => (
         <View key={plan.sku}>
           <Text>
             {plan.tier.toUpperCase()} ·{" "}
             {t(plan.months === 12 ? "1 năm" : "1 tháng")} ·{" "}
             {formatVnd(plan.amount)}
+            {plan.promotion && plan.list_amount
+              ? ` (${t("Giảm {{percent}}% từ {{price}}", { percent: plan.promotion.percent, price: formatVnd(plan.list_amount) })})`
+              : ""}
           </Text>
+          {plan.promotion && (
+            <Text>
+              {plan.promotion.name}
+              {plan.promotion.slotsLeft !== null
+                ? ` · ${t("Còn {{count}} suất", { count: plan.promotion.slotsLeft })}`
+                : ""}
+              {plan.promotion.endsAt
+                ? ` · ${t("Đến {{date}}", { date: new Date(plan.promotion.endsAt).toLocaleDateString() })}`
+                : ""}
+            </Text>
+          )}
           <PrimaryButton
             label="Tạo thanh toán"
             disabled={busy || tier === null || tier !== "free"}

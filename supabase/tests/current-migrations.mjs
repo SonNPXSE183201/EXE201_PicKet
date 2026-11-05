@@ -9,6 +9,7 @@ const suites = [
   "payos-auth-permissions",
   "payos-expiry-hardening",
   "revenue-ledger",
+  "billing-promotions",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",

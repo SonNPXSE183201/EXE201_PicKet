@@ -430,6 +430,8 @@ class SupabaseGateway {
       'revenue_summary',
       'revenue_entries',
       'revenue_adjust',
+      'promotion_list',
+      'promotion_save',
       'permission_list',
       'permission_update',
       'permission_group_update',

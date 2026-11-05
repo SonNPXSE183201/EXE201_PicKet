@@ -71,3 +71,38 @@ export async function adjustRevenue(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect(`${path}&saved=1`);
 }
+const vnInput = (value: FormDataEntryValue | null) => {
+  const text = String(value ?? "");
+  return text ? new Date(`${text}:00+07:00`).toISOString() : null;
+};
+export async function savePromotionAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  const id = String(form.get("id") ?? "");
+  const max = String(form.get("maxRedemptions") ?? "");
+  try {
+    await api.savePromotion(
+      accessToken,
+      {
+        ...(id ? { id, revision: Number(form.get("revision")) } : {}),
+        name: String(form.get("name") ?? ""),
+        description: String(form.get("description") ?? ""),
+        code: String(form.get("code") ?? "").trim().toUpperCase(),
+        discountPercent: Number(form.get("discountPercent")),
+        skus: form.getAll("skus").map(String),
+        channels: form.getAll("channels").map(String),
+        startsAt: vnInput(form.get("startsAt")),
+        endsAt: vnInput(form.get("endsAt")),
+        maxRedemptions: max ? Number(max) : null,
+        perUserLimit: Number(form.get("perUserLimit") || 1),
+        enabled: form.get("enabled") === "true",
+        priority: Number(form.get("priority") || 0),
+        playOfferId: String(form.get("playOfferId") ?? ""),
+      },
+      String(form.get("reason") ?? ""),
+    );
+  } catch {
+    redirect(`/admin/promotions?${id ? `edit=${id}&` : ""}error=save`);
+  }
+  revalidatePath("/admin", "layout");
+  redirect("/admin/promotions?saved=1");
+}

@@ -19,12 +19,17 @@ export interface PlayPurchaseVerification {
   expiresAt: string;
 }
 
+export interface PaymentPromotion {
+  id:string; name:string; description:string|null; percent:number;
+  endsAt:string|null; slotsLeft:number|null;
+}
 export interface PaymentOrder {
   id:string; order_code:number; sku:string; tier:'plus'|'pro'; amount:number; currency:'VND';
+  list_amount?:number|null; discount_amount?:number;
   status:'pending'|'paid'|'cancelled'|'expired'|'review'; payment_link_id:string|null;
   checkout_url:string|null; qr_code:string|null; created_at:string; expires_at:string;
 }
 export interface PaymentCustomer {
-  catalog:{sku:string;tier:'plus'|'pro';months:1|12;amount:number}[];
+  catalog:{sku:string;tier:'plus'|'pro';months:1|12;amount:number;list_amount?:number;promotion?:PaymentPromotion|null}[];
   orders:PaymentOrder[];
 }

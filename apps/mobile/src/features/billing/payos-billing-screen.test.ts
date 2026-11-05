@@ -33,8 +33,8 @@ function harness() {
   const api = {
     paymentCustomer: async () => customer,
     currentEntitlements: async () => ({ tier }),
-    paymentCheckout: async (_token: string, sku: string, key: string) => {
-      calls.push({ sku, key });
+    paymentCheckout: async (_token: string, sku: string, key: string, code?: string) => {
+      calls.push(code ? { sku, key, code } : { sku, key });
       if (failCheckout) { failCheckout = false; throw new Error("Connection lost"); }
       customer = { ...customer, orders: [{ id: key, order_code: 1, amount: 19000, tier: "plus", status: "pending", expires_at: "2099-01-01", checkout_url: "https://pay.payos.vn/web/qa" }] };
       return customer;
@@ -53,9 +53,9 @@ function harness() {
     "@picket/domain": { ...domain, formatVnd: (amount: number) => String(amount) },
     "@/core/api/client": { picketApi: api },
     "@/features/auth/auth-context": { useAuth: () => ({ session: { user: { id: "qa" }, access_token: "session" } }) },
-    "@/features/auth/auth-screen": Object.fromEntries(["AuthMessage", "AuthScreen", "PrimaryButton", "TextLink"].map((name) => [name, name])),
+    "@/features/auth/auth-screen": Object.fromEntries(["AuthField", "AuthMessage", "AuthScreen", "PrimaryButton", "TextLink"].map((name) => [name, name])),
     "@/core/ui/picket-text": { PicketText: "Text" },
-    "react-i18next": { useTranslation: () => ({ t: (key: string) => key }) },
+    "react-i18next": { useTranslation: () => ({ t: (key: string, values: Record<string, unknown> = {}) => key.replace(/{{(\w+)}}/g, (_m: string, name: string) => String(values[name])) }) },
   };
   const module = { exports: {} as any };
   vm.runInNewContext(ts.transpileModule(readFileSync("src/features/billing/payos-billing-screen.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
@@ -72,6 +72,12 @@ function harness() {
     setTier: (value: string) => { tier = value; },
     failNextCheckout: () => { failCheckout = true; },
     setOrders: (orders: any[]) => { customer = { ...customer, orders }; },
+    setCatalog: (catalog: any[]) => { customer = { ...customer, catalog }; },
+    typeCode(value: string) {
+      const field = nodes(render()).find((node) => node.type === "AuthField");
+      assert.ok(field, "Missing promo code field");
+      field.props.onChangeText(value);
+    },
     foreground: () => foreground("active"),
     press(label: string) {
       const button = nodes(render()).find((node) => node.props.label === label);
@@ -151,4 +157,12 @@ test("an overdue link is re-checked at PayOS once and never shown as payable", a
   assert.equal(app.button("Mở thanh toán"), undefined);
   app.render(); await settle();
   assert.deepEqual(app.calls.filter((call) => call.action === "refresh"), [{ id: "late", action: "refresh" }]);
+});
+test("a live promotion shows the locked discount and a code is sent with checkout", async () => {
+  const app = harness();
+  app.setCatalog([{ sku: "plus", tier: "plus", months: 1, amount: 11400, list_amount: 19000, promotion: { id: "p", name: "Sáng lập", description: null, percent: 40, endsAt: null, slotsLeft: 7 } }]);
+  app.render(); await settle();
+  assert.match(app.text(), /11400/); assert.match(app.text(), /40%/); assert.match(app.text(), /19000/); assert.match(app.text(), /Sáng lập/); assert.match(app.text(), /7/);
+  app.typeCode("founder"); app.press("Tạo thanh toán"); await settle();
+  assert.deepEqual(app.calls.find((call) => call.sku), { sku: "plus", key: "request-1", code: "FOUNDER" });
 });
