@@ -1,6 +1,6 @@
 /** Shared geometry for every palette; circles, photos and charts keep their own shape. */
 export const paperShape = {
-  card: 22,
+  card: 24,
   pocketCorner: 14,
   input: 14,
   button: 24,
