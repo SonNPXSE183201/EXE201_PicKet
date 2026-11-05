@@ -23,3 +23,4 @@ export * from "./learning-ai";
 export * from "./billing-availability";
 export * from "./cashflow";
 export * from "./payment-order";
+export * from "./announcements";

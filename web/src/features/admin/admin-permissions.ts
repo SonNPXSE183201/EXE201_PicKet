@@ -3,6 +3,7 @@ export const adminSections = {
   payments: { title: 'Giao dịch thanh toán', href: '/admin/payments', icon: 'wallet' },
   permissions: { title: 'Phân quyền', href: '/admin/permissions', icon: 'shield' },
   promotions: { title: 'Ưu đãi', href: '/admin/promotions', icon: 'wallet' },
+  announcements: { title: 'Thông báo hệ thống', href: '/admin/announcements', icon: 'bell' },
   overview: { title: "Tổng quan", href: "/admin", icon: "chart" },
   users: { title: "Người dùng", href: "/admin/users", icon: "person" },
   acquisition: {
@@ -50,7 +51,7 @@ export function canViewAdminSection(
 ) {
   // This page manages only the signed-in user's MFA, not security admin data.
   if (permissions && section === 'security') return permissions.length > 0;
-  const managed: Partial<Record<AdminSection, string>> = { permissions: 'permissions.manage', promotions: 'promotions.manage' };
+  const managed: Partial<Record<AdminSection, string>> = { permissions: 'permissions.manage', promotions: 'promotions.manage', announcements: 'announcements.manage' };
   if (permissions) return permissions.includes(managed[section] ?? `${section}.read`);
   return role === 'owner'; // Bootstrap compatibility only; normal calls pass database permissions.
 }

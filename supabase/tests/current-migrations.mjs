@@ -10,6 +10,7 @@ const suites = [
   "payos-expiry-hardening",
   "revenue-ledger",
   "billing-promotions",
+  "app-announcements",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",

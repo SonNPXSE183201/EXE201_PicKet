@@ -21,6 +21,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useProfile } from "@/features/profile/profile-context";
 import { useSync } from "@/features/sync/sync-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
+import { AnnouncementBanner } from "@/features/announcements/announcement-views";
 
 export default function HomeScreen() {
   const { receiptMonth } = useLocalSearchParams<{ receiptMonth?: string }>();
@@ -57,6 +58,7 @@ function HomeContent({ initialMonth }: { initialMonth?: string }) {
   if (!profileError && !profile?.onboardingCompleted) return <Redirect href={routes.onboarding} />;
   return <View style={styles.root}><PicketScreen>
     <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.greeting}>{new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long", timeZone: profile?.timezone ?? "Asia/Ho_Chi_Minh" })}</Text><Text accessibilityRole="header" style={styles.heading}>{t("homeToday",{name:profile?.displayName?.trim().split(/\s+/).pop() || t("friend")})}</Text></View><IconButton icon="bell-outline" label={t("notifications")} onPress={() => router.push(routes.notifications)} /></View>
+    <AnnouncementBanner />
     <Surface style={styles.balanceCard}><View pointerEvents="none" style={{ position: "absolute", right: 4, bottom: 0, opacity: theme === "dark" ? .85 : 1 }}><PaperArt id="bloom" style={{ width: 92, height: 100 }} /></View><View style={styles.between}><Text style={styles.balanceLabel}>{t("balance")}</Text><Pressable accessibilityLabel={hideBalance ? t("showBalance") : t("hideBalance")} accessibilityRole="button" onPress={toggleBalance} style={styles.eyeTouchWrap}><View style={styles.eyeCircle}><AppIcon name={hideBalance ? "eye-off-outline" : "eye-outline"} size={17} color={colors.mauve} /></View></Pressable></View><Text adjustsFontSizeToFit numberOfLines={Math.max(1,totals.length)} style={styles.balance}>{totalText("balance")}</Text><Pressable onPress={() => router.navigate(routes.accounts)} style={styles.walletLink}><AppIcon name="wallet-outline" size={18} color={colors.ink} /><Text style={styles.walletLinkText}>{t("walletCount",{count:accounts.length})}</Text></Pressable></Surface>
 
     {(!summary || summary.unscopedTransactionIds.length>0) && <Text accessibilityRole="alert" style={{color:colors.expense}}>{t("summaryError")}</Text>}

@@ -432,6 +432,8 @@ class SupabaseGateway {
       'revenue_adjust',
       'promotion_list',
       'promotion_save',
+      'announcement_list',
+      'announcement_save',
       'permission_list',
       'permission_update',
       'permission_group_update',
@@ -450,6 +452,37 @@ class SupabaseGateway {
     final value = jsonDecode(response.body);
     if (value is! Map<String, dynamic>) {
       throw const GatewayException(502, 'Invalid payment response.');
+    }
+    return value;
+  }
+
+  /// Public announcement feed. A signed-in caller is targeted by plan; a
+  /// guest, or a caller whose token is no longer valid, gets the guest feed.
+  Future<Map<String, dynamic>> announcementsFeed(
+    String? token,
+    Map<String, dynamic> body,
+  ) async {
+    Future<http.Response> call(String? bearer) => _client
+        .post(
+          _uri('/rest/v1/rpc/announcements_feed'),
+          headers: {
+            'apikey': config.supabasePublishableKey,
+            HttpHeaders.acceptHeader: ContentType.json.mimeType,
+            HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+            if (bearer != null)
+              HttpHeaders.authorizationHeader: 'Bearer $bearer',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 10));
+    var response = await call(token);
+    if (token != null && response.statusCode == 401) {
+      response = await call(null);
+    }
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    if (value is! Map<String, dynamic>) {
+      throw const GatewayException(502, 'Invalid announcement response.');
     }
     return value;
   }

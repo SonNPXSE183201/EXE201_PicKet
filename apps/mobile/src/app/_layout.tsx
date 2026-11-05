@@ -31,6 +31,8 @@ import { LearningSync } from "@/features/learning/learning-sync";
 import { PlayBillingProvider } from "@/features/billing/play-billing-provider";
 import { ScheduleSync } from "@/features/cashflow/schedule-sync";
 import * as SplashScreen from "expo-splash-screen";
+import { AnnouncementsProvider } from "@/features/announcements/announcements-context";
+import { MaintenanceGate } from "@/features/announcements/announcement-views";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -64,9 +66,9 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
   return (
     <SafeAreaProvider>
-      <AppAppearanceProvider><AuthProvider>
+      <AppAppearanceProvider><AuthProvider><AnnouncementsProvider>
         <SessionReadyTree />
-      </AuthProvider></AppAppearanceProvider>
+      </AnnouncementsProvider></AuthProvider></AppAppearanceProvider>
     </SafeAreaProvider>
   );
 }
@@ -79,12 +81,12 @@ function SessionReadyTree() {
     <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.link} />
   </View>;
   return (
-        <MobileAccessBoundary><DeviceLockProvider>
+        <MaintenanceGate><MobileAccessBoundary><DeviceLockProvider>
           <SessionProviders>
             <StatusBar style={theme === "dark" ? "light" : "dark"} />
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
             <NavigationShell />
           </SessionProviders>
-        </DeviceLockProvider></MobileAccessBoundary>
+        </DeviceLockProvider></MobileAccessBoundary></MaintenanceGate>
   );
 }

@@ -1,3 +1,4 @@
+import { AnnouncementInbox } from "@/features/announcements/announcement-views";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useReminderCalendar } from "@/features/notifications/use-reminder-calendar";
 import { useTranslation } from "react-i18next";
@@ -230,6 +231,7 @@ export default function NotificationsScreen() {
 
   return (
     <PicketScreen>
+      <AnnouncementInbox />
       {/* Master Design Screen 17 Header */}
       <View style={styles.headerRow}>
         <Pressable

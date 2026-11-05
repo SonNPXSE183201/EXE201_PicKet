@@ -859,6 +859,16 @@ export class PicketApiClient {
   adminRevenueAdjust(accessToken:string,body:{ledgerId:number;amountVnd:number;kind:'refund'|'adjustment';reason:string;externalRef?:string}):Promise<Record<string,unknown>> {
     return this.request('/v1/admin/revenue',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
   }
+  announcements(query:{channel:'play'|'apk'|'web';versionCode?:number;locale?:string},accessToken?:string|null):Promise<import('@picket/domain').AnnouncementFeed> {
+    const params=new URLSearchParams({channel:query.channel,locale:query.locale??'vi',...(query.versionCode?{versionCode:String(query.versionCode)}:{})});
+    return this.request(`/v1/announcements?${params}`,accessToken?{headers:this.authHeaders(accessToken)}:{});
+  }
+  adminAnnouncements<T=Record<string,unknown>>(accessToken:string):Promise<T> {
+    return this.request('/v1/admin/announcements',{headers:this.authHeaders(accessToken)});
+  }
+  saveAnnouncement(accessToken:string,announcement:Record<string,unknown>,reason:string):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/announcements',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({announcement,reason})});
+  }
   adminPromotions<T=Record<string,unknown>>(accessToken:string):Promise<T> {
     return this.request('/v1/admin/promotions',{headers:this.authHeaders(accessToken)});
   }

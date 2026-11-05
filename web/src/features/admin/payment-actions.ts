@@ -106,3 +106,44 @@ export async function savePromotionAction(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect("/admin/promotions?saved=1");
 }
+export async function saveAnnouncementAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  const id = String(form.get("id") ?? "");
+  const text = (key: string) => String(form.get(key) ?? "").trim();
+  const int = (key: string) => (text(key) ? Number(text(key)) : null);
+  try {
+    await api.saveAnnouncement(
+      accessToken,
+      {
+        ...(id ? { id, revision: Number(form.get("revision")) } : {}),
+        kind: text("kind"),
+        severity: text("severity"),
+        titleVi: text("titleVi"),
+        bodyVi: text("bodyVi"),
+        titleEn: text("titleEn"),
+        bodyEn: text("bodyEn"),
+        ctaLabelVi: text("ctaLabelVi"),
+        ctaLabelEn: text("ctaLabelEn"),
+        ctaRoute: text("ctaRoute"),
+        ctaUrl: text("ctaUrl"),
+        promotionId: text("promotionId"),
+        incidentId: text("incidentId"),
+        channels: form.getAll("channels").map(String),
+        tiers: form.getAll("tiers").map(String),
+        minVersionCode: int("minVersionCode"),
+        maxVersionCode: int("maxVersionCode"),
+        startsAt: vnInput(form.get("startsAt")),
+        endsAt: vnInput(form.get("endsAt")),
+        blocking: form.get("blocking") === "true",
+        notify: form.get("notify") === "true",
+        pinned: form.get("pinned") === "true",
+        status: text("status"),
+      },
+      text("reason"),
+    );
+  } catch {
+    redirect(`/admin/announcements?${id ? `edit=${id}&` : ""}error=save`);
+  }
+  revalidatePath("/", "layout");
+  redirect("/admin/announcements?saved=1");
+}

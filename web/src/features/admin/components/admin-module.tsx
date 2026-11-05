@@ -14,6 +14,7 @@ import { MfaPanel } from "./mfa-panel";
 import { PaymentAdmin } from './payment-admin';
 import { RevenueAdmin } from './revenue-admin';
 import { PromotionAdmin } from './promotion-admin';
+import { AnnouncementAdmin } from './announcement-admin';
 import { adminLabel } from "../admin-labels";
 import "../admin-platform.css";
 
@@ -573,6 +574,7 @@ export async function AdminModule({
     );
   if(section==='revenue') return <RevenueAdmin query={query}/>;
   if(section==='promotions') return <PromotionAdmin query={query}/>;
+  if(section==='announcements') return <AnnouncementAdmin query={query}/>;
   if(section==='payments'||section==='permissions') return <PaymentAdmin section={section} query={query}/>;
   const days = ["7", "30", "90"].includes(query.days ?? "")
     ? Number(query.days)

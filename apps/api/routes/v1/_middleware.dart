@@ -15,6 +15,7 @@ Handler middleware(Handler handler) => (context) async {
   if (path.startsWith('/v1/admin/') ||
       path == '/v1/billing/payos/reconcile' ||
       path == '/v1/account/access' ||
+      path == '/v1/announcements' ||
       path == '/v1/telemetry') {
     return handler(context);
   }
