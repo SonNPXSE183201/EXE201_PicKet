@@ -32,6 +32,8 @@ function harness(){
  "@/features/notifications/keepsake-source":{loadReminderKeepsakes:async()=>owner==="A"?[{id:"private-A"}]:[]},
  "@/features/notifications/reminders":{collectReminders:(input:{keepsakes:unknown[]})=>{seenKeepsakes=input.keepsakes;return [];},remindersEnabled:async()=>false,readReminderIds:async()=>[],setRemindersEnabled:async()=>{writes++;await held;return true;},scheduleUserReminders:async()=>{schedules++;}},
  "@/core/ui/picket-ui":{PicketScreen:"Screen"},
+ "@picket/design-tokens":{figmaType:new Proxy({},{get:()=>({})})},
+ "@/features/notifications/notification-screen-copy":{notificationScreenCopy:()=>({emptyTitle:"",emptyBody:"",readAll:""})},
  };
  const exports:{default?:()=>unknown}={};vm.runInNewContext(ts.transpileModule(readFileSync("src/app/notifications.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},Date});
  const render=()=>{cursor=0;return exports.default!();};

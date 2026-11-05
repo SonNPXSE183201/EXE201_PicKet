@@ -1,19 +1,24 @@
+import { useMgmtCopy } from "@/features/management/management-copy";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useTranslation } from "react-i18next";
-import { formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
+import { figmaType } from "@picket/design-tokens";
+import { formatMoney, normalizeLanguage } from "@/core/i18n/formatters";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
-import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ConnectionNotice, EmptyState, PicketScreen } from "@/core/ui/picket-ui";
+import { ConnectionNotice, IconButton, PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
 import { AppIcon } from "@/core/ui/app-icon";
-import { PaperArt } from "@/core/ui/paper-art";
+import { Chip, FigmaButton, ReceiptDivider, ReceiptEdge, Skeleton, figmaShadow } from "@/core/ui/figma-ui";
+import { FieldOverline, ManagementEmpty } from "@/features/management/management-ui";
+import { daysUntil, titleIcon, toneAt } from "@/features/management/management-tone";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBills } from "@/features/bills/bills-context";
+
+const monthCloseScene = require("../../../assets/management/month-close-scene.png");
 
 export default function BillsScreen() {
   const { t, i18n } = useTranslation("bills");
@@ -21,281 +26,106 @@ export default function BillsScreen() {
   const { session, localMode } = useAuth();
   const { bills, error, loading, refresh } = useBills();
   const language = normalizeLanguage(i18n.resolvedLanguage ?? i18n.language);
+  const m = useMgmtCopy();
   const [renderedAt] = useState(() => Date.now());
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
   const activeBills = bills.filter((bill) => bill.status !== "cancelled");
+  const isUnpaid = (bill: (typeof bills)[number]) => bill.status === "pending" || bill.status === "overdue";
+  const unpaid = activeBills.filter(isUnpaid).sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+  const paid = activeBills.filter((bill) => !isUnpaid(bill));
+  const unpaidTotal = unpaid.reduce((sum, bill) => sum + bill.amount, 0);
+  const paidTotal = paid.reduce((sum, bill) => sum + bill.amount, 0);
+  const month = new Date(renderedAt).getMonth() + 1;
+  const tones = [colors.pocketCoral, colors.pocketBlue, colors.pocketMint, colors.pocketLilac];
+  const short = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`; };
+  const money = (value: number) => formatMoney(value, language, "VND");
+  const add = () => router.push(routes.newBill);
 
-  // Calculate unpaid vs paid totals
-  const unpaidBills = activeBills.filter(
-    (bill) => bill.status === "pending" || bill.status === "overdue",
-  );
-  const unpaidTotal = unpaidBills.reduce((sum, b) => sum + b.amount, 0);
+  const header = <TopAppBar title={m.billsTitle} action={<IconButton icon="plus" label={m.addBill} variant="surface" onPress={add} />} />;
 
-  const now = new Date();
-  const currentMonthNum = now.getMonth() + 1;
+  if (loading && !activeBills.length) return <PicketScreen>{header}<View accessibilityLabel={t("loading")} style={styles.block}><Skeleton height={44} radius={12} /><Skeleton height={120} radius={18} style={{ marginTop: 14 }} /><Skeleton height={120} radius={18} style={{ marginTop: 14 }} /></View></PicketScreen>;
+
+  if (!loading && activeBills.length === 0) return <PicketScreen>{header}
+    {error ? <ConnectionNotice hasData={false} onRetry={() => void refresh()} /> : null}
+    <ManagementEmpty art={monthCloseScene} title={t("emptyTitle")} body={t("emptyDescription")} action={<FigmaButton variant="outline" size="medium" label={t("emptyAction")} onPress={add} />} />
+  </PicketScreen>;
 
   return (
     <PicketScreen>
-      {/* Master Design Screen 22 Header */}
-      <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
-          <Pressable
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <AppIcon name="arrow-left" color={colors.ink} size={24} />
-          </Pressable>
-          <Text accessibilityRole="header" numberOfLines={1} style={styles.headerTitle}>
-            Hóa đơn cần thanh toán
-          </Text>
-        </View>
-        <Pressable
-          accessibilityLabel="Thêm hóa đơn"
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => router.push(routes.newBill)}
-          style={styles.addCircleBtn}
-        >
-          <AppIcon name="plus" color={colors.onPrimary} size={20} />
-        </Pressable>
-      </View>
-
-      {/* Master Summary Hero Card */}
-      <View style={styles.heroSummaryCard}>
-        <View style={styles.heroCopy}>
-          <Text style={styles.heroSubLabel}>Cần thanh toán tháng {currentMonthNum}</Text>
-          <Text style={styles.heroAmount}>{formatMoney(unpaidTotal, language, "VND")}</Text>
-          <Text style={styles.heroCountSub}>
-            {unpaidBills.length} hóa đơn sắp đến hạn trong tuần này
-          </Text>
-        </View>
-        <View style={styles.heroArtBox}>
-          <PaperArt id="bills" style={{ width: 62, height: 62 }} />
-        </View>
-      </View>
-
-      {/* Section: HÓA ĐƠN ĐỊNH KỲ THÁNG */}
-      <Text style={styles.sectionHeaderLabel}>HÓA ĐƠN ĐỊNH KỲ THÁNG</Text>
-
+      {header}
       {error ? <ConnectionNotice hasData={bills.length > 0} onRetry={() => void refresh()} /> : null}
-      {loading ? <ActivityIndicator accessibilityLabel={t("loading")} color={colors.link} style={{ marginVertical: 20 }} /> : null}
+      <View style={[styles.summary, styles.block]}>
+        <View style={{ gap: 2 }}>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{m.remaining(month)}</Text>
+          <Text style={[figmaType.titleSection, styles.large]}>{money(unpaidTotal)}</Text>
+        </View>
+        <View style={{ gap: 2, alignItems: "flex-end" }}>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{m.paid}</Text>
+          <Text style={[figmaType.bodyStrong, { color: colors.income }]}>{money(paidTotal)}</Text>
+        </View>
+      </View>
 
-      {!loading && activeBills.length === 0 ? (
-        <EmptyState
-          illustration="receipt"
-          action={t("emptyAction")}
-          description={t("emptyDescription")}
-          onAction={() => router.push(routes.newBill)}
-          symbol="▤"
-          title={t("emptyTitle")}
-        />
-      ) : null}
-
-      {activeBills.length > 0 ? (
-        <View style={styles.billsList}>
-          {activeBills.map((bill) => {
-            const overdue =
-              bill.status === "overdue" ||
-              (bill.status === "pending" && new Date(bill.dueAt).getTime() < renderedAt);
-            const isUnpaid = bill.status === "pending" || overdue;
-
-            return (
-              <Pressable
-                accessibilityRole="button"
-                key={bill.id}
-                onPress={() => router.push(routes.bill(bill.id))}
-                style={[styles.billCard, isUnpaid && styles.unpaidBillCard]}
-              >
-                <View style={[styles.billIconContainer, isUnpaid && styles.unpaidIconContainer]}>
-                  <PaperArt id="bills" style={{ width: 34, height: 34 }} />
+      {unpaid.length > 0 && <View style={styles.block}>
+        <FieldOverline>{m.upcoming}</FieldOverline>
+        <View style={{ gap: 14, marginTop: 8 }}>
+          {unpaid.map((bill, index) => {
+            const days = daysUntil(bill.dueAt, renderedAt);
+            const late = bill.status === "overdue" || days < 0;
+            const soon = late || days <= 3;
+            const due = late ? m.late(short(bill.dueAt)) : m.due(short(bill.dueAt), days);
+            return <View key={bill.id} style={figmaShadow("paper")}>
+              <View style={styles.paper}>
+                <View style={styles.line}>
+                  <View style={[styles.tile, { backgroundColor: toneAt(tones, index) }]}><AppIcon name={titleIcon(bill.title)} size={20} color={colors.text} /></View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{bill.title}</Text>
+                    <Text style={[figmaType.bodySmall, { color: soon ? colors.warning : colors.muted }]}>{due}</Text>
+                  </View>
+                  <Text style={[figmaType.amountRow, { color: colors.text }]}>{money(bill.amount)}</Text>
                 </View>
-
-                <View style={styles.billBody}>
-                  <Text style={styles.billTitle}>{bill.title}</Text>
-                  <Text style={[styles.billDate, overdue && styles.overdueDate]}>
-                    {isUnpaid
-                      ? `Hạn nộp: ${new Date(bill.dueAt).toLocaleDateString(localeFor(language))}`
-                      : `Đã thanh toán ngày ${new Date(bill.dueAt).toLocaleDateString(localeFor(language))}`}
-                  </Text>
+                <ReceiptDivider />
+                <View style={[styles.line, { justifyContent: "space-between" }]}>
+                  <Text style={[figmaType.micro, { color: colors.muted, flex: 1 }]}>{m.billHint}</Text>
+                  <FigmaButton variant="outline" size="medium" label={m.paid} onPress={() => router.push(routes.bill(bill.id))} />
                 </View>
-
-                <View style={styles.billRightCol}>
-                  <Text style={[styles.billAmount, isUnpaid ? styles.unpaidAmount : styles.paidAmount]}>
-                    {isUnpaid ? `-${formatMoney(bill.amount, language, "VND")}` : formatMoney(bill.amount, language, "VND")}
-                  </Text>
-                  {isUnpaid && (
-                    <View style={styles.payNowBadge}>
-                      <Text style={styles.payNowText}>Nộp ngay</Text>
-                    </View>
-                  )}
-                </View>
-              </Pressable>
-            );
+              </View>
+              <ReceiptEdge direction="bottom" />
+            </View>;
           })}
         </View>
-      ) : null}
+      </View>}
+
+      {paid.length > 0 && <View style={styles.block}>
+        <FieldOverline>{m.paidSection}</FieldOverline>
+        <View style={{ gap: 14, marginTop: 8 }}>
+          {paid.map((bill, index) => <View key={bill.id} style={[figmaShadow("paper"), { opacity: 0.6 }]}>
+            <View style={styles.paper}>
+              <View style={styles.line}>
+                <View style={[styles.tile, { backgroundColor: toneAt(tones, index + 2) }]}><AppIcon name={titleIcon(bill.title)} size={20} color={colors.text} /></View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{bill.title}</Text>
+                  <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{m.paidOn(short(bill.dueAt))}</Text>
+                </View>
+                <Text style={[figmaType.amountRow, { color: colors.text }]}>{money(bill.amount)}</Text>
+                <Chip tone="success" label={m.paid} />
+              </View>
+            </View>
+            <ReceiptEdge direction="bottom" />
+          </View>)}
+        </View>
+      </View>}
     </PicketScreen>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginTop: 4,
-      marginBottom: 16,
-    },
-    headerLeft: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-      flex: 1,
-      marginRight: 8,
-    },
-    backBtn: {
-      padding: 4,
-    },
-    headerTitle: {
-      color: colors.ink,
-      fontSize: 18,
-      fontWeight: "800",
-      letterSpacing: -0.3,
-      flex: 1,
-    },
-    addCircleBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.mauve,
-      alignItems: "center",
-      justifyContent: "center",
-      shadowColor: colors.mauve,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 3,
-      elevation: 2,
-    },
-    heroSummaryCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 20,
-      padding: 16,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 18,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
-    },
-    heroCopy: {
-      flex: 1,
-    },
-    heroSubLabel: {
-      color: colors.muted,
-      fontSize: 13,
-    },
-    heroAmount: {
-      color: colors.expense,
-      fontSize: 28,
-      fontWeight: "800",
-      fontVariant: ["tabular-nums"],
-      marginVertical: 4,
-    },
-    heroCountSub: {
-      color: colors.expense,
-      fontSize: 12,
-      fontWeight: "600",
-    },
-    heroArtBox: {
-      marginLeft: 10,
-    },
-    sectionHeaderLabel: {
-      color: colors.muted,
-      fontSize: 12,
-      fontWeight: "700",
-      letterSpacing: 0.6,
-      marginBottom: 12,
-      textTransform: "uppercase",
-    },
-    billsList: {
-      gap: 10,
-      paddingBottom: 40,
-    },
-    billCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 16,
-      padding: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-    },
-    unpaidBillCard: {
-      borderColor: colors.mauve,
-    },
-    billIconContainer: {
-      width: 44,
-      height: 44,
-      borderRadius: 14,
-      backgroundColor: colors.cream,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    unpaidIconContainer: {
-      backgroundColor: colors.pocketLilac,
-    },
-    billBody: {
-      flex: 1,
-    },
-    billTitle: {
-      color: colors.ink,
-      fontSize: 15,
-      fontWeight: "700",
-    },
-    billDate: {
-      color: colors.muted,
-      fontSize: 12,
-      marginTop: 2,
-    },
-    overdueDate: {
-      color: colors.expense,
-      fontWeight: "700",
-    },
-    billRightCol: {
-      alignItems: "flex-end",
-      gap: 4,
-    },
-    billAmount: {
-      fontSize: 15,
-      fontWeight: "800",
-      fontVariant: ["tabular-nums"],
-    },
-    unpaidAmount: {
-      color: colors.expense,
-    },
-    paidAmount: {
-      color: "#16A34A",
-    },
-    payNowBadge: {
-      backgroundColor: colors.mauve,
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 3,
-    },
-    payNowText: {
-      color: colors.onPrimary,
-      fontSize: 11,
-      fontWeight: "700",
-    },
+    block: { marginTop: 20 },
+    summary: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
+    large: { fontSize: 20, lineHeight: 26, letterSpacing: -0.3, color: colors.text },
+    paper: { backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 14, paddingBottom: 10, paddingHorizontal: 16, gap: 8 },
+    line: { flexDirection: "row", alignItems: "center", gap: 12 },
+    tile: { width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   });
