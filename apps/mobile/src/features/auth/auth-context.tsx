@@ -1,3 +1,5 @@
+import { picketApi } from "@/core/api/client";
+import { phoneSignInTokens } from "@/features/auth/phone-sign-in";
 import type { Session } from "@supabase/supabase-js";
 import { passwordLoginCredentials } from '@picket/domain';
 import * as Linking from "expo-linking";
@@ -38,7 +40,7 @@ interface AuthContextValue {
   enterLocalMode(): Promise<void>;
   leaveLocalMode(): Promise<void>;
   signIn(identifier: string, password: string): Promise<void>;
-  signUp(email: string, password: string): Promise<boolean>;
+  signUp(email: string, password: string, phone?: string): Promise<boolean>;
   verifySignup(email: string, token: string): Promise<void>;
   resendSignup(email: string): Promise<void>;
   requestPasswordReset(email: string): Promise<void>;
@@ -179,14 +181,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       async signIn(identifier, password) {
         const credentials = passwordLoginCredentials(identifier, password);
+        if (credentials.phone) {
+          // Phone accounts sign in through the API until an SMS provider exists.
+          const tokens = await phoneSignInTokens(picketApi, credentials.phone, credentials.password);
+          const { error } = await mutateAuth(() => requireClient().auth.setSession(tokens));
+          if (error) throw error;
+          return;
+        }
         const { error } = await mutateAuth(() => requireClient().auth.signInWithPassword(credentials));
         if (error) throw error;
       },
-      async signUp(email, password) {
+      async signUp(email, password, phone) {
         const { data, error } = await mutateAuth(() => requireClient().auth.signUp({
           email: email.trim().toLowerCase(),
           password,
-          options: { emailRedirectTo: authCallbackUrl },
+          options: { emailRedirectTo: authCallbackUrl, ...(phone ? { data: { pending_phone: phone } } : {}) },
         }));
         if (error) throw error;
         return data.session === null;

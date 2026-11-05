@@ -859,6 +859,16 @@ export class PicketApiClient {
   adminRevenueAdjust(accessToken:string,body:{ledgerId:number;amountVnd:number;kind:'refund'|'adjustment';reason:string;externalRef?:string}):Promise<Record<string,unknown>> {
     return this.request('/v1/admin/revenue',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
   }
+  /** Phone + password sign-in; returns Supabase session tokens for setSession. */
+  phoneLogin(phone:string,password:string):Promise<{access_token:string;refresh_token:string;expires_in?:number;expires_at?:number;token_type?:string}> {
+    return this.request('/v1/auth/phone-login',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({phone,password})});
+  }
+  authChannels():Promise<{email:boolean;sms:boolean;order:string[]}> {
+    return this.request('/v1/auth/channels',{});
+  }
+  accountPhone(accessToken:string,body:{phone:string;action?:'attach'|'send'|'verify';challengeId?:string;code?:string}):Promise<Record<string,unknown>> {
+    return this.request('/v1/account/phone',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
+  }
   announcements(query:{channel:'play'|'apk'|'web';versionCode?:number;locale?:string},accessToken?:string|null):Promise<import('@picket/domain').AnnouncementFeed> {
     const params=new URLSearchParams({channel:query.channel,locale:query.locale??'vi',...(query.versionCode?{versionCode:String(query.versionCode)}:{})});
     return this.request(`/v1/announcements?${params}`,accessToken?{headers:this.authHeaders(accessToken)}:{});

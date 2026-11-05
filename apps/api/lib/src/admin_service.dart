@@ -47,6 +47,39 @@ class AdminService {
     };
   }
 
+  /// Service-role auth helpers (phone lookup, rate limits, OTP challenges).
+  Future<Object?> authRpc(String name, Map<String, dynamic> body) async {
+    if (!{
+      'auth_phone_lookup',
+      'auth_rate_hit',
+      'otp_create',
+      'otp_verify',
+      'contact_mark_phone_verified',
+    }.contains(name)) {
+      throw const FormatException('Invalid auth operation.');
+    }
+    final response = await _client
+        .post(
+          config.supabaseUrl.resolve('/rest/v1/rpc/$name'),
+          headers: _headers,
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode == 429 || response.body.contains('P0429')) {
+      throw const GatewayException(
+        429,
+        'Please wait before requesting another code.',
+      );
+    }
+    if (response.statusCode >= 300) {
+      throw const GatewayException(
+        502,
+        'Authentication service request failed.',
+      );
+    }
+    return jsonDecode(response.body);
+  }
+
   Future<void> rpc(String name, Map<String, dynamic> body) async {
     if (!{
       'admin_finish_auth',

@@ -33,6 +33,7 @@ import { ScheduleSync } from "@/features/cashflow/schedule-sync";
 import * as SplashScreen from "expo-splash-screen";
 import { AnnouncementsProvider } from "@/features/announcements/announcements-context";
 import { MaintenanceGate } from "@/features/announcements/announcement-views";
+import { PendingPhoneAttach } from "@/features/auth/pending-phone-attach";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -43,7 +44,7 @@ function ProviderTree({ children }: { children: React.ReactNode }) {
       <LearningSync />
       <ScheduleSync />
       <PlayBillingProvider><AccountsProvider>
-        <TransactionsProvider><BudgetsProvider><BillsProvider><SubscriptionsProvider><SyncProvider><ReminderCoordinator />{children}</SyncProvider></SubscriptionsProvider></BillsProvider></BudgetsProvider></TransactionsProvider>
+        <TransactionsProvider><BudgetsProvider><BillsProvider><SubscriptionsProvider><SyncProvider><ReminderCoordinator /><PendingPhoneAttach />{children}</SyncProvider></SubscriptionsProvider></BillsProvider></BudgetsProvider></TransactionsProvider>
       </AccountsProvider></PlayBillingProvider>
     </ProfileProvider>
   );

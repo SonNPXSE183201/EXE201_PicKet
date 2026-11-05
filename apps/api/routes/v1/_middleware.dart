@@ -13,6 +13,7 @@ import 'package:picket_api/src/supabase_gateway.dart';
 Handler middleware(Handler handler) => (context) async {
   final path = context.request.uri.path;
   if (path.startsWith('/v1/admin/') ||
+      path.startsWith('/v1/auth/') ||
       path == '/v1/billing/payos/reconcile' ||
       path == '/v1/account/access' ||
       path == '/v1/announcements' ||

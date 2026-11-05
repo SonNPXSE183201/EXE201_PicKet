@@ -436,6 +436,7 @@ class SupabaseGateway {
       'announcement_save',
       'release_list',
       'release_save',
+      'contact_set_phone',
       'permission_list',
       'permission_update',
       'permission_group_update',
