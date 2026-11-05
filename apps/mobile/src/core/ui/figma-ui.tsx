@@ -56,12 +56,17 @@ export function FigmaButton({ label, onPress, variant = "primary", size = "large
 export function ReceiptEdge({ direction = "bottom", color }: { direction?: "top" | "bottom"; color?: string }) {
   const { colors } = useMobileStyles(createStyles);
   const [width, setWidth] = useState(0);
-  const tooth = 10, count = Math.ceil(width / tooth);
+  const tooth = 14, depth = 8, count = Math.ceil(width / tooth);
   const paper = color ?? colors.paper;
-  return <View onLayout={event => setWidth(event.nativeEvent.layout.width)} accessible={false} importantForAccessibility="no-hide-descendants" style={{ flexDirection: "row", height: direction === "bottom" ? 8 : 6, overflow: "hidden" }}>
+  // Native shadows do not follow triangle shapes, so a 1.5px border-coloured row sits under the paper row as the visible cut line.
+  const row = (fill: string, offset: number) => <View style={{ position: "absolute", left: 0, right: 0, [direction === "bottom" ? "top" : "bottom"]: offset, flexDirection: "row" }}>
     {Array.from({ length: count }, (_, i) => <View key={i} style={direction === "bottom"
-      ? { width: 0, height: 0, borderLeftWidth: tooth / 2, borderRightWidth: tooth / 2, borderTopWidth: 8, borderLeftColor: "transparent", borderRightColor: "transparent", borderTopColor: paper }
-      : { width: 0, height: 0, borderLeftWidth: tooth / 2, borderRightWidth: tooth / 2, borderBottomWidth: 6, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: paper }} />)}
+      ? { width: 0, height: 0, borderLeftWidth: tooth / 2, borderRightWidth: tooth / 2, borderTopWidth: depth, borderLeftColor: "transparent", borderRightColor: "transparent", borderTopColor: fill }
+      : { width: 0, height: 0, borderLeftWidth: tooth / 2, borderRightWidth: tooth / 2, borderBottomWidth: depth, borderLeftColor: "transparent", borderRightColor: "transparent", borderBottomColor: fill }} />)}
+  </View>;
+  return <View onLayout={event => setWidth(event.nativeEvent.layout.width)} accessible={false} importantForAccessibility="no-hide-descendants" style={{ height: depth + 2, overflow: "hidden" }}>
+    {row(colors.border, 1.5)}
+    {row(paper, 0)}
   </View>;
 }
 

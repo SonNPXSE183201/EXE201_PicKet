@@ -22,6 +22,36 @@
       "./plugins/with-safe-launcher-icon",
       "./plugins/with-network-pool-guard",
       "./plugins/with-current-activity-intent",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "PicketNunito",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/nunito-400.ttf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./assets/fonts/nunito-600.ttf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./assets/fonts/nunito-700.ttf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./assets/fonts/nunito-800.ttf",
+                    "weight": 800
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",

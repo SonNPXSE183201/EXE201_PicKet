@@ -24,7 +24,8 @@ export function AccessiblePressable({
   return (
     <Pressable
       {...props}
-      android_ripple={props.android_ripple ?? { color: "rgba(121, 50, 104, 0.10)", borderless: false }}
+      // Android ripples ignore borderRadius and paint a rectangle behind rounded controls; use a shape-safe press fade instead.
+      android_ripple={props.android_ripple}
       accessibilityRole={accessibilityRole}
       accessibilityState={resolvedAccessibilityState}
       disabled={disabled}
@@ -32,6 +33,7 @@ export function AccessiblePressable({
       style={(state) => [
         typeof style === "function" ? style(state) : style,
         styles.minimumTarget,
+        state.pressed && !props.android_ripple && !disabled && styles.pressed,
         { overflow: clipFeedback ? "hidden" : "visible" },
       ]}
     />
@@ -39,6 +41,7 @@ export function AccessiblePressable({
 }
 
 const styles = StyleSheet.create({
+  pressed: { opacity: 0.72, transform: [{ scale: 0.98 }] },
   minimumTarget: {
     minHeight: minimumTouchTarget,
     minWidth: minimumTouchTarget,
