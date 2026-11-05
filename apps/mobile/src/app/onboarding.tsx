@@ -1,4 +1,7 @@
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { figmaRadii, figmaType } from "@picket/design-tokens";
+import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
+import { IconButton } from "@/core/ui/picket-ui";
+import { PaperArt } from "@/core/ui/paper-art";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
@@ -38,7 +41,7 @@ export default function OnboardingScreen() {
   const [message, setMessage] = useState<string | null>(null);
 
   if (authLoading || (session && profileLoading)) {
-    return <View style={styles.loading}><ActivityIndicator accessibilityLabel="Đang tải thiết lập" color={colors.link} /></View>;
+    return <View style={styles.loading}><ActivityIndicator accessibilityLabel="Đang tải thiết lập" color={colors.primary} /></View>;
   }
   if (!session) return <Redirect href={routes.login} />;
   if (profile?.onboardingCompleted) return <Redirect href={routes.home} />;
@@ -70,13 +73,19 @@ export default function OnboardingScreen() {
     }
   }
 
+  const skippable = step >= 2 && step <= 4;
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View accessibilityLabel={`Tiến độ thiết lập ${step + 1} trên 8`} accessibilityRole="progressbar" accessibilityValue={{ max: 8, min: 1, now: step + 1 }} style={styles.progressTrack}><View style={[styles.progress, { width: `${((step + 1) / 8) * 100}%` }]} /></View>
+      <View style={styles.top}>
+        {step > 0 ? <IconButton icon="chevron-left" label="Quay lại" variant="surface" disabled={busy} onPress={() => setStep((current) => current - 1)} /> : <View style={styles.topSpacer} />}
+        <View accessibilityLabel={`Tiến độ thiết lập ${step + 1} trên 8`} accessibilityRole="progressbar" accessibilityValue={{ max: 8, min: 1, now: step + 1 }} style={styles.dots}>
+          {Array.from({ length: 8 }, (_, index) => <View key={index} style={[styles.dot, index === step && styles.dotActive]} />)}
+        </View>
+        {skippable ? <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setStep((current) => current + 1)}><Text style={styles.skip}>Bỏ qua</Text></Pressable> : <View style={styles.topSpacer} />}
+      </View>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.counter}>Thiết lập {step + 1}/8</Text>
-        {step === 0 && <Step title="Giữ từng chi tiêu. Gom từng kỷ niệm." description="Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn." />}
-        {step === 1 && <Step title="Mình gọi bạn là gì?" description="Tên này chỉ dùng để cá nhân hóa trải nghiệm."><Field value={displayName} onChangeText={setDisplayName} placeholder="Tên hiển thị" /></Step>}
+        {step === 0 && <Step title="Giữ từng chi tiêu. Gom từng kỷ niệm." description="Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn."><View style={styles.art}><PaperArt id="bloom" style={{ width: 160, height: 160 }} /></View></Step>}
+        {step === 1 && <Step title="Mình gọi bạn là gì?" description="Picket dùng tên này để chào bạn mỗi ngày."><View style={styles.nameCard}><Text style={styles.overline}>TÊN HIỂN THỊ</Text><TextInput accessibilityLabel="Tên hiển thị" value={displayName} onChangeText={setDisplayName} placeholder="Tên hiển thị" placeholderTextColor={colors.muted} selectionColor={colors.primary} style={styles.nameInput} /><View style={styles.underline} /><Text style={styles.hint}>Tên thật hay biệt danh đều được.</Text></View></Step>}
         {step === 2 && <Step title="Nhịp sống của bạn" description="Chọn nhóm gần nhất với hoàn cảnh hiện tại."><Choices values={personas} selected={persona} onSelect={setPersona} /></Step>}
         {step === 3 && <Step title="Mục tiêu chính" description="Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này."><Choices values={goals} selected={goal} onSelect={setGoal} /></Step>}
         {step === 4 && <Step title="Đơn vị tiền tệ" description="Bạn có thể thay đổi lựa chọn này sau."><Choices values={currencies} selected={currencyCode} onSelect={setCurrencyCode} /></Step>}
@@ -86,8 +95,7 @@ export default function OnboardingScreen() {
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
       </ScrollView>
       <View style={styles.actions}>
-        {step > 0 && <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => setStep((current) => current - 1)} style={styles.secondary}><Text style={styles.secondaryText}>Quay lại</Text></Pressable>}
-        <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={() => void next()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang hoàn tất thiết lập" color={colors.onPrimary} /> : <Text style={styles.primaryText}>{step === 7 ? "Bắt đầu cùng Picket" : "Tiếp tục"}</Text>}</Pressable>
+        <FigmaButton label={step === 7 ? "Bắt đầu cùng Picket" : "Tiếp tục"} onPress={() => void next()} busy={busy} fullWidth />
       </View>
     </SafeAreaView>
   );
@@ -110,29 +118,34 @@ function Choices<T extends string>({ values, selected, onSelect }: { values: rea
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
-  loading: { alignItems: "center", backgroundColor: colors.cream, flex: 1, justifyContent: "center" },
-  progressTrack: { backgroundColor: colors.peach, height: 5 },
-  progress: { backgroundColor: colors.mauve, height: 5 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1, justifyContent: "center", padding: paperSpace.screen },
-  counter: { color: colors.link, fontSize: 13, fontWeight: "700", marginBottom: 24 },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
-  description: { color: colors.muted, fontSize: 16, lineHeight: 24, marginTop: 12 },
-  stepBody: { marginTop: 28 },
-  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
-  choices: { gap: 12 },
-  choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.chip, borderWidth: 1, minHeight: paperControl.height, padding: 16 },
-  choiceSelected: { backgroundColor: colors.mauve, borderColor: colors.primaryOutline },
-  choiceText: { color: colors.ink, fontSize: 16, fontWeight: "700" },
-  choiceTextSelected: { color: colors.onPrimary },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
+  loading: { alignItems: "center", backgroundColor: colors.canvas, flex: 1, justifyContent: "center" },
+  top: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 24 },
+  topSpacer: { width: 44 },
+  dots: { alignItems: "center", flexDirection: "row", gap: 6 },
+  dot: { backgroundColor: colors.border, borderRadius: 3, height: 6, width: 6 },
+  dotActive: { backgroundColor: colors.primary, width: 22 },
+  skip: { ...figmaType.captionStrong, color: colors.muted, textAlign: "right", width: 44 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1, paddingHorizontal: 20, paddingTop: 20 },
+  title: { ...figmaType.display, color: colors.text },
+  description: { ...figmaType.bodySmall, color: colors.muted, marginTop: 4 },
+  stepBody: { marginTop: 20 },
+  art: { alignItems: "center", paddingTop: 24 },
+  nameCard: { backgroundColor: colors.paper, borderRadius: figmaRadii.receipt, gap: 8, paddingBottom: 12, paddingHorizontal: 16, paddingTop: 16, ...figmaShadow("paper") },
+  overline: { ...figmaType.overline, color: colors.muted },
+  nameInput: { ...figmaType.amountHero, color: colors.text, padding: 0 },
+  underline: { backgroundColor: colors.border, height: 1 },
+  hint: { ...figmaType.bodySmall, color: colors.muted },
+  input: { backgroundColor: colors.paper, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: 56, paddingHorizontal: 16 },
+  choices: { gap: 10 },
+  choice: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, justifyContent: "center", minHeight: 56, paddingHorizontal: 16 },
+  choiceSelected: { backgroundColor: colors.selectedSurface, borderColor: colors.primary, borderWidth: 1.5 },
+  choiceText: { ...figmaType.bodyStrong, color: colors.text },
+  choiceTextSelected: { color: colors.primary, fontWeight: "800" },
   consent: { alignItems: "flex-start", flexDirection: "row", gap: 12 },
-  checkbox: { borderColor: colors.primaryOutline, borderRadius: 4, borderWidth: 2, height: 22, width: 22 },
-  checked: { backgroundColor: colors.mauve },
-  consentText: { color: colors.ink, flex: 1, fontSize: 15, lineHeight: 22 },
-  error: { color: colors.danger, fontSize: 14, marginTop: 20 },
-  actions: { flexDirection: "row", gap: 12, padding: 20 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, flex: 1, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 16 },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
-  secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 16 },
-  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  checkbox: { borderColor: colors.primary, borderRadius: 6, borderWidth: 2, height: 22, width: 22 },
+  checked: { backgroundColor: colors.primary },
+  consentText: { ...figmaType.bodySmall, color: colors.text, flex: 1 },
+  error: { ...figmaType.bodySmall, color: colors.expense, marginTop: 16 },
+  actions: { paddingBottom: 24, paddingHorizontal: 20, paddingTop: 12 },
 });

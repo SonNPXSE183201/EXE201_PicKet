@@ -150,30 +150,32 @@ function DeviceLockSession({ children }: PropsWithChildren) {
       </View>
       {session && locked && (
         <View style={styles.root}>
-          <View style={styles.lockCard}>
-            <View style={styles.lockArtBox}>
-              <PaperArt id="security" style={{ width: 72, height: 72 }} />
-            </View>
-            <Text accessibilityRole="header" style={styles.heading}>
-              {t("locked")}
-            </Text>
-            <Text style={styles.copy}>{t("lockedBody")}</Text>
-            {message && (
-              <Text accessibilityLiveRegion="polite" style={styles.error}>
-                {t(message)}
+          <View style={styles.cardOuter}>
+            <View style={styles.lockCard}>
+              <View style={styles.lockArtBox}>
+                <AppIcon name="lock-outline" size={32} color={colors.onPrimary} />
+              </View>
+              <Text accessibilityRole="header" style={styles.heading}>
+                {t("locked")}
               </Text>
-            )}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ disabled: busy }}
-              disabled={busy}
-              onPress={() => void unlock()}
-              style={styles.button}
-            >
-              <AppIcon name="shield-lock-outline" size={20} color={colors.onPrimary} />
-              <Text style={styles.buttonText}>{busy ? t("authenticating") : t("unlock")}</Text>
-            </Pressable>
+              <Text style={styles.copy}>{t("lockedBody")}</Text>
+              {message && (
+                <Text accessibilityLiveRegion="polite" style={styles.error}>
+                  {t(message)}
+                </Text>
+              )}
+            </View>
+            <PaperArt id="savings" style={styles.jar} />
           </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy }}
+            disabled={busy}
+            onPress={() => void unlock()}
+            style={styles.button}
+          >
+            <Text style={styles.buttonText}>{busy ? t("authenticating") : t("unlock")}</Text>
+          </Pressable>
         </View>
       )}
     </LockContext.Provider>
@@ -189,71 +191,71 @@ export function useDeviceLock() {
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
     root: {
-      alignItems: "center",
-      backgroundColor: colors.cream,
+      backgroundColor: colors.primary,
       flex: 1,
       justifyContent: "center",
-      padding: 24,
+      paddingBottom: 48,
+      paddingHorizontal: 20,
+    },
+    cardOuter: {
+      backgroundColor: "rgba(255,255,255,0.08)",
+      borderRadius: 32,
+      marginBottom: 120,
+      padding: 12,
     },
     lockCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 28,
-      paddingVertical: 32,
+      alignItems: "center",
+      borderColor: "rgba(255,255,255,0.35)",
+      borderRadius: 24,
+      borderStyle: "dashed",
+      borderWidth: 1.5,
       paddingHorizontal: 24,
-      alignItems: "center",
-      width: "100%",
-      maxWidth: 340,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.06,
-      shadowRadius: 12,
-      elevation: 3,
+      paddingVertical: 40,
     },
+    jar: { bottom: -24, height: 72, position: "absolute", right: -8, width: 72 },
     lockArtBox: {
-      width: 96,
-      height: 96,
-      borderRadius: 48,
-      backgroundColor: colors.pocketLilac,
       alignItems: "center",
+      backgroundColor: "rgba(255,255,255,0.18)",
+      borderRadius: 20,
+      height: 72,
       justifyContent: "center",
       marginBottom: 20,
+      width: 72,
     },
     heading: {
-      color: colors.ink,
+      color: colors.onPrimary,
       fontSize: 22,
       fontWeight: "800",
+      letterSpacing: -0.3,
+      lineHeight: 29,
       textAlign: "center",
-      letterSpacing: -0.5,
     },
     copy: {
-      color: colors.muted,
-      fontSize: 14,
-      lineHeight: 20,
+      color: "rgba(255,255,255,0.78)",
+      fontSize: 12,
+      fontWeight: "600",
+      lineHeight: 18,
       marginTop: 8,
       textAlign: "center",
     },
     error: {
-      color: colors.danger,
-      fontSize: 13,
+      color: colors.pocketCoral,
+      fontSize: 12,
+      fontWeight: "700",
       marginTop: 12,
       textAlign: "center",
     },
     button: {
-      flexDirection: "row",
       alignItems: "center",
-      backgroundColor: colors.mauve,
+      backgroundColor: colors.pocketCoral,
       borderRadius: 24,
-      gap: 8,
+      height: 48,
       justifyContent: "center",
-      marginTop: 24,
-      minHeight: 48,
-      width: "100%",
     },
     buttonText: {
-      color: colors.onPrimary,
-      fontWeight: "700",
-      fontSize: 15,
+      color: colors.primary,
+      fontSize: 13,
+      fontWeight: "800",
+      lineHeight: 19,
     },
   });
