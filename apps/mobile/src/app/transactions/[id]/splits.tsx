@@ -1,12 +1,17 @@
-import { TopAppBar } from "@/core/ui/picket-ui";
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
-import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { figmaType } from "@picket/design-tokens";
+import { FigmaButton, Overline, ReceiptDivider, ReceiptEdge, figmaShadow } from "@/core/ui/figma-ui";
+import { AppIcon } from "@/core/ui/app-icon";
+import { CategoryPickerSheet } from "@/core/ui/picker-sheets";
+import { categoryTile } from "@/features/home/home-recent";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { useFigmaCopy } from "@/features/transactions/figma-copy";
+import { ChildBar, ErrorLine, FigmaScreen, NoticeCard } from "@/features/transactions/figma-parts";
+import { formatMoney } from "@/core/i18n/formatters";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { radii } from "@/core/ui/mobile-palette";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -20,7 +25,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function TransactionSplitsScreen() {
-  const {tx,money:formatVnd}=useTransactionCopy();
+  const {tx}=useTransactionCopy();
   const { colors, styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
@@ -29,6 +34,10 @@ export default function TransactionSplitsScreen() {
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [added, setAdded] = useState<string[]>([]);
+  const [adding, setAdding] = useState(false);
+  const copy = useFigmaCopy();
+  const { language } = useAppTheme();
   const [message, setMessage] = useState<TransactionNotice | null>(null);
   const availableCategories = useMemo(
     () =>
@@ -118,49 +127,82 @@ export default function TransactionSplitsScreen() {
     }
   }
 
+  const currency = "VND";
+  const fmt = (value: number) => formatMoney(value, language, currency);
+  const parts = normalizedAmounts.filter((item) => item.value.trim() !== "" || added.includes(item.category.id));
+  const left = transactionAmount - total;
+  const over = total > transactionAmount;
+  const ratio = transactionAmount > 0 ? Math.min(1, total / transactionAmount) : 0;
+  const date = new Date(transaction.occurredAt);
+  const unusedOptions = normalizedAmounts.filter((item) => !parts.some((part) => part.category.id === item.category.id)).map(({ category }) => { const t = categoryTile(category.icon, category.name, transaction.kind === "income", colors); return { id: category.id, name: category.name, icon: t.name, tint: t.color }; });
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <TopAppBar title={tx("Chia danh mục")} backDisabled={busy} />
-        <Text style={styles.subtitle}>{transaction.title}</Text>
-        <View style={styles.totalCard}>
-          <Text style={styles.totalLabel}>{tx("Đã phân bổ")}</Text>
-          <Text style={[styles.totalValue, total === transaction.amount ? styles.valid : styles.invalid]}>{formatVnd(total)} / {formatVnd(transaction.amount)}</Text>
-        </View>
-        {normalizedAmounts.map(({ category, value }) => (
-          <View key={category.id} style={styles.row}>
-            <Text style={styles.category}>{category.name}</Text>
-            <TextInput money accessibilityLabel={tx("splitAmount",{category:category.name})} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
+    <FigmaScreen footer={<View style={{ gap: 4 }}>
+      <FigmaButton fullWidth icon="check" busy={busy} disabled={over} label={copy("splitSave")} onPress={() => void submit()} />
+      {parts.length > 0 && <FigmaButton fullWidth variant="text" size="medium" disabled={busy} label={copy("clearAll")} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); setAdded([]); }} />}
+    </View>}>
+      <ChildBar title={copy("splitTitle")} backDisabled={busy} />
+      <View style={figmaShadow("paper")}>
+        <View style={styles.totalPaper}>
+          <Overline>{copy("billTotal")}</Overline>
+          <View style={styles.totalRow}>
+            <Text style={[figmaType.amountPocket, { fontSize: 20, color: colors.text }]}>{fmt(transactionAmount)}</Text>
+            <Text numberOfLines={1} style={[figmaType.bodySmall, { color: colors.muted, flexShrink: 1 }]}>{transaction.title} · {date.getDate()}/{date.getMonth() + 1}</Text>
           </View>
-        ))}
-        {message && <Text style={styles.error}>{tx(message)}</Text>}
-        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu phân bổ giao dịch")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{tx("Lưu phân bổ")}</Text>}</Pressable>
-        <Pressable disabled={busy} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); }} style={styles.clear}><Text style={styles.clearText}>{tx("Bỏ toàn bộ phân bổ")}</Text></Pressable>
-        <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>{tx("Hủy")}</Text></Pressable>
-      </ScrollView>
-    </SafeAreaView>
+          <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: transactionAmount, now: Math.min(total, transactionAmount) }} style={styles.track}><View style={[styles.fill, { width: `${ratio * 100}%`, backgroundColor: over ? colors.expense : colors.primary }]} /></View>
+          <View style={styles.totalRow}>
+            <Text style={[figmaType.bodySmall, { color: colors.text }]}>{copy("splitDone", { amount: fmt(total) })}</Text>
+            <Text style={[figmaType.bodySmall, { color: over ? colors.expense : colors.warning }]}>{over ? copy("splitOver", { amount: fmt(total - transactionAmount) }) : copy("splitLeft", { amount: fmt(left) })}</Text>
+          </View>
+        </View>
+        <ReceiptEdge direction="bottom" />
+      </View>
+
+      <View style={{ gap: 12 }}>
+        <Overline>{copy("partsOverline")}</Overline>
+        <View style={[styles.card, figmaShadow("paper")]}>
+          {parts.map(({ category, value }) => {
+            const t = categoryTile(category.icon, category.name, transaction.kind === "income", colors);
+            return <View key={category.id}>
+              <View style={styles.partRow}>
+                <View style={[styles.tile, { backgroundColor: t.color }]}><AppIcon name={t.name} size={18} color={colors.text} /></View>
+                <View style={{ flex: 1, minWidth: 1 }}><Text style={[figmaType.bodySmall, { color: colors.muted }]}>{copy("categoryLabel")}</Text><Text numberOfLines={1} style={styles.partName}>{category.name}</Text></View>
+                <TextInput money borderless accessibilityLabel={tx("splitAmount", { category: category.name })} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
+                <Pressable accessibilityRole="button" accessibilityLabel={`${copy("removePart")}: ${category.name}`} hitSlop={8} disabled={busy} onPress={() => { setAmounts((current) => ({ ...current, [category.id]: "" })); setAdded((current) => current.filter((id) => id !== category.id)); }}><AppIcon name="close" size={18} color={colors.muted} /></Pressable>
+              </View>
+              <ReceiptDivider />
+            </View>;
+          })}
+          <Pressable accessibilityRole="button" disabled={busy || unusedOptions.length === 0} onPress={() => setAdding(true)} style={styles.partRow}>
+            <View style={styles.addTile}><AppIcon name="plus" size={18} color={colors.primary} /></View>
+            <Text style={[figmaType.bodyStrong, { color: colors.primary, flex: 1 }]}>{left > 0 && parts.length > 0 ? copy("addPartLeft", { amount: fmt(left) }) : copy("addPart")}</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {over && <NoticeCard title={copy("splitOverTitle")} body={copy("splitOverBody", { amount: fmt(total - transactionAmount), total: fmt(transactionAmount) })} />}
+      {message && <ErrorLine>{tx(message)}</ErrorLine>}
+
+      <CategoryPickerSheet visible={adding} title={copy("pickCategory")} searchPlaceholder={copy("categorySearch")} closeLabel={copy("close")} options={unusedOptions}
+        onSelect={(id) => { setAdded((current) => [...current, id]); if (left > 0) setAmounts((current) => ({ ...current, [id]: String(left) })); setAdding(false); }} onClose={() => setAdding(false)} />
+    </FigmaScreen>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 12, padding: paperSpace.screen, paddingBottom: 48 },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700", marginTop: 20 },
-  subtitle: { color: colors.muted, fontSize: 15, marginBottom: 8 },
-  totalCard: { backgroundColor: colors.white, borderRadius: paperShape.card, marginBottom: 6, padding: 16 },
-  totalLabel: { color: colors.muted, fontSize: 12 },
-  totalValue: { fontSize: 18, fontWeight: "700", marginTop: 5 },
-  valid: { color: colors.income },
-  invalid: { color: colors.expense },
-  row: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", gap: 12, padding: 12 },
-  category: { color: colors.ink, flex: 1, fontSize: 15, fontWeight: "700" },
-  amountInput: { borderColor: colors.peach, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, minHeight: 44, paddingHorizontal: 12, textAlign: "right", width: 130 },
+  totalPaper: { backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 16, paddingBottom: 14, paddingHorizontal: 16, gap: 8 },
+  totalRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  track: { height: 8, borderRadius: 4, backgroundColor: colors.elevated, overflow: "hidden" },
+  fill: { height: 8, borderRadius: 4 },
+  card: { backgroundColor: colors.paper, borderRadius: 24, paddingHorizontal: 16 },
+  partRow: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 60, paddingVertical: 10 },
+  tile: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  addTile: { width: 36, height: 36, borderRadius: 12, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.muted, alignItems: "center", justifyContent: "center" },
+  partName: { fontSize: 15, lineHeight: 22, fontWeight: "800", color: colors.text },
+  amountInput: { minWidth: 80, maxWidth: 120, textAlign: "right", fontSize: 15, fontWeight: "800", color: colors.text, padding: 0, backgroundColor: "transparent", borderWidth: 0 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 8, minHeight: paperControl.height },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
-  clear: { alignItems: "center", minHeight: 44, padding: 12 },
-  clearText: { color: colors.expense, fontSize: 14, fontWeight: "700" },
   secondary: { alignItems: "center", minHeight: 44, padding: 12 },
-  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  secondaryText: { color: colors.primary, fontSize: 15, fontWeight: "700" },
 });

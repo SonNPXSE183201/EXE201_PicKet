@@ -1,16 +1,24 @@
-import { paperControl , paperShape } from "@/core/theme/paper-foundations";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { TopAppBar , ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
+import { WalletPickerSheet } from "@/core/ui/picker-sheets";
+import { FigmaButton } from "@/core/ui/figma-ui";
+import { figmaType } from "@picket/design-tokens";
+import { formatMoney } from "@/core/i18n/formatters";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { useProfile } from "@/features/profile/profile-context";
+import { summarizeCurrencies, transactionMonthAt } from "@/features/cashflow/currency-summary";
+import { useFigmaCopy } from "@/features/transactions/figma-copy";
+import { AmountPaper, ChildBar, ErrorLine, FigmaScreen, FormRow, NoticeCard, PaperCard, heroAmount } from "@/features/transactions/figma-parts";
 import { AppIcon } from "@/core/ui/app-icon";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { StyleSheet, View } from "react-native";
+
 
 import { routes } from "@/core/navigation/routes";
 import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
@@ -25,14 +33,18 @@ export default function NewTransferScreen() {
   const { accounts: allAccounts } = useAccounts();
   const accounts = allAccounts.filter(account => !account.archived && !account.deletedAt);
   const { currency } = useLocalSearchParams<{ currency?: string }>();
-  const { createTransfer } = useTransactions();
+  const { createTransfer, transactions } = useTransactions();
+  const copy = useFigmaCopy();
+  const { language } = useAppTheme();
+  const { profile } = useProfile();
+  type Account = (typeof allAccounts)[number];
+  const [picker, setPicker] = useState<"from" | "to" | null>(null);
   const [sourceId, setSourceId] = useState(accounts.find(account => account.currencyCode === currency)?.id ?? accounts[0]?.id ?? "");
   const source = accounts.find((item) => item.id === sourceId) ?? accounts.find(item => item.currencyCode === currency) ?? accounts[0];
   const destinations = useMemo(() => accounts.filter((item) => item.id !== source?.id && item.currencyCode === source?.currencyCode), [accounts, source]);
   const [destinationId, setDestinationId] = useState("");
   const selectedDestinationId = destinations.some((item) => item.id === destinationId) ? destinationId : destinations[0]?.id ?? "";
-  const [showDetails, setShowDetails] = useState(false);
-  const [title, setTitle] = useState(tx("Chuyển tiền"));
+  const [title] = useState(tx("Chuyển tiền"));
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const submitting = useRef(false);
@@ -56,29 +68,66 @@ export default function NewTransferScreen() {
     } finally { submitting.current = false; setBusy(false); }
   }
 
-  return <PicketScreen>
-    <TopAppBar title={tx("Chuyển tiền")} backDisabled={busy} />
-    <Text style={styles.subtitle}>{tx("Di chuyển tiền giữa các tài khoản mà không làm thay đổi tổng thu chi.")}</Text>
-    <Surface peach style={styles.form}>
-      <View style={styles.routeHeading}><AppIcon name="swap-horizontal" size={24} color={colors.link} /><Text style={styles.summaryTitle}>{tx("Chuyển nội bộ")}</Text>
-        <Pressable disabled={busy || !selectedDestinationId} accessibilityLabel={tx("Đổi chiều chuyển")} onPress={() => { setSourceId(selectedDestinationId); setDestinationId(source?.id ?? ""); }} style={styles.swap}><AppIcon name="swap-horizontal" size={22} color={colors.link} /></Pressable>
+  const timeZone = profile?.timezone ?? "Asia/Ho_Chi_Minh";
+  let balances: Record<string, number> = {};
+  try { balances = summarizeCurrencies(allAccounts, transactions, transactionMonthAt(new Date().toISOString(), timeZone), timeZone).walletBalances; } catch { /* balances unavailable: no overdraw check */ }
+  const destination = destinations.find((item) => item.id === selectedDestinationId);
+  const currencyCode = source?.currencyCode ?? "VND";
+  const fmt = (value: number) => formatMoney(value, language, currencyCode);
+  const sourceBalance = source ? balances[source.id] : undefined;
+  const parsed = Number.parseInt(amount, 10);
+  const over = sourceBalance !== undefined && Number.isFinite(parsed) && parsed > sourceBalance;
+  const kindLabel = (account?: Account) => account ? (account.kind === "cash" ? copy("walletCash") : account.kind === "bank" ? copy("walletBank") : account.currencyCode) : "";
+  const today = new Date();
+  const card = (role: "from" | "to", account: Account | undefined, bg: string, border: string) => (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${role === "from" ? copy("from") : copy("to")}: ${account?.name ?? copy("pickWallet")}`} disabled={busy} onPress={() => setPicker(role)} style={[styles.walletCard, { backgroundColor: bg, borderColor: border }]}>
+      <View style={styles.walletTile}><AppIcon name="wallet-outline" size={20} color={colors.text} /></View>
+      <View style={{ flex: 1, minWidth: 1 }}>
+        <Text style={[figmaType.overline, { color: colors.muted }]}>{(role === "from" ? copy("from") : copy("to")).toUpperCase()}</Text>
+        <Text numberOfLines={1} style={[figmaType.bodyStrong, { fontSize: 15, color: colors.text, fontWeight: "800" }]}>{account?.name ?? copy("pickWallet")}</Text>
+        <Text numberOfLines={1} style={[figmaType.bodySmall, { color: colors.muted }]}>{kindLabel(account)}</Text>
       </View>
-      <FieldLabel>{tx("Từ tài khoản")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{accounts.map(account => <ChoiceChip disabled={busy} checked={source?.id === account.id} key={account.id} label={account.name} onPress={() => { setSourceId(account.id); setDestinationId(""); }} />)}</View>
-      <FieldLabel>{tx("Đến tài khoản (")}{source?.currencyCode ?? "—"})</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{destinations.map(account => <ChoiceChip disabled={busy} checked={selectedDestinationId === account.id} key={account.id} label={account.name} onPress={() => setDestinationId(account.id)} />)}{destinations.length === 0 && <Text style={styles.empty}>{tx("Không có tài khoản đích cùng loại tiền.")}</Text>}</View>
-    </Surface>
-    <Surface style={styles.amountCard}>
-      <FieldLabel>{tx("Số tiền")}</FieldLabel><View style={styles.amountBox}><TextInput money borderless accessibilityLabel={tx("Số tiền chuyển")} editable={!busy} keyboardType="number-pad" onChangeText={setAmount} placeholder="0" style={styles.amountInput} value={amount} /><Text style={styles.currency}>{source?.currencyCode ?? "VND"}</Text></View>
-      <Pressable disabled={busy} accessibilityState={{ expanded: showDetails }} onPress={() => setShowDetails(!showDetails)} style={styles.detailsToggle}><AppIcon name="note-text-outline" size={18} color={colors.link} /><Text style={styles.detailsLabel}>{tx("Nội dung và ghi chú (không bắt buộc)")}</Text><AppIcon name={showDetails ? "chevron-up" : "chevron-down"} size={18} color={colors.link} /></Pressable>
-      {showDetails && <><FieldLabel>{tx("Nội dung")}</FieldLabel><TextInput accessibilityLabel={tx("Nội dung chuyển tiền")} editable={!busy} maxLength={120} onChangeText={setTitle} style={styles.input} value={title} /><FieldLabel>{tx("Ghi chú")}</FieldLabel><TextInput accessibilityLabel={tx("Ghi chú chuyển tiền")} editable={!busy} multiline onChangeText={setNote} placeholder={tx("Không bắt buộc")} style={[styles.input, styles.note]} value={note} /></>}
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text> : null}
-      <PrimaryAction busy={busy} disabled={!source || !selectedDestinationId} label={tx("Xác nhận chuyển")} onPress={() => void submit()} />
-    </Surface>
-  </PicketScreen>;
+      {account && balances[account.id] !== undefined ? <Text style={[figmaType.amountRow, { color: colors.text }]}>{fmt(balances[account.id])}</Text> : null}
+    </Pressable>
+  );
+
+  return <FigmaScreen footer={<FigmaButton fullWidth icon="check" busy={busy} disabled={!source || !selectedDestinationId || over || !amount} label={copy("transferDo")} onPress={() => void submit()} />}>
+    <ChildBar title={copy("transferTitle")} backDisabled={busy} />
+    <View style={{ gap: 0 }}>
+      {card("from", source, colors.pocketCoral + "66", colors.pocketCoral)}
+      <View style={{ height: 8 }} />
+      {card("to", destination, colors.pocketMint + "66", colors.pocketMint)}
+      <Pressable disabled={busy || !selectedDestinationId} accessibilityRole="button" accessibilityLabel={tx("Đổi chiều chuyển")} onPress={() => { setSourceId(selectedDestinationId); setDestinationId(source?.id ?? ""); }} style={styles.swap}><AppIcon name="chevron-down" size={22} color={colors.onPrimary} /></Pressable>
+    </View>
+    {!destination && source ? <ErrorLine>{tx("Không có tài khoản đích cùng loại tiền.")}</ErrorLine> : null}
+
+    <AmountPaper overline={copy("transferAmount")} footer={
+      <View style={styles.noteLine}><AppIcon name="pencil-outline" size={14} color={colors.muted} />
+        <TextInput accessibilityLabel={tx("Ghi chú chuyển tiền")} borderless editable={!busy} maxLength={120} onChangeText={setNote} placeholder={tx("Không bắt buộc")} placeholderTextColor={colors.muted} style={styles.noteInput} value={note} /></View>}>
+      <View style={styles.amountRow}>
+        <TextInput money borderless accessibilityLabel={tx("Số tiền chuyển")} editable={!busy} keyboardType="number-pad" onChangeText={setAmount} placeholder="0" placeholderTextColor={colors.muted} style={[styles.amountInput, { color: over ? colors.expense : amount ? colors.text : colors.muted }]} value={amount} />
+        <Text style={[heroAmount, { color: over ? colors.expense : colors.text, textDecorationLine: "underline" }]}>{currencyCode === "VND" ? "₫" : currencyCode}</Text>
+      </View>
+    </AmountPaper>
+
+    {over && source && sourceBalance !== undefined ? <NoticeCard title={copy("overTitle")} body={copy("overBody", { name: source.name, amount: fmt(sourceBalance) })} action={sourceBalance > 0 ? copy("transferAll") : undefined} onAction={() => setAmount(String(sourceBalance))} /> : null}
+    {message ? <ErrorLine>{tx(message)}</ErrorLine> : null}
+
+    <PaperCard><FormRow icon="calendar-month-outline" label={copy("rowDate")} value={`${tx("Hôm nay")}, ${today.toLocaleDateString(language === "en" ? "en-US" : "vi-VN")}`} last /></PaperCard>
+    <View style={{ flexDirection: "row", gap: 8, alignItems: "center", paddingHorizontal: 4 }}><AppIcon name="shimmer" size={16} color={colors.muted} /><Text style={[figmaType.bodySmall, { color: colors.muted, flex: 1 }]}>{copy("transferHint")}</Text></View>
+
+    <WalletPickerSheet visible={picker !== null} title={copy("walletPickTitle")} closeLabel={copy("close")} selectedId={picker === "to" ? selectedDestinationId : source?.id}
+      options={(picker === "to" ? destinations : accounts).map((account) => ({ id: account.id, name: account.name, meta: kindLabel(account), balance: balances[account.id] !== undefined ? formatMoney(balances[account.id], language, account.currencyCode) : undefined }))}
+      onSelect={(id) => { if (picker === "to") setDestinationId(id); else { setSourceId(id); setDestinationId(""); } setPicker(null); }} onClose={() => setPicker(null)} />
+  </FigmaScreen>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  appBar: { justifyContent: "center", minHeight: 52 }, back: { color: colors.link, fontSize: 15, fontWeight: "700" }, heading: { color: colors.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 }, subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 18, marginTop: 7 },
-  summary: { alignItems: "center", flexDirection: "row", gap: 14, padding: 16 }, summarySymbol: { color: colors.link, fontSize: 30, fontWeight: "700" }, summaryCopy: { flex: 1 }, summaryTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" }, summaryText: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, form: { marginTop: 14 },
-  routeHeading: { flexDirection: "row", alignItems: "center", gap: 10 }, swap: { marginLeft: "auto", borderWidth: 1, borderColor: colors.controlBorder, borderRadius: 16, alignItems: "center", justifyContent: "center" }, amountCard: { marginTop: 14, backgroundColor: colors.pocketLilac }, detailsToggle: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 }, detailsLabel: { flex: 1, color: colors.link, fontSize: 13, fontWeight: "600" },
-  choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 }, input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 }, amountBox: { backgroundColor: colors.surface, alignItems: "center", borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 }, amountInput: { borderWidth: 0, backgroundColor: "transparent", paddingHorizontal: 0, color: colors.ink, flex: 1, fontSize: 24, fontWeight: "700", minHeight: 54 }, currency: { color: colors.link, fontSize: 14, fontWeight: "700" }, note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" }, empty: { color: colors.expense, fontSize: 13, lineHeight: 19 }, error: { color: colors.danger, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 },
+  walletCard: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, borderWidth: 1 },
+  walletTile: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  swap: { position: "absolute", right: 24, top: "50%", marginTop: -20, width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, borderWidth: 3, borderColor: colors.canvas, alignItems: "center", justifyContent: "center" },
+  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+  amountInput: { ...heroAmount, minWidth: 80, textAlign: "center", paddingHorizontal: 0, backgroundColor: "transparent", borderWidth: 0 },
+  noteLine: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 4, justifyContent: "center", alignSelf: "stretch" },
+  noteInput: { ...figmaType.bodySmall, color: colors.muted, minWidth: 140, padding: 0, backgroundColor: "transparent", borderWidth: 0, textAlign: "center" },
 });

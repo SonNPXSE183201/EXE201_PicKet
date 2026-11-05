@@ -23,10 +23,11 @@ test("HomeScreen recent list uses category stroke icons on tinted tiles (Figma R
   assert.match(homeSource, /categoryTile/);
 });
 
-test("TransactionsScreen renders PaperArt in transaction rows", () => {
+test("TransactionsScreen renders Figma day papers with category tiles in transaction rows", () => {
   const txSource = readFileSync(new URL("../../app/transactions/index.tsx", import.meta.url), "utf8");
-  assert.match(txSource, /categoryArt/);
-  assert.match(txSource, /<PaperArt id=\{artId\}/);
+  const listSource = readFileSync(new URL("../../features/transactions/spending-list.tsx", import.meta.url), "utf8");
+  assert.match(txSource, /DayPaper/);
+  assert.match(listSource, /categoryTile/);
 });
 
 test("NavigationShell has canonical destination label Picket", () => {
