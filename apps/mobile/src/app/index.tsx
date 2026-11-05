@@ -2,8 +2,6 @@ import { useState } from "react";
 import { HomeWeeklyRhythm } from "@/features/cashflow/home-weekly-rhythm";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { HomeBudgetPockets } from "@/features/budgets/home-budget-pockets";
-import { PaperArt } from "@/core/ui/paper-art";
-import { categoryArt } from "@/core/theme/category-art";
 import { useTranslation } from "react-i18next";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
@@ -11,11 +9,15 @@ import { formatMoney, localeFor } from "@/core/i18n/formatters";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { summarizeCurrencies } from "@/features/cashflow/currency-summary";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { routes } from "@/core/navigation/routes";
 import { AppIcon } from "@/core/ui/app-icon";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ConnectionNotice, IconButton, MenuRow, PicketScreen, SectionTitle, Surface } from "@/core/ui/picket-ui";
+import { ConnectionNotice, IconButton, MenuRow, PicketScreen } from "@/core/ui/picket-ui";
+import { SectionHeader, Skeleton } from "@/core/ui/figma-ui";
+import { HomeHero, HomeHeroSkeleton, type StubState } from "@/features/home/home-hero";
+import { HomeRecent, HomeRecentSkeleton, type RecentRow } from "@/features/home/home-recent";
+import { WeeklySkeleton } from "@/features/cashflow/weekly-day-bars";
 import { useAccounts } from "@/features/accounts/accounts-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { useProfile } from "@/features/profile/profile-context";
@@ -29,7 +31,7 @@ export default function HomeScreen() {
 }
 
 function HomeContent({ initialMonth }: { initialMonth?: string }) {
-  const { colors, styles, theme } = useMobileStyles(createStyles);
+  const { colors, styles } = useMobileStyles(createStyles);
   const { language } = useAppTheme();
   const { t } = useTranslation("overview");
   const { configured, loading: authLoading, localMode, session } = useAuth();
@@ -52,33 +54,61 @@ function HomeContent({ initialMonth }: { initialMonth?: string }) {
   };
   const money = (value: number, currency?: string) => hideBalance ? "••••••" : currency ? formatMoney(value,language,currency) : "—";
   const totalText = (field:"balance"|"income"|"expense") => totals.map(row=>money(row[field],row.currency)).join("\n") || "—";
-  if (authLoading || ((session || localMode) && !profile && (profileLoading || accountsLoading))) return <View style={styles.loading}><ActivityIndicator accessibilityLabel={t("loading")} color={colors.link} /></View>;
+  if (authLoading || ((session || localMode) && !profile && (profileLoading || accountsLoading))) return <View accessibilityLabel={t("loading")} accessibilityState={{ busy: true }} style={styles.root}><PicketScreen>
+    <HomeHeader title={t("homeToday", { name: profile?.displayName?.trim().split(/\s+/).pop() || t("friend") })} dateText={new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long" })} bell={t("notifications")} />
+    <HomeHeroSkeleton label={t("balance")} />
+    <View style={styles.block}><SectionHeader overline={t("rhythmTitle")} title={t("rhythmWeekLoading")} /><WeeklySkeleton /></View>
+    <View style={styles.block}><SectionHeader overline={t("pocketLabel")} title={t("pocketTitle")} /><View style={{ flexDirection: "row", gap: 12, overflow: "hidden" }}>{[0, 1, 2].map(i => <View key={i} style={styles.skeletonPocket}><Skeleton width={32} height={32} radius={11} /><Skeleton width={64} height={8} /><Skeleton width={92} height={14} /><Skeleton width={116} height={4} /></View>)}</View></View>
+    <HomeRecentSkeleton />
+  </PicketScreen></View>;
   if ((!configured || !session) && !localMode) return <Redirect href={routes.login} />;
   if (!profileError && !profile?.onboardingCompleted) return <Redirect href={routes.onboarding} />;
+  const timeZone = profile?.timezone ?? "Asia/Ho_Chi_Minh";
+  const dayKey = (instant: Date) => new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(instant);
+  const todayKey = dayKey(new Date());
+  const heroCurrency = totals[0]?.currency;
+  const todayExpenses = visible.filter(item => item.kind === "expense" && dayKey(new Date(item.occurredAt)) === todayKey && accounts.find(account => account.id === item.accountId)?.currencyCode === heroCurrency);
+  const todaySum = todayExpenses.reduce((sum, item) => sum + item.amount, 0);
+  const stub: StubState = hideBalance ? { kind: "hidden", title: t("homeStubTodayHidden") } : todayExpenses.length ? { kind: "default", title: t("homeStubToday", { count: todayExpenses.length }), amount: `−${money(todaySum, heroCurrency)}` } : { kind: "empty", title: t("homeStubTodayHidden"), hint: t("homeStubEmpty") };
+  const groupLabel = (iso: string) => {
+    const instant = new Date(iso), key = dayKey(instant);
+    const weekday = instant.toLocaleDateString(localeFor(language), { weekday: "long", timeZone });
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric", month: "numeric" }).format(instant);
+    const label = t("homeWeekdayDate", { weekday, date: parts.replace(/\/(\d+)$/, "/$1") });
+    return key === todayKey ? `${t("homeTodayLabel")} · ${label}` : label;
+  };
+  const recentRows: RecentRow[] = visible.slice(0, 3).map(item => {
+    const category = categories.find(c => c.id === item.categoryId);
+    const account = accounts.find(entry => entry.id === item.accountId);
+    const sign = item.kind === "expense" ? "−" : item.kind === "income" ? "+" : "";
+    return { id: item.id, title: item.title, group: groupLabel(item.occurredAt), kind: item.kind, icon: category?.icon ?? null, categoryName: category?.name ?? "",
+      meta: [category?.name, account?.name].filter(Boolean).join(" · ") || new Date(item.occurredAt).toLocaleDateString(localeFor(language), { timeZone }),
+      amount: account?.currencyCode ? `${sign}${formatMoney(item.amount, language, account.currencyCode)}` : "—" };
+  });
   return <View style={styles.root}><PicketScreen>
-    <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.greeting}>{new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long", timeZone: profile?.timezone ?? "Asia/Ho_Chi_Minh" })}</Text><Text accessibilityRole="header" style={styles.heading}>{t("homeToday",{name:profile?.displayName?.trim().split(/\s+/).pop() || t("friend")})}</Text></View><IconButton icon="bell-outline" label={t("notifications")} onPress={() => router.push(routes.notifications)} /></View>
-    <Surface style={styles.balanceCard}><View pointerEvents="none" style={{ position: "absolute", right: 4, bottom: 0, opacity: theme === "dark" ? .85 : 1 }}><PaperArt id="bloom" style={{ width: 92, height: 100 }} /></View><View style={styles.between}><Text style={styles.balanceLabel}>{t("balance")}</Text><Pressable accessibilityLabel={hideBalance ? t("showBalance") : t("hideBalance")} accessibilityRole="button" onPress={toggleBalance} style={styles.eyeTouchWrap}><View style={styles.eyeCircle}><AppIcon name={hideBalance ? "eye-off-outline" : "eye-outline"} size={17} color={colors.mauve} /></View></Pressable></View><Text adjustsFontSizeToFit numberOfLines={Math.max(1,totals.length)} style={styles.balance}>{totalText("balance")}</Text><Pressable onPress={() => router.navigate(routes.accounts)} style={styles.walletLink}><AppIcon name="wallet-outline" size={18} color={colors.ink} /><Text style={styles.walletLinkText}>{t("walletCount",{count:accounts.length})}</Text></Pressable></Surface>
-
+    <HomeHeader title={t("homeToday", { name: profile?.displayName?.trim().split(/\s+/).pop() || t("friend") })} dateText={new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long", timeZone })} bell={t("notifications")} />
+    <HomeHero label={t("balance")} balance={totalText("balance")} lines={Math.max(1, totals.length)} hidden={hideBalance} onToggle={toggleBalance} toggleLabel={hideBalance ? t("showBalance") : t("hideBalance")} wallets={accounts.length === 1 ? undefined : t("homeWallets", { count: accounts.length })} onWallets={() => router.navigate(routes.accounts)} stub={stub} />
     {(!summary || summary.unscopedTransactionIds.length>0) && <Text accessibilityRole="alert" style={{color:colors.expense}}>{t("summaryError")}</Text>}
     {(profileError || accountsError || transactionsError) && <ConnectionNotice hasData={Boolean(profile || accounts.length || transactions.length)} onRetry={() => void Promise.all([refresh(), refreshAccounts(), refreshTransactions()])} />}
     {(pendingCount > 0) && <Pressable onPress={() => { if (!localMode) void flush(); }} accessibilityState={{ busy: syncing }} style={styles.status}><AppIcon name={syncing ? "sync" : localMode ? "cellphone-check" : "cloud-sync-outline"} size={17} color={colors.muted} /><Text style={styles.statusText}>{localMode ? t("local") : syncing ? t("syncing") : t("pending",{count:pendingCount})}</Text></Pressable>}
     {conflictCount > 0 && <MenuRow icon="alert-circle-outline" title={t("conflicts",{count:conflictCount})} onPress={() => router.push(routes.syncConflicts)} />}
-    <HomeWeeklyRhythm />
-    <HomeBudgetPockets />
-    <SectionTitle title={t("recent")} action={t("viewAll")} onAction={() => router.push(routes.transactions)} />
-    {visible.length === 0 ? <View style={{ paddingVertical: 12 }}><Text style={styles.meta}>{t("emptyTitle")}</Text><Pressable onPress={() => router.push(routes.newTransaction)}><Text style={{ color: colors.link, fontWeight: "700" }}>{t("addTransaction")}</Text></Pressable></View> : <Surface style={styles.list}>{visible.slice(0, 3).map((item, index) => {
-      const category = categories.find((c) => c.id === item.categoryId);
-      const artId = categoryArt(category?.icon ?? null, category?.name || item.title);
-      return <Pressable key={item.id} onPress={() => router.push(routes.transaction(item.id))} style={[styles.row, index > 0 && styles.divider]}><View style={styles.transactionIcon}><PaperArt id={artId} style={{ width: 28, height: 28 }} /></View><View style={styles.copy}><Text numberOfLines={2} style={styles.rowTitle}>{item.title}</Text><Text style={styles.meta}>{new Date(item.occurredAt).toLocaleDateString(localeFor(language),{timeZone:profile?.timezone ?? "Asia/Ho_Chi_Minh"})}</Text></View><Text style={[styles.rowAmount, { color: item.kind === "expense" ? colors.expense : item.kind === "transfer" ? colors.mauve : colors.income }]}>{accounts.find(account=>account.id===item.accountId)?.currencyCode ? formatMoney(item.amount,language,accounts.find(account=>account.id===item.accountId)!.currencyCode) : "—"}</Text></Pressable>;
-    })}</Surface>}
+    <View style={styles.block}><HomeWeeklyRhythm /></View>
+    <View style={styles.block}><HomeBudgetPockets /></View>
+    <View style={styles.block}><HomeRecent rows={recentRows} onAdd={() => router.push(routes.newTransaction)} onOpen={id => router.push(routes.transaction(id))} /></View>
   </PicketScreen></View>;
 }
 
+function HomeHeader({ title, dateText, bell }: { title: string; dateText: string; bell: string }) {
+  const { styles } = useMobileStyles(createStyles);
+  return <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.greeting}>{dateText}</Text><Text accessibilityRole="header" numberOfLines={2} style={styles.heading}>{title}</Text></View><IconButton variant="surface" icon="bell-outline" label={bell} onPress={() => router.push(routes.notifications)} /></View>;
+}
+
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.canvas }, loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas },
-  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 6, paddingBottom: 12 }, greeting: { color: colors.muted, fontSize: 13, lineHeight: 20 }, heading: { color: colors.text, fontSize: 26, lineHeight: 34, fontWeight: "800", letterSpacing: -.6 },
-  eyeTouchWrap: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", zIndex: 1 },
-  eyeCircle: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.pocketLilac, alignItems: "center", justifyContent: "center" },
-  balanceCard: { minHeight: 160, overflow: "hidden", padding: 18, borderWidth: 0, borderRadius: 32, borderBottomLeftRadius: 16 }, between: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, balanceLabel: { flex: 1, fontSize: 14, fontWeight: "500", color: colors.muted }, balance: { paddingRight: 48, fontSize: 38, lineHeight: 48, fontWeight: "800", fontVariant: ["tabular-nums"], letterSpacing: -1, color: colors.text }, walletLink: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, marginTop: 4 }, walletLinkText: { color: colors.text, fontSize: 12, fontWeight: "600" },
-  status: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 }, statusText: { color: colors.muted, fontSize: 12, flex: 1 }, list: { padding: 0, backgroundColor: "transparent", borderWidth: 0 }, row: { flexDirection: "row", alignItems: "center", gap: 10, minHeight: 64, paddingVertical: 8 }, divider: { borderTopWidth: 1, borderTopColor: colors.border }, transactionIcon: { backgroundColor: colors.pocketLilac, width: 40, height: 40, borderRadius: 14, alignItems: "center", justifyContent: "center" }, copy: { flex: 1, gap: 3 }, rowTitle: { color: colors.text, fontSize: 14, fontWeight: "600", lineHeight: 20 }, meta: { color: colors.muted, fontSize: 12, lineHeight: 18 }, rowAmount: { fontSize: 13, fontWeight: "700", fontVariant: ["tabular-nums"], maxWidth: "40%" },
+  root: { flex: 1, backgroundColor: colors.canvas },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 16, paddingBottom: 24 },
+  greeting: { color: colors.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
+  heading: { color: colors.text, fontSize: 22, lineHeight: 29, fontWeight: "800", letterSpacing: -.3, marginTop: 2 },
+  block: { gap: 12, marginTop: 24 },
+  skeletonPocket: { width: 148, height: 188, padding: 16, gap: 10, justifyContent: "flex-end", backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 12 },
+  status: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16 }, statusText: { color: colors.muted, fontSize: 12, flex: 1 },
 });
