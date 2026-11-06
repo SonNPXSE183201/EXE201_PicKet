@@ -119,3 +119,31 @@ test("inline arithmetic conflicts keep the observed total and explicitly request
   assert.equal(r.needsReview, true);
   assert.match(r.reviewReason!, /không khớp/);
 });
+
+test("a payment document title is not a payable total label", () => {
+  const r = parseReceiptLines([
+    cell("CỬA HÀNG MẪU", 10, 10, 180), cell("BIÊN NHẬN THANH TOÁN", 10, 40, 180),
+    cell("Sản phẩm mẫu", 10, 80), cell("21000", 300, 80),
+    cell("Tổng tiền:", 10, 120), cell("21000", 300, 120),
+    cell("Đã thanh toán:", 10, 160), cell("21000", 300, 160),
+  ]);
+  assert.equal(r.amount, 21000);
+});
+
+test("a damaged low-confidence bare CỘNG read is not summary evidence", () => {
+  const lines = [
+    { ...cell("CoNG", 10, 200, 40), confidence: .4 }, cell("37200", 300, 200, 40),
+  ];
+  assert.equal(parseReceiptLines(lines).amount, null);
+  assert.equal(parseReceiptLines([{ ...lines[0], confidence: .9 }, lines[1]]).amount, 37200);
+});
+
+test("table-like headers without assembled rows still read plain priced rows", () => {
+  const r = parseReceiptLines([
+    cell("CỬA HÀNG MẪU", 10, 10, 120),
+    cell("Tên món", 10, 40), cell("SL", 120, 40, 20), cell("ĐG", 150, 40, 20), cell("TT", 190, 40, 20),
+    cell("Trà đào cam sả 35.000", 10, 80, 120),
+    cell("Tổng thanh toán 35.000", 10, 120, 120),
+  ]);
+  assert.deepEqual(r.lineItems.map(i => i.total), [35000]);
+});

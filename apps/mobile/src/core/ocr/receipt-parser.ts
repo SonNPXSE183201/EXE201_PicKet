@@ -43,6 +43,10 @@ export type ReceiptDraftLine = {
   confidence: number;
 };
 
+const bareSumLabel=/^cong\b(?!\s*tien\s*hang)/;
+const weakSumLabelConfidence=0.6;
+// Row text emitted by receiptTableRows: "name qty x unit | total".
+const assembledTableRow=/\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/;
 const totalWords = /^cong(?=\s*(?:[:|]\s*)?(?:\d|$))|^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|can\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
@@ -212,8 +216,10 @@ function adjacentTotalCandidate(label:ReceiptTextLine,candidate:ReceiptTextLine|
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
   const structured = receiptVatSummaryRows(receiptPosRows(receiptTableRows(recognizedLines
     .map((line) => ({ ...line, text: line.text.trim() }))
-    .filter((line) => line.text.length > 0))));
-  const lines=receiptHasTableColumns(structured)?structured:receiptUnheadedRows(structured);
+    // A bare "Cộng" is a weak label; a damaged read of it is not evidence of a summary row.
+    .filter((line) => line.text.length > 0 && !(bareSumLabel.test(normalized(line.text)) && typeof line.confidence === "number" && line.confidence < weakSumLabelConfidence)))));
+  const assembledTable=receiptHasTableColumns(structured)&&structured.some(line=>assembledTableRow.test(line.text));
+  const lines=assembledTable?structured:receiptUnheadedRows(structured);
   // Preserve an unambiguous visual total row in the text saved to drafts.
   // Re-parsing that text after restart must not depend on lost native frames.
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>(),unlinkedAmounts=new Set<ReceiptTextLine>();
@@ -302,7 +308,9 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   const bodyStart=receiptBodyStart(lines);
   const dateLineIndex=selectedDate?.index ?? -1;
   const dateLine=dateLineIndex>=0?lines[dateLineIndex]:null;
-  const itemLines = receiptHasTableColumns(lines) ? lines.filter(line => /\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/.test(line.text)) : lines;
+  const tableRowLines = receiptHasTableColumns(lines) ? lines.filter(line => /\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/.test(line.text)) : [];
+  // Headers alone do not make a table: if no row could be assembled, read the lines as plain rows.
+  const itemLines = tableRowLines.length > 0 ? tableRowLines : lines;
   const {items:itemCandidates,hasArithmeticConflict}=receiptItemCandidates(itemLines),lineItems=itemCandidates.map(candidate=>candidate.item);
   const bodySources=new Set([...itemCandidates.map(candidate=>candidate.source),...lines.filter(line=>isReceiptSummary(line.text))]);
   const bodyTop=Math.min(Infinity,...[...bodySources].flatMap(line=>typeof line.top==='number'&&Number.isFinite(line.top)?[line.top]:[]));
