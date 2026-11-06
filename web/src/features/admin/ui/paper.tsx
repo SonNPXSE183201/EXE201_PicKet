@@ -56,7 +56,7 @@ export function Kpi({ icon, tone = "cream", label, value, note, chip, href, hero
 
 export function Button({ href, variant = "primary", size, block, icon, children, ...rest }: {
   href?: string; variant?: "primary" | "secondary" | "ghost" | "coral" | "danger"; size?: "sm"; block?: boolean; icon?: string; children: ReactNode;
-  type?: "submit" | "button"; disabled?: boolean; name?: string; value?: string; form?: string; "aria-label"?: string;
+  type?: "submit" | "button"; disabled?: boolean; name?: string; value?: string; form?: string; "aria-label"?: string; onClick?: () => void;
 }) {
   const className = cx("ap-btn", variant !== "primary" && `is-${variant}`, size === "sm" && "is-sm", block && "is-block");
   const content = <>{icon && <AdminIcon name={icon} size={18} />}{children}</>;

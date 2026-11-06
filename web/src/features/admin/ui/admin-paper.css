@@ -225,8 +225,8 @@
 .ap-empty .ap-row { justify-content: center; margin-top: 8px; }
 
 /* ---------- Data viz ---------- */
-.ap-bars { display: flex; align-items: flex-end; gap: 6px; height: 92px; }
-.ap-bars span { flex: 1; min-width: 4px; border-radius: 999px; background: var(--ap-lilac); }
+.ap-bars { display: flex; align-items: flex-end; gap: clamp(1px, 1.2%, 6px); height: 92px; min-width: 0; overflow: hidden; }
+.ap-bars span { flex: 1 1 0; min-width: 1px; border-radius: 999px; background: var(--ap-lilac); }
 .ap-bars span:last-child { background: var(--ap-mauve); }
 .ap-progress { height: 8px; border-radius: 999px; background: var(--ap-cream); overflow: hidden; }
 .ap-progress span { display: block; height: 100%; border-radius: inherit; background: var(--ap-mauve); }
@@ -318,3 +318,9 @@
 @media (min-width: 700px) and (max-width: 1100px) {
   .ap-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Loading skeleton */
+.ap-skeleton { background: linear-gradient(100deg, #fff 30%, var(--ap-surface) 50%, #fff 70%) 0 0 / 200% 100%; animation: ap-shimmer 1.4s linear infinite; }
+@keyframes ap-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .ap-skeleton { animation: none; } }
+.ap-root input::-ms-reveal, .ap-root input::-ms-clear { display: none; }

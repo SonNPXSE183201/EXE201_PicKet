@@ -3,53 +3,49 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
+import { normalizePhoneNumber } from "@picket/domain";
 
 import { createClient } from "@/core/supabase/client";
 import { passwordValidationMessage } from "@/core/auth/password";
-import { PasswordField } from "@/features/auth/components/password-field";
+import { FieldGroup, FieldRow, PasswordRow } from "@/features/auth/components/paper-fields";
 
-export function RegisterForm() {
+const symbols = "!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
+const rules = [
+  { text: "Ít nhất 12 ký tự", ok: (p: string) => p.length >= 12 },
+  { text: "Có chữ hoa và chữ thường", ok: (p: string) => /[a-z]/.test(p) && /[A-Z]/.test(p) },
+  { text: "Có ít nhất một số", ok: (p: string) => /\d/.test(p) },
+  { text: "Có ký tự đặc biệt (!@#…)", ok: (p: string) => Array.from(p).some((c) => symbols.includes(c)) },
+];
+
+/* Figma › User Web › W1 Đăng ký bằng email, plus the phone option the backend
+   supports (same flow as mobile: the code goes to email, the phone is attached
+   after verification). */
+export function RegisterForm({ phoneEnabled = true }: { phoneEnabled?: boolean }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-
-  async function signUpWithGoogle() {
-    if (busy) return;
-    setBusy(true);
-    setMessage(null);
-    const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard`;
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          queryParams: { prompt: "select_account" },
-        },
-      });
-      if (error) {
-        setMessage("Không mở được đăng ký Google. Vui lòng thử lại.");
-        setBusy(false);
-      }
-    } catch {
-      setMessage("Không mở được đăng ký Google. Kiểm tra mạng rồi thử lại.");
-      setBusy(false);
-    }
-  }
+  const [mode, setMode] = useState<"email" | "phone">("email");
+  const [password, setPassword] = useState("");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "")
-      .trim()
-      .toLowerCase();
-    const password = String(form.get("password") ?? "");
+    const email = String(form.get("email") ?? "").trim().toLowerCase();
+    const value = String(form.get("password") ?? "");
     const confirmation = String(form.get("confirmation") ?? "");
-
-    const passwordIssue = passwordValidationMessage(password);
+    let phone: string | undefined;
+    if (mode === "phone") {
+      try {
+        phone = normalizePhoneNumber(String(form.get("phone") ?? ""));
+      } catch {
+        return setMessage("Số điện thoại không hợp lệ.");
+      }
+    }
+    const passwordIssue = passwordValidationMessage(value);
     if (passwordIssue) return setMessage(passwordIssue);
-    if (password !== confirmation) return setMessage("Hai mật khẩu chưa khớp.");
+    if (value !== confirmation) return setMessage("Hai mật khẩu chưa khớp.");
 
     setBusy(true);
     setMessage(null);
@@ -57,14 +53,11 @@ export function RegisterForm() {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
-        password,
-        options: { emailRedirectTo: redirectTo },
+        password: value,
+        options: { emailRedirectTo: redirectTo, ...(phone ? { data: { pending_phone: phone } } : {}) },
       });
-
       if (error) {
-        setMessage(
-          "Không thể tạo tài khoản. Email có thể đã được sử dụng hoặc bạn thao tác quá nhanh.",
-        );
+        setMessage("Không thể tạo tài khoản. Email có thể đã được sử dụng hoặc bạn thao tác quá nhanh.");
         setBusy(false);
         return;
       }
@@ -80,86 +73,60 @@ export function RegisterForm() {
     }
   }
 
+  async function signUpWithGoogle() {
+    if (busy) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`, queryParams: { prompt: "select_account" } },
+      });
+      if (error) {
+        setMessage("Không mở được đăng ký Google. Vui lòng thử lại.");
+        setBusy(false);
+      }
+    } catch {
+      setMessage("Không mở được đăng ký Google. Kiểm tra mạng rồi thử lại.");
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="auth-card">
-      <h1 className="auth-title">Tạo tài khoản</h1>
-      <p className="auth-copy">
-        Bắt đầu ghi chép và chăm chút kế hoạch tài chính cùng Picket.
-      </p>
-      <button
-        className="button google-button"
-        disabled={busy}
-        onClick={signUpWithGoogle}
-        type="button"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            fill="#4285F4"
-            d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.2 3-7.4Z"
-          />
-          <path
-            fill="#34A853"
-            d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 .9-3.4.9-2.6 0-4.8-1.7-5.6-4H3.1v2.6A10 10 0 0 0 12 22Z"
-          />
-          <path
-            fill="#FBBC05"
-            d="M6.4 14a6 6 0 0 1 0-4V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14Z"
-          />
-          <path
-            fill="#EA4335"
-            d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.9 5.4L6.4 10c.8-2.3 3-4 5.6-4Z"
-          />
-        </svg>
-        Đăng ký nhanh bằng Google
-      </button>
-      <div className="auth-divider">
-        <span>hoặc đăng ký bằng email</span>
-      </div>
-      <form
-        className="auth-form"
-        onSubmit={submit}
-        aria-busy={busy}
-        aria-describedby={message ? "register-message" : undefined}
-      >
-        <label>
-          Email
-          <input
-            autoComplete="email"
-            autoCapitalize="none"
-            spellCheck={false}
-            name="email"
-            required
-            type="email"
-          />
-        </label>
-        <PasswordField
-          autoComplete="new-password"
-          hint="Ít nhất 12 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
-        />
-        <PasswordField
-          label="Nhập lại mật khẩu"
-          name="confirmation"
-          autoComplete="new-password"
-        />
-        {message && (
-          <p className="form-message" id="register-message" role="alert">
-            {message}
-          </p>
-        )}
-        <button className="button primary" disabled={busy} type="submit">
-          {busy ? "Đang tạo..." : "Tạo tài khoản"}
-        </button>
+      <header className="pa-head">
+        <p className="pa-eyebrow">Tạo tài khoản Picket</p>
+        <h1 className="pa-title">Tạo tài khoản</h1>
+        <p className="pa-copy">
+          {mode === "phone" ? "Đăng ký bằng số điện thoại. Mã xác minh sẽ được gửi tới email của bạn." : "Bắt đầu ghi chép và chăm chút kế hoạch tài chính cùng Picket."}
+        </p>
+      </header>
+
+      {phoneEnabled && (
+        <div className="pa-tabs" role="group" aria-label="Cách đăng ký">
+          <button type="button" aria-pressed={mode === "email"} onClick={() => setMode("email")}>Email</button>
+          <button type="button" aria-pressed={mode === "phone"} onClick={() => setMode("phone")}>Số điện thoại</button>
+        </div>
+      )}
+
+      <form className="pa-form-wrap" onSubmit={submit} aria-busy={busy} aria-describedby={message ? "register-message" : undefined}>
+        <FieldGroup>
+          {mode === "phone" && <FieldRow icon="message" label="Số điện thoại" name="phone" type="tel" inputMode="tel" autoComplete="tel" required placeholder="09xx xxx xxx" />}
+          <FieldRow icon="mail" label="Email" name="email" type="email" autoComplete="email" autoCapitalize="none" spellCheck={false} required placeholder="ban@example.com" />
+          <PasswordRow autoComplete="new-password" onValue={setPassword} />
+          <PasswordRow label="Nhập lại mật khẩu" name="confirmation" autoComplete="new-password" />
+        </FieldGroup>
+        <ul className="pa-rules" aria-label="Yêu cầu mật khẩu">
+          {rules.map((r) => <li key={r.text} className={r.ok(password) ? "is-ok" : undefined}>{r.text}</li>)}
+        </ul>
+        {message && <p className="pa-message" id="register-message" role="alert">{message}</p>}
+        <button className="pa-btn" disabled={busy} type="submit">{busy ? "Đang tạo..." : "Tạo tài khoản"}</button>
       </form>
-      <p className="paper-auth-policy">
-        Tìm hiểu cách Picket xử lý dữ liệu trong{" "}
-        <a href="https://picketfinance.com/privacy.html">
-          Chính sách quyền riêng tư
-        </a>
-        .
-      </p>
-      <Link className="back-link" href="/login">
-        Đã có tài khoản? Đăng nhập
-      </Link>
+
+      <div className="pa-divider">hoặc</div>
+      <button className="pa-btn is-secondary" disabled={busy} onClick={signUpWithGoogle} type="button">Đăng ký nhanh bằng Google</button>
+      <p className="pa-meta">Tìm hiểu cách Picket xử lý dữ liệu trong <a href="https://picketfinance.com/privacy.html">Chính sách quyền riêng tư</a>.</p>
+      <p className="pa-meta">Đã có tài khoản? <Link href="/login">Đăng nhập</Link></p>
     </div>
   );
 }

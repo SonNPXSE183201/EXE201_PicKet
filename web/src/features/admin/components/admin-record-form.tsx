@@ -23,7 +23,7 @@ export function AdminRecordForm({
         ? ["open", "investigating", "resolved"]
         : ["draft", "review", "published", "archived"];
   return (
-    <form action={mutateAdmin} className="finance-form admin-editor">
+    <form action={mutateAdmin} className="ap-form">
       <input type="hidden" name="action" value={action} />
       <input type="hidden" name="requestId" value={randomUUID()} />
       {row && (
@@ -37,9 +37,9 @@ export function AdminRecordForm({
         </>
       )}
       <fieldset disabled={disabled}>
-        <legend>{row ? "Cập nhật bản ghi" : "Tạo mới"}</legend>
-        <label>
-          Tiêu đề
+        <legend className="ap-eyebrow">{row ? "Cập nhật bản ghi" : "Tạo mới"}</legend>
+        <label className="ap-field">
+          <span>Tiêu đề</span>
           <input
             name="title"
             maxLength={160}
@@ -47,8 +47,8 @@ export function AdminRecordForm({
             defaultValue={value(row, "title")}
           />
         </label>
-        <label>
-          Nội dung
+        <label className="ap-field">
+          <span>Nội dung</span>
           <textarea
             name="body"
             rows={4}
@@ -57,8 +57,8 @@ export function AdminRecordForm({
           />
         </label>
         {action !== "partner" && (
-          <label>
-            Trạng thái
+          <label className="ap-field">
+            <span>Trạng thái</span>
             <select
               name="status"
               defaultValue={value(row, "status") || states[0]}
@@ -73,8 +73,8 @@ export function AdminRecordForm({
         )}
         {action === "ticket" ? (
           <>
-            <label>
-              Phân loại
+            <label className="ap-field">
+              <span>Phân loại</span>
               <select
                 name="category"
                 defaultValue={value(row, "category") || "support"}
@@ -85,13 +85,13 @@ export function AdminRecordForm({
                 <option value="account_deletion">Yêu cầu xóa tài khoản</option>
               </select>
             </label>
-            <p>
+            <p className="ap-card-note">
               Yêu cầu xóa tài khoản: ghi nhận xác minh chủ tài khoản và tiến
               trình bằng ghi chú nội bộ. Hướng dẫn chủ tài khoản dùng chức năng
               xóa trong Picket; nút lưu ticket chỉ cập nhật tiến trình hỗ trợ.
             </p>
-            <label>
-              Ưu tiên
+            <label className="ap-field">
+              <span>Ưu tiên</span>
               <select
                 name="priority"
                 defaultValue={value(row, "priority") || "normal"}
@@ -103,22 +103,22 @@ export function AdminRecordForm({
                 ))}
               </select>
             </label>
-            <label>
-              User ID liên quan (nếu có)
+            <label className="ap-field">
+              <span>User ID liên quan (nếu có)</span>
               <input
                 name="targetUser"
                 defaultValue={value(row, "target_user")}
               />
             </label>
-            <label>
-              User ID người xử lý (nếu có)
+            <label className="ap-field">
+              <span>User ID người xử lý (nếu có)</span>
               <input name="assignee" defaultValue={value(row, "assignee")} />
             </label>
           </>
         ) : action === "release" ? (
           <>
-            <label>
-              Phiên bản
+            <label className="ap-field">
+              <span>Phiên bản</span>
               <input
                 name="version"
                 required
@@ -126,8 +126,8 @@ export function AdminRecordForm({
                 placeholder="1.0.9"
               />
             </label>
-            <label>
-              Mã phiên bản
+            <label className="ap-field">
+              <span>Mã phiên bản</span>
               <input
                 name="versionCode"
                 type="number"
@@ -136,8 +136,8 @@ export function AdminRecordForm({
                 defaultValue={value(details, "versionCode")}
               />
             </label>
-            <label>
-              Link APK chính thức
+            <label className="ap-field">
+              <span>Link APK chính thức</span>
               <input
                 name="releaseUrl"
                 type="url"
@@ -145,8 +145,8 @@ export function AdminRecordForm({
                 defaultValue={value(details, "url")}
               />
             </label>
-            <label>
-              SHA-256
+            <label className="ap-field">
+              <span>SHA-256</span>
               <input
                 name="sha256"
                 pattern="[a-f0-9]{64}"
@@ -157,23 +157,23 @@ export function AdminRecordForm({
           </>
         ) : action === "incident" ? (
           <>
-            <label>
-              Thành phần
+            <label className="ap-field">
+              <span>Thành phần</span>
               <input
                 name="component"
                 maxLength={80}
                 defaultValue={value(details, "component")}
               />
             </label>
-            <label>
-              Mức độ
+            <label className="ap-field">
+              <span>Mức độ</span>
               <select
                 name="severity"
                 defaultValue={value(details, "severity") || "medium"}
               >
                 {["low", "medium", "high", "critical"].map((s) => (
                   <option key={s} value={s}>
-                    {adminLabel(s)}
+                    {{ medium: "Trung bình", critical: "Nghiêm trọng" }[s] ?? adminLabel(s)}
                   </option>
                 ))}
               </select>
@@ -181,16 +181,16 @@ export function AdminRecordForm({
           </>
         ) : action === "content" ? (
           <>
-            <label>
-              Mã bài học (nếu liên kết bài học)
+            <label className="ap-field">
+              <span>Mã bài học (nếu liên kết bài học)</span>
               <input
                 name="lessonId"
                 maxLength={80}
                 defaultValue={value(details, "lessonId")}
               />
             </label>
-            <label>
-              Ngôn ngữ
+            <label className="ap-field">
+              <span>Ngôn ngữ</span>
               <select
                 name="locale"
                 defaultValue={value(details, "locale") || "vi"}
@@ -199,8 +199,8 @@ export function AdminRecordForm({
                 <option value="en">English</option>
               </select>
             </label>
-            <label>
-              Phiên bản nội dung
+            <label className="ap-field">
+              <span>Phiên bản nội dung</span>
               <input
                 name="contentVersion"
                 type="number"
@@ -211,8 +211,8 @@ export function AdminRecordForm({
           </>
         ) : action === "partner" ? (
           <>
-            <label>
-              Liên kết HTTPS
+            <label className="ap-field">
+              <span>Liên kết HTTPS</span>
               <input
                 name="url"
                 type="url"
@@ -220,24 +220,27 @@ export function AdminRecordForm({
                 defaultValue={value(row, "url")}
               />
             </label>
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                name="active"
-                defaultChecked={row?.active === true}
-              />
+            <label className="ap-check">
+              <span className="ap-switch">
+                <input
+                  type="checkbox"
+                  name="active"
+                  defaultChecked={row?.active === true}
+                />
+                <span />
+              </span>
               Hiển thị chiến dịch
             </label>
-            <label>
-              Bắt đầu (UTC, để trống nếu không giới hạn)
+            <label className="ap-field">
+              <span>Bắt đầu (UTC, để trống nếu không giới hạn)</span>
               <input
                 name="startsAt"
                 type="datetime-local"
                 defaultValue={value(row, "starts_at").slice(0, 16)}
               />
             </label>
-            <label>
-              Kết thúc (UTC, để trống nếu không giới hạn)
+            <label className="ap-field">
+              <span>Kết thúc (UTC, để trống nếu không giới hạn)</span>
               <input
                 name="endsAt"
                 type="datetime-local"
@@ -247,24 +250,24 @@ export function AdminRecordForm({
           </>
         ) : null}
         {action === "release" && (
-          <p className="admin-note">
+          <p className="ap-card-note">
             Ghi lại bản phát hành đã kiểm tra chữ ký và checksum. Thao tác này
             không tự build, deploy hoặc publish Google Play.
           </p>
         )}
         {action === "content" && (
-          <p className="admin-note">
+          <p className="ap-card-note">
             Cần review độc lập trước khi công bố. Với bài học được liên kết,
             công bố cho phép chấm bài cloud của phiên bản đã duyệt; không tự
             thay nội dung đã đóng gói trong ứng dụng.
           </p>
         )}
-        <label>
-          Lý do
+        <label className="ap-field">
+          <span>Lý do</span>
           <textarea name="reason" minLength={5} maxLength={500} required />
         </label>
-        <label>
-          Nhập SAVE để xác nhận
+        <label className="ap-field">
+          <span>Nhập SAVE để xác nhận</span>
           <input
             name="confirmation"
             pattern="SAVE"
@@ -272,7 +275,7 @@ export function AdminRecordForm({
             autoComplete="off"
           />
         </label>
-        <SubmitButton className="button primary">Lưu thay đổi</SubmitButton>
+        <SubmitButton className="ap-btn is-block">Lưu thay đổi</SubmitButton>
       </fieldset>
     </form>
   );

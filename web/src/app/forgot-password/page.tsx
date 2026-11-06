@@ -1,10 +1,10 @@
 import { ForgotPasswordForm } from "./forgot-password-form";
-import { AuthShell } from "@/features/auth/components/auth-shell";
+import { PaperAuthShell } from "@/features/auth/components/paper-auth-shell";
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthShell variant="recovery">
+    <PaperAuthShell>
       <ForgotPasswordForm />
-    </AuthShell>
+    </PaperAuthShell>
   );
 }
