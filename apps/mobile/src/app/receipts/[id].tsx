@@ -10,6 +10,8 @@ import { formatVnd, MAX_MONEY, type ReceiptRecord } from "@picket/domain";
 import { ApiError } from "@picket/api-client";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,11 +22,11 @@ import { routes } from "@/core/navigation/routes";
 import { supabase } from "@/core/supabase/client";
 import { useAuth } from "@/features/auth/auth-context";
 
-function statusText(status: ReceiptRecord["status"]) {
-  if (status === "confirmed") return "Đã xác nhận";
-  if (status === "review_required") return "Cần kiểm tra";
-  if (status === "processing") return "Đang xử lý";
-  return "Xử lý thất bại";
+function statusText(status: ReceiptRecord["status"], t: TFunction<"common">) {
+  if (status === "confirmed") return t("Đã xác nhận");
+  if (status === "review_required") return t("Cần kiểm tra");
+  if (status === "processing") return t("Đang xử lý");
+  return t("Xử lý thất bại");
 }
 
 type EditableLine = {
@@ -40,6 +42,7 @@ function dateInput(value: string | null) {
 }
 
 export default function ReceiptDetailScreen() {
+  const { t } = useTranslation("common");
   const { colors, styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -72,7 +75,7 @@ export default function ReceiptDetailScreen() {
       })
       .catch((error: unknown) => {
         if (active && !(error instanceof Error && error.name === "AbortError")) {
-          setMessage("Không tải được hóa đơn.");
+          setMessage(t("Không tải được hóa đơn."));
         }
       })
       .finally(() => {
@@ -82,7 +85,7 @@ export default function ReceiptDetailScreen() {
       active = false;
       controller.abort();
     };
-  }, [id, session]);
+  }, [id, session, t]);
 
   if (!session) return <Redirect href={routes.login} />;
 
@@ -125,28 +128,28 @@ export default function ReceiptDetailScreen() {
     if (!receipt || !session || !picketApi) return;
     const parsedTotal = total === "" ? null : Number.parseInt(total, 10);
     if (merchant.trim().length > 160) {
-      setMessage("Tên cửa hàng không được vượt quá 160 ký tự.");
+      setMessage(t("Tên cửa hàng không được vượt quá 160 ký tự."));
       return;
     }
     if (parsedTotal !== null && (!/^\d+$/.test(total) || parsedTotal <= 0 || parsedTotal > MAX_MONEY)) {
-      setMessage("Tổng hóa đơn phải là số nguyên lớn hơn 0.");
+      setMessage(t("Tổng hóa đơn phải là số nguyên lớn hơn 0."));
       return;
     }
     let purchasedIso: string | null = null;
     if (purchasedAt && !/^\d{4}-\d{2}-\d{2}$/.test(purchasedAt)) {
-      setMessage("Ngày mua phải có định dạng YYYY-MM-DD.");
+      setMessage(t("Ngày mua phải có định dạng YYYY-MM-DD."));
       return;
     }
     if (purchasedAt) {
       const date = new Date(`${purchasedAt}T00:00:00.000Z`);
       if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== purchasedAt) {
-        setMessage("Ngày mua không hợp lệ.");
+        setMessage(t("Ngày mua không hợp lệ."));
         return;
       }
       purchasedIso = date.toISOString();
     }
     if (lines.length > 100) {
-      setMessage("Một hóa đơn chỉ hỗ trợ tối đa 100 sản phẩm.");
+      setMessage(t("Một hóa đơn chỉ hỗ trợ tối đa 100 sản phẩm."));
       return;
     }
     const parsedLines = [];
@@ -167,7 +170,7 @@ export default function ReceiptDetailScreen() {
             unitPrice > MAX_MONEY ||
             Math.abs(Math.round(quantity * unitPrice) - lineTotal) > 1))
       ) {
-        setMessage("Kiểm tra tên, số lượng, đơn giá và thành tiền của từng sản phẩm.");
+        setMessage(t("Kiểm tra tên, số lượng, đơn giá và thành tiền của từng sản phẩm."));
         return;
       }
       parsedLines.push({
@@ -191,12 +194,12 @@ export default function ReceiptDetailScreen() {
       });
       setReceipt(result.receipt);
       setEditing(false);
-      setMessage("Đã lưu kết quả kiểm tra hóa đơn.");
+      setMessage(t("Đã lưu kết quả kiểm tra hóa đơn."));
     } catch (error) {
       setMessage(
         error instanceof ApiError && error.status === 409
-          ? "Hóa đơn đã thay đổi trên thiết bị khác. Hãy mở lại màn hình trước khi sửa tiếp."
-          : "Không lưu được hóa đơn. Hãy kiểm tra kết nối và thử lại.",
+          ? t("Hóa đơn đã thay đổi trên thiết bị khác. Hãy mở lại màn hình trước khi sửa tiếp.")
+          : t("Không lưu được hóa đơn. Hãy kiểm tra kết nối và thử lại."),
       );
     } finally {
       setSaving(false);
@@ -212,82 +215,82 @@ export default function ReceiptDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
-        <TopAppBar title="Chi tiết hóa đơn" illustration="receipt" onBack={() => router.canGoBack() ? router.back() : router.replace(routes.transactions)} />
-        {loading && <ActivityIndicator accessibilityLabel="Đang tải hóa đơn" color={colors.link} style={styles.loader} />}
+        <TopAppBar title={t("Chi tiết hóa đơn")} illustration="receipt" onBack={() => router.canGoBack() ? router.back() : router.replace(routes.transactions)} />
+        {loading && <ActivityIndicator accessibilityLabel={t("Đang tải hóa đơn")} color={colors.link} style={styles.loader} />}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         {receipt && (
           <>
             {imageUrl ? (
-              <Image accessibilityLabel="Ảnh hóa đơn đã lưu" source={{ uri: imageUrl }} resizeMode="contain" style={styles.image} />
+              <Image accessibilityLabel={t("Ảnh hóa đơn đã lưu")} source={{ uri: imageUrl }} resizeMode="contain" style={styles.image} />
             ) : (
               <View style={[styles.image, styles.imagePlaceholder]}>
-                <Text style={styles.hint}>Không tải được ảnh xem trước.</Text>
+                <Text style={styles.hint}>{t("Không tải được ảnh xem trước.")}</Text>
               </View>
             )}
             {editing ? (
               <View style={styles.card}>
-                <Text style={styles.fieldLabel}>Cửa hàng</Text>
-                <TextInput accessibilityLabel="Tên cửa hàng" value={merchant} onChangeText={setMerchant} placeholder="Tên cửa hàng" placeholderTextColor={colors.muted} style={styles.input} />
-                <Text style={styles.fieldLabel}>Tổng hóa đơn</Text>
-                <TextInput money accessibilityLabel="Tổng hóa đơn" value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder="Tổng tiền" placeholderTextColor={colors.muted} style={styles.input} />
-                <Text style={styles.fieldLabel}>Ngày mua</Text>
-                <TextInput date accessibilityLabel="Ngày mua" value={purchasedAt} onChangeText={setPurchasedAt} style={styles.input} />
+                <Text style={styles.fieldLabel}>{t("Cửa hàng")}</Text>
+                <TextInput accessibilityLabel={t("Tên cửa hàng")} value={merchant} onChangeText={setMerchant} placeholder={t("Tên cửa hàng")} placeholderTextColor={colors.muted} style={styles.input} />
+                <Text style={styles.fieldLabel}>{t("Tổng hóa đơn")}</Text>
+                <TextInput money accessibilityLabel={t("Tổng hóa đơn")} value={total} onChangeText={setTotal} keyboardType="number-pad" placeholder={t("Tổng tiền")} placeholderTextColor={colors.muted} style={styles.input} />
+                <Text style={styles.fieldLabel}>{t("Ngày mua")}</Text>
+                <TextInput date accessibilityLabel={t("Ngày mua")} value={purchasedAt} onChangeText={setPurchasedAt} style={styles.input} />
               </View>
             ) : (
               <View style={styles.card}>
-                <Text style={styles.merchant}>{receipt.merchant ?? "Hóa đơn"}</Text>
+                <Text style={styles.merchant}>{receipt.merchant ?? t("Hóa đơn")}</Text>
                 <Text style={styles.amount}>
                   {receipt.detectedTotal === null
-                    ? "Chưa có tổng tiền"
+                    ? t("Chưa có tổng tiền")
                     : formatVnd(receipt.detectedTotal)}
                 </Text>
-                <Text style={styles.meta}>{statusText(receipt.status)}</Text>
+                <Text style={styles.meta}>{statusText(receipt.status, t)}</Text>
                 <Text style={styles.meta}>
                   {receipt.purchasedAt
                     ? new Date(receipt.purchasedAt).toLocaleString("vi-VN")
-                    : "Chưa nhận diện ngày mua"}
+                    : t("Chưa nhận diện ngày mua")}
                 </Text>
                 <Text style={styles.meta}>
-                  OCR: {receipt.ocrProvider} · Độ tin cậy: {receipt.confidence === null ? "—" : `${Math.round(receipt.confidence * 100)}%`}
+                  {t("OCR: {{provider}} · Độ tin cậy: {{confidence}}", { provider: receipt.ocrProvider, confidence: receipt.confidence === null ? "—" : `${Math.round(receipt.confidence * 100)}%` })}
                 </Text>
               </View>
             )}
-            <Text accessibilityRole="header" style={styles.sectionTitle}>Sản phẩm</Text>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>{t("Sản phẩm")}</Text>
             {editing ? (
               <>
                 {lines.map((line, index) => (
                   <View key={line.key} style={styles.editLine}>
                     <View style={styles.lineHeader}>
-                      <Text style={styles.lineName}>Sản phẩm {index + 1}</Text>
-                      <Pressable accessibilityLabel={`Xóa sản phẩm ${index + 1}`} onPress={() => setLines((current) => current.filter((item) => item.key !== line.key))}>
-                        <Text style={styles.remove}>Xóa</Text>
+                      <Text style={styles.lineName}>{t("Sản phẩm {{index}}", { index: index + 1 })}</Text>
+                      <Pressable accessibilityLabel={t("Xóa sản phẩm {{index}}", { index: index + 1 })} onPress={() => setLines((current) => current.filter((item) => item.key !== line.key))}>
+                        <Text style={styles.remove}>{t("Xóa")}</Text>
                       </Pressable>
                     </View>
-                    <TextInput accessibilityLabel={`Tên sản phẩm ${index + 1}`} value={line.name} onChangeText={(value) => updateLine(line.key, "name", value)} placeholder="Tên sản phẩm" placeholderTextColor={colors.muted} style={styles.input} />
+                    <TextInput accessibilityLabel={t("Tên sản phẩm {{index}}", { index: index + 1 })} value={line.name} onChangeText={(value) => updateLine(line.key, "name", value)} placeholder={t("Tên sản phẩm")} placeholderTextColor={colors.muted} style={styles.input} />
                     <View style={styles.inputRow}>
-                      <TextInput accessibilityLabel={`Số lượng sản phẩm ${index + 1}`} value={line.quantity} onChangeText={(value) => updateLine(line.key, "quantity", value)} keyboardType="decimal-pad" placeholder="Số lượng" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
-                      <TextInput money accessibilityLabel={`Đơn giá sản phẩm ${index + 1}`} value={line.unitPrice} onChangeText={(value) => updateLine(line.key, "unitPrice", value)} keyboardType="number-pad" placeholder="Đơn giá" placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
+                      <TextInput accessibilityLabel={t("Số lượng sản phẩm {{index}}", { index: index + 1 })} value={line.quantity} onChangeText={(value) => updateLine(line.key, "quantity", value)} keyboardType="decimal-pad" placeholder={t("Số lượng")} placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
+                      <TextInput money accessibilityLabel={t("Đơn giá sản phẩm {{index}}", { index: index + 1 })} value={line.unitPrice} onChangeText={(value) => updateLine(line.key, "unitPrice", value)} keyboardType="number-pad" placeholder={t("Đơn giá")} placeholderTextColor={colors.muted} style={[styles.input, styles.flexInput]} />
                     </View>
-                    <TextInput money accessibilityLabel={`Thành tiền sản phẩm ${index + 1}`} value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder="Thành tiền" placeholderTextColor={colors.muted} style={styles.input} />
+                    <TextInput money accessibilityLabel={t("Thành tiền sản phẩm {{index}}", { index: index + 1 })} value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder={t("Thành tiền")} placeholderTextColor={colors.muted} style={styles.input} />
                   </View>
                 ))}
                 <Pressable disabled={lines.length >= 100} onPress={() => setLines((current) => [...current, { key: `new-${Date.now()}-${current.length}`, name: "", quantity: "1", unitPrice: "", total: "" }])} style={[styles.outlineButton, lines.length >= 100 && styles.disabled]}>
-                  <Text style={styles.outlineText}>+ Thêm sản phẩm</Text>
+                  <Text style={styles.outlineText}>{t("+ Thêm sản phẩm")}</Text>
                 </Pressable>
                 {lines.length > 0 && Number.isSafeInteger(editedReceiptTotal) && editedLineTotal !== editedReceiptTotal && (
-                  <Text style={styles.warning}>Tổng các dòng là {formatVnd(editedLineTotal)}, khác tổng hóa đơn {formatVnd(editedReceiptTotal)}. Có thể do thuế hoặc giảm giá.</Text>
+                  <Text style={styles.warning}>{t("Tổng các dòng là {{lineTotal}}, khác tổng hóa đơn {{receiptTotal}}. Có thể do thuế hoặc giảm giá.", { lineTotal: formatVnd(editedLineTotal), receiptTotal: formatVnd(editedReceiptTotal) })}</Text>
                 )}
               </>
             ) : receipt.lineItems.length === 0 ? (
               <View style={styles.card}>
-                <Text style={styles.hint}>Chưa nhận diện chi tiết từng sản phẩm.</Text>
+                <Text style={styles.hint}>{t("Chưa nhận diện chi tiết từng sản phẩm.")}</Text>
               </View>
             ) : (
               receipt.lineItems.map((item) => (
                 <View key={item.id} style={styles.lineItem}>
                   <View style={styles.lineCopy}>
                     <Text style={styles.lineName}>{item.name}</Text>
-                    <Text style={styles.hint}>Số lượng {item.quantity}</Text>
+                    <Text style={styles.hint}>{t("Số lượng {{quantity}}", { quantity: item.quantity })}</Text>
                   </View>
                   <Text style={styles.lineTotal}>{formatVnd(item.total)}</Text>
                 </View>
@@ -296,20 +299,20 @@ export default function ReceiptDetailScreen() {
             {editing ? (
               <View style={styles.editorActions}>
                 <Pressable disabled={saving} onPress={() => void saveReview()} style={styles.primaryButton}>
-                  {saving ? <ActivityIndicator accessibilityLabel="Đang lưu kết quả kiểm tra hóa đơn" color={colors.onPrimary} /> : <Text style={styles.primaryText}>Lưu kết quả kiểm tra</Text>}
+                  {saving ? <ActivityIndicator accessibilityLabel={t("Đang lưu kết quả kiểm tra hóa đơn")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{t("Lưu kết quả kiểm tra")}</Text>}
                 </Pressable>
                 <Pressable disabled={saving} onPress={() => { setEditing(false); setMessage(null); }} style={styles.outlineButton}>
-                  <Text style={styles.outlineText}>Hủy chỉnh sửa</Text>
+                  <Text style={styles.outlineText}>{t("Hủy chỉnh sửa")}</Text>
                 </Pressable>
               </View>
             ) : (
               <Pressable onPress={beginEditing} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>Kiểm tra và chỉnh sửa</Text>
+                <Text style={styles.primaryText}>{t("Kiểm tra và chỉnh sửa")}</Text>
               </Pressable>
             )}
             {receipt.rawText && (
               <>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>Văn bản OCR</Text>
+                <Text accessibilityRole="header" style={styles.sectionTitle}>{t("Văn bản OCR")}</Text>
                 <View style={styles.card}>
                   <Text style={styles.rawText}>{receipt.rawText}</Text>
                 </View>

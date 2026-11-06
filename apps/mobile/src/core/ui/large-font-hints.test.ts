@@ -17,6 +17,6 @@ test("bill title example stays short enough for a scaled single-line input", () 
 
 test("keepsake search keeps its accessible label and a compact visible hint", () => {
   const screen = readFileSync(new URL("../../app/keepsakes.tsx", import.meta.url), "utf8");
-  assert.match(screen, /accessibilityLabel="Tìm món đồ"/);
-  assert.match(screen, /placeholder="Tìm món đồ"/);
+  assert.match(screen, /accessibilityLabel=\{t\("Tìm món đồ"\)\}/);
+  assert.match(screen, /placeholder=\{t\("Tìm món đồ"\)\}/);
 });
