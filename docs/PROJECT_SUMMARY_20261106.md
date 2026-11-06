@@ -21,7 +21,8 @@ Nhánh `fix/mobile-completion-plan`, **chưa push lên GitHub** (theo yêu cầu
 - Giáo trình 30 bài, 4 chặng, VI/EN, có nguồn chính thức, đã tự duyệt theo checklist. Danh sách bài hiện ngay đầu màn hình.
 - Mục "Học tài chính" và "Kỷ niệm & giấy tờ" trong trang Cá nhân; màn đăng ký mới; banner/hộp thông báo; màn bảo trì; cờ bắt buộc cập nhật.
 - OCR: parser tổng quát hơn với 12 test mới (241 test OCR). Chạy đủ 40 ảnh Bill trên Redmi 7 bằng bản QA code 61: **40/40 xử lý được, 0 lỗi, 15 ảnh đủ điều kiện mở màn Review tự động**. Output ML Kit gốc lưu ở `.artifacts/ocr-device-20261106/results/` để đánh giá offline.
-- i18n: màn review-inbox, insights, một phần onboarding.
+- i18n: review-inbox, insights, onboarding, keepsakes, chi tiết hóa đơn, thông báo lỗi API (thêm 131 khóa EN, có test locale).
+- OCR replay 40 ảnh Bill (output ML Kit thật từ Redmi) so với parser cũ: tổng đúng 25 / sai 0 / thiếu 11 (giữ nguyên, **0 hồi quy** sau commit `10615dde`); ngày đúng 10 → 11; dòng hàng P/R 75,8% / 20,7%. Chi tiết: `.artifacts/ocr-device-20261106/EVALUATION.md`.
 - Sửa lỗi gom ngày theo UTC trong dữ liệu dự báo.
 
 ### QA thiết bị thật (Redmi 7, `com.picket.mobile.bugqa`)
@@ -41,9 +42,8 @@ Nhánh `fix/mobile-completion-plan`, **chưa push lên GitHub** (theo yêu cầu
 
 | Việc | Trạng thái | Cần gì |
 | --- | --- | --- |
-| Upload bản internal Google Play (1.0.15 / code 29) | Đã nâng phiên bản trong `app.json` (chưa commit) và `android/app/build.gradle` (không theo dõi bằng git); build AAB bị Claude Code dừng vì máy thiếu RAM | Chạy lại build khi máy rảnh RAM (đóng bớt ứng dụng), rồi upload track **internal** (không đụng closed testing) |
-| Đánh giá OCR cũ vs mới trên output thật | Task Codex bị dừng vì thiếu RAM | Chạy lại `.artifacts/codex-tasks/ocr-evaluate.md` để có bảng chính xác tổng/merchant/ngày/dòng hàng và xử lý hồi quy nếu có |
-| i18n còn lại | Còn `keepsakes`, `receipts/[id]`, `api-error-message`, phần lớn `onboarding` | Một lượt Codex nữa (model `gpt-6.1-terra`) |
+| Google Play internal | 1.0.15 (29) đã lên internal, cài qua Play trên Redmi, smoke PASS (khởi động lạnh lần đầu sau cập nhật 34,8 s do tối ưu dex một lần, các lần sau ~2 s). 1.0.16 (30) gồm bản sửa hồi quy OCR + i18n: xem mục 5 | Closed testing (alpha, code 28) giữ nguyên |
+| Độ chính xác OCR | Parser không còn hồi quy nhưng 11/36 ảnh có nhãn vẫn thiếu tổng (ảnh mờ, nghiêng, hóa đơn dài) | Tiền xử lý ảnh/crop phía native (Kotlin) rồi đo lại bằng harness |
 | Thử đăng ký/đăng nhập SĐT trên máy | Chưa thử vì phải đăng xuất tài khoản thật; đã có unit test và kiểm tra API production (SĐT lạ trả 401) | Thử bằng một tài khoản phụ |
 
 ## 3. Chưa làm (cần quyết định hoặc thao tác của chủ dự án)
@@ -58,15 +58,15 @@ Nhánh `fix/mobile-completion-plan`, **chưa push lên GitHub** (theo yêu cầu
 
 ## 4. Đề xuất làm tiếp (theo thứ tự)
 
-1. Build AAB 1.0.15/29 → upload internal → cài từ Play trên Redmi → smoke test.
-2. Chạy đánh giá OCR offline, sửa hồi quy nếu có, mở rộng nhãn; mục tiêu tiếp theo là tiền xử lý ảnh/crop phía native cho ảnh mờ và nghiêng.
-3. Hoàn tất i18n; thêm đăng nhập SĐT cho web.
+1. Tiền xử lý ảnh/crop phía native cho ảnh mờ và nghiêng; mở rộng nhãn Bill.
+2. Thêm đăng nhập SĐT cho web; i18n các màn còn sót (rà bằng grep chuỗi tiếng Việt trong JSX).
+3. Thử luồng SĐT bằng tài khoản phụ trên Redmi.
 4. Nghiệm thu tiền thật PayOS (khi bạn sẵn sàng) và cập nhật `PROJECT_STATUS.md`.
 5. Push nhánh, tạo PR vào `main`.
 
 ## 5. Kiểm tra gần nhất
 
-- Mobile 1099 test PASS; typecheck và lint sạch (sau các sửa ngày 06/11).
+- Mobile 1105 test PASS; typecheck và lint sạch (sau i18n ngày 06/11).
 - API 180, web 62, landing 14, Edge 16, worker 19, SQL 23 suite PASS ở lần chạy toàn repo gần nhất.
 - Production smoke: API ok, Web 200, Auth 401, CORS, TLS.
 
@@ -75,3 +75,4 @@ Nhánh `fix/mobile-completion-plan`, **chưa push lên GitHub** (theo yêu cầu
 - Máy phát triển thường thiếu RAM khi chạy Gradle song song với agent khác; nên chạy build một mình.
 - Gradle không chạy lại bundle JS khi chỉ thay `.env.local`: xóa `android/app/build/generated/{assets,res,sourcemaps}/react/release` trước khi build khác cấu hình.
 - Codex sandbox không gọi được `adb`; QA thiết bị do Claude thực hiện. Antigravity CLI ở chế độ headless cần quyền lệnh rõ ràng nên chưa dùng được.
+- `codex exec` chạy nền phải đóng stdin (`< /dev/null`), nếu không sẽ treo ở "Reading additional input from stdin".
