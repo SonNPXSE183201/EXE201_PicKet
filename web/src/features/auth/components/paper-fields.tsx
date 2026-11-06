@@ -30,7 +30,7 @@ export function PasswordRow({ label = "Mật khẩu", name = "password", autoCom
         <input id={id} name={name} type={visible ? "text" : "password"} autoComplete={autoComplete} required onChange={(e) => onValue?.(e.target.value)} />
       </span>
       <button type="button" className="pa-eye" aria-controls={id} aria-pressed={visible} aria-label={`${visible ? "Ẩn" : "Hiện"} ${label.toLocaleLowerCase("vi")}`} onClick={() => setVisible((v) => !v)}>
-        <AdminIcon name={visible ? "eye-off" : "eye"} size={20} />
+        <AdminIcon name={visible ? "eye" : "eye-off"} size={20} />
       </button>
     </div>
   );

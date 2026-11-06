@@ -1,5 +1,6 @@
 import { PicketApiClient } from "@picket/api-client";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { createClient } from "@/core/supabase/server";
 import { workspaceRedirect } from "./workspace-policy";
@@ -247,7 +248,8 @@ function createMockApiClient(): PicketApiClient {
   } as unknown as PicketApiClient;
 }
 
-export async function requireApiSession(
+/** One session check per request: layouts, pages and components share it via React cache(). */
+export const requireApiSession = cache(async function requireApiSession(
   workspace: "user" | "admin" | "either" = "user",
 ) {
   if (
@@ -293,4 +295,4 @@ export async function requireApiSession(
     role: access.role,
     mfaVerified: access.mfaVerified, permissions: access.permissions,
   };
-}
+});

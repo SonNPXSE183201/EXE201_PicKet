@@ -1,3 +1,4 @@
+import { DateField } from "../ui/date-field";
 import Link from "next/link";
 import { formatVnd } from "@picket/domain";
 import { requireApiSession } from "@/core/auth/require-api-session";
@@ -158,8 +159,8 @@ export async function PromotionAdmin({ query }: { query: Query }) {
               </fieldset>
               <Field label="Mã offer Google Play"><input name="playOfferId" pattern="[a-z0-9\-]{1,63}" defaultValue={form?.play_offer_id ?? ""} /></Field>
               <Field label="Mã khuyến mãi (để trống = tự áp)"><input name="code" pattern="[A-Za-z0-9_\-]{3,32}" defaultValue={form?.code ?? ""} /></Field>
-              <Field label="Bắt đầu (giờ VN)"><input type="datetime-local" name="startsAt" defaultValue={vnLocal(form?.starts_at ?? null)} /></Field>
-              <Field label="Kết thúc (giờ VN)"><input type="datetime-local" name="endsAt" defaultValue={vnLocal(form?.ends_at ?? null)} /></Field>
+              <Field label="Bắt đầu (giờ VN)"><DateField type="datetime-local" name="startsAt" defaultValue={vnLocal(form?.starts_at ?? null)} /></Field>
+              <Field label="Kết thúc (giờ VN)"><DateField type="datetime-local" name="endsAt" defaultValue={vnLocal(form?.ends_at ?? null)} /></Field>
               <Field label="Tổng số suất (để trống = không giới hạn)"><input name="maxRedemptions" type="number" min={1} defaultValue={form?.max_redemptions ?? ""} /></Field>
               <div className="am-pair">
                 <Field label="Mỗi người tối đa"><input name="perUserLimit" type="number" min={1} max={100} defaultValue={form?.per_user_limit ?? 1} /></Field>

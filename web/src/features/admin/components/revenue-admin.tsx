@@ -1,3 +1,4 @@
+import { DateField } from "../ui/date-field";
 import Link from "next/link";
 import { formatVnd } from "@picket/domain";
 import { requireApiSession } from "@/core/auth/require-api-session";
@@ -128,8 +129,8 @@ export async function RevenueAdmin({ query }: { query: Query }) {
       </p>
 
       <form className="ap-filter" method="get" aria-label="Lọc doanh thu">
-        <Field label="Từ" width={190}><input type="datetime-local" name="from" defaultValue={query.from} /></Field>
-        <Field label="Đến" width={190}><input type="datetime-local" name="to" defaultValue={query.to} /></Field>
+        <Field label="Từ" width={190}><DateField type="datetime-local" name="from" defaultValue={query.from} /></Field>
+        <Field label="Đến" width={190}><DateField type="datetime-local" name="to" defaultValue={query.to} /></Field>
         <Field label="Nguồn" width={140}>
           <select name="source" defaultValue={query.source ?? ""}>
             <option value="">Tất cả</option>

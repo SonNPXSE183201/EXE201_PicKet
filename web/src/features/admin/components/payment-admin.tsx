@@ -1,3 +1,4 @@
+import { DateField } from "../ui/date-field";
 import Link from "next/link";
 import {
   formatVnd,
@@ -70,8 +71,8 @@ export async function PaymentAdmin({
               <option value="custom">Tùy chọn</option>
             </select>
           </Field>
-          <Field label="Từ ngày giờ" width={190}><input type="datetime-local" name="from" defaultValue={query.from} /></Field>
-          <Field label="Đến ngày giờ" width={190}><input type="datetime-local" name="to" defaultValue={query.to} /></Field>
+          <Field label="Từ ngày giờ" width={190}><DateField type="datetime-local" name="from" defaultValue={query.from} /></Field>
+          <Field label="Đến ngày giờ" width={190}><DateField type="datetime-local" name="to" defaultValue={query.to} /></Field>
           <Field label="Nhóm theo" width={130}>
             <select name="bucket" defaultValue={query.bucket ?? "day"}>
               <option value="day">Ngày</option>
@@ -264,7 +265,7 @@ export async function PaymentAdmin({
                       <input type="hidden" name="id" value={group.id} />
                       <input type="hidden" name="userId" value={userId} />
                       <input type="hidden" name="enabled" value={group.member ? "false" : "true"} />
-                      <Field label="Hết hạn thành viên"><input type="datetime-local" name="expiresAt" /></Field>
+                      <Field label="Hết hạn thành viên"><DateField type="datetime-local" name="expiresAt" /></Field>
                       <Field label="Lý do"><input name="reason" required minLength={5} maxLength={500} /></Field>
                       <SubmitButton className="ap-btn is-secondary">{group.member ? "Gỡ user khỏi nhóm" : "Thêm user vào nhóm"}</SubmitButton>
                     </fieldset>
@@ -297,7 +298,7 @@ export async function PaymentAdmin({
                             <option value="false">Từ chối</option>
                           </select>
                         </Field>
-                        <Field label="Hết hạn"><input type="datetime-local" name="expiresAt" /></Field>
+                        <Field label="Hết hạn"><DateField type="datetime-local" name="expiresAt" /></Field>
                         <Field label="Lý do"><input name="reason" required minLength={5} maxLength={500} /></Field>
                         <SubmitButton className="ap-btn is-secondary">Lưu quyền</SubmitButton>
                       </fieldset>

@@ -1,3 +1,4 @@
+import { DateField } from "../ui/date-field";
 import { adminLabel } from "../admin-labels";
 import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
@@ -233,19 +234,15 @@ export function AdminRecordForm({
             </label>
             <label className="ap-field">
               <span>Bắt đầu (UTC, để trống nếu không giới hạn)</span>
-              <input
-                name="startsAt"
+              <DateField name="startsAt"
                 type="datetime-local"
-                defaultValue={value(row, "starts_at").slice(0, 16)}
-              />
+                defaultValue={value(row, "starts_at").slice(0, 16)} />
             </label>
             <label className="ap-field">
               <span>Kết thúc (UTC, để trống nếu không giới hạn)</span>
-              <input
-                name="endsAt"
+              <DateField name="endsAt"
                 type="datetime-local"
-                defaultValue={value(row, "ends_at").slice(0, 16)}
-              />
+                defaultValue={value(row, "ends_at").slice(0, 16)} />
             </label>
           </>
         ) : null}

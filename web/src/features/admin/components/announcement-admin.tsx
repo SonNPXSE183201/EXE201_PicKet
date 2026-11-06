@@ -1,3 +1,4 @@
+import { DateField } from "../ui/date-field";
 import Link from "next/link";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { SubmitButton } from "@/core/ui/submit-button";
@@ -187,8 +188,8 @@ export async function AnnouncementAdmin({ query }: { query: Query }) {
                 <Field label="Đến versionCode"><input name="maxVersionCode" type="number" min={1} defaultValue={form?.max_version_code ?? ""} /></Field>
               </div>
               <div className="am-pair">
-                <Field label="Bắt đầu (giờ VN)"><input type="datetime-local" name="startsAt" defaultValue={vnLocal(form?.starts_at ?? null)} /></Field>
-                <Field label="Kết thúc (giờ VN)"><input type="datetime-local" name="endsAt" defaultValue={vnLocal(form?.ends_at ?? null)} /></Field>
+                <Field label="Bắt đầu (giờ VN)"><DateField type="datetime-local" name="startsAt" defaultValue={vnLocal(form?.starts_at ?? null)} /></Field>
+                <Field label="Kết thúc (giờ VN)"><DateField type="datetime-local" name="endsAt" defaultValue={vnLocal(form?.ends_at ?? null)} /></Field>
               </div>
 
               <hr className="ap-divider" />

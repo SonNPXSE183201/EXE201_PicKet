@@ -324,3 +324,56 @@
 @keyframes ap-shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .ap-skeleton { animation: none; } }
 .ap-root input::-ms-reveal, .ap-root input::-ms-clear { display: none; }
+
+/* Thin progress bar while a filter/search navigation is in flight. */
+.ap-route-progress { position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: 3px; pointer-events: none; opacity: 0; background: linear-gradient(90deg, var(--ap-coral), var(--ap-mauve)); transform-origin: left; transform: scaleX(0); transition: opacity .2s; }
+.ap-route-progress.is-active { opacity: 1; animation: ap-route 1.6s ease-out forwards; }
+@keyframes ap-route { 0% { transform: scaleX(.05); } 60% { transform: scaleX(.7); } 100% { transform: scaleX(.92); } }
+.ap-stack[aria-busy="true"] { opacity: .72; transition: opacity .15s; }
+@media (prefers-reduced-motion: reduce) { .ap-route-progress.is-active { animation: none; transform: scaleX(.6); } }
+.ap-nav-pending { width: 6px; height: 6px; margin-left: auto; border-radius: 50%; background: currentColor; opacity: 0; flex: none; }
+.ap-nav-pending.is-pending { opacity: .8; animation: ap-pulse .8s ease-in-out infinite alternate; }
+.ap-range .ap-nav-pending { display: inline-block; margin-left: 6px; vertical-align: middle; }
+.ap-range .ap-nav-pending:not(.is-pending) { display: none; }
+@keyframes ap-pulse { from { transform: scale(.6); } to { transform: scale(1.2); } }
+
+/* ---------- Native <select> in the Paper style (Chrome/Edge 135+; others keep the native list) ---------- */
+@supports (appearance: base-select) {
+  .ap-root select:not([multiple]), .pa-root select:not([multiple]) { appearance: base-select; display: flex; align-items: center; }
+  .ap-root select:not([multiple])::picker-icon, .pa-root select:not([multiple])::picker-icon { display: none; }
+  .ap-root select:not([multiple])::picker(select), .pa-root select:not([multiple])::picker(select) {
+    appearance: base-select; margin-top: 6px; padding: 6px; max-height: 320px; border: 1px solid var(--ap-line, #eaddd5); border-radius: 14px;
+    background: #fff; box-shadow: 0 12px 32px rgb(48 33 50 / 14%); font-family: ApNunito, PaNunito, "Segoe UI", sans-serif;
+  }
+  .ap-root select option, .pa-root select option { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--ap-ink, #302132); cursor: pointer; }
+  .ap-root select option:hover, .ap-root select option:focus-visible, .pa-root select option:hover { background: var(--ap-cream, #fbebdd); outline: 0; }
+  .ap-root select option:checked, .pa-root select option:checked { background: rgb(255 180 162 / 35%); color: var(--ap-mauve, #793268); font-weight: 800; }
+  .ap-root select option::checkmark, .pa-root select option::checkmark { order: 2; margin-left: auto; color: var(--ap-mauve, #793268); }
+  .ap-root select:open, .pa-root select:open { border-color: var(--ap-mauve, #793268); box-shadow: 0 0 0 3px rgb(121 50 104 / 12%); }
+}
+
+/* ---------- Date picker ---------- */
+.ap-date { position: relative; min-width: 0; }
+.ap-root .ap-date input.ap-date-required { position: absolute; left: 0; bottom: 0; width: 100%; height: 1px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
+.ap-date-trigger { display: flex !important; align-items: center; justify-content: space-between; gap: 8px; width: 100%; cursor: pointer; text-align: left; }
+.ap-date-trigger .is-placeholder { color: var(--ap-muted); }
+.ap-date-trigger[aria-expanded="true"] { border-color: var(--ap-mauve); box-shadow: 0 0 0 3px rgb(121 50 104 / 12%); }
+.ap-date-pop { position: absolute; z-index: 35; top: calc(100% + 6px); left: 0; width: 296px; max-width: calc(100vw - 24px); display: grid; gap: 10px; padding: 14px; border: 1px solid var(--ap-line); border-radius: 18px; background: #fff; box-shadow: 0 16px 40px rgb(48 33 50 / 16%); letter-spacing: 0; }
+.ap-date-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ap-date-head b { font-size: 13px; font-weight: 800; color: var(--ap-ink); }
+.ap-date-nav { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--ap-line); border-radius: 50%; background: var(--ap-surface); color: var(--ap-ink); cursor: pointer; }
+.ap-date-nav:hover { border-color: var(--ap-mauve); }
+.ap-date-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.ap-date-dow { display: grid; place-items: center; height: 26px; font-size: 10px; font-weight: 800; color: var(--ap-muted); }
+.ap-date-day { height: 34px; border: 0; border-radius: 10px; background: none; font: inherit; font-size: 12px; font-weight: 700; color: var(--ap-ink); cursor: pointer; }
+.ap-date-day:hover { background: var(--ap-cream); }
+.ap-date-day.is-outside { color: #b9adb5; }
+.ap-date-day.is-today { box-shadow: inset 0 0 0 1.5px var(--ap-coral); }
+.ap-date-day[aria-pressed="true"] { background: var(--ap-mauve); color: #fff; }
+.ap-date-time { display: flex; align-items: center; gap: 8px; padding-top: 10px; border-top: 1.5px dashed var(--ap-line); color: var(--ap-muted); }
+.ap-date-time select { min-height: 34px; padding: 0 28px 0 10px; border: 1px solid var(--ap-line); border-radius: 10px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23302132' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center; font: inherit; font-size: 13px; font-weight: 800; color: var(--ap-ink); appearance: none; }
+.ap-date-time b { color: var(--ap-ink); }
+.ap-date-foot { display: flex; justify-content: flex-end; gap: 6px; }
+@media (max-width: 480px) {
+  .ap-date-pop { position: fixed; top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-width: none; z-index: 70; border-radius: 22px; box-shadow: 0 -12px 40px rgb(48 33 50 / 22%); }
+}

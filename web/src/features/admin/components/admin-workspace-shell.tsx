@@ -1,7 +1,7 @@
 "use client";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { adminSections, canViewAdminSection, type AdminSection } from "../admin-permissions";
 import { adminLabel } from "../admin-labels";
 import { signOut } from "@/app/dashboard/actions";
@@ -39,6 +39,8 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
   const setMenuOpen = (open: boolean | ((v: boolean) => boolean)) => setMenuPath((typeof open === "function" ? open(menuOpen) : open) ? path : null);
   const account = useRef<HTMLDetailsElement>(null);
   const search = useRef<HTMLInputElement>(null);
+  const [navigating, startNavigation] = useTransition();
+  const go = (href: string) => startNavigation(() => router.push(href));
   const current = (Object.keys(adminSections) as AdminSection[]).find((s) => adminSections[s].href === path) ?? "overview";
   const days = ranges.includes(params.get("days") as (typeof ranges)[number]) ? params.get("days") : "30";
   const name = displayName(email);
@@ -60,6 +62,25 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
     return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", key); };
   }, []);
 
+  // Filter forms (method="get") navigate client-side instead of reloading the
+  // whole document; server-action forms (POST) are left alone.
+  useEffect(() => {
+    const onSubmit = (event: SubmitEvent) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement) || form.getAttribute("method")?.toLowerCase() !== "get") return;
+      if (!form.closest(".ap-root")) return;
+      event.preventDefault();
+      const target = new URL(form.getAttribute("action") || window.location.pathname, window.location.origin);
+      const query = new URLSearchParams();
+      for (const [key, value] of new FormData(form, event.submitter)) {
+        if (typeof value === "string" && value.trim() !== "") query.append(key, value);
+      }
+      startNavigation(() => router.push(`${target.pathname}${query.size ? `?${query}` : ""}`));
+    };
+    document.addEventListener("submit", onSubmit);
+    return () => document.removeEventListener("submit", onSubmit);
+  }, [router]);
+
   const rangeHref = (value: string) => {
     const next = new URLSearchParams(params.toString());
     next.set("days", value);
@@ -71,6 +92,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
   return (
     <div className={`ap-root ap-shell workspace-admin${menuOpen ? " is-menu-open" : ""}`}>
       <a className="ap-skip" href="#workspace-content">Bỏ qua điều hướng</a>
+      <div className={`ap-route-progress${navigating ? " is-active" : ""}`} role="progressbar" aria-hidden={!navigating} aria-label="Đang tải dữ liệu" />
       <div className="ap-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
       <aside className="ap-sidebar" id="admin-sidebar" aria-label="Điều hướng quản trị">
         <Link className="ap-brand" href="/admin">
@@ -81,7 +103,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
         <nav className="ap-nav" aria-label="Quản trị">
           {visible("overview") && (
             <Link className="ap-nav-item" href="/admin" aria-current={current === "overview" ? "page" : undefined}>
-              <AdminIcon name="home" />Tổng quan
+              <AdminIcon name="home" />Tổng quan<NavPending />
             </Link>
           )}
           {groups.map((group) => {
@@ -93,7 +115,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
                 <div>
                   {sections.map((s) => (
                     <Link key={s} className="ap-nav-item" href={adminSections[s].href} aria-current={current === s ? "page" : undefined}>
-                      <AdminIcon name={sectionIcons[s]} />{adminSections[s].title}
+                      <AdminIcon name={sectionIcons[s]} />{adminSections[s].title}<NavPending />
                     </Link>
                   ))}
                 </div>
@@ -120,7 +142,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
             <form className="ap-search" role="search" action="/admin/users" onSubmit={(e) => {
               e.preventDefault();
               const value = search.current?.value.trim() ?? "";
-              router.push(value ? `/admin/users?search=${encodeURIComponent(value.slice(0, 160))}` : "/admin/users");
+              go(value ? `/admin/users?search=${encodeURIComponent(value.slice(0, 160))}` : "/admin/users");
             }}>
               <AdminIcon name="search" size={16} />
               <input ref={search} name="search" type="search" placeholder="Tìm email, User ID…" aria-label="Tìm người dùng theo email, số điện thoại hoặc User ID" maxLength={160} />
@@ -128,7 +150,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
             </form>
           )}
           <nav className="ap-range" aria-label="Khoảng thời gian">
-            {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày</Link>)}
+            {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
           </nav>
           {visible("incidents") && (
             <Link className="ap-icon-btn" href="/admin/incidents" aria-label="Sự cố và cảnh báo"><AdminIcon name="bell" size={22} /></Link>
@@ -147,7 +169,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
             </div>
           </details>
         </header>
-        <div id="workspace-content" className="ap-stack" tabIndex={-1}>{children}</div>
+        <div id="workspace-content" className="ap-stack" tabIndex={-1} aria-busy={navigating}>{children}</div>
       </div>
     </div>
   );
@@ -157,4 +179,10 @@ function displayName(email?: string | null) {
   const local = (email ?? "").split("@")[0];
   if (!local) return "Quản trị viên";
   return local.split(/[._-]+/).filter(Boolean).map((p) => p[0].toUpperCase() + p.slice(1)).join(" ");
+}
+
+/** Small pulsing dot on the link being opened, so a click gets instant feedback. */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  return <span className={`ap-nav-pending${pending ? " is-pending" : ""}`} aria-hidden="true" />;
 }

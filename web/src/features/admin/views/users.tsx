@@ -1,3 +1,4 @@
+import { DateField } from "../ui/date-field";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
@@ -47,8 +48,8 @@ export function UsersView(p: ViewProps) {
         <details className="av-more-filters">
           <summary className="ap-field"><span>Bộ lọc khác</span><span className="ap-input av-more-value">Ngày, phiên bản{extraCount ? ` (${extraCount})` : ""}<AdminIcon name="chevron-down" size={14} /></span></summary>
           <div className="av-more-panel">
-            <Field label="Đăng ký từ"><input name="createdFrom" type="date" defaultValue={query.createdFrom} /></Field>
-            <Field label="Đăng ký đến"><input name="createdTo" type="date" defaultValue={query.createdTo} /></Field>
+            <Field label="Đăng ký từ"><DateField name="createdFrom" type="date" defaultValue={query.createdFrom} /></Field>
+            <Field label="Đăng ký đến"><DateField name="createdTo" type="date" defaultValue={query.createdTo} /></Field>
             <Field label="Phiên bản quan sát"><input name="version" maxLength={40} defaultValue={query.version} placeholder="Ví dụ 1.0.9" /></Field>
           </div>
         </details>
