@@ -24,6 +24,11 @@ const affected: Record<string, AdminSection[]> = {
   ocr: ["ocr", "health"],
 };
 
+/** Every admin screen whose data a feed event changes. */
+export function affectedSections(feedSection: unknown): AdminSection[] {
+  return typeof feedSection === "string" ? affected[feedSection] ?? [] : [];
+}
+
 export function realtimeAffects(feedSection: unknown, current: AdminSection): boolean {
   return typeof feedSection === "string" && (affected[feedSection]?.includes(current) ?? false);
 }

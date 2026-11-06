@@ -389,3 +389,6 @@
 .ap-live-update { position: fixed; left: 50%; bottom: 20px; z-index: 55; transform: translateX(-50%); min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ap-mauve); color: #fff; font: inherit; font-size: 13px; font-weight: 800; box-shadow: var(--ap-shadow-strong); cursor: pointer; }
 @media (max-width: 720px) { .ap-live { order: 4; height: 28px; padding: 0 10px; } }
 @media (prefers-reduced-motion: reduce) { .ap-live.is-live i { animation: none; } }
+/* Sidebar/range navigations also drive the top progress bar (pure CSS via :has). */
+.ap-shell:has(.ap-nav-pending.is-pending) .ap-route-progress { opacity: 1; animation: ap-route 1.6s ease-out forwards; }
+.ap-shell:has(.ap-nav-pending.is-pending) #workspace-content { opacity: .72; transition: opacity .15s; }

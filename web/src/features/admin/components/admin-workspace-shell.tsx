@@ -7,7 +7,6 @@ import { adminLabel } from "../admin-labels";
 import { signOut } from "@/app/dashboard/actions";
 import { AdminIcon } from "../ui/admin-icon";
 import { AdminRealtime } from "./admin-realtime";
-import "../admin-platform.css";
 import "../ui/admin-paper.css";
 
 /* Navigation groups follow Figma › Admin Web; modules that exist only in the
@@ -103,9 +102,9 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
         <p className="ap-nav-label">QUẢN LÝ ỨNG DỤNG</p>
         <nav className="ap-nav" aria-label="Quản trị">
           {visible("overview") && (
-            <Link className="ap-nav-item" href="/admin" aria-current={current === "overview" ? "page" : undefined}>
+            <NavLink href="/admin" current={current === "overview"}>
               <AdminIcon name="home" />Tổng quan<NavPending />
-            </Link>
+            </NavLink>
           )}
           {groups.map((group) => {
             const sections = group.sections.filter(visible);
@@ -115,9 +114,9 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
                 <summary>{group.title}<AdminIcon name="chevron-right" size={14} /></summary>
                 <div>
                   {sections.map((s) => (
-                    <Link key={s} className="ap-nav-item" href={adminSections[s].href} aria-current={current === s ? "page" : undefined}>
+                    <NavLink key={s} href={adminSections[s].href} current={current === s}>
                       <AdminIcon name={sectionIcons[s]} />{adminSections[s].title}<NavPending />
-                    </Link>
+                    </NavLink>
                   ))}
                 </div>
               </details>
@@ -153,7 +152,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
           <nav className="ap-range" aria-label="Khoảng thời gian">
             {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
           </nav>
-          <AdminRealtime current={current} />
+          <AdminRealtime current={current} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
           {visible("incidents") && (
             <Link className="ap-icon-btn" href="/admin/incidents" aria-label="Sự cố và cảnh báo"><AdminIcon name="bell" size={22} /></Link>
           )}
@@ -187,4 +186,18 @@ function displayName(email?: string | null) {
 function NavPending() {
   const { pending } = useLinkStatus();
   return <span className={`ap-nav-pending${pending ? " is-pending" : ""}`} aria-hidden="true" />;
+}
+
+/** Sidebar link that fetches the full screen (data included) as soon as the
+    user shows intent — hover, focus or touch — so the click usually lands on
+    an already-loaded page. Before intent only the default lightweight prefetch runs. */
+function NavLink({ href, current, children }: { href: string; current: boolean; children: ReactNode }) {
+  const [intent, setIntent] = useState(false);
+  const warm = () => setIntent(true);
+  return (
+    <Link className="ap-nav-item" href={href} prefetch={intent ? true : null} aria-current={current ? "page" : undefined}
+      onMouseEnter={warm} onFocus={warm} onTouchStart={warm}>
+      {children}
+    </Link>
+  );
 }

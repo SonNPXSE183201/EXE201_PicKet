@@ -3,22 +3,59 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/core/supabase/client";
 import type { AdminSection } from "../admin-permissions";
-import { isEditing, realtimeAffects } from "../realtime-policy";
+import { affectedSections, isEditing } from "../realtime-policy";
 
-/* Server push for the admin: Supabase triggers broadcast "section changed"
-   events on the private topic admin:feed (staff only). The current screen
-   re-renders in place with router.refresh() — no polling, no page reload.
-   If the connection drops, a slow visible-tab refresh keeps data fresh. */
+/* Live data layer for the admin (SPA-style, still server-rendered):
+   1. Warm-up: once the first screen is idle, every screen the staff member may
+      open is prefetched into the client cache (3 at a time), so switching tabs
+      renders instantly instead of waiting for the server.
+   2. Push: Supabase triggers broadcast "section changed" on the private topic
+      admin:feed (WebSocket, staff only). The open screen re-renders in place
+      (router.refresh, which only re-fetches the current route); other affected
+      screens are marked stale.
+   3. Stale-while-revalidate: opening a stale screen shows the cached copy at
+      once, then refreshes it in the background.
+   No polling while connected; if the socket drops, the visible screen refreshes
+   every 60 s until it reconnects. */
 type State = "connecting" | "live" | "offline";
 const debounceMs = 400;
 const fallbackMs = 60_000;
+const warmBatch = 3;
+const warmGapMs = 350;
 
-export function AdminRealtime({ current }: { current: AdminSection }) {
+export function AdminRealtime({ current, screens }: { current: AdminSection; screens: { section: AdminSection; href: string }[] }) {
   const router = useRouter();
   const [state, setState] = useState<State>("connecting");
   const [waiting, setWaiting] = useState(false);
   const currentRef = useRef(current);
-  useEffect(() => { currentRef.current = current; }, [current]);
+  const stale = useRef(new Set<AdminSection>());
+  const refreshCurrent = useRef<() => void>(() => undefined);
+  const screensKey = screens.map((s) => s.href).join("|");
+
+  // Opening a screen that changed while it was hidden: show cache, then refresh.
+  useEffect(() => {
+    currentRef.current = current;
+    if (!stale.current.has(current)) return;
+    stale.current.delete(current);
+    const t = setTimeout(() => refreshCurrent.current(), 150);
+    return () => clearTimeout(t);
+  }, [current]);
+
+  // Warm the client cache with every permitted screen once the page is idle.
+  useEffect(() => {
+    const targets = screensKey.split("|").filter(Boolean);
+    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const start = () => {
+      targets.forEach((href, i) => {
+        timers.push(setTimeout(() => { if (!cancelled) prefetchFull(router, href); }, Math.floor(i / warmBatch) * warmGapMs));
+      });
+    };
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    if (idle) idle(start, { timeout: 2500 });
+    else timers.push(setTimeout(start, 1200));
+    return () => { cancelled = true; timers.forEach(clearTimeout); };
+  }, [router, screensKey]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -37,6 +74,7 @@ export function AdminRealtime({ current }: { current: AdminSection }) {
       setWaiting(false);
       router.refresh();
     };
+    refreshCurrent.current = refresh;
     const schedule = () => {
       if (timer) clearTimeout(timer);
       timer = setTimeout(refresh, debounceMs);
@@ -46,7 +84,10 @@ export function AdminRealtime({ current }: { current: AdminSection }) {
 
     const channel = supabase.channel("admin:feed", { config: { private: true } });
     channel.on("broadcast", { event: "change" }, ({ payload }) => {
-      if (realtimeAffects((payload as { section?: unknown })?.section, currentRef.current)) schedule();
+      for (const section of affectedSections((payload as { section?: unknown })?.section)) {
+        if (section === currentRef.current) schedule();
+        else stale.current.add(section);
+      }
     });
 
     void (async () => {
@@ -86,4 +127,11 @@ export function AdminRealtime({ current }: { current: AdminSection }) {
       )}
     </>
   );
+}
+
+/** router.prefetch defaults to the lightweight "auto" prefetch (loading shell
+    only). Next 16 accepts kind "full" at runtime — the same mode as
+    <Link prefetch={true}> — which also fetches the screen's data. */
+function prefetchFull(router: ReturnType<typeof useRouter>, href: string) {
+  (router.prefetch as (href: string, options?: { kind?: "full" }) => void)(href, { kind: "full" });
 }

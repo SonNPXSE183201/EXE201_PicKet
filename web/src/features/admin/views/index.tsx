@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { AdminSection } from "../admin-permissions";
 import type { ViewProps } from "./shared";
-import { LegacyBody } from "./legacy";
+import { notFound } from "next/navigation";
 import { OverviewView } from "./overview";
 import { UsersView } from "./users";
 import { AcquisitionView, EngagementView, OcrView } from "./growth";
@@ -10,7 +10,7 @@ import { HealthView, IncidentsView } from "./operations";
 import { ContentView, PartnersView } from "./content";
 import { AuditView, IntegrationsView, SettingsView, StaffView } from "./system";
 
-/* Section → Paper view (Figma › Admin Web). Unlisted sections fall back to LegacyBody. */
+/* Section → Paper view (Figma › Admin Web). */
 const views: Partial<Record<AdminSection, (p: ViewProps) => ReactNode>> = {
   overview: (p) => <OverviewView {...p} />,
   users: (p) => <UsersView {...p} />,
@@ -30,5 +30,7 @@ const views: Partial<Record<AdminSection, (p: ViewProps) => ReactNode>> = {
 };
 
 export function renderSection(props: ViewProps): ReactNode {
-  return (views[props.section] ?? ((p: ViewProps) => <LegacyBody {...p} />))(props);
+  const view = views[props.section];
+  if (!view) notFound();
+  return view(props);
 }
