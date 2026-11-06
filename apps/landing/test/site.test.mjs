@@ -16,8 +16,6 @@ test('release page is readable without JavaScript and points to one approved APK
   assert.match(scripts[1], /^<script type="module" src="\/launch-assets\/analytics\.js"><\/script>$/);
   assert.ok(!html.includes('{{'));
   assert.equal((html.match(new RegExp('href="/downloads/'+release.filename+'"','g'))||[]).length,2);
-  assert.match(html, /Không bắt buộc tạo tài khoản/);
-  assert.match(html, /Chưa có trên Google Play/);
 });
 test('Caddy serves only landing paths statically and preserves existing Next routes', async () => {
   const caddy = await readFile(new URL('../../../deploy/Caddyfile',import.meta.url),'utf8');
@@ -45,4 +43,23 @@ test('landing exposes same-origin web login in header and footer without downloa
 test('landing distinguishes web account requirement from Android guest usage', async () => {
   const html = await readFile(new URL('site/index.html', root), 'utf8');
   assert.match(html, /Bản web cần đăng nhập và kết nối mạng/);
+});
+
+test('landing v2 keeps store rollout configurable and avoids scroll-driven motion', async () => {
+  const html = await readFile(new URL('site/index.html', root), 'utf8');
+  const motion = await readFile(new URL('site/launch-assets/paper-motion-v1.js', root), 'utf8');
+  const styles = await readFile(new URL('site/launch-assets/paper-motion-v1.css', root), 'utf8');
+  assert.match(motion, /PLAY_STORE_URL = '#'/);
+  assert.match(html, /data-play-link/);
+  assert.doesNotMatch(`${html}\n${motion}\n${styles}`, /scroll-progress|IntersectionObserver|animation-timeline|scroll-timeline/);
+  assert.match(motion, /prefers-reduced-motion: reduce/);
+  assert.match(styles, /@media\(prefers-reduced-motion:reduce\)/);
+});
+
+test('landing publishes only verified support and policy details', async () => {
+  const html = await readFile(new URL('site/index.html', root), 'utf8');
+  assert.doesNotMatch(html, /support@picket\.vn|\/terms\.html|Không quảng cáo/);
+  assert.match(html, /0369 076 214/);
+  assert.match(html, /picketfinance@gmail\.com/);
+  assert.match(html, /\/account-deletion\.html/);
 });
