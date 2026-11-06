@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/core/supabase/server";
 import { workspaceRedirect } from "./workspace-policy";
+import { mockAdminPermissions, mockAdminPortal } from "./mock-admin-data";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -81,6 +82,10 @@ function createMockApiClient(): PicketApiClient {
       {sku:'picket_plus_yearly',tier:'plus',months:12,amount:199000},
       {sku:'picket_pro_yearly',tier:'pro',months:12,amount:499000},
     ],orders:[]};},
+    async adminPortal(_token: string, section: string, filters: Record<string, string | number> = {}) { return mockAdminPortal(section, filters); },
+    async adminMutate() { return { updated: true, id: 'mock' }; },
+    async adminAccountAction() { return { updated: true }; },
+    async requestAdminExport() { return { id: 'mock-export', status: 'queued' }; },
     async adminPayments() {return {total:0,series:[],orders:[],events:[]};},
     async adminRevenue() {return {confirmedVnd:0,estimatedVnd:0,reviewVnd:0,unconverted:[],bySource:[],series:[],entries:[],history:[]};},
     async adminRevenueAdjust() {return {};},
@@ -123,10 +128,10 @@ export async function requireApiSession(
     return {
       accessToken: "mock-token",
       api: createMockApiClient(),
-      claims: { sub: "mock-user-123", email: "son.nguyen@picket.vn" },
+      claims: { sub: "mock-user-123", email: workspace==='admin' ? "linh.tran@picket.vn" : "son.nguyen@picket.vn" },
       staff: workspace==='admin',
       role: workspace==='admin'?'owner':"user",
-      mfaVerified: true, permissions: ['overview.read','revenue.read','payments.read','permissions.manage'],
+      mfaVerified: process.env.DEV_MOCK_MFA !== "0", permissions: workspace==='admin' ? mockAdminPermissions : [],
     };
   }
 

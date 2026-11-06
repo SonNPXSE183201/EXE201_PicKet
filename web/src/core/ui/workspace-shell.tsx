@@ -86,6 +86,6 @@ function StandardWorkspaceShell({ children, admin = false, adminRole = null }: {
   </div>;
 }
 
-export function WorkspaceShell(props: {children:ReactNode;admin?:boolean;adminRole?:string|null;adminPermissions?:string[]}) {
- return props.admin ? <AdminWorkspaceShell role={props.adminRole??null} permissions={props.adminPermissions??[]}>{props.children}</AdminWorkspaceShell> : <StandardWorkspaceShell {...props}/>;
+export function WorkspaceShell(props: {children:ReactNode;admin?:boolean;adminRole?:string|null;adminPermissions?:string[];adminEmail?:string|null;adminMfaVerified?:boolean}) {
+ return props.admin ? <AdminWorkspaceShell role={props.adminRole??null} permissions={props.adminPermissions??[]} email={props.adminEmail} mfaVerified={props.adminMfaVerified}>{props.children}</AdminWorkspaceShell> : <StandardWorkspaceShell {...props}/>;
 }
