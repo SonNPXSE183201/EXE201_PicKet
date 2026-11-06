@@ -1,0 +1,197 @@
+/* Landing v2 responsive layer: keeps the v2 design and adds the breakpoints it
+   lacked (tablets, foldables, small laptops, large desktops). Loaded last. */
+
+html, body { overflow-x: clip; }
+main, footer { overflow-x: clip; }
+img { max-width: 100%; }
+.top nav a, .chips span, .actions span { white-space: nowrap; }
+
+/* Small laptops and tablets in landscape: 1024-1279px. */
+@media (max-width: 1279px) and (min-width: 721px) {
+  .wrap { width: min(1200px, calc(100% - 64px)); }
+  nav { gap: clamp(16px, 2.4vw, 32px); }
+  h1 { font-size: clamp(52px, 5.6vw, 72px); letter-spacing: -2px; }
+  .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 500px); gap: 24px; }
+  .pocket { height: 500px; }
+  .phone { width: 270px; height: 515px; left: calc(50% - 135px); }
+  .ticket.income { left: -30px; top: 230px; }
+  .ticket.expense { right: -16px; }
+  .bloom { right: -10px; width: 120px; }
+  .hero-category.food, .hero-category.ride { right: -8px; }
+  .hero-category.cafe { left: -8px; }
+  .feature-category.food { left: 12%; }
+  .feature-category.ride { right: 12%; }
+  .feature-category.gift { right: 10%; }
+  .feature-category.cafe { left: 10%; }
+  .side-phone.left { left: 0; }
+  .side-phone.right { right: 0; }
+  .seal { right: -30px; }
+  .step-cards { gap: 28px; }
+  .stickers { max-width: 480px; margin: 0 auto; }
+  .download-ticket { grid-template-columns: 1fr 290px; }
+  .download-ticket h2 { font-size: 44px; }
+}
+
+/* Tablets in portrait, Galaxy Z Fold open, Surface Duo spanned: 721-1023px. */
+@media (max-width: 1023px) and (min-width: 721px) {
+  .top { height: 72px; }
+  nav { gap: 18px; font-size: 13px; }
+  .badge.small img { width: 120px; }
+  .hero { padding: 56px 0 70px; }
+  .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+  .hero-grid > div:first-child { max-width: 640px; }
+  h1 { font-size: clamp(52px, 7.4vw, 64px); }
+  .pocket { width: min(100%, 560px); height: 500px; margin: 0 auto; }
+  .chips { flex-wrap: wrap; }
+  .marquee { height: 84px; }
+  h2, .features h2 { font-size: 40px; }
+  .section { padding: 90px 0; }
+  .receipt { width: min(100%, 540px); }
+  .seal { right: -20px; bottom: -60px; width: 120px; height: 120px; }
+  .side-phone { width: 190px; height: 390px; }
+  .heading-row { display: block; }
+  .step-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .step-cards button { height: 250px; padding: 20px; }
+  .step-cards img { width: 110px; height: 92px; top: -22px; }
+  .offline-grid { grid-template-columns: 1fr; }
+  .offline article { min-height: 400px; }
+  .extras section { padding: 36px; }
+  .download-ticket { height: auto; grid-template-columns: 1fr; transform: rotate(-1deg); }
+  .download-ticket > div:first-child { padding: 40px; }
+  .ticket-stub { min-height: 240px; border-left: 0; border-top: 2px dashed var(--border); }
+  .ticket-stub:before, .ticket-stub:after { top: -18px; }
+  .ticket-stub:before { left: -18px; }
+  .ticket-stub:after { left: auto; right: -18px; }
+}
+
+/* Below 1024px the feature scene stacks: receipt first, both phones side by
+   side underneath, so nothing overlaps whatever the receipt height is. */
+@media (max-width: 1023px) {
+  .feature-scene { height: auto; display: grid; grid-template-columns: repeat(2, auto); justify-content: center; justify-items: center; column-gap: clamp(16px, 6vw, 48px); row-gap: 72px; padding: 10px 0 30px; }
+  .feature-scene .receipt { grid-column: 1 / -1; order: -1; }
+  .side-phone { position: relative; }
+  .side-phone.left, .side-phone.right { left: auto; right: auto; bottom: auto; }
+  .feature-category { display: none; }
+}
+
+/* Phones (v2 already stacks below 720px): keep decorations inside the screen. */
+@media (max-width: 720px) {
+  .wrap { width: calc(100% - 32px); }
+  .hero-grid > div:first-child { min-width: 0; }
+  .pocket { max-width: 480px; margin-left: auto; margin-right: auto; }
+  .bloom { right: -6px; bottom: -30px; }
+  .feature-scene { max-width: 520px; margin: 0 auto; }
+  .seal { right: -4px; bottom: -58px; }
+  .stickers { max-width: 340px; margin: 0 auto; }
+  .ticket-stub img { width: 150px; }
+  .ticket-stub span { display: block; max-width: 58%; }
+}
+
+/* Galaxy Z Fold cover screens and other narrow phones: <= 360px. */
+@media (max-width: 360px) {
+  .wrap { width: calc(100% - 24px); }
+  .badge.small img { width: 100px; }
+  h1 { font-size: 34px; letter-spacing: -1px; }
+  h2, .features h2 { font-size: 27px; }
+  .actions { flex-wrap: wrap; gap: 12px; }
+  .pocket { height: 360px; }
+  .phone { width: 176px; height: 344px; left: calc(50% - 88px); }
+  .ticket.income { left: -4px; top: 170px; padding: 10px; }
+  .ticket.expense { right: -4px; padding: 10px; }
+  .hero-category { width: 44px; height: 44px; }
+  .receipt { padding: 16px; }
+  .receipt li small { margin-left: 0; }
+  .total b { font-size: 22px; }
+  .barcode { font-size: 22px; letter-spacing: 2px; }
+  .side-phone { width: 128px; height: 262px; }
+  .stickers { transform: scale(.82); transform-origin: top left; }
+  .download-ticket > div:first-child { padding: 22px; }
+  .download-ticket h2 { font-size: 30px; }
+  .ticket-stub { padding: 40px 20px; }
+  .ticket-stub img { width: 120px; }
+  .extras section { padding: 22px; }
+}
+
+/* Large desktops: give the hero room instead of a narrow centred strip. */
+@media (min-width: 1600px) {
+  .wrap { width: min(1320px, calc(100% - 80px)); }
+  .hero-grid { grid-template-columns: 1fr 640px; }
+}
+
+/* Desktop hero (>= 1024px): keep the intro clear of the floating salary
+   ticket, and pin the live balance chip over the balance in the screenshot. */
+@media (min-width: 1024px) {
+  .hero-grid > div:first-child { min-width: 0; padding-right: 48px; }
+  .hero p:not(.stamp-label) { max-width: min(520px, 100%); }
+}
+@media (min-width: 1280px) {
+  .phone-overlay { top: 154px; left: 30px; font-size: 17px; padding: 10px 52px 10px 22px; }
+}
+
+/* Very large screens: scale the hero up instead of leaving a narrow strip. */
+@media (min-width: 1920px) {
+  .wrap { width: min(1480px, calc(100% - 120px)); }
+  h1 { font-size: 84px; }
+  .hero-grid { grid-template-columns: 1fr 680px; }
+  .pocket { height: 620px; }
+}
+@media (min-width: 721px) and (max-width: 1279px) {
+  .phone-overlay { top: 138px; left: 26px; font-size: 15px; padding: 9px 46px 9px 20px; }
+}
+
+/* Brand mark: the app's wallet-camera logo instead of the letter placeholder. */
+.brand img { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
+@media (max-width: 720px) { .brand img { width: 32px; height: 32px; } }
+
+/* Store badges: APKPure (live download) first, Google Play next to it. */
+.badge img { height: auto; }
+.store-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.actions { flex-wrap: wrap; }
+@media (max-width: 1023px) and (min-width: 721px) { .top .badge.small img { width: 112px; } }
+@media (max-width: 720px) {
+  .top .play-badge { display: none; }
+  .actions { gap: 12px; }
+  .actions .badge img { width: 140px; }
+}
+@media (max-width: 360px) { .actions .badge img { width: 122px; } }
+.top .wrap { gap: 16px; }
+@media (max-width: 1023px) { .top .play-badge { display: none; } }
+
+/* Footer, kept minimal (Wix-style): brand + intro + social icons, two short
+   link columns, then a bottom bar with legal links and the store badges. */
+footer { padding: 64px 0 32px; }
+.footer-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
+.footer-grid > nav { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+.footer-grid > div { min-width: 0; }
+.footer-grid a { overflow-wrap: anywhere; }
+.footer-brand p { max-width: 340px; margin-bottom: 4px; }
+.social-links { display: flex; gap: 12px; }
+.social { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: white; color: var(--primary); transition: transform .2s, background-color .2s, color .2s, border-color .2s; }
+.social svg { width: 19px; height: 19px; fill: currentColor; }
+.social:hover, .social:focus-visible { transform: translateY(-2px); color: white; }
+.social.facebook:hover, .social.facebook:focus-visible { background: #1877f2; border-color: #1877f2; }
+.social.youtube:hover, .social.youtube:focus-visible { background: #ff0000; border-color: #ff0000; }
+.social:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+.footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 18px 32px; flex-wrap: wrap; margin-top: 48px; padding-top: 22px; border-top: 1px dashed var(--border); }
+.footer-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 20px; font-size: 13px; color: var(--muted); }
+.footer-meta small { font-size: 13px; }
+.footer-meta a, .footer-meta .analytics-settings { min-height: 0; padding: 0; font: inherit; font-weight: 700; color: var(--muted); text-decoration: none; }
+.footer-meta a:hover, .footer-meta .analytics-settings:hover { color: var(--primary); }
+.footer-meta a, .footer-meta a:hover, .footer-meta a:focus, .footer-meta .analytics-settings, .footer-meta .analytics-settings:hover { text-decoration: none; }
+.footer-meta a:focus-visible, .footer-meta .analytics-settings:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+.footer-bottom .store-badges { flex-wrap: nowrap; gap: 10px; }
+.footer-bottom .badge img { width: 132px; }
+@media (max-width: 1023px) and (min-width: 721px) {
+  .footer-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+}
+@media (max-width: 720px) {
+  footer { padding: 48px 0 28px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px 20px; }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; margin-top: 36px; }
+  .footer-bottom .badge img { width: 128px; }
+}
+@media (max-width: 360px) {
+  .footer-grid { grid-template-columns: 1fr; }
+  .footer-bottom .badge img { width: 112px; }
+}

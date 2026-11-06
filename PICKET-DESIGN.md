@@ -99,7 +99,7 @@ Không thêm nền giấy raster phủ toàn app nếu làm mất tính flat. Kh
 
 ## 6. Landing public
 
-Nguồn: [HTML](apps/landing/site/index.html), [Paper CSS](apps/landing/site/launch-assets/paper-v1.css), [motion CSS](apps/landing/site/launch-assets/paper-motion-v1.css), [motion JS](apps/landing/site/launch-assets/paper-motion-v1.js).
+Nguồn: [HTML](apps/landing/site/index.html), [landing v2 CSS](apps/landing/site/launch-assets/landing-r2.css), [responsive CSS](apps/landing/site/launch-assets/landing-responsive.css), [motion CSS](apps/landing/site/launch-assets/paper-motion-v1.css), [motion JS](apps/landing/site/launch-assets/paper-motion-v1.js).
 
 - Dùng Nunito local 400/700 và Paper light. Hero chữ lớn, ảnh native, lớp giấy/phiếu ví dụ; vùng tải là mục tiêu chính.
 - Header: logo, Tính năng/Cách cài đặt/Liên hệ, **Đăng nhập nền tím/chữ trắng**. Không có nút Tải ứng dụng ở header.

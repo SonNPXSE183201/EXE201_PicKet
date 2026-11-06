@@ -1,0 +1,31 @@
+/* Policy pages (privacy, account deletion) in the landing v2 look. */
+.legal-hero { padding: 64px 0 40px; }
+.legal-hero h1 { font-size: clamp(36px, 5vw, 60px); line-height: 1.05; letter-spacing: -1.5px; margin: 22px 0 16px; max-width: 900px; }
+.legal-lead { font-size: 18px; max-width: 680px; }
+.legal-card { max-width: 900px; margin: 0 auto; background: white; border: 1px solid var(--border); border-radius: 28px; padding: 48px 56px; box-shadow: 0 10px 28px rgb(48 33 50 / 8%); overflow-wrap: anywhere; }
+.legal-card h2 { font-size: 26px; letter-spacing: -.5px; margin: 40px 0 12px; padding-top: 28px; border-top: 1px dashed var(--border); }
+.legal-card h2:first-child, .legal-card > p:first-child + h2 { margin-top: 24px; }
+.legal-card p, .legal-card li { font-size: 16px; line-height: 1.75; color: var(--muted); }
+.legal-card strong { color: var(--text); }
+.legal-card ul, .legal-card ol { padding-left: 24px; }
+.legal-card li { margin-bottom: 10px; }
+.legal-card li::marker { color: var(--primary); font-weight: 800; }
+.legal-card a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; font-weight: 800; }
+.legal-card a:focus-visible, .legal-back a:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
+.legal-back { max-width: 900px; margin: 28px auto 90px; }
+.legal-back a { color: var(--primary); font-weight: 800; }
+
+@media (max-width: 720px) {
+  .legal-hero { padding: 36px 0 24px; }
+  .legal-hero h1 { font-size: 32px; letter-spacing: -1px; }
+  .legal-lead { font-size: 15px; }
+  .legal-card { padding: 26px 20px; border-radius: 22px; }
+  .legal-card h2 { font-size: 21px; margin-top: 30px; padding-top: 22px; }
+  .legal-card p, .legal-card li { font-size: 15px; }
+  .legal-back { margin-bottom: 60px; }
+}
+@media (max-width: 360px) {
+  .legal-hero h1 { font-size: 28px; }
+  .legal-card { padding: 20px 14px; }
+  .legal-card ul, .legal-card ol { padding-left: 18px; }
+}
