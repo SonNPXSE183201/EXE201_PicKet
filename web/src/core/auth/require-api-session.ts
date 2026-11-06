@@ -1,4 +1,4 @@
-import { PicketApiClient } from "@picket/api-client";
+import { ApiError, PicketApiClient } from "@picket/api-client";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
@@ -276,7 +276,17 @@ export const requireApiSession = cache(async function requireApiSession(
   if (!accessToken) redirect(loginPath);
 
   const api = new PicketApiClient(apiBaseUrl);
-  const access = await api.accountAccess(accessToken);
+  let access: Awaited<ReturnType<PicketApiClient["accountAccess"]>>;
+  try {
+    access = await api.accountAccess(accessToken);
+  } catch (error) {
+    // Supabase rejected the token (expired/revoked/locked): sign in again
+    // instead of crashing. Outages (5xx) still surface as an error page.
+    if (error instanceof ApiError && [400, 401, 403].includes(error.status)) {
+      redirect(`/auth/expired?next=${encodeURIComponent(workspace === "admin" ? "/admin" : "/dashboard")}`);
+    }
+    throw error;
+  }
   const staff = access.staff;
   const destination =
     workspace === "either"

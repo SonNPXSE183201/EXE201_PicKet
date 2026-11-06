@@ -37,8 +37,10 @@ export function PasswordRow({ label = "Mật khẩu", name = "password", autoCom
 }
 
 /** Six single-digit boxes that submit as one field (`name`), with paste and arrow-key support. */
-export function OtpInput({ name, length = 6, label = "Mã xác thực", autoFocus = true, disabled = false }: {
+export function OtpInput({ name, length = 6, label = "Mã xác thực", autoFocus = true, disabled = false, mask = false }: {
   name: string; length?: number; label?: string; autoFocus?: boolean; disabled?: boolean;
+  /** Hide the digits (PIN entry). */
+  mask?: boolean;
 }) {
   const [digits, setDigits] = useState<string[]>(() => Array(length).fill(""));
   const refs = useRef<(HTMLInputElement | null)[]>([]);
@@ -52,7 +54,7 @@ export function OtpInput({ name, length = 6, label = "Mã xác thực", autoFocu
     <div className="pa-otp" role="group" aria-label={label}>
       <input type="hidden" name={name} value={digits.join("")} />
       {digits.map((d, i) => (
-        <input key={i} ref={(el) => { refs.current[i] = el; }} value={d} placeholder=" " inputMode="numeric" autoComplete={i === 0 ? "one-time-code" : "off"}
+        <input key={i} ref={(el) => { refs.current[i] = el; }} value={d} placeholder=" " inputMode="numeric" type={mask ? "password" : "text"} autoComplete={mask ? "off" : i === 0 ? "one-time-code" : "off"}
           maxLength={length} aria-label={`${label} — chữ số ${i + 1}`} autoFocus={autoFocus && i === 0} disabled={disabled}
           onChange={(e) => {
             const v = e.target.value.replace(/\D/g, "");

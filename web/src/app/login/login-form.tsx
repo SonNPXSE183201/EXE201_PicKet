@@ -16,11 +16,13 @@ interface LoginFormProps {
   admin?: boolean;
   /** Where to go after sign-in; must be a same-site path. */
   next?: string;
+  /** This browser has a saved PIN (quick unlock). */
+  pinAvailable?: boolean;
 }
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export function LoginForm({ initialError, admin = false, next = "/session" }: LoginFormProps) {
+export function LoginForm({ initialError, admin = false, next = "/session", pinAvailable = false }: LoginFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [busy, setBusy] = useState(false);
@@ -169,6 +171,14 @@ export function LoginForm({ initialError, admin = false, next = "/session" }: Lo
         <p className="pa-copy">{admin ? "Dùng email công ty. Phiên quản trị cần MFA để thay đổi dữ liệu." : "Đăng nhập để đồng bộ dữ liệu tài chính giữa điện thoại và máy tính."}</p>
       </header>
 
+      {pinAvailable && (
+        <Link className="pa-pin-cta" href="/login/pin">
+          <span className="pa-tile"><AdminIcon name="lock" size={20} /></span>
+          <span><b>Mở khoá nhanh bằng PIN</b><small>Trình duyệt này đã bật PIN · không cần mật khẩu</small></span>
+          <AdminIcon name="chevron-right" size={16} />
+        </Link>
+      )}
+      {pinAvailable && <div className="pa-divider">hoặc đăng nhập bằng mật khẩu</div>}
       <form className="pa-form-wrap" onSubmit={signIn} aria-busy={busy} aria-describedby={message ? "login-message" : undefined}>
         <FieldGroup>
           <FieldRow icon="mail" label={admin ? "Email công ty" : "Email hoặc số điện thoại"} name="identifier" type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder={admin ? "ten@picket.vn" : "ban@example.com hoặc 09xx xxx xxx"} />
@@ -193,7 +203,6 @@ export function LoginForm({ initialError, admin = false, next = "/session" }: Lo
             </svg>
             Tiếp tục với Google
           </button>
-          <p className="pa-meta"><Link href="/login/pin">Mở khoá bằng PIN</Link></p>
           <p className="pa-meta">Chưa có tài khoản? <Link href="/register">Đăng ký</Link></p>
         </>
       )}

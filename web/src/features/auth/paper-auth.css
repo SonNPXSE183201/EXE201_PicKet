@@ -161,3 +161,36 @@
 /* Edge/IE add their own reveal/clear buttons to password fields; we already
    provide one eye toggle, so hide the browser's to avoid two icons. */
 .pa-root input::-ms-reveal, .pa-root input::-ms-clear { display: none; }
+
+/* PIN */
+.pa-pin-label { font-size: 11px; font-weight: 700; color: var(--pa-muted); }
+.pa-otp input[type="password"] { font-size: 26px; letter-spacing: 0; }
+.pa-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: pa-step; }
+.pa-steps li { position: relative; padding-left: 34px; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); counter-increment: pa-step; }
+.pa-steps li::before { content: counter(pa-step); position: absolute; left: 0; top: -2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pa-cream); font-size: 12px; font-weight: 800; color: var(--pa-mauve); }
+.pa-steps b { color: var(--pa-ink); }
+.pa-pin-cta { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--pa-coral); border-radius: 18px; background: rgb(255 180 162 / 22%); text-decoration: none; color: var(--pa-ink); }
+.pa-pin-cta:hover { background: rgb(255 180 162 / 35%); }
+.pa-pin-cta span:nth-child(2) { flex: 1; }
+.pa-pin-cta b { display: block; font-size: 13px; font-weight: 800; }
+.pa-pin-cta small { display: block; font-size: 11px; font-weight: 600; color: var(--pa-muted); }
+.pa-pin-cta .pa-tile { background: #fff; }
+/* Paper auth content embedded inside the user workspace (no full-page grid). */
+.pa-root.is-inline { display: grid; gap: 16px; min-height: 0; padding: 24px; background: var(--pa-canvas); border-radius: 24px; }
+.pa-root.is-inline .pa-form-wrap { width: min(440px, 100%); }
+.pa-root a.pa-btn { color: #fff; }
+.pa-root a.pa-btn.is-secondary { color: var(--pa-ink); }
+.pa-pin-status { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; background: var(--pa-card); box-shadow: 0 3px 10px rgb(48 33 51 / 7%); }
+.pa-pin-status > span:nth-child(2) { flex: 1; min-width: 0; }
+.pa-pin-status b { display: block; font-size: 14px; font-weight: 800; }
+.pa-pin-status small { display: block; font-size: 11px; font-weight: 700; color: var(--pa-muted); }
+.pa-switch { position: relative; display: inline-flex; width: 44px; height: 26px; flex: none; cursor: pointer; }
+.pa-switch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.pa-switch span[aria-hidden] { width: 100%; border-radius: 999px; background: var(--pa-line); transition: background-color .15s; }
+.pa-switch span[aria-hidden]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 20%); transition: transform .15s; }
+.pa-switch input:checked + span[aria-hidden] { background: var(--pa-mauve); }
+.pa-switch input:checked + span[aria-hidden]::after { transform: translateX(18px); }
+.pa-switch input:focus-visible + span[aria-hidden] { outline: 2px solid var(--pa-mauve); outline-offset: 2px; }
+.pa-pin-actions { display: grid; gap: 10px; }
+.pa-root .pa-btn.is-danger { color: var(--pa-danger); }
+.pa-root .ap-sr, .pa-root .pa-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
