@@ -1,0 +1,12 @@
+*
+!web/
+!web/**
+!packages/
+!packages/**
+web/node_modules
+web/.next
+web/.next-dev
+web/.env
+web/.env.*
+packages/**/node_modules
+**/.DS_Store

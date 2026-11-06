@@ -1,0 +1,62 @@
+export interface ReceiptImageCacheEntry { id: string; path: string; dataUri: string; thumbnailUri?: string; usedAt: number }
+export type ReceiptPreview = { path: string; thumbnailUri: string };
+export function hydrateReceiptPreviews<T extends { path?: string; thumbnailUri?: string }>(rows: T[], previews: ReceiptPreview[]): T[] {
+  const valid = new Map(previews.filter(item => typeof item?.path === "string" && typeof item.thumbnailUri === "string"
+    && item.thumbnailUri.startsWith("data:image/jpeg;base64,") && item.thumbnailUri.length <= 131_104)
+    .map(item => [item.path, item.thumbnailUri]));
+  return rows.map(row => ({ ...row, thumbnailUri: row.path ? valid.get(row.path) : undefined }));
+}
+
+export function indexReceiptThumbnailPaths(items: ReceiptImageCacheEntry[]) {
+  const paths = new Map<string, string>();
+  for (const image of [...items].sort((a, b) => a.usedAt - b.usedAt)) {
+    if (image.thumbnailUri && image.thumbnailUri.length <= 131_104) paths.set(image.path, image.thumbnailUri);
+  }
+  return paths;
+}
+
+/** Build only from the current owner's decrypted cache; paths are the image identity. */
+export function indexReceiptImagePaths(items: ReceiptImageCacheEntry[]) {
+  const paths = new Map<string, string>();
+  for (const image of [...items].sort((a, b) => a.usedAt - b.usedAt)) paths.set(image.path, image.dataUri);
+  return paths;
+}
+
+export async function loadReceiptGallery<T>(owner: string, loader: { remote(): Promise<T[]>; cached(owner: string): Promise<T[] | null>; save(owner: string, rows: T[]): Promise<void>; onCached?(rows: T[]): void; onRemote?(rows: T[]): void; hydrateCached?(owner: string, rows: T[]): Promise<T[]> }) {
+  // Cache-first metadata makes the calendar usable while network/media work
+  // continues. Cache corruption must never prevent a successful remote read.
+  let snapshot: T[] | null = null;
+  let remoteSettled = false;
+  if (loader.onCached) {
+    try { snapshot = await loader.cached(owner); } catch { /* Remote may recover. */ }
+    if (snapshot !== null) {
+      loader.onCached(snapshot);
+      // Local media must not wait for a stalled network request. A late local
+      // completion must never resurrect metadata replaced by the remote read.
+      if (loader.hydrateCached) void loader.hydrateCached(owner, snapshot).then(rows => {
+        if (!remoteSettled) loader.onCached?.(rows);
+      }).catch(() => undefined);
+    }
+  }
+  let rows: T[];
+  try { rows = await loader.remote(); remoteSettled = true; }
+  catch (error) { remoteSettled = true; const cached = snapshot ?? await loader.cached(owner); if (cached !== null) return { rows: cached, stale: true }; throw error; }
+  // Metadata is useful immediately. Slow encryption/SQLite must not keep the
+  // calendar disabled after a successful authoritative response.
+  loader.onRemote?.(rows);
+  try { await loader.save(owner, rows); } catch { /* A full disk must not hide fresh remote data. */ }
+  return { rows, stale: false };
+}
+
+/** Budget is base64 character count (~20 MiB maximum before encryption). */
+export function trimReceiptImages(items: ReceiptImageCacheEntry[], validIds: Set<string>, budget = 20 * 1024 * 1024, validPaths?: Set<string>): ReceiptImageCacheEntry[] {
+  let used = 0;
+  const seen = new Set<string>();
+  const paths = new Set<string>();
+  return [...items].sort((a, b) => b.usedAt - a.usedAt).filter((item) => {
+    const referenced = validPaths ? validPaths.has(item.path) : validIds.has(item.id);
+    const length = item.dataUri.length + (item.thumbnailUri?.length ?? 0);
+    if (!referenced || seen.has(item.id) || paths.has(item.path) || length > budget - used) return false;
+    seen.add(item.id); paths.add(item.path); used += length; return true;
+  });
+}

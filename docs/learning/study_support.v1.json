@@ -1,0 +1,572 @@
+{
+  "schemaVersion": 1,
+  "editorialRevision": 2,
+  "authoredAt": "2026-10-27",
+  "status": "authored-source-checked-not-independent-review",
+  "audience": "Adults 18+; fictional Vietnamese-context examples; all amounts VND",
+  "lessons": [
+    {
+      "lessonId": "picket.vi.financial.v1.01",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Xác định những ví nào đang nằm trong phạm vi báo cáo trước khi cộng số dư.",
+          "Chuyển giữa hai ví của chính mình chỉ đổi nơi giữ tiền; phí phải được ghi riêng.",
+          "Đối chiếu đủ hai phía để tránh ghi một lần rút tiền thành hai khoản chi."
+        ],
+        "misconception": "Thấy tiền ra khỏi ngân hàng rồi kết luận toàn bộ số đó đã được tiêu.",
+        "practicePrompt": "An có 900.000đ ở ngân hàng và 100.000đ tiền mặt. An rút 150.000đ; ngân hàng thu thêm 5.000đ phí. Tính số dư mỗi ví, tổng tiền và khoản chi thực sự.",
+        "solutionSteps": [
+          "Ngân hàng còn 900.000 − 150.000 − 5.000 = 745.000đ.",
+          "Tiền mặt tăng thành 100.000 + 150.000 = 250.000đ.",
+          "Tổng còn 995.000đ; chỉ 5.000đ phí rời khỏi phạm vi hai ví."
+        ],
+        "answer": "Khoản chuyển là 150.000đ; khoản chi là 5.000đ. Không ghi 155.000đ thành chi tiêu toàn bộ."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Identify which wallets are inside the report before adding their balances.",
+          "Moving money between your own wallets changes its location; record any fee separately.",
+          "Check both sides so a cash withdrawal is not counted again as spending."
+        ],
+        "misconception": "Assuming every amount leaving a bank account is money already spent.",
+        "practicePrompt": "An has 900,000 VND in a bank account and 100,000 VND in cash. An withdraws 150,000 VND and pays a separate 5,000 VND fee. Find both balances, the total and the actual expense.",
+        "solutionSteps": [
+          "The bank balance becomes 900,000 − 150,000 − 5,000 = 745,000 VND.",
+          "Cash increases to 100,000 + 150,000 = 250,000 VND.",
+          "The combined total is 995,000 VND; only the 5,000 VND fee leaves the two-wallet scope."
+        ],
+        "answer": "The transfer is 150,000 VND and the expense is 5,000 VND. Do not classify all 155,000 VND as overall spending."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "900000-150000-5000",
+          "expected": 745000
+        },
+        {
+          "expression": "100000+150000",
+          "expected": 250000
+        },
+        {
+          "expression": "745000+250000",
+          "expected": 995000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.02",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Ghi số tiền, ngày, ví và loại giao dịch trước khi cân nhắc danh mục.",
+          "Ảnh hóa đơn đính kèm không phải một khoản chi mới.",
+          "Ngày chưa ghi đủ cần được nhận diện là thiếu dữ liệu, không tự đổi thành chi bằng không."
+        ],
+        "misconception": "Quét lại ảnh hoặc tải lại màn hình là lý do để tạo thêm một giao dịch giống hệt.",
+        "practicePrompt": "Bình đã ghi bữa trưa 40.000đ và tiền xe 30.000đ. Bình quét lại hóa đơn bữa trưa và thấy một bản nháp 40.000đ. Tổng chi thực tế là bao nhiêu, và nên kiểm tra gì trước khi lưu?",
+        "solutionSteps": [
+          "Cộng hai khoản đã xảy ra: 40.000 + 30.000 = 70.000đ.",
+          "Đối chiếu ngày, số tiền và ví của bản nháp với giao dịch bữa trưa đã có.",
+          "Nếu cùng một lần thanh toán, không lưu thêm bản ghi; nếu là hai lần mua thật thì cần bằng chứng phân biệt."
+        ],
+        "answer": "Tổng theo dữ kiện là 70.000đ. Không tự nâng thành 110.000đ chỉ vì có thêm một ảnh hoặc bản nháp."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Record amount, date, wallet and transaction direction before choosing a category.",
+          "An attached receipt image is not an additional expense.",
+          "A day with missing records is incomplete; it does not automatically mean zero spending."
+        ],
+        "misconception": "Treating a rescan or screen refresh as a reason to create an identical transaction.",
+        "practicePrompt": "Bình recorded lunch costing 40,000 VND and transport costing 30,000 VND. Rescanning the lunch receipt creates a 40,000 VND draft. What is the actual total, and what should be checked before saving?",
+        "solutionSteps": [
+          "Add the two known purchases: 40,000 + 30,000 = 70,000 VND.",
+          "Compare the draft date, amount and wallet with the recorded lunch transaction.",
+          "If it is the same payment, do not save another transaction; two genuine purchases need distinguishing evidence."
+        ],
+        "answer": "The stated total is 70,000 VND. Another image or draft alone does not increase it to 110,000 VND."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "40000+30000",
+          "expected": 70000
+        },
+        {
+          "expression": "70000+40000",
+          "expected": 110000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.03",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Phân loại nhu cầu và mong muốn theo mục đích, hoàn cảnh và thời điểm.",
+          "Một món đồ có thể phục vụ nhiều mục đích; tên cửa hàng chưa đủ để kết luận.",
+          "So lựa chọn với số tiền và ưu tiên của tình huống, không dùng danh mục để đánh giá con người."
+        ],
+        "misconception": "Cho rằng một loại hàng luôn là mong muốn với tất cả mọi người.",
+        "practicePrompt": "Chi có 150.000đ. Gói kết nối 100.000đ cần cho bài thi trực tuyến ngày mai; gói giải trí 60.000đ có thể mua tuần sau. Hãy lập một phương án trong số tiền hiện có và giải thích bằng bối cảnh.",
+        "solutionSteps": [
+          "Trong tình huống này, kết nối cho bài thi có thời hạn cụ thể và khó trì hoãn.",
+          "Sau gói kết nối, Chi còn 150.000 − 100.000 = 50.000đ.",
+          "Mua cả hai cần 160.000đ, vượt 10.000đ; có thể hoãn gói giải trí thay vì giả định có thêm thu nhập."
+        ],
+        "answer": "Một phương án phù hợp dữ kiện là mua gói cần cho bài thi và hoãn gói giải trí. Đây không phải quy tắc cấm giải trí cho mọi người."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Classify needs and wants using purpose, circumstances and timing.",
+          "One item can serve several purposes; a merchant name alone is not enough.",
+          "Compare options with the stated resources and priorities rather than judging a person by a category."
+        ],
+        "misconception": "Assuming a product is always a want for everyone.",
+        "practicePrompt": "Chi has 150,000 VND. A 100,000 VND connection plan is needed for an online exam tomorrow; a 60,000 VND entertainment plan can wait until next week. Suggest an affordable option and explain the context.",
+        "solutionSteps": [
+          "In this case, the exam connection has a specific deadline and is difficult to postpone.",
+          "After paying for that connection, Chi has 150,000 − 100,000 = 50,000 VND left.",
+          "Both plans cost 160,000 VND, exceeding the available money by 10,000 VND; entertainment can wait without assuming new income."
+        ],
+        "answer": "One option supported by the facts is to buy the exam connection and postpone entertainment. This is not a universal ban on entertainment."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "150000-100000",
+          "expected": 50000
+        },
+        {
+          "expression": "100000+60000",
+          "expected": 160000
+        },
+        {
+          "expression": "160000-150000",
+          "expected": 10000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.04",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Xếp khoản thu và khoản phải trả theo ngày, không chỉ nhìn tổng tháng.",
+          "Tiền dự kiến về sau ngày đến hạn chưa giải quyết được thiếu hụt trước hạn.",
+          "Chỉ sửa lịch thật khi thay đổi ngoài ứng dụng đã được xác nhận."
+        ],
+        "misconception": "Tháng kết thúc còn dư thì mọi ngày trong tháng đều có đủ tiền thanh toán.",
+        "practicePrompt": "Dũng có 150.000đ ngày 5. Hóa đơn 200.000đ đến hạn ngày 7; thu nhập 500.000đ dự kiến về ngày 10. Nếu chưa có khoản nào khác, ngày nào thiếu và còn điều gì phải xác minh?",
+        "solutionSteps": [
+          "Trước thu nhập, 150.000 − 200.000 = −50.000đ vào ngày 7.",
+          "Nếu khoản thu đến đúng ngày 10, phép tính sau đó là −50.000 + 500.000 = 450.000đ.",
+          "Số cuối kỳ dương không xóa khoảng thiếu trước hạn; cần kiểm ngày nhận tiền và phương án xử lý thực sự với bên liên quan."
+        ],
+        "answer": "Thiếu 50.000đ ở thời điểm ngày 7. Lịch trong Picket chỉ giúp nhìn ra vấn đề, không tự dời hạn hoặc tạo thêm tiền."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Place income and obligations on a timeline rather than relying only on monthly totals.",
+          "Money expected after a due date does not remove the earlier shortfall.",
+          "Change a real schedule only after the external change is confirmed."
+        ],
+        "misconception": "Believing a positive month-end balance means every earlier payment is affordable.",
+        "practicePrompt": "Dũng has 150,000 VND on day 5. A 200,000 VND bill is due on day 7, while 500,000 VND of income is expected on day 10. With no other flows, identify the shortfall and what still needs verification.",
+        "solutionSteps": [
+          "Before the income, the day-7 calculation is 150,000 − 200,000 = −50,000 VND.",
+          "If the income arrives on day 10, the later calculation is −50,000 + 500,000 = 450,000 VND.",
+          "A positive ending value does not remove the earlier gap; verify the income date and any actual arrangement with the relevant party."
+        ],
+        "answer": "The day-7 shortfall is 50,000 VND. A Picket schedule makes it visible; it does not move a due date or create money."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "150000-200000",
+          "expected": -50000
+        },
+        {
+          "expression": "-50000+500000",
+          "expected": 450000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.05",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Tách khoản đã biết trước khỏi chi phí bất ngờ.",
+          "Mức dự phòng phù hợp phụ thuộc hoàn cảnh; ví dụ trong bài không phải mức bắt buộc.",
+          "Gắn nhãn để dành giúp theo dõi, nhưng không tự chuyển tiền hoặc bảo đảm số dư."
+        ],
+        "misconception": "Mọi khoản lớn đều là khẩn cấp, hoặc gắn nhãn quỹ dự phòng là đã có thêm tiền.",
+        "practicePrompt": "Hà biết cần bảo dưỡng xe 240.000đ sau 4 tuần. Hà còn quỹ cho việc bất ngờ 90.000đ; một hỏng hóc không dự kiến vừa dùng 40.000đ. Tách hai mục tiêu và tính các số còn lại.",
+        "solutionSteps": [
+          "Bảo dưỡng đã biết trước có thể lập mục tiêu 240.000 ÷ 4 = 60.000đ mỗi tuần theo giả định chia đều.",
+          "Khoản hỏng bất ngờ dùng 40.000đ từ quỹ 90.000đ, nên quỹ còn 50.000đ.",
+          "Hai khoản có mục đích khác nhau; đừng tính nhãn quỹ như một nguồn thu mới hoặc buộc phải dành mức vượt khả năng."
+        ],
+        "answer": "Mục tiêu bảo dưỡng là 60.000đ mỗi tuần nếu khả thi; quỹ bất ngờ còn 50.000đ. Có thể điều chỉnh kế hoạch theo thu nhập thực tế."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Separate known future costs from unexpected expenses.",
+          "An appropriate reserve depends on circumstances; the examples are not mandatory targets.",
+          "An earmark helps tracking but does not move money or guarantee a balance."
+        ],
+        "misconception": "Treating every large cost as an emergency, or treating a reserve label as new money.",
+        "practicePrompt": "Hà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.",
+        "solutionSteps": [
+          "The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.",
+          "The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.",
+          "The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity."
+        ],
+        "answer": "The service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "240000/4",
+          "expected": 60000
+        },
+        {
+          "expression": "90000-40000",
+          "expected": 50000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.06",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Mô tả mục tiêu bằng số tiền còn thiếu và mốc thời gian có thể xem lại.",
+          "Tính lại từ số đã có khi thu nhập hoặc ưu tiên thay đổi.",
+          "Điều chỉnh thời hạn hay quy mô là một lựa chọn, không phải thất bại cá nhân."
+        ],
+        "misconception": "Đã đặt mục tiêu thì phải giữ mức góp cũ dù không còn đủ cho khoản thiết yếu.",
+        "practicePrompt": "Khoa muốn có 900.000đ, hiện đã có 300.000đ và dự định góp 100.000đ mỗi tuần trong 6 tuần. Hai tuần đầu thực góp 100.000đ và 40.000đ. Còn 4 tuần, Khoa chỉ có thể dành 80.000đ mỗi tuần. Kế hoạch cũ còn khớp không?",
+        "solutionSteps": [
+          "Sau hai tuần, số đã có là 300.000 + 100.000 + 40.000 = 440.000đ.",
+          "Còn thiếu 900.000 − 440.000 = 460.000đ; nếu giữ 4 tuần thì cần 115.000đ mỗi tuần.",
+          "Khả năng 80.000đ không đáp ứng mức đó; có thể dời mốc, giảm mục tiêu hoặc xem lại một phương án khả thi, không giả định phần thiếu đã tồn tại."
+        ],
+        "answer": "Kế hoạch cũ không còn khớp. Với mức 80.000đ, thêm 6 tuần tạo được 480.000đ trước chi phí khác; đó là một kịch bản để cân nhắc, không phải cam kết."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Describe a goal using the remaining amount and a reviewable deadline.",
+          "Recalculate from actual progress when income or priorities change.",
+          "Changing the deadline or goal size is an option, not a personal failure."
+        ],
+        "misconception": "Insisting on an old contribution even when it would leave essential costs uncovered.",
+        "practicePrompt": "Khoa wants 900,000 VND, already has 300,000 VND and planned to add 100,000 VND weekly for 6 weeks. The first two contributions were 100,000 and 40,000 VND. With 4 weeks left, only 80,000 VND per week is affordable. Does the old plan still fit?",
+        "solutionSteps": [
+          "After two weeks, the amount held is 300,000 + 100,000 + 40,000 = 440,000 VND.",
+          "The remaining 460,000 VND would require 115,000 VND each week over the next 4 weeks.",
+          "That exceeds the stated 80,000 VND capacity; consider a later date, smaller goal or another feasible option instead of inventing the difference."
+        ],
+        "answer": "The original plan no longer fits. Six more weeks at 80,000 VND would add 480,000 VND before other costs; that is a scenario to consider, not a promise."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "300000+100000+40000",
+          "expected": 440000
+        },
+        {
+          "expression": "900000-440000",
+          "expected": 460000
+        },
+        {
+          "expression": "460000/4",
+          "expected": 115000
+        },
+        {
+          "expression": "6*80000",
+          "expected": 480000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.07",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Tách số dư đang có khỏi phần đã dành cho nghĩa vụ và chi thiết yếu.",
+          "Giữ cùng phạm vi ví và đơn vị tiền khi tính phần chưa phân bổ.",
+          "Đánh dấu khoản đã trả để tránh trừ nghĩa vụ đó lần thứ hai."
+        ],
+        "misconception": "Toàn bộ số dư hiện trên màn hình đều sẵn để mua một món mới.",
+        "practicePrompt": "Lan có 1.200.000đ trong phạm vi ví đang xem. Trước kỳ thu tiếp theo, Lan dành 800.000đ tiền nhà, 250.000đ sinh hoạt và 100.000đ cho khoản dự phòng đã chọn. Theo các giả định này còn bao nhiêu chưa phân bổ?",
+        "solutionSteps": [
+          "Các phần đã dự định dùng là 800.000 + 250.000 + 100.000 = 1.150.000đ.",
+          "Phần chưa phân bổ theo dữ kiện là 1.200.000 − 1.150.000 = 50.000đ.",
+          "Kiểm tra khoản nào đã trả, còn thiếu hoặc nằm ngoài phạm vi; kết quả này chưa phải đánh giá chắc chắn về khả năng mua của một người thật."
+        ],
+        "answer": "Còn 50.000đ chưa phân bổ theo ví dụ. Số dư 1.200.000đ không đồng nghĩa toàn bộ số tiền đó còn tự do sử dụng."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Distinguish the displayed balance from money already planned for obligations and essentials.",
+          "Use the same wallet scope and currency when calculating unallocated money.",
+          "Mark paid obligations so they are not subtracted a second time."
+        ],
+        "misconception": "Assuming the entire displayed balance is available for a new purchase.",
+        "practicePrompt": "Lan has 1,200,000 VND in the selected wallets. Before the next income, Lan has allocated 800,000 VND to rent, 250,000 VND to living costs and 100,000 VND to a chosen reserve. Under these assumptions, what remains unallocated?",
+        "solutionSteps": [
+          "The planned allocations total 800,000 + 250,000 + 100,000 = 1,150,000 VND.",
+          "The stated unallocated amount is 1,200,000 − 1,150,000 = 50,000 VND.",
+          "Check what is paid, missing or outside the scope; this calculation is not a certain assessment of a real person’s affordability."
+        ],
+        "answer": "There is 50,000 VND unallocated in this example. A 1,200,000 VND balance does not mean that the full amount is free to spend."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "800000+250000+100000",
+          "expected": 1150000
+        },
+        {
+          "expression": "1200000-1150000",
+          "expected": 50000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.08",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Tách dữ kiện đã xác nhận khỏi giả định khi tạo kịch bản.",
+          "So các phương án trên cùng mốc thời gian, phạm vi ví và đơn vị tiền.",
+          "Một kết quả mô phỏng không phải lời hứa hay giao dịch đã xảy ra."
+        ],
+        "misconception": "Chọn kịch bản đẹp nhất rồi coi khoản thu chưa chắc chắn là tiền đã có.",
+        "practicePrompt": "Minh có 400.000đ, còn khoản phải trả đã xác nhận 150.000đ. Minh cân nhắc món đồ 300.000đ và có thể nhận thêm 200.000đ nhưng chưa chắc ngày nhận. So phương án không có và có khoản thu giả định.",
+        "solutionSteps": [
+          "Sau khoản phải trả, còn 400.000 − 150.000 = 250.000đ theo dữ kiện.",
+          "Nếu mua món đồ mà chưa có khoản thu thêm, kịch bản còn 250.000 − 300.000 = −50.000đ.",
+          "Nếu giả định 200.000đ đến đúng lúc, kết quả là 150.000đ; phải ghi rõ giả định này, không xóa cảnh báo ở phương án cơ sở."
+        ],
+        "answer": "Phương án cơ sở thiếu 50.000đ nếu mua. Kết quả 150.000đ chỉ thuộc kịch bản có khoản thu đúng lúc, không phải tiền được bảo đảm."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Separate confirmed facts from assumptions when building a scenario.",
+          "Compare options over the same time window, wallet scope and currency.",
+          "A simulated result is neither a promise nor an executed transaction."
+        ],
+        "misconception": "Choosing the most optimistic scenario and treating uncertain income as money already held.",
+        "practicePrompt": "Minh has 400,000 VND and a confirmed upcoming 150,000 VND payment. Minh is considering a 300,000 VND item and might receive another 200,000 VND at an uncertain time. Compare the purchase without and with that assumed income.",
+        "solutionSteps": [
+          "After the confirmed payment, the facts give 400,000 − 150,000 = 250,000 VND.",
+          "Buying before any extra income gives a scenario balance of 250,000 − 300,000 = −50,000 VND.",
+          "Assuming 200,000 VND arrives in time gives 150,000 VND; label that assumption rather than removing the base-case warning."
+        ],
+        "answer": "The base case has a 50,000 VND shortfall if the item is bought. The 150,000 VND result belongs only to the timely-income scenario and is not guaranteed."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "400000-150000",
+          "expected": 250000
+        },
+        {
+          "expression": "250000-300000",
+          "expected": -50000
+        },
+        {
+          "expression": "-50000+200000",
+          "expected": 150000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.09",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "So tổng tiền, số kỳ, tiền thực nhận và mọi phí đã biết trước khi so khoản trả mỗi kỳ.",
+          "Khoản trả nhỏ hơn có thể đi kèm nhiều kỳ hơn và tổng tiền lớn hơn.",
+          "Không biến phép tính tổng tiền đơn giản thành lãi suất năm hoặc kết luận pháp lý."
+        ],
+        "misconception": "Khoản trả mỗi kỳ thấp nhất chắc chắn là phương án rẻ nhất.",
+        "practicePrompt": "Hai hợp đồng giả lập đều cho nhận đủ 2.000.000đ. A có hai kỳ 1.050.000đ và phí 30.000đ trả riêng. B có ba kỳ 720.000đ, không phí khác. Tính tổng, chi phí vượt tiền nhận và điểm còn phải xem trước khi quyết định.",
+        "solutionSteps": [
+          "A trả 2 × 1.050.000 + 30.000 = 2.130.000đ; phần vượt tiền nhận là 130.000đ.",
+          "B trả 3 × 720.000 = 2.160.000đ; tổng cao hơn A 30.000đ dù mỗi kỳ thấp hơn.",
+          "Kỳ hạn và thời điểm khác nhau vẫn cần được xem; kiểm điều kiện chậm trả, trả trước và thông tin hợp đồng, không suy ra APR từ các tổng này."
+        ],
+        "answer": "A có tổng thấp hơn 30.000đ theo đúng phí đã nêu. Đây chỉ là so sánh số học của hợp đồng hư cấu, không phải giới thiệu một khoản vay."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Compare total payments, term, actual proceeds and known fees before comparing instalment size.",
+          "A smaller instalment can come with more instalments and a higher total.",
+          "A simple total-cost calculation is not an annual interest rate or legal conclusion."
+        ],
+        "misconception": "Assuming the smallest instalment is automatically the cheapest option.",
+        "practicePrompt": "Two fictional contracts each provide the full 2,000,000 VND. A requires two 1,050,000 VND instalments and a separate 30,000 VND fee. B requires three 720,000 VND instalments and no other fee. Compare the totals and identify what else needs checking.",
+        "solutionSteps": [
+          "A totals 2 × 1,050,000 + 30,000 = 2,130,000 VND, exceeding the proceeds by 130,000 VND.",
+          "B totals 3 × 720,000 = 2,160,000 VND, which is 30,000 VND more despite smaller instalments.",
+          "The terms and timing still differ; check late-payment and early-repayment conditions and do not infer an APR from these totals."
+        ],
+        "answer": "A has a 30,000 VND lower total under the stated fees. This is arithmetic for fictional contracts, not a recommendation of a loan."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "2*1050000+30000",
+          "expected": 2130000
+        },
+        {
+          "expression": "2130000-2000000",
+          "expected": 130000
+        },
+        {
+          "expression": "3*720000",
+          "expected": 2160000
+        },
+        {
+          "expression": "2160000-2130000",
+          "expected": 30000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.10",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Đọc ngày trả và ngày thu bên cạnh tổng chi phí.",
+          "Thiếu tiền trước hạn cần được nhận diện riêng, kể cả khi cuối kỳ còn dư.",
+          "Một thay đổi lịch chỉ có thật khi bên liên quan đã đồng ý và điều kiện được xác nhận."
+        ],
+        "misconception": "Sửa ngày trên ứng dụng là đã thay đổi nghĩa vụ với bên cho vay.",
+        "practicePrompt": "Nam có 120.000đ, khoản trả 200.000đ đến hạn ngày 18; thu nhập 500.000đ dự kiến ngày 25 và chi sinh hoạt 100.000đ ngày 27. Chỉ ra khoảng thiếu và hai việc cần kiểm tra trước khi sửa lịch.",
+        "solutionSteps": [
+          "Ngày 18 thiếu 200.000 − 120.000 = 80.000đ.",
+          "Nếu tất cả khoản sau đó xảy ra đúng giả định, cuối kỳ là 120.000 − 200.000 + 500.000 − 100.000 = 320.000đ.",
+          "Cần kiểm ngày thu thực tế và liên hệ kênh chính thức để hỏi phương án, phí và điều kiện; chỉ cập nhật lịch khi có xác nhận, không mặc nhiên vay mới để bù."
+        ],
+        "answer": "Cuối kỳ dự kiến còn 320.000đ nhưng trước hạn vẫn thiếu 80.000đ. Picket không tự thương lượng hoặc gia hạn thay bạn."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Read repayment and income dates alongside total cost.",
+          "Identify a pre-due-date shortfall separately even if the ending balance is positive.",
+          "A schedule change is real only when the relevant party agrees and the terms are confirmed."
+        ],
+        "misconception": "Believing an edited date in an app changes an external repayment obligation.",
+        "practicePrompt": "Nam has 120,000 VND. A 200,000 VND repayment is due on day 18, income of 500,000 VND is expected on day 25 and living costs of 100,000 VND on day 27. Identify the gap and two checks needed before changing the schedule.",
+        "solutionSteps": [
+          "The day-18 shortfall is 200,000 − 120,000 = 80,000 VND.",
+          "If every later assumption holds, the ending value is 120,000 − 200,000 + 500,000 − 100,000 = 320,000 VND.",
+          "Verify the income date and ask through the official channel about feasible arrangements, fees and conditions; update only after confirmation rather than automatically borrowing again."
+        ],
+        "answer": "The projected ending value is 320,000 VND, but the earlier shortfall is still 80,000 VND. Picket does not negotiate or extend obligations for you."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "200000-120000",
+          "expected": 80000
+        },
+        {
+          "expression": "120000-200000+500000-100000",
+          "expected": 320000
+        }
+      ]
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.11",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Biết đúng thông tin đơn hàng không chứng minh người gọi là nhân viên thật.",
+          "Không cung cấp OTP, mật khẩu hoặc quyền điều khiển máy theo yêu cầu hoàn tiền lạ.",
+          "Dừng trao đổi và tự tìm kênh chính thức để xác minh; giữ bằng chứng nếu nghi bị lừa."
+        ],
+        "misconception": "Người gọi đọc đúng tên hàng và số tiền thì có thể tin mọi hướng dẫn sau đó.",
+        "practicePrompt": "Một người gọi nói sẽ hoàn 350.000đ, đọc đúng tên món hàng rồi yêu cầu OTP và cài ứng dụng điều khiển máy để nhận tiền. Bạn chưa thực hiện bước nào. Hãy nêu ba hành động an toàn và giải thích vì sao số tiền hứa hoàn chưa được ghi là thu nhập.",
+        "solutionSteps": [
+          "Dừng thao tác; không đọc OTP, nhập bí mật vào đường dẫn lạ hay cấp quyền điều khiển máy.",
+          "Mở ứng dụng hoặc kênh liên hệ chính thức mà bạn tự xác định để kiểm tra yêu cầu, không dùng riêng số liên lạc người gọi gửi.",
+          "Giữ nội dung liên hệ cần thiết; nếu đã lộ thông tin hoặc thấy giao dịch lạ, liên hệ ngay ngân hàng/kênh chức năng chính thức để được hướng dẫn, không hứa chắc thu hồi tiền."
+        ],
+        "answer": "350.000đ mới là lời hứa của người gọi. Chưa có khoản nhận tiền được xác nhận thì không ghi thành thu nhập thật."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Knowing order details does not prove a caller is a genuine employee.",
+          "Do not share an OTP, password or remote-control access in response to an unexpected refund request.",
+          "Stop and independently find an official verification channel; preserve relevant evidence if fraud is suspected."
+        ],
+        "misconception": "Trusting every instruction because the caller knows the product name and amount.",
+        "practicePrompt": "A caller promises a 350,000 VND refund, names the correct item and asks for an OTP and a remote-control app to receive it. You have not taken those steps. Give three safer actions and explain why the promised refund is not yet recorded income.",
+        "solutionSteps": [
+          "Stop the process; do not share the OTP, enter secrets through an unfamiliar link or grant remote-control access.",
+          "Use an official app or contact channel you identify independently to verify the request, not only contact details supplied by the caller.",
+          "Preserve relevant communications; if information was exposed or an unfamiliar transaction appears, promptly contact the official bank or competent channel for guidance without assuming recovery is guaranteed."
+        ],
+        "answer": "The 350,000 VND is only the caller’s promise. Without a confirmed receipt of money, it is not actual income."
+      },
+      "arithmeticChecks": []
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.12",
+      "vi": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Đọc giá sau dùng thử, ngày thu tiếp theo và cách hủy trước khi quyết định.",
+          "Xóa ứng dụng hoặc đánh dấu xem lại trong Picket không tự hủy thuê bao bên ngoài.",
+          "Quy đổi chi phí về cùng khoảng thời gian và ghi rõ giả định về giá, số kỳ."
+        ],
+        "misconception": "Dịch vụ ít dùng hoặc đã gỡ ứng dụng thì chắc chắn không bị thu tiền nữa.",
+        "practicePrompt": "Một gói sẽ thu 59.000đ mỗi tháng sau dùng thử; gói khác đang là 89.000đ mỗi tháng. Nếu cả hai giữ nguyên giá suốt 12 tháng, tổng là bao nhiêu? Với giới hạn tự chọn 120.000đ mỗi tháng, điều gì cần xem lại trước ngày gia hạn?",
+        "solutionSteps": [
+          "Tổng mỗi tháng là 59.000 + 89.000 = 148.000đ, vượt mức tự chọn 28.000đ.",
+          "Nếu giữ nguyên cả hai đủ 12 tháng, tổng là 148.000 × 12 = 1.776.000đ; giá thay đổi hoặc hủy giữa kỳ sẽ làm giả định khác đi.",
+          "Rà nhu cầu, điều kiện và thời điểm hủy qua kênh chính thức; kiểm trạng thái xác nhận trước khi sửa lịch, không đăng ký thêm chỉ để thực hành."
+        ],
+        "answer": "Tổng giả định là 148.000đ mỗi tháng và 1.776.000đ cho 12 tháng. Một nhắc việc trong Picket chưa chứng minh dịch vụ đã dừng thu."
+      },
+      "en": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Check the post-trial price, next charge date and cancellation method before deciding.",
+          "Deleting an app or flagging a service in Picket does not cancel an external subscription.",
+          "Compare costs over the same period and state price and duration assumptions."
+        ],
+        "misconception": "Assuming an unused or uninstalled service can no longer charge.",
+        "practicePrompt": "One plan will cost 59,000 VND monthly after its trial; another currently costs 89,000 VND monthly. If both prices stay unchanged for 12 months, what is the total? With a self-chosen monthly limit of 120,000 VND, what should be reviewed before renewal?",
+        "solutionSteps": [
+          "Together they cost 59,000 + 89,000 = 148,000 VND monthly, which is 28,000 VND above the chosen limit.",
+          "Keeping both for 12 unchanged-price months totals 148,000 × 12 = 1,776,000 VND; price changes or mid-period cancellation change that assumption.",
+          "Review use, terms and the official cancellation process; confirm the result before changing the schedule and do not subscribe just to practise."
+        ],
+        "answer": "The assumed total is 148,000 VND per month and 1,776,000 VND for 12 months. A Picket reminder does not prove that charging has stopped."
+      },
+      "arithmeticChecks": [
+        {
+          "expression": "59000+89000",
+          "expected": 148000
+        },
+        {
+          "expression": "148000-120000",
+          "expected": 28000
+        },
+        {
+          "expression": "148000*12",
+          "expected": 1776000
+        }
+      ]
+    }
+  ]
+}

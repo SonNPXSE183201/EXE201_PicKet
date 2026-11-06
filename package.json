@@ -4,7 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run test:landing && npm run test:mobile && npm run test:web && npm run test:api && npm run test:db",
+    "test:db": "npm test --prefix supabase/tests",
+    "test:landing": "npm test --prefix apps/landing",
+    "test:mobile": "cd apps/mobile && node --import tsx --test \"src/**/*.test.ts\"",
+    "test:web": "npm run test:auth --prefix web && npm run lint --prefix web && npm run typecheck --prefix web",
+    "test:api": "cd apps/api && dart test",
+    "lint": "npm run lint --prefix apps/mobile && npm run lint --prefix web && cd apps/api && dart analyze",
+    "typecheck": "npm run typecheck --prefix apps/mobile && npm run typecheck --prefix web",
+    "cleanup:generated": "pwsh -NoProfile -File scripts/cleanup-generated.ps1",
+    "cleanup:generated:apply": "pwsh -NoProfile -File scripts/cleanup-generated.ps1 -Apply",
     "prepare": "husky"
   },
   "repository": {
@@ -22,13 +31,5 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.5.0"
-  },
-  "lint-staged": {
-    "web/**/*.{js,jsx,ts,tsx}": [
-      "npm run lint --prefix web"
-    ],
-    "mobile/**/*.dart": [
-      "cd mobile && flutter analyze"
-    ]
   }
 }

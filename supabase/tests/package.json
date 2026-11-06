@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "node --test ../functions/tests/*.test.mjs && node validate.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

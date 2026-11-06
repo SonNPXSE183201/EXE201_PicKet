@@ -1,1 +1,37 @@
 node_modules/
+__pycache__/
+*.py[cod]
+.idea/
+supabase/.branches/
+supabase/.temp/
+
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+!.env.production.example
+!**/.env.example
+!**/.env.production.example
+!**/.env.worker.example
+!**/.env.learning-worker.example
+
+# Local framework/runtime artifacts
+web/.next-dev/
+.artifacts/
+*.apk
+*.aab
+hs_err_pid*.log
+replay_pid*.log
+.playwright-cli/
+output/playwright/
+deploy/secrets/
+
+# Local receipt corpus used for device OCR testing
+/Bill/
+
+# Local AI agent files (Claude Code / Codex sessions)
+/CLAUDE.md
+CLAUDE.local.md
+.claude/
+/docs/lovable/

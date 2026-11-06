@@ -1,0 +1,28 @@
+export const learningAiVi={
+  title:"Giải thích tình huống với AI",case:"Ví dụ giả định: có 100.000 ₫; tiền thuê 300.000 ₫ đến hạn trước khi nhận thu nhập 1.000.000 ₫. Số dư có thể xuống −200.000 ₫ trước khi thu nhập về.",
+  consent:"Nếu đồng ý, PicKet gửi tình huống giả định này và ngôn ngữ bạn chọn đến Google Gemini. Không gửi giao dịch, hóa đơn, số dư ví thực, thông tin tài khoản hay câu hỏi cá nhân. AI chỉ chọn các đoạn giải thích có sẵn.",
+  retention:"Kết quả khả dụng tối đa 24 giờ. Khi xóa lịch sử hoặc thu hồi đồng ý, kết quả bị xóa và yêu cầu đang chạy bị hủy. Thông tin tối thiểu để chống gửi lặp và giữ hạn mức được lên lịch xóa tự động sau 30 ngày. Một yêu cầu đã gửi đến Google không thể thu hồi.",
+  limits:"Tối đa 3 yêu cầu mỗi ngày theo giờ UTC. Yêu cầu lỗi vẫn tính vào hạn mức. Bạn vẫn có thể học bằng nội dung có sẵn.",
+  accept:"Đồng ý sử dụng AI cho ví dụ này",revoke:"Thu hồi đồng ý và xóa kết quả",generate:"Yêu cầu giải thích",clear:"Xóa lịch sử AI",refresh:"Thử kết nối lại",loading:"Đang xử lý…",
+  disabled:"Giải thích AI chưa được bật. Nội dung bài học vẫn sử dụng được.",signIn:"Đăng nhập để quản lý đồng ý và yêu cầu giải thích AI.",
+  unavailable:"Chưa xác nhận được yêu cầu. Bạn có thể thử kết nối lại; nếu gửi lại cùng yêu cầu, hệ thống giữ nguyên mã chống gửi lặp.",quota:"Đã đạt hạn mức ngày. Hãy dùng bài học có sẵn hoặc thử lại vào ngày UTC tiếp theo.",
+  accepted:"Bạn đã đồng ý cho tình huống giả định này.",declined:"Bạn chưa đồng ý sử dụng AI.",
+  queued:"Đang chờ xử lý",claimed:"Đang chuẩn bị",dispatched:"Đang tạo giải thích",completed:"Giải thích cho ví dụ giả định",failed:"Chưa tạo được giải thích. Bạn có thể dùng bài học có sẵn.",cancelled:"Yêu cầu đã bị hủy",expired:"Yêu cầu hoặc kết quả đã hết hạn",
+  timing:"Khoản chi đến hạn trước thu nhập có thể khiến số dư âm tạm thời, dù tổng thu cuối kỳ lớn hơn tổng chi.",
+  buffer:"Khoản dự phòng giúp xử lý chênh lệch thời điểm thu và chi. Ví dụ này không xác định số tiền bạn có thể chi tiêu.",
+  "incomplete-records":"Ví dụ chỉ gồm các khoản đã nêu; chưa tính những chi phí khác. Không dùng kết quả này để quyết định chi tiêu thực tế.",
+} as const;
+export const learningAiEn:Record<keyof typeof learningAiVi,string>={
+  title:"Explain a learning example with AI",case:"Synthetic example: an opening balance of VND 100,000; VND 300,000 rent is due before VND 1,000,000 income arrives. The balance may reach −VND 200,000 before income arrives.",
+  consent:"With your consent, PicKet sends this synthetic example and your selected language to Google Gemini. No transactions, receipts, real wallet balances, account details or personal questions are sent. AI only selects predefined explanations.",
+  retention:"Results are available for up to 24 hours. Deleting history or withdrawing consent clears results and cancels pending work. Minimal records for deduplication and daily limits are scheduled for automatic deletion after 30 days. A request already sent to Google cannot be recalled.",
+  limits:"Up to 3 requests per UTC day. Failed requests count toward the limit. Existing lessons remain available.",
+  accept:"Agree to AI for this example",revoke:"Withdraw consent and clear results",generate:"Request explanation",clear:"Delete AI history",refresh:"Reconnect",loading:"Working…",
+  disabled:"AI explanations are not enabled yet. Existing lessons remain available.",signIn:"Sign in to manage consent and request AI explanations.",
+  unavailable:"The request could not be confirmed. You can reconnect; retrying the same request keeps its deduplication key.",quota:"Daily limit reached. Use the existing lesson or try on the next UTC day.",
+  accepted:"You have consented to this synthetic example.",declined:"You have not consented to AI explanations.",
+  queued:"Waiting to be processed",claimed:"Preparing",dispatched:"Creating explanation",completed:"Explanation of the synthetic example",failed:"An explanation could not be created. Use the existing lesson.",cancelled:"Request cancelled",expired:"Request or result expired",
+  timing:"An expense due before income can make the balance temporarily negative even when total income exceeds total expenses by the end of the period.",
+  buffer:"A contingency buffer helps with differences in the timing of income and expenses. This example does not determine how much you can spend.",
+  "incomplete-records":"This example includes only the stated items and omits other costs. Do not use its result to make a real spending decision.",
+};

@@ -1,0 +1,4 @@
+[
+ {"name":"settled-and-purchase","input":{"startDay":"2026-10-23","days":7,"currency":"VND","openingBalance":1000000,"occurrences":[{"id":"bill","day":"2026-10-24","amount":-300000,"currency":"VND","settled":false},{"id":"paid","day":"2026-10-25","amount":-200000,"currency":"VND","settled":true}]},"purchase":{"day":"2026-10-26","amount":400000},"expected":{"lastBalance":700000,"scenarioLastBalance":300000,"minimum":700000}},
+ {"name":"negative-before-income","input":{"startDay":"2026-12-28","days":7,"currency":"VND","openingBalance":100000,"occurrences":[{"id":"rent","day":"2026-12-29","amount":-300000,"currency":"VND","settled":false},{"id":"salary","day":"2027-01-01","amount":1000000,"currency":"VND","settled":false}]},"expected":{"lastBalance":800000,"scenarioLastBalance":null,"minimum":-200000}}
+]

@@ -1,0 +1,45 @@
+{
+  "packageName": "com.picket.mobile",
+  "products": [
+    {
+      "productId": "picket_plus_monthly",
+      "basePlanId": "monthly",
+      "state": "DRAFT",
+      "VNprice": {
+        "currencyCode": "VND",
+        "units": "19000"
+      },
+      "period": "P1M"
+    },
+    {
+      "productId": "picket_plus_yearly",
+      "basePlanId": "yearly",
+      "state": "DRAFT",
+      "VNprice": {
+        "currencyCode": "VND",
+        "units": "199000"
+      },
+      "period": "P1Y"
+    },
+    {
+      "productId": "picket_pro_monthly",
+      "basePlanId": "monthly",
+      "state": "DRAFT",
+      "VNprice": {
+        "currencyCode": "VND",
+        "units": "49000"
+      },
+      "period": "P1M"
+    },
+    {
+      "productId": "picket_pro_yearly",
+      "basePlanId": "yearly",
+      "state": "DRAFT",
+      "VNprice": {
+        "currencyCode": "VND",
+        "units": "499000"
+      },
+      "period": "P1Y"
+    }
+  ]
+}

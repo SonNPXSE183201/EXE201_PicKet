@@ -1,0 +1,114 @@
+{
+  "sourceExport": "data_safety_export.csv",
+  "dataTypes": {
+    "PSL_NAME": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY",
+        "PSL_ACCOUNT_MANAGEMENT"
+      ]
+    },
+    "PSL_EMAIL": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY",
+        "PSL_ACCOUNT_MANAGEMENT"
+      ]
+    },
+    "PSL_USER_ACCOUNT": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY",
+        "PSL_ACCOUNT_MANAGEMENT"
+      ]
+    },
+    "PSL_PURCHASE_HISTORY": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY",
+        "PSL_FRAUD_PREVENTION_SECURITY"
+      ]
+    },
+    "PSL_OTHER": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY"
+      ]
+    },
+    "PSL_PHOTOS": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY"
+      ]
+    },
+    "PSL_USER_GENERATED_CONTENT": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "OPTIONAL",
+      "purposes": [
+        "PSL_APP_FUNCTIONALITY"
+      ]
+    },
+    "PSL_APPROX_LOCATION": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "REQUIRED",
+      "purposes": [
+        "PSL_FRAUD_PREVENTION_SECURITY"
+      ]
+    },
+    "PSL_PERFORMANCE_DIAGNOSTICS": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "REQUIRED",
+      "purposes": [
+        "PSL_ANALYTICS"
+      ]
+    },
+    "PSL_DEVICE_ID": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "REQUIRED",
+      "purposes": [
+        "PSL_ANALYTICS"
+      ]
+    },
+    "PSL_USER_INTERACTION": {
+      "collection": "collected",
+      "shared": false,
+      "ephemeral": false,
+      "userControl": "REQUIRED",
+      "purposes": [
+        "PSL_ANALYTICS"
+      ]
+    }
+  },
+  "preserved": [
+    "email/password",
+    "OAuth",
+    "accountDeletionUrl"
+  ],
+  "dataDeletionUrl": "https://picket.51-79-207-154.sslip.io/account-deletion.html"
+}

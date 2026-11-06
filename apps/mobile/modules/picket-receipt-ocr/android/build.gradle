@@ -1,0 +1,20 @@
+plugins { id 'com.android.library'; id 'expo-module-gradle-plugin' }
+group = 'com.picket'
+version = '1.0.0'
+android { namespace 'expo.modules.picketreceiptocr'; defaultConfig { versionCode 1; versionName '1.0.0'; testInstrumentationRunner 'android.test.InstrumentationTestRunner' } }
+dependencies {
+ implementation 'com.google.mlkit:text-recognition:16.0.1'
+ implementation 'androidx.exifinterface:exifinterface:1.4.2'
+ testImplementation 'junit:junit:4.13.2'
+}
+
+// Private corpus files are opt-in androidTest assets only, never release assets.
+if (findProperty('picketReceiptCorpusDir')) {
+ android.sourceSets.androidTest.assets.srcDir(file(findProperty('picketReceiptCorpusDir')))
+}
+
+// Framework instrumentation compatibility is test-only (Android 9 device).
+def legacyTestDir = new File(android.sdkDirectory, "platforms/${android.compileSdkVersion}/optional")
+dependencies {
+ androidTestCompileOnly files(new File(legacyTestDir, 'android.test.runner.jar'), new File(legacyTestDir, 'android.test.base.jar'), new File(legacyTestDir, 'android.test.mock.jar'))
+}

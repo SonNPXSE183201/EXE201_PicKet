@@ -1,0 +1,364 @@
+[
+  {
+    "name": "median-resists-one-off",
+    "input": {
+      "startDay": "2026-09-29",
+      "days": 7,
+      "currency": "VND",
+      "history": [
+        {
+          "day": "2026-09-01",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-02",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-03",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-04",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-05",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-06",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-07",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-08",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-09",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-10",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-11",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-12",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-13",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-14",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-15",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-16",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-17",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-18",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-19",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-20",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-21",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-22",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-23",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-24",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-25",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-26",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-27",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-28",
+          "currency": "VND",
+          "complete": true,
+          "amount": 999999
+        }
+      ]
+    },
+    "expected": {
+      "kind": "trailing-median-scenario",
+      "dailyAmount": 10000,
+      "observedDays": 28,
+      "occurrences": 7
+    }
+  },
+  {
+    "name": "missing-is-unknown",
+    "input": {
+      "startDay": "2026-09-29",
+      "days": 30,
+      "currency": "VND",
+      "history": [
+        {
+          "day": "2026-09-02",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-03",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-04",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-05",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-06",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-07",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-08",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-09",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-10",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-11",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-12",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-13",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-14",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-15",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-16",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-17",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-18",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-19",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-20",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-21",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-22",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-23",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-24",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-25",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-26",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-27",
+          "currency": "VND",
+          "complete": true,
+          "amount": 10000
+        },
+        {
+          "day": "2026-09-28",
+          "currency": "VND",
+          "complete": true,
+          "amount": 999999
+        }
+      ]
+    },
+    "expected": {
+      "kind": "insufficient-history",
+      "dailyAmount": null,
+      "observedDays": 27,
+      "occurrences": 0
+    }
+  }
+]

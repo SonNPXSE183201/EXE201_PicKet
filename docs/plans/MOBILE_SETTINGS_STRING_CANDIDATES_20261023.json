@@ -1,0 +1,3337 @@
+[
+  {
+    "file": "apps/mobile/src/app/(auth)/forgot-password.tsx",
+    "line": 31,
+    "text": "Quên mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/forgot-password.tsx",
+    "line": 31,
+    "text": "Nhập email để nhận liên kết đặt lại mật khẩu."
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/forgot-password.tsx",
+    "line": 32,
+    "text": "Email"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/forgot-password.tsx",
+    "line": 34,
+    "text": "Gửi hướng dẫn"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/forgot-password.tsx",
+    "line": 35,
+    "text": "Quay lại đăng nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 20,
+    "text": "Promise"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 42,
+    "text": "Chào mừng trở lại"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 42,
+    "text": "Đăng nhập để đồng bộ, hoặc lưu nhật ký riêng trên điện thoại."
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 43,
+    "text": "Email"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 44,
+    "text": "Mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 46,
+    "text": "Đăng nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 47,
+    "text": "Tiếp tục với Google"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 48,
+    "text": "Dùng trên thiết bị, không cần đăng nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 53,
+    "text": "Quên mật khẩu?"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/login.tsx",
+    "line": 54,
+    "text": "Chưa có tài khoản? Đăng ký"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 36,
+    "text": "Tạo tài khoản Picket"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 36,
+    "text": "Bắt đầu hành trình tài chính của riêng bạn."
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 37,
+    "text": "Email"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 38,
+    "text": "Mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 39,
+    "text": "Nhập lại mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 41,
+    "text": "Đăng ký"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/register.tsx",
+    "line": 42,
+    "text": "Đã có tài khoản? Đăng nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/verify-email.tsx",
+    "line": 17,
+    "text": "Promise"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/verify-email.tsx",
+    "line": 37,
+    "text": "Xác thực email"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/verify-email.tsx",
+    "line": 38,
+    "text": "Mã OTP"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/verify-email.tsx",
+    "line": 40,
+    "text": "Xác thực"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/verify-email.tsx",
+    "line": 41,
+    "text": "Gửi lại mã"
+  },
+  {
+    "file": "apps/mobile/src/app/(auth)/verify-email.tsx",
+    "line": 42,
+    "text": "Quay lại đăng nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/_layout.tsx",
+    "line": 60,
+    "text": "Đang khôi phục phiên Picket"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 25,
+    "text": "Đang tải tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 70,
+    "text": "Chỉnh sửa tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 71,
+    "text": "Số dư đầu kỳ được giữ nguyên để lịch sử giao dịch luôn nhất quán."
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 73,
+    "text": "Tên tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 73,
+    "text": "Tên tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 73,
+    "text": "Tên tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 74,
+    "text": "Loại tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 75,
+    "text": "Tiền tệ"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 75,
+    "text": "Mã tiền tệ"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 75,
+    "text": "VND"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 77,
+    "text": "Lưu thay đổi"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/[id].tsx",
+    "line": 78,
+    "text": "Lưu trữ tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 21,
+    "text": "Tổng số dư"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 21,
+    "text": "Ví của bạn"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 21,
+    "text": "Theo dõi số dư và dòng tiền giữa các ví."
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 22,
+    "text": "Tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 23,
+    "text": "Ví đầu tiên của bạn"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 23,
+    "text": "Thêm ví tiền mặt hoặc tài khoản ngân hàng để bắt đầu."
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 24,
+    "text": "Dữ liệu của bạn được lưu riêng tư."
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 24,
+    "text": "Quản lý dòng tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 24,
+    "text": "Chuyển tiền giữa các ví"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 24,
+    "text": "Đối soát số dư"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 24,
+    "text": "Lịch sử giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/index.tsx",
+    "line": 25,
+    "text": "Thêm ví"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 42,
+    "text": "Thêm tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 42,
+    "text": "Gom tiền mặt, ngân hàng và ví điện tử vào cùng một nơi."
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 44,
+    "text": "Tên tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 44,
+    "text": "Tên tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 44,
+    "text": "Ví dụ: Ví hàng ngày"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 45,
+    "text": "Loại tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 46,
+    "text": "Tiền tệ"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 46,
+    "text": "Số dư ban đầu"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 46,
+    "text": "Mã tiền tệ"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 46,
+    "text": "VND"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 46,
+    "text": "Số dư ban đầu"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 47,
+    "text": "Số dư này là điểm bắt đầu để Picket tính tổng tiền hiện tại."
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 49,
+    "text": "Tạo tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/accounts/new.tsx",
+    "line": 49,
+    "text": "Đang tạo tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 90,
+    "text": "Quản trị Picket"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 91,
+    "text": "Đang xử lý…"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 93,
+    "text": "Không có quyền quản trị"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 93,
+    "text": "Màn hình này chỉ dành cho nhân viên Picket."
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 94,
+    "text": "Đang tải quản trị"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 94,
+    "text": "Dữ liệu chỉ mở khi máy chủ xác nhận quyền nhân viên."
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 98,
+    "text": "Tìm tài khoản trong trang"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 98,
+    "text": "Tìm email hoặc ID trong trang"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 99,
+    "text": "Che email"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 99,
+    "text": "Che email"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 105,
+    "text": "Xem sổ"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 107,
+    "text": "Mở khóa"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 108,
+    "text": "Tạm khóa"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 109,
+    "text": "Đặt lại mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 113,
+    "text": "Trang trước"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 113,
+    "text": "Trang sau"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 115,
+    "text": "Chỉ thống kê lượt và thời gian, không hiển thị ảnh hoặc nội dung hóa đơn."
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 115,
+    "text": "OCR trong 30 ngày"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 117,
+    "text": "Thêm nội dung đối tác"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 120,
+    "text": "Tiêu đề đối tác"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 120,
+    "text": "Tiêu đề"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 121,
+    "text": "Nội dung đối tác"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 121,
+    "text": "Nội dung"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 122,
+    "text": "Liên kết HTTPS đối tác"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 122,
+    "text": "https://…"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 123,
+    "text": "Hiển thị"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 123,
+    "text": "Hiển thị nội dung đối tác"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 124,
+    "text": "Lưu nội dung"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 125,
+    "text": "Hủy"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 128,
+    "text": "Bảo trì đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 128,
+    "text": "Tạm dừng ghi lên máy chủ."
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 128,
+    "text": "Bảo trì đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 128,
+    "text": "Thông báo hệ thống"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 128,
+    "text": "Thông báo cho người dùng"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 128,
+    "text": "Lưu cài đặt"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 129,
+    "text": "Nhật ký quản trị"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 130,
+    "text": "Lượt xem này được ghi vào nhật ký quản trị."
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 130,
+    "text": "Đóng"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 130,
+    "text": "Giao dịch đã đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/admin.tsx",
+    "line": 131,
+    "text": "Tải lại dữ liệu quản trị"
+  },
+  {
+    "file": "apps/mobile/src/app/auth/callback.tsx",
+    "line": 9,
+    "text": "Đang xử lý đăng nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/auth/reset-password.tsx",
+    "line": 33,
+    "text": "Đặt mật khẩu mới"
+  },
+  {
+    "file": "apps/mobile/src/app/auth/reset-password.tsx",
+    "line": 33,
+    "text": "Dùng ít nhất 12 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
+  },
+  {
+    "file": "apps/mobile/src/app/auth/reset-password.tsx",
+    "line": 34,
+    "text": "Mật khẩu mới"
+  },
+  {
+    "file": "apps/mobile/src/app/auth/reset-password.tsx",
+    "line": 35,
+    "text": "Nhập lại mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/auth/reset-password.tsx",
+    "line": 37,
+    "text": "Cập nhật mật khẩu"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 245,
+    "text": "‹ Quay lại hồ sơ"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 247,
+    "text": "Gói Picket"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 262,
+    "text": "Thanh toán trong ứng dụng hiện chỉ hỗ trợ Android."
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 265,
+    "text": "Đang kết nối Google Play"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 266,
+    "text": "Đang kết nối Google Play…"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 298,
+    "text": "Chọn gói"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 316,
+    "text": "Khôi phục giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 316,
+    "text": "Đang khôi phục giao dịch Google Play"
+  },
+  {
+    "file": "apps/mobile/src/app/billing.tsx",
+    "line": 323,
+    "text": "Quản lý hoặc hủy gói trên Google Play"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 56,
+    "text": "Chi tiết hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 56,
+    "text": "Cập nhật trạng thái ngay sau khi bạn hoàn tất thanh toán."
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 58,
+    "text": "Tên hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 58,
+    "text": "Tên hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 59,
+    "text": "Số tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 59,
+    "text": "Số tiền hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 60,
+    "text": "Ngày đến hạn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 60,
+    "text": "Ngày đến hạn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 61,
+    "text": "Trạng thái"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 63,
+    "text": "Lưu thay đổi"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/[id].tsx",
+    "line": 63,
+    "text": "Lưu trữ hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 24,
+    "text": "Hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 24,
+    "text": "Các khoản thanh toán sắp đến hạn."
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 24,
+    "text": "Thêm hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 26,
+    "text": "Đang tải hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 27,
+    "text": "Thêm tiền điện, tiền nước hoặc bất kỳ khoản cần thanh toán nào."
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 27,
+    "text": "Chưa có hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/index.tsx",
+    "line": 28,
+    "text": "Sắp đến hạn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 40,
+    "text": "Thêm hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 40,
+    "text": "Picket sẽ sắp xếp hóa đơn theo ngày đến hạn để bạn dễ theo dõi."
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 41,
+    "text": "Nên đặt hạn thanh toán sớm hơn ngày bị tính phí trễ."
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 43,
+    "text": "Tên hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 43,
+    "text": "Tên hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 43,
+    "text": "Tiền điện"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 44,
+    "text": "Số tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 44,
+    "text": "VND"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 44,
+    "text": "Số tiền hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 45,
+    "text": "Ngày đến hạn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 45,
+    "text": "Ngày đến hạn"
+  },
+  {
+    "file": "apps/mobile/src/app/bills/new.tsx",
+    "line": 47,
+    "text": "Tạo hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 87,
+    "text": "Ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 87,
+    "text": "Chi tiêu trong tầm tay, từng tháng một."
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 88,
+    "text": "Kế hoạch tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 88,
+    "text": "Điều chuyển hạn mức, chốt tháng và chuyển dư"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 89,
+    "text": "Tháng trước"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 89,
+    "text": "Tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 90,
+    "text": "Đang tải ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 94,
+    "text": "Chọn một danh mục và đặt hạn mức đầu tiên."
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 94,
+    "text": "Chưa có ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 102,
+    "text": "Ngân sách hàng tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 109,
+    "text": "Sửa hạn mức mặc định"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 109,
+    "text": "Xem giao dịch tháng này"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 109,
+    "text": "Lưu trữ ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 111,
+    "text": "Sửa hạn mức"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 112,
+    "text": "Lưu hạn mức"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 114,
+    "text": "Tạo ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 115,
+    "text": "Danh mục chi tiêu"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 115,
+    "text": "Tạo ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 116,
+    "text": "Hạn mức tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 116,
+    "text": "Hạn mức ngân sách tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 116,
+    "text": "Ví dụ: 1.000.000"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 117,
+    "text": "Picket sẽ nhắc khi chi tiêu đạt 80% hạn mức."
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 118,
+    "text": "Tạo ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/budgets/index.tsx",
+    "line": 118,
+    "text": "Đang tạo ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 456,
+    "text": "Chưa mở được bản nháp. Dữ liệu cũ chưa bị xóa."
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 456,
+    "text": "Thử mở lại bản nháp"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 456,
+    "text": "Quét hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 456,
+    "text": "Đang mở bản nháp hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 457,
+    "text": "Đang lưu ảnh bản nháp"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 466,
+    "text": "Quét hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 474,
+    "text": "Ảnh hóa đơn đang được kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 496,
+    "text": "Chụp ảnh"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 505,
+    "text": "Chọn từ thư viện"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 511,
+    "text": "Xoay ảnh hóa đơn 90 độ sang phải và nhận diện lại"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 524,
+    "text": "Xoay ảnh 90° sang phải"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 530,
+    "text": "Đang nhận diện hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 531,
+    "text": "Đang đọc hóa đơn…"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 535,
+    "text": "Ngày hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 536,
+    "text": "Ngày hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 537,
+    "text": "Tên cửa hàng / nội dung"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 539,
+    "text": "Tên cửa hàng hoặc nội dung hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 543,
+    "text": "Ví dụ: Cà phê sáng"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 547,
+    "text": "Tổng tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 549,
+    "text": "Tổng tiền hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 554,
+    "text": "Ví dụ: 45000"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 593,
+    "text": "Đính kèm ảnh hóa đơn vào giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 604,
+    "text": "Đính kèm ảnh vào giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 620,
+    "text": "Đang chuẩn bị giao dịch từ hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/capture/index.tsx",
+    "line": 622,
+    "text": "Kiểm tra và tạo giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 31,
+    "text": "Không tìm thấy danh mục tùy chỉnh."
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 31,
+    "text": "Về danh sách"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 59,
+    "text": "Sửa danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 60,
+    "text": "Điều chỉnh tên, phạm vi và màu nhận diện cho danh mục."
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 62,
+    "text": "Tên danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 62,
+    "text": "Tên danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 62,
+    "text": "Tên danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 63,
+    "text": "Áp dụng cho"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 64,
+    "text": "Màu sắc"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 66,
+    "text": "Lưu thay đổi"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/[id].tsx",
+    "line": 67,
+    "text": "Xóa danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/index.tsx",
+    "line": 17,
+    "text": "Danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/index.tsx",
+    "line": 17,
+    "text": "Phân loại các khoản thu và chi theo cách của bạn."
+  },
+  {
+    "file": "apps/mobile/src/app/categories/index.tsx",
+    "line": 17,
+    "text": "Thêm danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/index.tsx",
+    "line": 18,
+    "text": "Thêm danh mục đầu tiên để phân loại giao dịch."
+  },
+  {
+    "file": "apps/mobile/src/app/categories/index.tsx",
+    "line": 18,
+    "text": "Chưa có danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 51,
+    "text": "Danh mục mới"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 52,
+    "text": "Tạo nhóm riêng để theo dõi thu chi đúng với thói quen của bạn."
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 54,
+    "text": "Tên danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 55,
+    "text": "Tên danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 55,
+    "text": "Ví dụ: Ăn uống"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 56,
+    "text": "Áp dụng cho"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 58,
+    "text": "Màu sắc"
+  },
+  {
+    "file": "apps/mobile/src/app/categories/new.tsx",
+    "line": 61,
+    "text": "Tạo danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 39,
+    "text": "‹ Quay lại"
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 40,
+    "text": "Xóa tài khoản?"
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 41,
+    "text": "Ảnh riêng tư, dữ liệu tài chính và tài khoản đăng nhập sẽ bị xóa vĩnh viễn. Bạn cần vừa đăng nhập lại trong vòng 5 phút."
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 42,
+    "text": "Nhập DELETE để xác nhận"
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 43,
+    "text": "Xác nhận xóa tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 45,
+    "text": "Xóa vĩnh viễn tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/delete-account.tsx",
+    "line": 45,
+    "text": "Đang xóa vĩnh viễn tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 38,
+    "text": "Đang tải tổng quan tài chính"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 42,
+    "text": "Tài chính của bạn"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 42,
+    "text": "Thông báo"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 42,
+    "text": "Hồ sơ của bạn"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 43,
+    "text": "Tổng số dư"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 44,
+    "text": "Tháng trước"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 44,
+    "text": "Tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 45,
+    "text": "Thu nhập"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 45,
+    "text": "Chi tiêu"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 46,
+    "text": "Thêm giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 51,
+    "text": "Giao dịch gần đây"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 52,
+    "text": "Ghi lại khoản thu hoặc chi đầu tiên trong tháng."
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 52,
+    "text": "Chưa có giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Theo dõi và nhắc việc"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Theo dõi các khoản gia hạn và nhắc thanh toán"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Theo dõi hạn mức chi tiêu trong tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Hóa đơn sắp đến hạn"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 53,
+    "text": "Thống kê thu chi"
+  },
+  {
+    "file": "apps/mobile/src/app/index.tsx",
+    "line": 55,
+    "text": "Quét hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 40,
+    "text": "Thống kê"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 41,
+    "text": "Hiểu dòng tiền theo từng tháng và danh mục."
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 43,
+    "text": "Tháng trước"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 45,
+    "text": "Tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 48,
+    "text": "Đang tải toàn bộ lịch sử để tính thống kê…"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 50,
+    "text": "Chênh lệch thu − chi"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 54,
+    "text": "Bạn đã chi cho điều gì?"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 55,
+    "text": ": splitLoading ? null : summary.breakdown.length === 0 ?"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 55,
+    "text": "Chưa có chi tiêu trong tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 55,
+    "text": "Phân bổ sẽ xuất hiện khi bạn ghi giao dịch."
+  },
+  {
+    "file": "apps/mobile/src/app/insights.tsx",
+    "line": 56,
+    "text": "0 ? Math.round(item.amount / summary.expense * 100) : 0; return"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 93,
+    "text": "= 400 && error.cause.status"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 120,
+    "text": "Một món đồ. Một câu chuyện. Chỉ riêng bạn."
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 124,
+    "text": "Danh mục món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 125,
+    "text": "Ảnh món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 126,
+    "text": "Chọn ảnh món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 127,
+    "text": "Tên món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 127,
+    "text": "Tên món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 128,
+    "text": "Giá trị"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 128,
+    "text": "Giá trị món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 129,
+    "text": "Ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 129,
+    "text": "Ghi chú món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 130,
+    "text": "Hạn bảo hành"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 130,
+    "text": "Hạn bảo hành"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 131,
+    "text": "Hạn đổi trả"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 131,
+    "text": "Hạn đổi trả"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 132,
+    "text": "Lưu món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 133,
+    "text": "Xóa món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 135,
+    "text": "Tìm món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 135,
+    "text": "Tìm món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 136,
+    "text": "+ Thêm món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 137,
+    "text": "Đang tải bộ sưu tập"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 138,
+    "text": "Chưa tải được bộ sưu tập."
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 138,
+    "text": "Thử tải lại"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 139,
+    "text": "Góc kỷ niệm còn trống"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 139,
+    "text": "Thêm món đồ hoặc câu chuyện đầu tiên."
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 140,
+    "text": "Không tìm thấy món đồ"
+  },
+  {
+    "file": "apps/mobile/src/app/keepsakes.tsx",
+    "line": 140,
+    "text": "Thử tên, ghi chú hoặc danh mục khác."
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 48,
+    "text": "item.notifyAt === null || new Date(item.dueAt).getTime()"
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 92,
+    "text": "Thông báo"
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 93,
+    "text": "Các hạn thanh toán, món đồ và ngân sách cần chú ý."
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 94,
+    "text": "Nhắc trên điện thoại"
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 94,
+    "text": "Thông báo không hiển thị chi tiết tài chính khi màn hình khóa."
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 94,
+    "text": "Nhắc trên điện thoại"
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 95,
+    "text": "Cập nhật lịch nhắc"
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 97,
+    "text": "Chưa có thông báo mới"
+  },
+  {
+    "file": "apps/mobile/src/app/notifications.tsx",
+    "line": 97,
+    "text": "Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 41,
+    "text": "Đang tải thiết lập"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 78,
+    "text": "Giữ từng chi tiêu. Gom từng kỷ niệm."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 78,
+    "text": "Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 79,
+    "text": "Mình gọi bạn là gì?"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 79,
+    "text": "Tên này chỉ dùng để cá nhân hóa trải nghiệm."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 79,
+    "text": "Tên hiển thị"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 80,
+    "text": "Nhịp sống của bạn"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 80,
+    "text": "Chọn nhóm gần nhất với hoàn cảnh hiện tại."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 81,
+    "text": "Mục tiêu chính"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 81,
+    "text": "Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 82,
+    "text": "Đơn vị tiền tệ"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 82,
+    "text": "Bạn có thể thay đổi lựa chọn này sau."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 83,
+    "text": "Tạo ví đầu tiên"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 83,
+    "text": "Ví có thể là tiền mặt, tài khoản ngân hàng hoặc quỹ riêng."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 83,
+    "text": "Tên ví"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 84,
+    "text": "Số dư hiện tại"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 84,
+    "text": "Nhập số dư để báo cáo bắt đầu đúng từ hôm nay."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 84,
+    "text": "Số dư"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 85,
+    "text": "Tôi hiểu dữ liệu tài chính sẽ được lưu và đồng bộ an toàn theo cài đặt của mình."
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 85,
+    "text": "Sẵn sàng bắt đầu"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 85,
+    "text": "Đồng ý lưu và đồng bộ dữ liệu tài chính"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 89,
+    "text": "Quay lại"
+  },
+  {
+    "file": "apps/mobile/src/app/onboarding.tsx",
+    "line": 90,
+    "text": "Đang hoàn tất thiết lập"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 102,
+    "text": "Kế hoạch ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 105,
+    "text": "Phương pháp lập kế hoạch"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 107,
+    "text": "Phương pháp giúp bạn tổ chức ngân sách; hạn mức và chi tiêu vẫn lấy từ giao dịch thực tế."
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 108,
+    "text": "Tháng đang xem"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 109,
+    "text": "Tháng trước"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 109,
+    "text": "Tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 110,
+    "text": "Thu chi và ngân sách tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 118,
+    "text": "Tháng đã chốt"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 119,
+    "text": "Chuyển hạn mức"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 120,
+    "text": "Cần ít nhất hai ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 120,
+    "text": "Tạo thêm ngân sách để điều chuyển hạn mức."
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 121,
+    "text": "Từ ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 122,
+    "text": "Sang ngân sách"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 123,
+    "text": "Hạn mức chuyển (VND)"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 123,
+    "text": "Hạn mức chuyển"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 124,
+    "text": "Chuyển hạn mức"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 126,
+    "text": "Chốt tháng và chuyển phần dư"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Chuyển dư sang tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Ghi chú chốt tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Chuyển dư sang tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Ghi chú chốt tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/planning.tsx",
+    "line": 127,
+    "text": "Chốt tháng"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 32,
+    "text": "Đang tải hồ sơ"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 33,
+    "text": "Tải lại hồ sơ"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 162,
+    "text": "Cá nhân"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 165,
+    "text": "Tên hiển thị"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 166,
+    "text": "Tên hiển thị"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 167,
+    "text": "Nhịp sống"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 168,
+    "text": "Mục tiêu"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 169,
+    "text": "Tiền tệ chính"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 170,
+    "text": "Lưu thay đổi"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 170,
+    "text": "Đang lưu hồ sơ"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 172,
+    "text": "Tùy chọn và bảo mật"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 173,
+    "text": "Ẩn số dư"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 173,
+    "text": "Che số tiền trên màn hình tổng quan."
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 173,
+    "text": "Ẩn số dư"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 174,
+    "text": "Khóa ứng dụng"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 174,
+    "text": "Yêu cầu sinh trắc học hoặc mã khóa thiết bị khi mở lại Picket."
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 174,
+    "text": "Khóa ứng dụng"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 175,
+    "text": "Lưu tùy chọn"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 178,
+    "text": "Công cụ của bạn"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 180,
+    "text": "Hóa đơn cần thanh toán"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 181,
+    "text": "Chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 182,
+    "text": "Quản lý danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 183,
+    "text": "Thống kê thu chi"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 184,
+    "text": "Bộ sưu tập kỷ vật"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 185,
+    "text": "Thông báo và nhắc việc"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 187,
+    "text": "Tài khoản và dữ liệu"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 189,
+    "text": "Gói Picket và thanh toán"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 190,
+    "text": "Sao lưu và xuất dữ liệu"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 190,
+    "text": "Bản sao mã hóa, JSON và CSV"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 191,
+    "text": "Khôi phục từ bản sao"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 192,
+    "text": "Kiểm tra đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 193,
+    "text": "Quản trị Picket"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 196,
+    "text": "Xuất dữ liệu JSON"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 197,
+    "text": "Xuất giao dịch CSV"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 198,
+    "text": "Mật khẩu bản sao mã hóa"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 198,
+    "text": "Mật khẩu riêng, ít nhất 12 ký tự"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 199,
+    "text": "Tạo bản sao .picket có ảnh"
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 200,
+    "text": "Bản export chứa dữ liệu tài chính nhạy cảm. Chỉ lưu ở nơi bạn tin cậy."
+  },
+  {
+    "file": "apps/mobile/src/app/profile.tsx",
+    "line": 204,
+    "text": "Xóa tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/receipt-saved.tsx",
+    "line": 15,
+    "text": "Hoàn tất"
+  },
+  {
+    "file": "apps/mobile/src/app/receipt-saved.tsx",
+    "line": 17,
+    "text": "Đã lưu hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipt-saved.tsx",
+    "line": 19,
+    "text": "Về màn hình chính"
+  },
+  {
+    "file": "apps/mobile/src/app/receipt-saved.tsx",
+    "line": 20,
+    "text": "Xem hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 214,
+    "text": "Quay lại màn hình trước"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 215,
+    "text": "‹ Quay lại"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 217,
+    "text": "Chi tiết hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 218,
+    "text": "Đang tải hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 223,
+    "text": "Ảnh hóa đơn đã lưu"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 226,
+    "text": "Không tải được ảnh xem trước."
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 231,
+    "text": "Cửa hàng"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 232,
+    "text": "Tên cửa hàng"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 232,
+    "text": "Tên cửa hàng"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 233,
+    "text": "Tổng hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 234,
+    "text": "Tổng hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 234,
+    "text": "Tổng tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 235,
+    "text": "Ngày mua"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 236,
+    "text": "Ngày mua"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 257,
+    "text": "Sản phẩm"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 265,
+    "text": "Xóa"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 268,
+    "text": "Tên sản phẩm"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 270,
+    "text": "Số lượng"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 271,
+    "text": "Đơn giá"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 273,
+    "text": "Thành tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 277,
+    "text": "+ Thêm sản phẩm"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 285,
+    "text": "Chưa nhận diện chi tiết từng sản phẩm."
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 301,
+    "text": "Lưu kết quả kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 301,
+    "text": "Đang lưu kết quả kiểm tra hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 304,
+    "text": "Hủy chỉnh sửa"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 309,
+    "text": "Kiểm tra và chỉnh sửa"
+  },
+  {
+    "file": "apps/mobile/src/app/receipts/[id].tsx",
+    "line": 314,
+    "text": "Văn bản OCR"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 69,
+    "text": "currentAccount && (item.accountId === currentAccount.id || item.destinationAccountId === currentAccount.id) && new Date(item.occurredAt).getTime()"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 113,
+    "text": "Đối soát ví"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 116,
+    "text": "Đang tải lịch sử giao dịch…"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 118,
+    "text": "Chưa đọc được yêu cầu đã lưu. Dữ liệu chưa bị xóa. Mở lại màn hình để thử lại."
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 120,
+    "text": "Đối soát chưa xác nhận"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 121,
+    "text": "Không tự gửi lại. Thử lại sẽ dùng nguyên thông tin và mã đã lưu; có thể hoàn tất đối soát nếu lần trước chưa được ghi."
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 124,
+    "text": "Không đọc được một yêu cầu đã lưu. Giữ nguyên dữ liệu để kiểm tra, chưa thể thử lại."
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 134,
+    "text": "Chưa có ví"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 134,
+    "text": "Tạo ví trước khi đối soát."
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 135,
+    "text": "Ví cần đối soát"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 136,
+    "text": "Ngày sao kê"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 136,
+    "text": "Ngày sao kê"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 137,
+    "text": "Số dư trên sao kê (VND)"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 137,
+    "text": "Số dư trên sao kê"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 140,
+    "text": "Chọn tất cả"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 140,
+    "text": "Bỏ chọn"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 142,
+    "text": "Lý do điều chỉnh nếu có chênh lệch"
+  },
+  {
+    "file": "apps/mobile/src/app/reconcile.tsx",
+    "line": 142,
+    "text": "Lý do điều chỉnh"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 157,
+    "text": "‹ Quay lại"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 159,
+    "text": "Khôi phục backup"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 164,
+    "text": "Lưu ý"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 167,
+    "text": "Mật khẩu bản sao mã hóa"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 167,
+    "text": "Mật khẩu file .picket"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 169,
+    "text": "Chọn file JSON hoặc .picket"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 169,
+    "text": "Đang đọc file backup"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 186,
+    "text": "Nhập RESTORE để xác nhận"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 188,
+    "text": "Xác nhận khôi phục backup"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 201,
+    "text": "Khôi phục dữ liệu"
+  },
+  {
+    "file": "apps/mobile/src/app/restore.tsx",
+    "line": 201,
+    "text": "Đang khôi phục dữ liệu"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 41,
+    "text": "Hóa đơn cần kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 42,
+    "text": "Đang tải danh sách hóa đơn…"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 43,
+    "text": "Chưa tải được trạng thái hóa đơn. Kết nối mạng rồi chạm để thử lại."
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 43,
+    "text": "Thử tải lại hóa đơn cần kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 44,
+    "text": "Không có hóa đơn cần kiểm tra trong dữ liệu vừa tải."
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 47,
+    "text": "Kiểm tra kết quả nhận diện hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 63,
+    "text": "Cần kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 64,
+    "text": "Kiểm tra hóa đơn, phân loại giao dịch và đối chiếu các khoản nghi trùng."
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 66,
+    "text": "Giao dịch cần kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 68,
+    "text": "Đang đối chiếu toàn bộ lịch sử giao dịch…"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 69,
+    "text": "Giao dịch đã gọn gàng"
+  },
+  {
+    "file": "apps/mobile/src/app/review-inbox.tsx",
+    "line": 69,
+    "text": "Không có giao dịch cần phân loại hoặc nghi trùng trong dữ liệu đã tải."
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/[id].tsx",
+    "line": 13,
+    "text": "entry.id===id);const [busy,setBusy]=useState(false);const [message,setMessage]=useState"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/[id].tsx",
+    "line": 14,
+    "text": ";if(!item)return"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/[id].tsx",
+    "line": 17,
+    "text": "Chi tiết khoản thanh toán định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/[id].tsx",
+    "line": 17,
+    "text": "Lưu trữ khoản định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 20,
+    "text": "Chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 20,
+    "text": "Theo dõi các khoản thanh toán lặp lại."
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 20,
+    "text": "Thêm chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 21,
+    "text": "Đang tải chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 22,
+    "text": "Netflix, Internet, tiền thuê nhà hoặc bất kỳ chi phí lặp lại nào."
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 22,
+    "text": "Chưa có chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 23,
+    "text": "Sắp thanh toán"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/index.tsx",
+    "line": 24,
+    "text": "Đã tạm dừng"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 19,
+    "text": "(\"monthly\"); const [nextDueAt,setNextDueAt]=useState(defaultDueDate); const [walletId,setWalletId]=useState(accounts[0]?.id??\"\"); const [categoryId,setCategoryId]=useState(expenseCategories[0]?.id??\"\"); const [alertDays,setAlertDays]=useState(\"3\"); const [note,setNote]=useState(\"\"); const [busy,setBusy]=useState(false); const [message,setMessage]=useState"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 22,
+    "text": "Thêm chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 22,
+    "text": "Thiết lập một lần để không quên những khoản lặp lại."
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 23,
+    "text": "Tên khoản chi"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 23,
+    "text": "Số tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 23,
+    "text": "Tên khoản chi định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 23,
+    "text": "Ví dụ: Internet"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 23,
+    "text": "Số tiền định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 24,
+    "text": "Chu kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 24,
+    "text": "Ngày tiếp theo"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 24,
+    "text": "Ngày thanh toán tiếp theo"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 25,
+    "text": "Tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 25,
+    "text": "Danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 26,
+    "text": "Cảnh báo trước (ngày)"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 26,
+    "text": "Ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 26,
+    "text": "Số ngày cảnh báo trước"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 26,
+    "text": "Ghi chú chi phí định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 26,
+    "text": "Không bắt buộc"
+  },
+  {
+    "file": "apps/mobile/src/app/subscriptions/new.tsx",
+    "line": 26,
+    "text": "Tạo khoản định kỳ"
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 76,
+    "text": "‹ Trang chủ"
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 77,
+    "text": "Xung đột đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 78,
+    "text": "Picket không tự ghi đè khi phiên bản trên máy chủ đã thay đổi. Hãy mở lại dữ liệu mới nhất và thực hiện thay đổi lần nữa nếu vẫn cần."
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 80,
+    "text": "Đang tải xung đột đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 96,
+    "text": "Chỉ sửa các trường nghiệp vụ hoặc `expectedVersion` sau khi đối chiếu dữ liệu mới nhất trên server."
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 98,
+    "text": "Đưa vào hàng đợi đồng bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 100,
+    "text": "Đã xem, giữ bản trên máy chủ"
+  },
+  {
+    "file": "apps/mobile/src/app/sync-conflicts.tsx",
+    "line": 103,
+    "text": "Không còn xung đột nào."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 36,
+    "text": "Đang tải giao dịch cần hoàn tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 39,
+    "text": "Chỉ khoản chi đang hoạt động mới có thể hoàn tiền."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 39,
+    "text": "Về danh sách"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 71,
+    "text": "Hoàn tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 74,
+    "text": "Số tiền hoàn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 74,
+    "text": "Số tiền hoàn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 75,
+    "text": "Lý do hoặc ghi chú hoàn tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 75,
+    "text": "Lý do hoặc ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 78,
+    "text": "Tạo khoản hoàn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 78,
+    "text": "Đang tạo khoản hoàn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/refund.tsx",
+    "line": 80,
+    "text": "Hủy"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 65,
+    "text": "Không tìm thấy giao dịch."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 65,
+    "text": "Đang tải phân bổ giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 68,
+    "text": "Loại giao dịch này không hỗ trợ chia danh mục."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 68,
+    "text": "Quay lại"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 93,
+    "text": "!Number.isInteger(item.amount) || item.amount"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 121,
+    "text": "Chia danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 124,
+    "text": "Đã phân bổ"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 134,
+    "text": "Lưu phân bổ"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 134,
+    "text": "Đang lưu phân bổ giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 135,
+    "text": "Bỏ toàn bộ phân bổ"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id]/splits.tsx",
+    "line": 136,
+    "text": "Hủy"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 69,
+    "text": "Đang tải giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 76,
+    "text": "Không tìm thấy giao dịch."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 78,
+    "text": "Về danh sách"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 143,
+    "text": "Sửa giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 147,
+    "text": "Nội dung giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 147,
+    "text": "Nội dung"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 148,
+    "text": "Số tiền giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 148,
+    "text": "Số tiền (VND)"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 149,
+    "text": "Ghi chú giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 149,
+    "text": "Ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 150,
+    "text": "Danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 150,
+    "text": "Cần phân loại"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 153,
+    "text": "Lưu thay đổi"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 153,
+    "text": "Đang lưu giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 155,
+    "text": "Chia theo danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 156,
+    "text": "Tạo khoản hoàn tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 157,
+    "text": "Xem hóa đơn đính kèm"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 160,
+    "text": "Xóa giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/[id].tsx",
+    "line": 163,
+    "text": "Hủy"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 52,
+    "text": "Sửa nhiều giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 53,
+    "text": "Chọn các khoản thu/chi để đổi danh mục hoặc lưu trữ. Mỗi mục được xử lý riêng; mục lỗi sẽ còn được chọn."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 57,
+    "text": "Chọn tất cả"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 58,
+    "text": "Bỏ chọn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 60,
+    "text": "Chưa có giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 60,
+    "text": "Tạo khoản thu hoặc chi trước khi chỉnh sửa hàng loạt."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 62,
+    "text": "Danh mục mới"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 64,
+    "text": "Đổi danh mục đã chọn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/bulk.tsx",
+    "line": 65,
+    "text": "Lưu trữ đã chọn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 42,
+    "text": "Giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 42,
+    "text": "Công cụ giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 43,
+    "text": "Giao dịch cần kiểm tra"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 43,
+    "text": "Chỉnh sửa nhiều giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 43,
+    "text": "Đối soát ví"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 46,
+    "text": "Tìm giao dịch, danh mục hoặc ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 46,
+    "text": "Tìm giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 46,
+    "text": "Xóa tìm kiếm"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 48,
+    "text": "Tháng trước"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 48,
+    "text": "Tháng sau"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Ví"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Tháng cụ thể"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Đặt lại bộ lọc"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Mọi ví"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Mọi danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "Lọc tháng YYYY-MM"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 49,
+    "text": "YYYY-MM hoặc để trống"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 53,
+    "text": "Quét hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 55,
+    "text": ": visible.length === 0 ?"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 55,
+    "text": "Đang tải giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 55,
+    "text": "Thử thay đổi bộ lọc hoặc ghi một khoản thu, chi mới."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 55,
+    "text": "Chưa có giao dịch phù hợp"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/index.tsx",
+    "line": 56,
+    "text": "Thêm giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 292,
+    "text": "Giao dịch mới"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 292,
+    "text": "Ghi lại khoản thu hoặc chi của bạn."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 293,
+    "text": "Đang tải bản nháp hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 296,
+    "text": "Ảnh hóa đơn của giao dịch mới"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 298,
+    "text": "Có đính kèm hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 320,
+    "text": "Yêu cầu gốc đã được lưu an toàn"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 321,
+    "text": "Thử lại sẽ giữ nguyên ví, danh mục, thời gian và số tiền để không tạo giao dịch trùng. Hoàn tất yêu cầu này trước khi sửa giao dịch."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 328,
+    "text": "Số tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 328,
+    "text": "VND"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 328,
+    "text": "Số tiền giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 329,
+    "text": "Nội dung"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 329,
+    "text": "Nội dung giao dịch"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 329,
+    "text": "Ví dụ: Ăn trưa"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 331,
+    "text": "Ví / tài khoản thanh toán"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 332,
+    "text": "Bạn cần tạo ví trước khi lưu giao dịch. Ngân sách là tùy chọn."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 332,
+    "text": "Tạo ví đầu tiên"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 339,
+    "text": "Danh mục"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 339,
+    "text": "Quản lý"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 344,
+    "text": "Chưa có danh mục phù hợp."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 347,
+    "text": "Ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 347,
+    "text": "Ghi chú giao dịch, không bắt buộc"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 347,
+    "text": "Không bắt buộc"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/new.tsx",
+    "line": 351,
+    "text": "Kiểm tra để sửa yêu cầu"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 46,
+    "text": "Chuyển tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 47,
+    "text": "Di chuyển tiền giữa các tài khoản mà không làm thay đổi tổng thu chi."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 48,
+    "text": "Chuyển nội bộ"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 48,
+    "text": "Chỉ các tài khoản cùng loại tiền mới có thể chuyển cho nhau."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 50,
+    "text": "Từ tài khoản"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 51,
+    "text": "Không có tài khoản đích cùng loại tiền."
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 52,
+    "text": "Nội dung"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 52,
+    "text": "Nội dung chuyển tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 52,
+    "text": "Ví dụ: Chuyển sang ví tiết kiệm"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 53,
+    "text": "Số tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 53,
+    "text": "Số tiền chuyển"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 54,
+    "text": "Ghi chú"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 54,
+    "text": "Ghi chú chuyển tiền"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 54,
+    "text": "Không bắt buộc"
+  },
+  {
+    "file": "apps/mobile/src/app/transactions/transfer.tsx",
+    "line": 56,
+    "text": "Xác nhận chuyển"
+  },
+  {
+    "file": "apps/mobile/src/core/local/guest-finance-context.tsx",
+    "line": 7,
+    "text": "GuestMutation)): Promise"
+  },
+  {
+    "file": "apps/mobile/src/core/local/guest-finance-context.tsx",
+    "line": 7,
+    "text": "; replace(value: GuestFinance): Promise"
+  },
+  {
+    "file": "apps/mobile/src/core/receipts/receipt-gallery-photo.tsx",
+    "line": 21,
+    "text": "Đang mở ảnh hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/receipts/receipt-gallery-photo.tsx",
+    "line": 23,
+    "text": "Chưa mở được ảnh. Kết nối mạng rồi thử lại."
+  },
+  {
+    "file": "apps/mobile/src/core/receipts/receipt-gallery-photo.tsx",
+    "line": 23,
+    "text": "Tải lại ảnh"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/brand-logo.tsx",
+    "line": 4,
+    "text": "Logo Picket"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/date-field.tsx",
+    "line": 25,
+    "text": "Tháng trước trên lịch"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/date-field.tsx",
+    "line": 27,
+    "text": "Tháng sau trên lịch"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/date-field.tsx",
+    "line": 30,
+    "text": "Hôm nay"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/date-field.tsx",
+    "line": 31,
+    "text": "Hủy chọn ngày"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 33,
+    "text": "new Map"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Chạm ngày để xem ảnh đã lưu. Dấu ! là hóa đơn cần thanh toán; ngày trống mở camera quét."
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Đang xem hóa đơn đã lưu trên máy. Ảnh chưa tải trước đó cần kết nối mạng."
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Lịch hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Tải lại hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Hóa đơn cần thanh toán"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Mở chi tiết hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/home-receipt-calendar.tsx",
+    "line": 124,
+    "text": "Quét thêm hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/month-calendar.tsx",
+    "line": 5,
+    "text": "; thumbnails?: Record"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/month-calendar.tsx",
+    "line": 5,
+    "text": "; receiptMode?: boolean; disabled?: boolean; month: string; activeDays: Set"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/picket-ui.tsx",
+    "line": 29,
+    "text": "Quay lại"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/picket-ui.tsx",
+    "line": 37,
+    "text": "Thử lại"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/picket-ui.tsx",
+    "line": 42,
+    "text": "Đóng biểu mẫu"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/picket-ui.tsx",
+    "line": 42,
+    "text": "Đóng biểu mẫu"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/picket-ui.tsx",
+    "line": 119,
+    "text": "Đang xử lý"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 29,
+    "text": "Quét hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 29,
+    "text": "Đóng camera"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 30,
+    "text": "Đặt toàn bộ hóa đơn trong khung, giữ máy ổn định. Ảnh chụp được giữ làm bản nháp trên thiết bị."
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 32,
+    "text": "Thử lại camera"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 35,
+    "text": "Chọn ảnh từ thư viện"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 35,
+    "text": "Chụp hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 35,
+    "text": "Đang chụp hóa đơn"
+  },
+  {
+    "file": "apps/mobile/src/core/ui/receipt-camera.tsx",
+    "line": 36,
+    "text": "Nhập thông tin thủ công"
+  },
+  {
+    "file": "apps/mobile/src/features/budgets/budgets-context.tsx",
+    "line": 14,
+    "text": "; create(request: CreateBudgetRequest): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/budgets/budgets-context.tsx",
+    "line": 14,
+    "text": "; update(id: string, request: UpdateBudgetRequest): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/budgets/budgets-context.tsx",
+    "line": 14,
+    "text": "; archive(id: string, expectedVersion: number): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/budgets/budgets-context.tsx",
+    "line": 18,
+    "text": "(session?.user.id ?? null, \"budgets\", []); const [loading, setLoading] = useState(session !== null); const [error, setError] = useState"
+  },
+  {
+    "file": "apps/mobile/src/features/partners/partner-notice.tsx",
+    "line": 57,
+    "text": "THÔNG BÁO TỪ PICKET"
+  },
+  {
+    "file": "apps/mobile/src/features/partners/partner-notice.tsx",
+    "line": 58,
+    "text": "NỘI DUNG ĐỐI TÁC"
+  },
+  {
+    "file": "apps/mobile/src/features/partners/partner-notice.tsx",
+    "line": 58,
+    "text": "Tìm hiểu thêm ↗"
+  },
+  {
+    "file": "apps/mobile/src/features/security/device-lock.tsx",
+    "line": 90,
+    "text": "Picket đã khóa"
+  },
+  {
+    "file": "apps/mobile/src/features/security/device-lock.tsx",
+    "line": 91,
+    "text": "Xác thực trên thiết bị để xem thông tin tài chính của bạn."
+  },
+  {
+    "file": "apps/mobile/src/features/subscriptions/subscriptions-context.tsx",
+    "line": 15,
+    "text": "; create(request: CreateSubscriptionRequest): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/subscriptions/subscriptions-context.tsx",
+    "line": 15,
+    "text": "; update(id: string, request: UpdateSubscriptionRequest): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/subscriptions/subscriptions-context.tsx",
+    "line": 15,
+    "text": "; archive(id: string, expectedVersion: number): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/subscriptions/subscriptions-context.tsx",
+    "line": 19,
+    "text": "(session?.user.id ?? null, \"subscriptions\", []); const [loading, setLoading] = useState(session !== null); const [error, setError] = useState"
+  },
+  {
+    "file": "apps/mobile/src/features/sync/sync-context.tsx",
+    "line": 20,
+    "text": "; flush(): Promise"
+  },
+  {
+    "file": "apps/mobile/src/features/sync/transaction-merge-editor.tsx",
+    "line": 65,
+    "text": "Chọn riêng từng trường. Trường không có trong bản sửa trên máy sẽ giữ nguyên trên máy chủ. Nếu máy chủ đổi tiếp, Picket sẽ yêu cầu đối chiếu lại."
+  },
+  {
+    "file": "apps/mobile/src/features/sync/transaction-merge-editor.tsx",
+    "line": 66,
+    "text": "Đang tải bản máy chủ để đối chiếu"
+  },
+  {
+    "file": "apps/mobile/src/features/sync/transaction-merge-editor.tsx",
+    "line": 68,
+    "text": "Tải lại bản máy chủ"
+  },
+  {
+    "file": "apps/mobile/src/features/sync/transaction-merge-editor.tsx",
+    "line": 78,
+    "text": "Gửi bản đã chọn"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 39,
+    "text": "Ứng dụng"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 41,
+    "text": "Cập nhật ứng dụng"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 44,
+    "text": "Tiến trình tải bản cập nhật"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 45,
+    "text": "Tải bản cập nhật"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 46,
+    "text": "Hủy tải"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 47,
+    "text": "Cho phép cài cập nhật"
+  },
+  {
+    "file": "apps/mobile/src/features/updates/app-update-section.tsx",
+    "line": 49,
+    "text": "Mở Google Play"
+  }
+]

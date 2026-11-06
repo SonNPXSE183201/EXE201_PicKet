@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Picket Next.js web
 
-## Getting Started
+<!-- current-project-status -->
+Trạng thái triển khai và nghiệm thu cập nhật 27/10/2026: [PROJECT_STATUS](../docs/PROJECT_STATUS.md). Dùng trạng thái này để đối chiếu các ví dụ và checkpoint bên dưới.
 
-First, run the development server:
+Phát hành/nghiệm thu toàn dự án: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing tải APK là `apps/landing`, không phải giao diện Next.js được thiết kế lại. Các route web/auth hiện có vẫn được giữ.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Web client dùng Next.js 16.4.3 (bản vá đã triển khai ngày 27/10), Supabase Auth cookie SSR và Dart Frog API dùng
+chung với ứng dụng Expo.
+
+## Cấu hình
+
+Sao chép `.env.example` thành `.env.local` rồi điền:
+
+```text
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Trong Supabase Dashboard → Authentication → URL Configuration, thêm redirect:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000/auth/callback
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Khi deploy, thêm callback của domain production, ví dụ:
+`https://app.example.com/auth/callback`.
 
-## Learn More
+Google OAuth dùng **Google Console → Supabase callback → Picket callback**;
+không đưa Google Client Secret vào Next.js. Xem [hướng dẫn cấu hình và
+kiểm thử](../docs/migration/GOOGLE_OAUTH_SETUP.md).
 
-To learn more about Next.js, take a look at the following resources:
+## Chạy và kiểm tra
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```powershell
+npm install
+npm run dev
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-## Deploy on Vercel
+- Landing page: `http://localhost:3000`
+- Đăng nhập: `http://localhost:3000/login`
+- Đăng ký/OTP: `http://localhost:3000/register`
+- Quên mật khẩu: `http://localhost:3000/forgot-password`
+- Onboarding cần session: `http://localhost:3000/onboarding`
+- Dashboard cần session: `http://localhost:3000/dashboard`
+- Tài khoản: `http://localhost:3000/accounts`
+- Giao dịch: `http://localhost:3000/transactions`
+- Chuyển tiền: `http://localhost:3000/transactions/transfer`
+- Hoàn tiền: mở từ một khoản chi trong trang giao dịch
+- Chia danh mục: mở từ một khoản thu/chi trong trang giao dịch
+- Danh mục: `http://localhost:3000/categories`
+- Ngân sách: `http://localhost:3000/budgets`
+- Hồ sơ và tùy chọn: `http://localhost:3000/profile`
+- Hồ sơ hiển thị gói hiện tại và quota OCR cloud do Dart API xác thực
+- Export dữ liệu: `http://localhost:3000/data`
+- Xóa tài khoản: khu vực nguy hiểm trong `http://localhost:3000/data`
+- Hóa đơn: `http://localhost:3000/receipts` (xem/sửa line items và kiểm tra trùng theo cửa hàng, ngày, tổng tiền)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Proxy Next.js refresh Supabase cookie; callback đổi PKCE code thành session. Dashboard
+xác minh claims trước khi lấy access token để gọi Dart API.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Các trang tài chính đăng ký Supabase Realtime theo đúng user để tự tải lại dữ
+liệu do Expo hoặc tab khác thay đổi. Khi Realtime mất kết nối, web chuyển sang
+refresh lúc tab trở lại foreground và polling mỗi 60 giây.

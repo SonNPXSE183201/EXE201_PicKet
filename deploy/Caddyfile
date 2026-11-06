@@ -1,0 +1,104 @@
+{
+	email {$ACME_EMAIL}
+}
+
+(landing-files) {
+	root * /srv/picket-landing
+	@revalidated not path /downloads/*.apk
+	header @revalidated Cache-Control "no-cache"
+	header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+	@apk path /downloads/*.apk
+	header @apk {
+		Content-Type application/vnd.android.package-archive
+		Content-Disposition attachment
+		Cache-Control "public, max-age=31536000, immutable"
+	}
+	file_server
+}
+{$PICKET_LANDING_DOMAIN} {
+	log {
+		output file /var/log/caddy/landing.json {
+			mode 0644
+			roll_size 20MiB
+			roll_keep 10
+			roll_keep_for 336h
+			roll_uncompressed
+		}
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>remote_ip delete
+				request>client_ip delete
+				request>remote_port delete
+				request>uri delete
+				resp_headers delete
+			}
+		}
+	}
+	map {http.request.header.User-Agent} {analytics_bot} {
+		~(?i)(bot|crawler|spider|headless|uptime|probe) true
+		default false
+	}
+	map {http.request.uri.path} {analytics_path} {
+		~^/downloads/[a-zA-Z0-9_.-]+[.]apk$ "${0}"
+		default /other
+	}
+	log_append path {analytics_path}
+	log_append bot {analytics_bot}
+	handle /events {
+		rewrite * /v1/telemetry
+		reverse_proxy api:8080
+	}
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	@webRoutes path /login /register /forgot-password /reset-password /auth/* /dashboard /dashboard/* /admin /admin/*
+	redir @webRoutes https://{$PICKET_WEB_DOMAIN}{uri} 308
+	import landing-files
+}
+{$PICKET_WEB_DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	reverse_proxy web:3000
+}
+
+# Preserve installed mobile clients and existing public/legal links.
+{$PICKET_LEGACY_WEB_DOMAIN:picket.51-79-207-154.sslip.io} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	@landing path / /launch-assets/* /downloads/* /release.json /privacy.html /account-deletion.html
+	handle @landing {
+		import landing-files
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}
+
+{$PICKET_API_DOMAIN}, {$PICKET_LEGACY_API_DOMAIN:api.51-79-207-154.sslip.io} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	reverse_proxy api:8080
+}

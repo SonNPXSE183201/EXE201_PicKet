@@ -1,0 +1,16 @@
+{
+  "packageName": "com.picket.mobile",
+  "currency": "VND",
+  "regionCode": "VN",
+  "ownerApprovedPricesOn": "2026-10-24",
+  "basePlansState": "ACTIVE",
+  "activatedOn": "2026-10-27",
+  "activationReason": "Owner requested Google Play payment plan setup; activation enables catalogue testing and does not establish end-to-end billing acceptance",
+  "sandboxAcceptance": "PENDING",
+  "products": [
+    {"productId":"picket_plus_monthly","title":"PicKet Plus - tháng","tier":"plus","basePlanId":"monthly","billingPeriodDuration":"P1M","price":{"currencyCode":"VND","units":"19000","nanos":0}},
+    {"productId":"picket_plus_yearly","title":"PicKet Plus - năm","tier":"plus","basePlanId":"yearly","billingPeriodDuration":"P1Y","price":{"currencyCode":"VND","units":"199000","nanos":0}},
+    {"productId":"picket_pro_monthly","title":"PicKet Pro - tháng","tier":"pro","basePlanId":"monthly","billingPeriodDuration":"P1M","price":{"currencyCode":"VND","units":"49000","nanos":0}},
+    {"productId":"picket_pro_yearly","title":"PicKet Pro - năm","tier":"pro","basePlanId":"yearly","billingPeriodDuration":"P1Y","price":{"currencyCode":"VND","units":"499000","nanos":0}}
+  ]
+}

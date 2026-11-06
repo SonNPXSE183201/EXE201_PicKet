@@ -1,0 +1,33 @@
+// Windows-only build options. Keep generated native code out of version control.
+allprojects { project ->
+    project.afterEvaluate {
+        // Subst-drive builds may discover node modules through their original
+        // drive. Keep each library's codegen tools on its own drive too.
+        def reactExtension = project.extensions.findByName('react')
+        def moduleRoot = project.projectDir
+        while (moduleRoot != null && moduleRoot.name != 'node_modules') {
+            moduleRoot = moduleRoot.parentFile
+        }
+        if (reactExtension != null && moduleRoot != null) {
+            reactExtension.codegenDir.set(new File(moduleRoot, '@react-native/codegen'))
+            reactExtension.reactNativeDir.set(new File(moduleRoot, 'react-native'))
+            def localModules = moduleRoot
+            project.tasks.matching { it.name == 'generateCodegenSchemaFromJavaScript' }.configureEach {
+                codegenDir.set(new File(localModules, '@react-native/codegen'))
+            }
+            project.tasks.matching { it.name == 'generateCodegenArtifactsFromSchema' }.configureEach {
+                reactNativeDir.set(new File(localModules, 'react-native'))
+            }
+        }
+        def androidExtension = project.extensions.findByName('android')
+        if (androidExtension != null) {
+            androidExtension.defaultConfig.externalNativeBuild.cmake.arguments.add('-DCMAKE_OBJECT_PATH_MAX=240')
+            // The app uses JS-driven gestures. The optional shared Worklets runtime
+            // in this dependency combination does not export RNGH's linker symbols.
+            if (project.name == 'react-native-gesture-handler') {
+                androidExtension.defaultConfig.externalNativeBuild.cmake.arguments.removeAll { it.startsWith('-DRNGH_USE_WORKLETS=') }
+                androidExtension.defaultConfig.externalNativeBuild.cmake.arguments.add('-DRNGH_USE_WORKLETS=OFF')
+            }
+        }
+    }
+}

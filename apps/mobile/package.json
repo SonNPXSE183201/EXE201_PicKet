@@ -1,0 +1,92 @@
+{
+  "name": "mobile",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@noble/ciphers": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@picket/api-client": "file:../../packages/api-client",
+    "@picket/design-tokens": "file:../../packages/design-tokens",
+    "@picket/domain": "file:../../packages/domain-ts",
+    "@supabase/supabase-js": "^2.117.3",
+    "base64-js": "^1.5.1",
+    "expo": "~57.0.30",
+    "expo-camera": "~57.0.6",
+    "expo-constants": "~57.0.22",
+    "expo-crypto": "~57.0.4",
+    "expo-dev-client": "~57.0.20",
+    "expo-document-picker": "~57.0.3",
+    "expo-file-system": "~57.0.7",
+    "expo-font": "~57.0.4",
+    "expo-iap": "^6.0.1",
+    "expo-image-manipulator": "~57.0.21",
+    "expo-image-picker": "~57.0.20",
+    "expo-linking": "~57.0.13",
+    "expo-local-authentication": "~57.0.3",
+    "expo-localization": "~57.0.2",
+    "expo-notifications": "~57.0.23",
+    "expo-router": "~57.0.28",
+    "expo-secure-store": "~57.0.4",
+    "expo-sharing": "~57.0.23",
+    "expo-splash-screen": "~57.0.10",
+    "expo-sqlite": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "expo-web-browser": "~57.0.3",
+    "i18next": "26.5.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-i18next": "17.1.4",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-url-polyfill": "^4.0.0",
+    "rn-mlkit-ocr": "^0.3.1"
+  },
+  "devDependencies": {
+    "@expo/env": "^2.4.3",
+    "@types/node": "^26.6.4",
+    "@types/react": "~19.2.2",
+    "@typescript-eslint/eslint-plugin": "8.70.0",
+    "@typescript-eslint/parser": "8.70.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "lint": "expo lint",
+    "test:api": "tsx --test src/core/api/*.test.ts",
+    "test:auth": "tsx --test src/features/auth/*.test.ts",
+    "test:billing": "tsx --test src/features/billing/*.test.ts",
+    "test:subscriptions": "tsx --test src/features/subscriptions/*.test.ts",
+    "test:transactions": "tsx --test src/features/transactions/*.test.ts",
+    "test:notifications": "tsx --test src/features/notifications/*.test.ts",
+    "test:keepsakes": "tsx --test src/features/keepsakes/*.test.ts",
+    "test:ocr": "tsx --test src/core/ocr/*.test.ts",
+    "test:export": "tsx --test src/core/export/*.test.ts",
+    "test:sync": "tsx --test src/core/sync/*.test.ts",
+    "test:ui": "tsx --test src/core/ui/*.test.ts",
+    "test:settings": "tsx --test src/features/settings/*.test.ts src/core/i18n/*.test.ts src/core/theme/*.test.ts",
+    "test:learning": "tsx --test src/features/learning/*.test.ts",
+    "test:cashflow": "tsx --test src/features/cashflow/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "release:preflight": "node scripts/validate-release-env.mjs"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "rn-mlkit-ocr"
+        ]
+      }
+    }
+  },
+  "overrides": {
+    "shell-quote": "1.12.0"
+  },
+  "private": true
+}

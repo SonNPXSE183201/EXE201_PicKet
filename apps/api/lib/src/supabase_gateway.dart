@@ -1,0 +1,2222 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+import 'package:picket_api/src/account_contract.dart';
+import 'package:picket_api/src/admin_action_contract.dart';
+import 'package:picket_api/src/admin_contract.dart';
+import 'package:picket_api/src/api_config.dart';
+import 'package:picket_api/src/bill_contract.dart';
+import 'package:picket_api/src/billing_contract.dart';
+import 'package:picket_api/src/budget_contract.dart';
+import 'package:picket_api/src/cashflow_schedule_contract.dart';
+import 'package:picket_api/src/cashflow_settlement_contract.dart';
+import 'package:picket_api/src/category_contract.dart';
+import 'package:picket_api/src/entitlement_contract.dart';
+import 'package:picket_api/src/finance_contract.dart';
+import 'package:picket_api/src/keepsake_contract.dart';
+import 'package:picket_api/src/learning_activity.dart';
+import 'package:picket_api/src/learning_ai_consent.dart';
+import 'package:picket_api/src/learning_ai_jobs.dart';
+import 'package:picket_api/src/learning_contract.dart';
+import 'package:picket_api/src/ocr_job_contract.dart';
+import 'package:picket_api/src/profile_contract.dart';
+import 'package:picket_api/src/receipt_contract.dart';
+import 'package:picket_api/src/subscription_contract.dart';
+import 'package:picket_api/src/transaction_contract.dart';
+
+class GatewayException implements Exception {
+  const GatewayException(this.statusCode, this.message);
+  final int statusCode;
+  final String message;
+}
+
+class SupabaseGateway {
+  SupabaseGateway(this.config, {http.Client? client})
+    : _client = client ?? http.Client();
+
+  final ApiConfig config;
+  final http.Client _client;
+
+  Map<String, String> _headers(String accessToken) => {
+    HttpHeaders.authorizationHeader: 'Bearer $accessToken',
+    'apikey': config.supabasePublishableKey,
+    HttpHeaders.acceptHeader: ContentType.json.mimeType,
+    HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+  };
+
+  Uri _uri(String path, [Map<String, String>? query]) =>
+      config.supabaseUrl.resolve(path).replace(queryParameters: query);
+
+  Future<String> authenticate(String accessToken) async {
+    final response = await _client
+        .get(_uri('/auth/v1/user'), headers: _headers(accessToken))
+        .timeout(const Duration(seconds: 10));
+    if (response.statusCode != HttpStatus.ok) {
+      throw const GatewayException(HttpStatus.unauthorized, 'Unauthorized');
+    }
+    final body = jsonDecode(response.body);
+    if (body is! Map || body['id'] is! String) {
+      throw const GatewayException(HttpStatus.unauthorized, 'Unauthorized');
+    }
+    return body['id'] as String;
+  }
+
+  Future<Map<String, dynamic>> cashflowSchedules(
+    String token, {
+    CashflowScheduleMutation? mutation,
+    String? key,
+  }) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri(
+            '/rest/v1/rpc/${mutation == null ? 'load_cashflow_schedules' : 'mutate_cashflow_schedule'}',
+          ),
+          headers: _headers(token),
+          body: jsonEncode(
+            mutation == null ? <String, dynamic>{} : mutation.toRpcJson(key!),
+          ),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return validateScheduleDocument(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid schedule response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> cashflowSettlements(
+    String token, {
+    Map<String, dynamic>? input,
+    String? key,
+  }) async {
+    final value = await _learningAiRpc(
+      token,
+      input == null ? 'load_cashflow_settlements' : 'save_cashflow_settlements',
+      input == null ? {} : {...input, 'p_request_key': key},
+    );
+    try {
+      return validateSettlementDocument(value);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid settlement response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> cashflowLedger(String token) async {
+    final value = await _learningAiRpc(
+      token,
+      'load_cashflow_ledger_snapshot',
+      {},
+    );
+    if (value is! Map<String, dynamic> ||
+        value['asOf'] is! String ||
+        DateTime.tryParse(value['asOf'] as String) == null ||
+        value['wallets'] is! List ||
+        value['entries'] is! List ||
+        value['confirmations'] is! List ||
+        (value['wallets'] as List).length > 1000 ||
+        (value['entries'] as List).length > 100000 ||
+        (value['confirmations'] as List).length > 100000) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid ledger snapshot.',
+      );
+    }
+    return value;
+  }
+
+  Future<Map<String, dynamic>> learningAiConsent(
+    String token, {
+    bool? accepted,
+  }) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri(
+            '/rest/v1/rpc/${accepted == null ? 'load' : 'set'}_learning_ai_consent',
+          ),
+          headers: _headers(token),
+          body: jsonEncode(accepted == null ? {} : {'p_accepted': accepted}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return validateLearningAiConsent(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid consent response.',
+      );
+    }
+  }
+
+  Future<Object?> _learningAiRpc(
+    String token,
+    String name,
+    Map<String, Object?> body,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/$name'),
+          headers: _headers(token),
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return jsonDecode(response.body);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid educational response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> enqueueLearningAi(
+    String token,
+    LearningAiRequest request,
+    String key,
+  ) async {
+    if (!RegExp(r'^[a-zA-Z0-9_-]{8,100}$').hasMatch(key)) {
+      throw const FormatException('An idempotency key is required.');
+    }
+    final result = await _learningAiRpc(token, 'enqueue_learning_ai_job', {
+      'p_request_key': key,
+      'p_scenario_id': request.scenarioId,
+      'p_locale': request.locale,
+    });
+    try {
+      return validateLearningAiJob(result, queued: true);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid educational response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> learningAiJob(String token, String id) async {
+    if (!validLearningAiId(id)) {
+      throw const FormatException('Invalid educational job ID.');
+    }
+    final result = await _learningAiRpc(token, 'load_learning_ai_job', {
+      'p_id': id,
+    });
+    if (result == null) {
+      throw const GatewayException(
+        HttpStatus.notFound,
+        'Educational job not found.',
+      );
+    }
+    try {
+      return validateLearningAiJob(result);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid educational response.',
+      );
+    }
+  }
+
+  Future<void> deleteLearningAiHistory(String token) async {
+    final result = await _learningAiRpc(
+      token,
+      'delete_learning_ai_history',
+      {},
+    );
+    if (result is! Map || result['deleted'] != true) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'History deletion not confirmed.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> learningActivity(
+    String token, {
+    List<Map<String, dynamic>>? events,
+  }) async {
+    final result = await _learningAiRpc(
+      token,
+      events == null ? 'load_learning_activity' : 'sync_learning_activity',
+      events == null ? {} : {'p_events': events},
+    );
+    try {
+      return validateLearningActivityDocument(result);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid learning activity response.',
+      );
+    }
+  }
+
+  Future<LearningAttemptResult> submitLearningAttempt(
+    String accessToken,
+    LearningAttemptRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/submit_learning_attempt'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return LearningAttemptResult.fromJson(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid learning response.',
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listLearningProgress(String token) async {
+    final owner = await authenticate(token);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/learning_progress', {
+            'select': 'lesson_id,content_version,xp,completed_at',
+            'user_id': 'eq.$owner',
+            'order': 'completed_at.desc,lesson_id.asc',
+            'limit': '1000',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! List || body.any((row) => row is! Map)) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid learning progress.',
+      );
+    }
+    return body.map((row) => Map<String, dynamic>.from(row as Map)).toList();
+  }
+
+  Future<FinanceSnapshotEnvelope> loadSnapshot(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/load_normalized_finance'),
+          headers: _headers(accessToken),
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body == null) {
+      return const FinanceSnapshotEnvelope(revision: 0, payload: null);
+    }
+    if (body is! Map) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid finance data.',
+      );
+    }
+    final row = Map<String, dynamic>.from(body);
+    return FinanceSnapshotEnvelope(
+      revision: row['revision'] as int,
+      payload: Map<String, dynamic>.from(row['payload'] as Map),
+    );
+  }
+
+  Future<int> saveSnapshot(
+    String accessToken,
+    SaveSnapshotRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/save_normalized_finance'),
+          headers: _headers(accessToken),
+          body: jsonEncode({
+            'expected_revision': request.expectedRevision,
+            'new_payload': request.payload,
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final revision = jsonDecode(response.body);
+    if (revision is! int) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid revision.',
+      );
+    }
+    return revision;
+  }
+
+  Future<EntitlementsResource> currentEntitlements(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/current_entitlements'),
+          headers: _headers(accessToken),
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return EntitlementsResource.fromDatabase(jsonDecode(response.body));
+  }
+
+  Future<PlayPurchaseVerification> verifyPlayPurchase(
+    String accessToken,
+    VerifyPlayPurchaseRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/functions/v1/verify-purchase'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toFunctionJson()),
+        )
+        .timeout(const Duration(seconds: 35));
+    _ensureSuccess(response);
+    try {
+      return PlayPurchaseVerification.fromJson(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid purchase verification result.',
+      );
+    }
+  }
+
+  Future<AdminOverviewResource> adminOverview(
+    String accessToken,
+    int page,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/admin_overview'),
+          headers: _headers(accessToken),
+          body: jsonEncode({'page_number': page}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return AdminOverviewResource.fromDatabase(jsonDecode(response.body));
+  }
+
+  Future<Map<String, dynamic>> accountAccess(String token) =>
+      adminRpc(token, 'account_access', {});
+
+  Future<Map<String, dynamic>> paymentRpc(
+    String token,
+    String name,
+    Map<String, dynamic> body,
+  ) async {
+    if (!{
+      'payment_reserve',
+      'payment_customer',
+      'payment_dashboard',
+      'payment_orders',
+      'revenue_summary',
+      'revenue_entries',
+      'revenue_adjust',
+      'promotion_list',
+      'promotion_save',
+      'announcement_list',
+      'announcement_save',
+      'release_list',
+      'release_save',
+      'contact_set_phone',
+      'permission_list',
+      'permission_update',
+      'permission_group_update',
+    }.contains(name)) {
+      throw const FormatException('Invalid payment operation.');
+    }
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/$name'),
+          headers: _headers(token),
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    if (value is! Map<String, dynamic>) {
+      throw const GatewayException(502, 'Invalid payment response.');
+    }
+    return value;
+  }
+
+  /// Public, read-only manifest of the live landing APK.
+  Future<Map<String, dynamic>?> landingRelease() async {
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/release_landing_manifest'),
+          headers: {
+            'apikey': config.supabasePublishableKey,
+            HttpHeaders.acceptHeader: ContentType.json.mimeType,
+            HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+          },
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 10));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    return value is Map<String, dynamic> ? value : null;
+  }
+
+  /// Public announcement feed. A signed-in caller is targeted by plan; a
+  /// guest, or a caller whose token is no longer valid, gets the guest feed.
+  Future<Map<String, dynamic>> announcementsFeed(
+    String? token,
+    Map<String, dynamic> body,
+  ) async {
+    Future<http.Response> call(String? bearer) => _client
+        .post(
+          _uri('/rest/v1/rpc/announcements_feed'),
+          headers: {
+            'apikey': config.supabasePublishableKey,
+            HttpHeaders.acceptHeader: ContentType.json.mimeType,
+            HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+            if (bearer != null)
+              HttpHeaders.authorizationHeader: 'Bearer $bearer',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 10));
+    var response = await call(token);
+    if (token != null && response.statusCode == 401) {
+      response = await call(null);
+    }
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    if (value is! Map<String, dynamic>) {
+      throw const GatewayException(502, 'Invalid announcement response.');
+    }
+    return value;
+  }
+
+  Future<void> collectEvent(String token, Map<String, dynamic> event) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/collect_app_event'),
+          headers: _headers(token),
+          body: jsonEncode({'p_event': event}),
+        )
+        .timeout(const Duration(seconds: 10));
+    _ensureSuccess(response);
+  }
+
+  Future<Map<String, dynamic>> adminPortal(
+    String token,
+    String section,
+    Map<String, dynamic> filters,
+  ) => adminRpc(token, 'admin_portal', {
+    'p_section': section,
+    'p_filters': filters,
+  });
+
+  Future<Map<String, dynamic>> adminMutate(
+    String token,
+    Map<String, dynamic> input,
+  ) => adminRpc(token, 'admin_mutate', {
+    'p_action': input['action'],
+    'p_body': input['body'],
+    'p_reason': input['reason'],
+    'p_request_id': input['requestId'],
+  });
+
+  Future<Map<String, dynamic>> adminRpc(
+    String token,
+    String function,
+    Map<String, dynamic> body,
+  ) async {
+    if (!{
+      'account_access',
+      'admin_portal',
+      'admin_mutate',
+      'admin_prepare_auth',
+      'admin_exports',
+    }.contains(function)) {
+      throw const FormatException('Unknown administrative operation.');
+    }
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/$function'),
+          headers: _headers(token),
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    if (value is! Map<String, dynamic>) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid administrative response.',
+      );
+    }
+    return value;
+  }
+
+  Future<void> adminUserAction(
+    String accessToken,
+    String targetUser,
+    AdminUserActionRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/functions/v1/admin-user-action'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toFunctionJson(targetUser)),
+        )
+        .timeout(const Duration(seconds: 30));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! Map || body['updated'] != true) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid admin action result.',
+      );
+    }
+  }
+
+  static const _accountColumns =
+      'id,name,kind,currency_code,opening_balance,row_version,'
+      'archived_at,created_at,updated_at';
+
+  Future<List<AccountResource>> listAccounts(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/wallets', {
+            'select': _accountColumns,
+            'archived_at': 'is.null',
+            'order': 'created_at.asc,id.asc',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _accountList(response.body);
+  }
+
+  Future<AccountResource> createAccount(
+    String accessToken,
+    CreateAccountRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_account'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return AccountResource.fromDatabase(_rpcRow(response.body, 'account'));
+  }
+
+  Future<AccountResource> updateAccount(
+    String accessToken,
+    String accountId,
+    UpdateAccountRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/wallets', {
+            'id': 'eq.$accountId',
+            'row_version': 'eq.${request.expectedVersion}',
+            'archived_at': 'is.null',
+            'select': _accountColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode(request.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleAccount(response.body, conflictOnEmpty: true);
+  }
+
+  Future<AccountResource> archiveAccount(
+    String accessToken,
+    String accountId,
+    int expectedVersion,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/wallets', {
+            'id': 'eq.$accountId',
+            'row_version': 'eq.$expectedVersion',
+            'archived_at': 'is.null',
+            'select': _accountColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode({
+            'archived_at': DateTime.now().toUtc().toIso8601String(),
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleAccount(response.body, conflictOnEmpty: true);
+  }
+
+  List<AccountResource> _accountList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid account data.',
+      );
+    }
+    return body
+        .map(
+          (row) => AccountResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  AccountResource _singleAccount(
+    String responseBody, {
+    bool conflictOnEmpty = false,
+  }) {
+    final accounts = _accountList(responseBody);
+    if (accounts.length == 1) return accounts.single;
+    if (accounts.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Account version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid account data.',
+    );
+  }
+
+  static const _budgetColumns =
+      'id,category_id,name,default_limit,alert_percent,active,row_version,'
+      'archived_at,created_at,updated_at';
+
+  Future<List<BudgetResource>> listBudgets(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/budgets', {
+            'select': _budgetColumns,
+            'archived_at': 'is.null',
+            'order': 'created_at.asc,id.asc',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _budgetList(response.body);
+  }
+
+  Future<Map<String, dynamic>> getPlanning(String token, String month) async {
+    final owner = await authenticate(token);
+    final methods = await _client
+        .get(
+          _uri('/rest/v1/user_preferences', {
+            'select': 'budget_method',
+            'user_id': 'eq.$owner',
+            'limit': '1',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(methods);
+    final methodRows = jsonDecode(methods.body) as List;
+    final periods = await _client
+        .get(
+          _uri('/rest/v1/budget_periods', {
+            'select': 'budget_id,period_start,limit_amount,carried_amount',
+            'period_start': 'eq.$month-01',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(periods);
+    final closes = await _client
+        .get(
+          _uri('/rest/v1/month_closes', {
+            'select': 'month_start,closed_at,rollover_payload',
+            'month_start': 'eq.$month-01',
+            'limit': '1',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(closes);
+    final periodRows = jsonDecode(periods.body) as List;
+    final closeRows = jsonDecode(closes.body) as List;
+    final close = closeRows.isEmpty
+        ? null
+        : Map<String, dynamic>.from(closeRows.single as Map);
+    final payload = close == null
+        ? null
+        : Map<String, dynamic>.from(close['rollover_payload'] as Map);
+    return {
+      'method': methodRows.isEmpty
+          ? 'simple'
+          : (methodRows.single as Map)['budget_method'],
+      'periods': periodRows.map((row) {
+        final period = Map<String, dynamic>.from(row as Map);
+        return {
+          'budgetId': period['budget_id'],
+          'month': month,
+          'limit': period['limit_amount'],
+          'carriedAmount': period['carried_amount'],
+        };
+      }).toList(),
+      'close': close == null
+          ? null
+          : {
+              'month': month,
+              'closedAt': close['closed_at'],
+              'income': payload!['income'] ?? 0,
+              'expense': payload['expense'] ?? 0,
+              'note': payload['note'] ?? '',
+              'rollover': payload['rollover'] ?? false,
+            },
+    };
+  }
+
+  Future<void> setBudgetMethod(String token, String method) async {
+    final owner = await authenticate(token);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/user_preferences', {'user_id': 'eq.$owner'}),
+          headers: _headers(token),
+          body: jsonEncode({'budget_method': method}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+  }
+
+  Future<Map<String, dynamic>> transferBudgetLimit(
+    String token,
+    Map<String, dynamic> input,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/transfer_budget_period_limit'),
+          headers: _headers(token),
+          body: jsonEncode(input),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<Map<String, dynamic>> closeBudgetMonth(
+    String token,
+    Map<String, dynamic> input,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/close_budget_month'),
+          headers: _headers(token),
+          body: jsonEncode(input),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<Map<String, dynamic>> reconcileWallet(
+    String token,
+    Map<String, dynamic> input,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/reconcile_finance_wallet'),
+          headers: _headers(token),
+          body: jsonEncode(input),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+  }
+
+  Future<BudgetResource> createBudget(
+    String accessToken,
+    CreateBudgetRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_budget'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return BudgetResource.fromDatabase(_rpcRow(response.body, 'budget'));
+  }
+
+  Future<BudgetResource> updateBudget(
+    String accessToken,
+    String id,
+    UpdateBudgetRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/budgets', {
+            'id': 'eq.$id',
+            'row_version': 'eq.${request.expectedVersion}',
+            'archived_at': 'is.null',
+            'select': _budgetColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode(request.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleBudget(response.body, conflictOnEmpty: true);
+  }
+
+  Future<BudgetResource> archiveBudget(
+    String accessToken,
+    String id,
+    int expectedVersion,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/budgets', {
+            'id': 'eq.$id',
+            'row_version': 'eq.$expectedVersion',
+            'archived_at': 'is.null',
+            'select': _budgetColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode({
+            'archived_at': DateTime.now().toUtc().toIso8601String(),
+            'active': false,
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleBudget(response.body, conflictOnEmpty: true);
+  }
+
+  List<BudgetResource> _budgetList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid budget data.',
+      );
+    }
+    return body
+        .map(
+          (row) => BudgetResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  BudgetResource _singleBudget(
+    String responseBody, {
+    bool conflictOnEmpty = false,
+  }) {
+    final budgets = _budgetList(responseBody);
+    if (budgets.length == 1) return budgets.single;
+    if (budgets.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Budget version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid budget data.',
+    );
+  }
+
+  static const _keepsakeColumns =
+      'id,title,amount,purchased_at,note,category_name,warranty_until,'
+      'return_until,media_path,row_version,archived_at,created_at,updated_at';
+
+  List<KeepsakeResource> _keepsakeList(String body) {
+    final rows = jsonDecode(body);
+    if (rows is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid keepsake data.',
+      );
+    }
+    return rows
+        .map(
+          (row) => KeepsakeResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  KeepsakeResource _oneKeepsake(String body, {bool conflictOnEmpty = false}) {
+    final rows = _keepsakeList(body);
+    if (rows.length == 1) return rows.single;
+    if (rows.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Keepsake version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Invalid keepsake data.',
+    );
+  }
+
+  Future<List<KeepsakeResource>> listKeepsakes(String token) async {
+    await authenticate(token);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/keepsakes', {
+            'select': _keepsakeColumns,
+            'archived_at': 'is.null',
+            'order': 'purchased_at.desc,id.desc',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _keepsakeList(response.body);
+  }
+
+  Future<KeepsakeResource> createKeepsake(String token, Object? body) async {
+    final owner = await authenticate(token);
+    final input = parseKeepsakeCreate(body, owner);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/keepsakes', {'select': _keepsakeColumns}),
+          headers: {..._headers(token), 'Prefer': 'return=representation'},
+          body: jsonEncode(input),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _oneKeepsake(response.body);
+  }
+
+  Future<KeepsakeResource> updateKeepsake(
+    String token,
+    String id,
+    Object? body,
+  ) async {
+    final owner = await authenticate(token);
+    final update = parseKeepsakeUpdate(body, owner);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/keepsakes', {
+            'id': 'eq.$id',
+            'row_version': 'eq.${update.expectedVersion}',
+            'archived_at': 'is.null',
+            'select': _keepsakeColumns,
+          }),
+          headers: {..._headers(token), 'Prefer': 'return=representation'},
+          body: jsonEncode(update.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _oneKeepsake(response.body, conflictOnEmpty: true);
+  }
+
+  Future<KeepsakeResource> archiveKeepsake(
+    String token,
+    String id,
+    int version,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/keepsakes', {
+            'id': 'eq.$id',
+            'row_version': 'eq.$version',
+            'archived_at': 'is.null',
+            'select': _keepsakeColumns,
+          }),
+          headers: {..._headers(token), 'Prefer': 'return=representation'},
+          body: jsonEncode({
+            'archived_at': DateTime.now().toUtc().toIso8601String(),
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _oneKeepsake(response.body, conflictOnEmpty: true);
+  }
+
+  static const _billColumns =
+      'id,paid_transaction_id,title,amount,due_at,status,row_version,'
+      'archived_at,created_at,updated_at';
+
+  Future<List<BillResource>> listBills(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/bills', {
+            'select': _billColumns,
+            'archived_at': 'is.null',
+            'order': 'due_at.asc,id.asc',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _billList(response.body);
+  }
+
+  Future<BillResource> createBill(
+    String accessToken,
+    CreateBillRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_bill'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return BillResource.fromDatabase(_rpcRow(response.body, 'bill'));
+  }
+
+  Future<BillResource> updateBill(
+    String accessToken,
+    String id,
+    UpdateBillRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/bills', {
+            'id': 'eq.$id',
+            'row_version': 'eq.${request.expectedVersion}',
+            'archived_at': 'is.null',
+            'select': _billColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode(request.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleBill(response.body, conflictOnEmpty: true);
+  }
+
+  Future<BillResource> archiveBill(
+    String accessToken,
+    String id,
+    int expectedVersion,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/bills', {
+            'id': 'eq.$id',
+            'row_version': 'eq.$expectedVersion',
+            'archived_at': 'is.null',
+            'select': _billColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode({
+            'archived_at': DateTime.now().toUtc().toIso8601String(),
+            'status': 'cancelled',
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleBill(response.body, conflictOnEmpty: true);
+  }
+
+  List<BillResource> _billList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid bill data.',
+      );
+    }
+    return body
+        .map(
+          (row) =>
+              BillResource.fromDatabase(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  BillResource _singleBill(
+    String responseBody, {
+    bool conflictOnEmpty = false,
+  }) {
+    final bills = _billList(responseBody);
+    if (bills.length == 1) return bills.single;
+    if (bills.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Bill version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid bill data.',
+    );
+  }
+
+  static const _subscriptionColumns =
+      'id,wallet_id,category_id,title,amount,cadence,next_due_at,cycle_months,'
+      'active,note,alert_days,row_version,archived_at,created_at,updated_at';
+
+  Future<List<SubscriptionResource>> listSubscriptions(String token) async {
+    await authenticate(token);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/subscriptions', {
+            'select': _subscriptionColumns,
+            'archived_at': 'is.null',
+            'order': 'next_due_at.asc,id.asc',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _subscriptionList(response.body);
+  }
+
+  Future<SubscriptionResource> createSubscription(
+    String token,
+    CreateSubscriptionRequest request,
+    String key,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_subscription'),
+          headers: _headers(token),
+          body: jsonEncode(request.toRpcJson(key)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return SubscriptionResource.fromDatabase(
+      _rpcRow(response.body, 'subscription'),
+    );
+  }
+
+  Future<SubscriptionResource> updateSubscription(
+    String token,
+    String id,
+    UpdateSubscriptionRequest request,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/subscriptions', {
+            'id': 'eq.$id',
+            'row_version': 'eq.${request.expectedVersion}',
+            'archived_at': 'is.null',
+            'select': _subscriptionColumns,
+          }),
+          headers: {..._headers(token), 'Prefer': 'return=representation'},
+          body: jsonEncode(request.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleSubscription(response.body, conflictOnEmpty: true);
+  }
+
+  Future<SubscriptionResource> archiveSubscription(
+    String token,
+    String id,
+    int version,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/subscriptions', {
+            'id': 'eq.$id',
+            'row_version': 'eq.$version',
+            'archived_at': 'is.null',
+            'select': _subscriptionColumns,
+          }),
+          headers: {..._headers(token), 'Prefer': 'return=representation'},
+          body: jsonEncode({
+            'archived_at': DateTime.now().toUtc().toIso8601String(),
+            'active': false,
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleSubscription(response.body, conflictOnEmpty: true);
+  }
+
+  List<SubscriptionResource> _subscriptionList(String bodyText) {
+    final body = jsonDecode(bodyText);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid subscription data.',
+      );
+    }
+    return body
+        .map(
+          (row) => SubscriptionResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  SubscriptionResource _singleSubscription(
+    String body, {
+    bool conflictOnEmpty = false,
+  }) {
+    final items = _subscriptionList(body);
+    if (items.length == 1) return items.single;
+    if (items.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Subscription version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid subscription data.',
+    );
+  }
+
+  static const _categoryColumns =
+      'id,name,kind,color,icon,is_custom,row_version,'
+      'archived_at,created_at,updated_at';
+
+  Future<List<CategoryResource>> listCategories(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/categories', {
+            'select': _categoryColumns,
+            'archived_at': 'is.null',
+            'order': 'kind.asc,name.asc,id.asc',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _categoryList(response.body);
+  }
+
+  Future<CategoryResource> createCategory(
+    String accessToken,
+    CreateCategoryRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_category'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return CategoryResource.fromDatabase(_rpcRow(response.body, 'category'));
+  }
+
+  Future<CategoryResource> updateCategory(
+    String accessToken,
+    String categoryId,
+    UpdateCategoryRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/categories', {
+            'id': 'eq.$categoryId',
+            'row_version': 'eq.${request.expectedVersion}',
+            'is_custom': 'eq.true',
+            'archived_at': 'is.null',
+            'select': _categoryColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode(request.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleCategory(response.body, conflictOnEmpty: true);
+  }
+
+  Future<CategoryResource> archiveCategory(
+    String accessToken,
+    String categoryId,
+    int expectedVersion,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/categories', {
+            'id': 'eq.$categoryId',
+            'row_version': 'eq.$expectedVersion',
+            'is_custom': 'eq.true',
+            'archived_at': 'is.null',
+            'select': _categoryColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode({
+            'archived_at': DateTime.now().toUtc().toIso8601String(),
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleCategory(response.body, conflictOnEmpty: true);
+  }
+
+  List<CategoryResource> _categoryList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid category data.',
+      );
+    }
+    return body
+        .map(
+          (row) => CategoryResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  CategoryResource _singleCategory(
+    String responseBody, {
+    bool conflictOnEmpty = false,
+  }) {
+    final categories = _categoryList(responseBody);
+    if (categories.length == 1) return categories.single;
+    if (categories.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Category version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid category data.',
+    );
+  }
+
+  static const _transactionColumns =
+      'id,wallet_id,destination_wallet_id,category_id,refund_of,title,amount,'
+      'kind,occurred_at,note,reconciled_wallet_ids,row_version,deleted_at,'
+      'created_at,updated_at';
+
+  Future<List<TransactionResource>> listTransactions(
+    String accessToken, {
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/transactions', {
+            'select': _transactionColumns,
+            'deleted_at': 'is.null',
+            'order': 'occurred_at.desc,id.desc',
+            'limit': '$limit',
+            'offset': '$offset',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _transactionList(response.body);
+  }
+
+  Future<Map<String, dynamic>> resolveTransactionAttempt(
+    String accessToken,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/resolve_finance_transaction_attempt'),
+          headers: _headers(accessToken),
+          body: jsonEncode({'p_idempotency_key': idempotencyKey}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is Map<String, dynamic> && body['status'] == 'abandoned') {
+      return {'status': 'abandoned'};
+    }
+    if (body is Map<String, dynamic> &&
+        body['status'] == 'committed' &&
+        body['transaction'] is Map<String, dynamic>) {
+      return {
+        'status': 'committed',
+        'transaction': TransactionResource.fromDatabase(
+          body['transaction'] as Map<String, dynamic>,
+        ).toJson(),
+      };
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Invalid transaction attempt resolution',
+    );
+  }
+
+  Future<TransactionResource> createTransaction(
+    String accessToken,
+    CreateTransactionRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_transaction'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _transactionFromRpc(response.body);
+  }
+
+  Future<TransactionResource> createTransfer(
+    String accessToken,
+    CreateTransferRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_transfer'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _transactionFromRpc(response.body);
+  }
+
+  Future<TransactionResource> createRefund(
+    String accessToken,
+    String originalTransactionId,
+    CreateRefundRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_finance_refund'),
+          headers: _headers(accessToken),
+          body: jsonEncode(
+            request.toRpcJson(idempotencyKey, originalTransactionId),
+          ),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _transactionFromRpc(response.body);
+  }
+
+  static const _transactionSplitColumns =
+      'id,transaction_id,category_id,amount,row_version,created_at,updated_at';
+
+  Future<List<TransactionSplitResource>> listTransactionSplits(
+    String accessToken,
+    String transactionId,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/transaction_splits', {
+            'select': _transactionSplitColumns,
+            'transaction_id': 'eq.$transactionId',
+            'order': 'created_at.asc,id.asc',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _transactionSplitList(response.body);
+  }
+
+  Future<List<TransactionSplitResource>> listTransactionSplitsByIds(
+    String accessToken,
+    List<String> transactionIds,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/transaction_splits', {
+            'select': _transactionSplitColumns,
+            'transaction_id': 'in.(${transactionIds.join(',')})',
+            'order': 'transaction_id.asc,id.asc',
+            'limit': '501',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final splits = _transactionSplitList(response.body);
+    if (splits.length > 500) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an incomplete transaction split page.',
+      );
+    }
+    return splits;
+  }
+
+  Future<
+    ({TransactionResource transaction, List<TransactionSplitResource> splits})
+  >
+  setTransactionSplits(
+    String accessToken,
+    String transactionId,
+    SetTransactionSplitsRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/set_transaction_splits'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(transactionId)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final transaction = _transactionFromRpc(response.body);
+    final splits = await listTransactionSplits(accessToken, transactionId);
+    return (transaction: transaction, splits: splits);
+  }
+
+  Future<TransactionResource> updateTransaction(
+    String accessToken,
+    String transactionId,
+    UpdateTransactionRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/transactions', {
+            'id': 'eq.$transactionId',
+            'row_version': 'eq.${request.expectedVersion}',
+            'kind': 'in.(expense,income)',
+            'deleted_at': 'is.null',
+            'select': _transactionColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode(request.patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _singleTransaction(response.body, conflictOnEmpty: true);
+  }
+
+  Future<TransactionResource> archiveTransaction(
+    String accessToken,
+    String transactionId,
+    int expectedVersion,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/transactions', {
+            'id': 'eq.$transactionId',
+            'row_version': 'eq.$expectedVersion',
+            'deleted_at': 'is.null',
+            'select': _transactionColumns,
+          }),
+          headers: {
+            ..._headers(accessToken),
+            'Prefer': 'return=representation',
+          },
+          body: jsonEncode({
+            'deleted_at': DateTime.now().toUtc().toIso8601String(),
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final archived = _transactionList(response.body);
+    if (archived.isNotEmpty) return archived.single;
+
+    // A previous attempt may have committed before its response was lost.
+    // Read with the same user JWT so RLS still hides other owners' records.
+    final existingResponse = await _client
+        .get(
+          _uri('/rest/v1/transactions', {
+            'id': 'eq.$transactionId',
+            'select': _transactionColumns,
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(existingResponse);
+    final existing = _transactionList(existingResponse.body);
+    if (existing.length == 1 && existing.single.deletedAt != null) {
+      return existing.single;
+    }
+    // Active rows with a newer version remain genuine edit conflicts.
+    return _singleTransaction(response.body, conflictOnEmpty: true);
+  }
+
+  List<TransactionResource> _transactionList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid transaction data.',
+      );
+    }
+    return body
+        .map(
+          (row) => TransactionResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  TransactionResource _singleTransaction(
+    String responseBody, {
+    bool conflictOnEmpty = false,
+  }) {
+    final transactions = _transactionList(responseBody);
+    if (transactions.length == 1) return transactions.single;
+    if (transactions.isEmpty && conflictOnEmpty) {
+      throw const GatewayException(
+        HttpStatus.conflict,
+        'Transaction version conflict.',
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid transaction data.',
+    );
+  }
+
+  TransactionResource _transactionFromRpc(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is Map) {
+      return TransactionResource.fromDatabase(Map<String, dynamic>.from(body));
+    }
+    if (body is List && body.length == 1 && body.single is Map) {
+      return TransactionResource.fromDatabase(
+        Map<String, dynamic>.from(body.single as Map),
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid transaction data.',
+    );
+  }
+
+  Map<String, dynamic> _rpcRow(String responseBody, String resource) {
+    final body = jsonDecode(responseBody);
+    if (body is Map) return Map<String, dynamic>.from(body);
+    if (body is List && body.length == 1 && body.single is Map) {
+      return Map<String, dynamic>.from(body.single as Map);
+    }
+    throw GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid $resource data.',
+    );
+  }
+
+  List<TransactionSplitResource> _transactionSplitList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid transaction split data.',
+      );
+    }
+    return body
+        .map(
+          (row) => TransactionSplitResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  Future<Map<String, dynamic>?> currentProfile(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/current_profile'),
+          headers: _headers(accessToken),
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body == null) return null;
+    if (body is! Map) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid profile.',
+      );
+    }
+    return Map<String, dynamic>.from(body);
+  }
+
+  Future<void> deleteAccount(String accessToken) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/functions/v1/delete-account'),
+          headers: _headers(accessToken),
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 30));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! Map || body['deleted'] != true) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid account deletion result.',
+      );
+    }
+  }
+
+  Future<String> completeOnboarding(
+    String accessToken,
+    CompleteOnboardingRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/complete_onboarding'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson()),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final walletId = jsonDecode(response.body);
+    if (walletId is! String) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned an invalid wallet.',
+      );
+    }
+    return walletId;
+  }
+
+  Future<void> updateProfile(
+    String accessToken,
+    Map<String, dynamic> patch,
+  ) async {
+    final userId = await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/profiles', {'id': 'eq.$userId'}),
+          headers: _headers(accessToken),
+          body: jsonEncode(patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+  }
+
+  Future<void> updatePreferences(
+    String accessToken,
+    Map<String, dynamic> patch,
+  ) async {
+    final userId = await authenticate(accessToken);
+    final response = await _client
+        .patch(
+          _uri('/rest/v1/user_preferences', {'user_id': 'eq.$userId'}),
+          headers: _headers(accessToken),
+          body: jsonEncode(patch),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+  }
+
+  static const _ocrFallbackJobColumns =
+      'id,storage_path,local_confidence,status,result,error_code,'
+      'created_at,updated_at,started_at,completed_at,expires_at';
+
+  Future<List<OcrFallbackJobResource>> listOcrFallbackJobs(
+    String accessToken, {
+    int limit = 20,
+  }) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/ocr_fallback_jobs', {
+            'select': _ocrFallbackJobColumns,
+            'order': 'created_at.desc,id.desc',
+            'limit': '$limit',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _ocrFallbackJobList(response.body);
+  }
+
+  Future<OcrFallbackJobResource> getOcrFallbackJob(
+    String accessToken,
+    String id,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/ocr_fallback_jobs', {
+            'select': _ocrFallbackJobColumns,
+            'id': 'eq.$id',
+            'limit': '1',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final jobs = _ocrFallbackJobList(response.body);
+    if (jobs.length == 1) return jobs.single;
+    throw const GatewayException(HttpStatus.notFound, 'OCR job not found.');
+  }
+
+  Future<OcrFallbackJobResource> createOcrFallbackJob(
+    String accessToken,
+    CreateOcrFallbackJobRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_ocr_fallback_job'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson()),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is Map) {
+      return OcrFallbackJobResource.fromDatabase(
+        Map<String, dynamic>.from(body),
+      );
+    }
+    throw const GatewayException(
+      HttpStatus.badGateway,
+      'Supabase returned invalid OCR job data.',
+    );
+  }
+
+  List<OcrFallbackJobResource> _ocrFallbackJobList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid OCR job data.',
+      );
+    }
+    return body
+        .map(
+          (row) => OcrFallbackJobResource.fromDatabase(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList();
+  }
+
+  static const _receiptColumns =
+      'id,transaction_id,storage_path,merchant,detected_total,purchased_at,'
+      'currency_code,confidence,ocr_provider,review_required,raw_text,'
+      'image_sha256,status,row_version,created_at,updated_at,archived_at';
+  static const _receiptLineColumns =
+      'id,receipt_id,name,quantity,unit_price,total,confidence,row_version,'
+      'created_at,updated_at';
+
+  Future<List<ReceiptResource>> listReceipts(
+    String accessToken, {
+    int limit = 50,
+  }) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/receipts', {
+            'select': _receiptColumns,
+            'archived_at': 'is.null',
+            'order': 'created_at.desc,id.desc',
+            'limit': '$limit',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    return _receiptList(response.body);
+  }
+
+  Future<ReceiptResource> getReceipt(String accessToken, String id) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/receipts', {
+            'select': _receiptColumns,
+            'id': 'eq.$id',
+            'archived_at': 'is.null',
+            'limit': '1',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final receipts = _receiptList(response.body);
+    if (receipts.length != 1) {
+      throw const GatewayException(HttpStatus.notFound, 'Receipt not found.');
+    }
+    final lines = await _listReceiptLines(accessToken, id);
+    return receipts.single.withLineItems(lines);
+  }
+
+  Future<ReceiptResource> createReceipt(
+    String accessToken,
+    CreateReceiptRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/create_receipt_record'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.rpcJson),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! Map) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid receipt data.',
+      );
+    }
+    final receipt = ReceiptResource.fromDatabase(
+      Map<String, dynamic>.from(body),
+    );
+    final lines = await _listReceiptLines(accessToken, receipt.id);
+    return receipt.withLineItems(lines);
+  }
+
+  Future<ReceiptResource> updateReceipt(
+    String accessToken,
+    String id,
+    UpdateReceiptRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/update_receipt_record'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(id)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! Map) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid receipt data.',
+      );
+    }
+    final receipt = ReceiptResource.fromDatabase(
+      Map<String, dynamic>.from(body),
+    );
+    final lines = await _listReceiptLines(accessToken, receipt.id);
+    return receipt.withLineItems(lines);
+  }
+
+  Future<List<Map<String, String>>> findDuplicateReceipts(
+    String accessToken,
+    FindDuplicateReceiptRequest request,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/find_duplicate_receipts'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.rpcJson),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid duplicate receipt data.',
+      );
+    }
+    return body
+        .map(
+          (item) => {
+            'id': (item as Map)['id'] as String,
+            'matchType': item['match_type'] as String,
+          },
+        )
+        .toList();
+  }
+
+  Future<List<ReceiptLineItemResource>> _listReceiptLines(
+    String accessToken,
+    String receiptId,
+  ) async {
+    final response = await _client
+        .get(
+          _uri('/rest/v1/receipt_line_items', {
+            'select': _receiptLineColumns,
+            'receipt_id': 'eq.$receiptId',
+            'order': 'position.asc',
+          }),
+          headers: _headers(accessToken),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid receipt line data.',
+      );
+    }
+    return body
+        .map(
+          (item) => ReceiptLineItemResource.fromDatabase(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList();
+  }
+
+  List<ReceiptResource> _receiptList(String responseBody) {
+    final body = jsonDecode(responseBody);
+    if (body is! List) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Supabase returned invalid receipt data.',
+      );
+    }
+    return body
+        .map(
+          (item) => ReceiptResource.fromDatabase(
+            Map<String, dynamic>.from(item as Map),
+          ),
+        )
+        .toList();
+  }
+
+  void _ensureSuccess(http.Response response) {
+    if (response.statusCode >= 200 && response.statusCode < 300) return;
+    try {
+      final conflict = jsonDecode(response.body);
+      if (conflict is Map && conflict['code'] == '40001') {
+        throw const GatewayException(
+          HttpStatus.conflict,
+          'Record changed; reload before saving.',
+        );
+      }
+      final body = jsonDecode(response.body);
+      if (body is Map && body['code'] == '40001') {
+        throw const GatewayException(
+          HttpStatus.conflict,
+          'Resource version conflict.',
+        );
+      }
+      if (body is Map && body['code'] == '23514') {
+        throw const GatewayException(
+          HttpStatus.conflict,
+          'Business rule conflict.',
+        );
+      }
+      if (body is Map && body['code'] == '23505') {
+        throw const GatewayException(
+          HttpStatus.conflict,
+          'Resource already exists.',
+        );
+      }
+      if (body is Map && body['message'] == 'OCR_QUOTA_EXCEEDED') {
+        throw const GatewayException(
+          HttpStatus.tooManyRequests,
+          'OCR fallback quota exceeded.',
+        );
+      }
+      if (body is Map && body['message'] == 'OCR_IMAGE_NOT_FOUND') {
+        throw const GatewayException(
+          HttpStatus.notFound,
+          'OCR source image not found.',
+        );
+      }
+      if (body is Map && body['message'] == 'OCR_INVALID_REQUEST') {
+        throw const GatewayException(
+          HttpStatus.badRequest,
+          'Invalid OCR fallback request.',
+        );
+      }
+      if (body is Map && body['message'] == 'RECEIPT_NOT_FOUND') {
+        throw const GatewayException(HttpStatus.notFound, 'Receipt not found.');
+      }
+    } on GatewayException {
+      rethrow;
+    } on FormatException {
+      // Keep the sanitized default message.
+    }
+    throw GatewayException(
+      response.statusCode >= 500 ? HttpStatus.badGateway : response.statusCode,
+      'Supabase request failed.',
+    );
+  }
+
+  void close() => _client.close();
+}

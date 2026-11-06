@@ -1,0 +1,16 @@
+{
+  "packageName": "com.picket.mobile",
+  "committed": true,
+  "locales": [
+    "vi",
+    "en-US"
+  ],
+  "contactEmail": "picketfinance@gmail.com",
+  "assets": [
+    "icon",
+    "featureGraphic"
+  ],
+  "phoneScreenshotsUploaded": false,
+  "tracksChanged": false,
+  "reviewApproved": false
+}

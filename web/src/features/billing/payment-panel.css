@@ -1,0 +1,15 @@
+.payment-panel > p { margin-block: 8px 16px; }
+.payment-panel h3 { margin-top: 24px; }
+.payment-panel .payment-offer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-block: 16px;
+  border-bottom: 1px solid var(--line, #eaddd5);
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .payment-panel .payment-offer { flex-direction: column; align-items: stretch; }
+}
