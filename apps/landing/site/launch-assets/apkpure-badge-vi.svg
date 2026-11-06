@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="646" height="250" viewBox="0 0 646 250" role="img" aria-label="Tải trên APKPure">
+  <!-- Mirrors google-play-vi.png: same frame (y 29-221), logo column (x 46-177),
+       label at x 197 (bold, cap 29px, baseline 91) and store name (cap 60px, baseline 172). -->
+  <rect x="2" y="30" width="642" height="190" rx="22" fill="#000" stroke="#a6a6a6" stroke-width="3.5"/>
+  <g transform="translate(46 64) scale(1.95) translate(-1 -1)">
+    <polygon points="24,1 39,1 17,47 9,62 1,47" fill="#2dc88b"/>
+    <polygon points="39,1 54,32 46,47 31,17" fill="#5ccf4b"/>
+    <polygon points="25,32 38,32 46,47 17,47" fill="#00c963"/>
+    <polygon points="66,40 69,40 67.5,44" fill="#6ee18c" fill-opacity=".4"/>
+    <polygon points="57,44 65,44 61,51" fill="#6ee18c" fill-opacity=".7"/>
+    <polygon points="47,48 61,48 54,62" fill="#6de18b"/>
+  </g>
+  <text x="197" y="91" fill="#fff" font-family="'Google Sans', 'Product Sans', Roboto, Arial, Helvetica, sans-serif" font-size="40" font-weight="700" letter-spacing=".5">TẢI TRÊN</text>
+  <text x="195" y="172" fill="#fff" font-family="'Google Sans', 'Product Sans', Roboto, Arial, Helvetica, sans-serif" font-size="83" font-weight="500" letter-spacing="-.5">APKPure</text>
+</svg>

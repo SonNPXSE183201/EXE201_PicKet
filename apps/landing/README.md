@@ -7,10 +7,12 @@ Readback ngày 01/11/2026: landing public đang phục vụ APK **1.0.14/code 28
 ## Sửa giao diện và xem thử
 
 - `site/index.html`: nội dung, liên hệ, footer, FAQ và bảng hỗ trợ.
-- `site/launch-assets/paper-v1.css`: token Paper, layout và responsive.
-- `site/launch-assets/paper-motion-v1.css`, `paper-motion-v1.js`, `paper-motion-state.js`: animation, story, giảm chuyển động và mô phỏng khoản chi; không gọi API.
-- `site/launch-assets/`: ảnh minh họa, ảnh giao diện, font Nunito local và QR.
-- `site/privacy.html`, `site/account-deletion.html`: nội dung chính sách, dùng chung font/footer landing.
+- `site/launch-assets/paper-motion-v1.css`, `landing-r2.css`: giao diện landing v2 (Paper).
+- `site/launch-assets/landing-responsive.css`: breakpoint cho điện thoại gập, tablet, laptop và màn hình lớn.
+- `site/launch-assets/paper-motion-v1.js`: link cửa hàng, parallax, chọn bước, vé tải; không gọi API, không có animation theo cuộn.
+- `site/launch-assets/legal-v2.css`, `site/privacy.html`, `site/account-deletion.html`: trang chính sách dùng chung header/footer với landing.
+- `site/launch-assets/`: ảnh v2, logo `picket-mark-192.png`, badge Google Play/APKPure, font Nunito 600/800 local.
+- Nút tải: APKPure (`https://apkpure.com/picket/com.picket.mobile`) là link tải chính; Google Play giữ `PLAY_STORE_URL` cho tới khi có listing công khai; link APK trực tiếp vẫn có ở mục tải và footer.
 - `release.json`: metadata của APK đã được ký và xác minh. Không đổi metadata chỉ vì sửa landing.
 
 Để xem source landing trong lúc chỉnh sửa:

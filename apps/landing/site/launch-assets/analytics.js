@@ -30,9 +30,11 @@ panel.innerHTML = '<p>Cho phép Picket thống kê lượt truy cập và nút t
 if (!privacySignal && !storage.get(consentKey)) document.body.append(panel);
 panel.querySelector('[data-accept]').addEventListener('click', () => { storage.set(consentKey, 'yes'); panel.remove(); send('landing_view'); });
 panel.querySelector('[data-decline]').addEventListener('click', () => { storage.set(consentKey, 'no'); panel.remove(); });
-const footer = document.querySelector('.footer-bottom');
+const footer = document.querySelector('.footer-meta') ?? document.querySelector('.footer-bottom');
 if (footer && !privacySignal) {
   const settings = document.createElement('button'); settings.type = 'button'; settings.className = 'analytics-settings'; settings.textContent = 'Lựa chọn thống kê';
-  settings.addEventListener('click', () => { if (!panel.isConnected) document.body.append(panel); }); footer.append(settings);
+  settings.addEventListener('click', () => { if (!panel.isConnected) document.body.append(panel); });
+  // Keep the copyright last in the footer bar.
+  footer.insertBefore(settings, footer.querySelector('small'));
 }
 send('landing_view');
