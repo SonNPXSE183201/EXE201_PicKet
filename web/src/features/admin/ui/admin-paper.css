@@ -377,3 +377,15 @@
 @media (max-width: 480px) {
   .ap-date-pop { position: fixed; top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-width: none; z-index: 70; border-radius: 22px; box-shadow: 0 -12px 40px rgb(48 33 50 / 22%); }
 }
+
+/* Realtime status + deferred update */
+.ap-live { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--ap-card); border: 1px solid var(--ap-line); font-size: 11px; font-weight: 800; color: var(--ap-muted); white-space: nowrap; }
+.ap-live i { width: 8px; height: 8px; border-radius: 50%; background: #d4c4cc; }
+.ap-live.is-live { color: var(--ap-success); background: var(--ap-success-bg); border-color: transparent; }
+.ap-live.is-live i { background: #22a35a; box-shadow: 0 0 0 0 rgb(34 163 90 / 50%); animation: ap-live-ping 2s infinite; }
+.ap-live.is-offline { color: var(--ap-warning); background: var(--ap-warning-bg); border-color: transparent; }
+.ap-live.is-offline i { background: #d97706; }
+@keyframes ap-live-ping { 70% { box-shadow: 0 0 0 7px rgb(34 163 90 / 0%); } 100% { box-shadow: 0 0 0 0 rgb(34 163 90 / 0%); } }
+.ap-live-update { position: fixed; left: 50%; bottom: 20px; z-index: 55; transform: translateX(-50%); min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ap-mauve); color: #fff; font: inherit; font-size: 13px; font-weight: 800; box-shadow: var(--ap-shadow-strong); cursor: pointer; }
+@media (max-width: 720px) { .ap-live { order: 4; height: 28px; padding: 0 10px; } }
+@media (prefers-reduced-motion: reduce) { .ap-live.is-live i { animation: none; } }

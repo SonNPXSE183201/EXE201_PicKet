@@ -6,6 +6,7 @@ import { adminSections, canViewAdminSection, type AdminSection } from "../admin-
 import { adminLabel } from "../admin-labels";
 import { signOut } from "@/app/dashboard/actions";
 import { AdminIcon } from "../ui/admin-icon";
+import { AdminRealtime } from "./admin-realtime";
 import "../admin-platform.css";
 import "../ui/admin-paper.css";
 
@@ -152,6 +153,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
           <nav className="ap-range" aria-label="Khoảng thời gian">
             {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
           </nav>
+          <AdminRealtime current={current} />
           {visible("incidents") && (
             <Link className="ap-icon-btn" href="/admin/incidents" aria-label="Sự cố và cảnh báo"><AdminIcon name="bell" size={22} /></Link>
           )}
