@@ -1,10 +1,8 @@
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { radii } from "@/core/ui/mobile-palette";
 import * as Crypto from "expo-crypto";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,7 +19,11 @@ import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptu
 import type { CaptureSnapshot } from "@/core/ocr/capture-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
-import { ReceiptCamera } from "@/core/ui/receipt-camera";
+import { ReceiptCamera } from "@/features/capture/capture-camera";
+import { CaptureReading } from "@/features/capture/capture-reading";
+import { receiptArt } from "@/features/capture/capture-art";
+import { figmaType } from "@picket/design-tokens";
+import { Chip, Overline, ReceiptDivider, ReceiptSheet, figmaShadow } from "@/core/ui/figma-ui";
 import { TopAppBar } from "@/core/ui/picket-ui";
 import type { ReceiptDraftLine } from "@/core/ocr/receipt-parser";
 import { parseServerOcrResult } from "@/core/ocr/server-result";
@@ -453,69 +455,85 @@ export default function CaptureReceiptScreen() {
   if (!hydrated) return <SafeAreaView style={styles.safe}><ActivityIndicator accessibilityLabel="Đang mở camera" color={colors.link} /></SafeAreaView>;
   if (!imageUri && !hasDraft && !isRecognizing) return cameraScreen;
 
+  if (isRecognizing) return <CaptureReading statusLabel="Đang đọc hóa đơn…" onCancel={() => { pollingController.current?.abort(); localOcrController.current?.abort(); router.replace("/transactions/new"); }} />;
+
+  const reviewCount = (currencyWarning ? 1 : 0) + (hasObservedDate ? 0 : 1) + (needsFallback ? 1 : 0);
+  const busyAny = isRecognizing || isContinuing || isQueueingFallback;
+  const pinnedPhoto = imageUri ? (
+    <Image
+      key={imageUri}
+      accessibilityLabel="Ảnh hóa đơn đang được kiểm tra"
+      source={{ uri: imageUri }}
+      style={receiptEligible ? styles.pinnedImage : styles.bigImage}
+      resizeMode="cover"
+    />
+  ) : <Image accessible={false} source={receiptArt} style={receiptEligible ? styles.pinnedArt : styles.bigArt} resizeMode="contain" />;
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
-        <TopAppBar title="Quét hóa đơn" />
+        <TopAppBar title="Kiểm tra hoá đơn" />
 
-        {isRecognizing && (
-          <View accessibilityLiveRegion="polite" style={styles.progress}>
-            <ActivityIndicator accessibilityLabel="Đang nhận diện hóa đơn" color={colors.link} />
-            <Text style={styles.progressText}>Đang đọc hóa đơn…</Text>
+        {!receiptEligible && (
+          <View style={styles.notReceipt}>
+            <View style={styles.bigPhoto}>{pinnedPhoto}</View>
+            <View style={styles.tape} />
           </View>
         )}
 
-        {imageUri ? (
-          <Image
-            key={imageUri}
-            accessibilityLabel="Ảnh hóa đơn đang được kiểm tra"
-            source={{ uri: imageUri }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        ) : (
-          <View style={styles.placeholder}>
-            <AppIcon name="line-scan" size={64} />
-            <Text style={styles.placeholderTitle}>
-              Đặt hóa đơn trên nền phẳng, đủ sáng
-            </Text>
-          </View>
+        {message && <Text accessibilityLiveRegion="polite" role="alert" style={[figmaType.bodySmall, styles.message, !receiptEligible && styles.centerText]}>{message}</Text>}
+
+        {!receiptEligible && (
+          <>
+            <ReceiptSheet style={styles.tips}>
+              <Overline>Mẹo chụp lại</Overline>
+              {["Đặt trọn tờ hoá đơn trong khung", "Đủ sáng, tránh bóng loá", "Giữ máy thẳng, không nghiêng"].map((tip) => (
+                <View key={tip} style={styles.tip}>
+                  <View style={styles.tipCheck}><AppIcon name="check" size={14} color={colors.success} /></View>
+                  <Text style={[figmaType.bodySmall, { color: colors.text, flex: 1 }]}>{tip}</Text>
+                </View>
+              ))}
+            </ReceiptSheet>
+            <View style={styles.actions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busyAny }}
+                disabled={busyAny}
+                onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
+                style={[styles.primary, busyAny && styles.disabled]}
+              >
+                <AppIcon name="camera-outline" size={20} color={colors.onPrimary} /><Text style={styles.primaryText}>Chụp lại</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: busyAny }}
+                disabled={busyAny}
+                onPress={() => void choose("library")}
+                style={[styles.secondary, busyAny && styles.disabled]}
+              >
+                <AppIcon name="image-outline" size={20} color={colors.primary} /><Text style={styles.secondaryText}>Chọn từ thư viện</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => router.replace("/transactions/new")} style={styles.textButton}>
+                <Text style={styles.secondaryText}>Nhập tay thay vì chụp</Text>
+              </Pressable>
+            </View>
+          </>
         )}
 
-        {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.message}>{message}</Text>}
-
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ disabled: isRecognizing || isContinuing || isQueueingFallback }}
-            disabled={isRecognizing || isContinuing || isQueueingFallback}
-            onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
-            style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
-          >
-            <AppIcon name="camera-outline" color={colors.onPrimary} /><Text style={styles.primaryText}>Chụp lại</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ disabled: isRecognizing || isContinuing || isQueueingFallback }}
-            disabled={isRecognizing || isContinuing || isQueueingFallback}
-            onPress={() => void choose("library")}
-            style={[styles.secondary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
-          >
-            <AppIcon name="image-outline" /><Text style={styles.secondaryText}>Chọn từ thư viện</Text>
-          </Pressable>
+        {currencyWarning && <Text role="alert" style={[figmaType.bodySmall, styles.message]}>{currencyWarning}</Text>}
+        {receiptEligible && <>
+        <View style={styles.intro}>
+          {reviewCount > 0 && <Chip tone="warning" label={`${reviewCount} thông tin cần kiểm tra`} />}
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>Picket đã đọc xong. Xem lại một lượt trước khi lưu nhé.</Text>
         </View>
 
-
-
-        {currencyWarning && <Text role="alert" style={styles.message}>{currencyWarning}</Text>}
-        {receiptEligible && <>
-
-        <Text style={styles.label}>{typeof hasObservedDate === "boolean" && !hasObservedDate ? "Ngày hóa đơn (chưa đọc được trên ảnh — tạm điền hôm nay)" : "Ngày hóa đơn"}</Text>
-        <TextInput date accessibilityLabel="Ngày hóa đơn" value={calendarReceiptDay({ purchasedAt }) ?? ""} onChangeText={(day) => { explicitDate.current = receiptCalendarDate(day); setHasObservedDate(Boolean(explicitDate.current)); setPurchasedAt(receiptCaptureDate(day, null)); }} style={styles.input} />
-        <Text style={styles.label}>Tên cửa hàng / nội dung</Text>
+        <View style={styles.sheetWrap}>
+        <ReceiptSheet style={styles.sheet}>
+        <View style={styles.storeBlock}>
+        <Text style={[figmaType.bodySmall, styles.fieldLabel]}>Tên cửa hàng / nội dung</Text>
         <TextInput
           accessibilityLabel="Tên cửa hàng hoặc nội dung hóa đơn"
           editable={receiptEligible}
@@ -523,9 +541,9 @@ export default function CaptureReceiptScreen() {
           onChangeText={setTitle}
           placeholder="Ví dụ: Cà phê sáng"
           placeholderTextColor={colors.muted}
-          style={styles.input}
+          style={styles.storeInput}
         />
-        <Text style={styles.label}>{currencyWarning ? "Số tiền đọc được (chưa xác nhận tiền tệ)" : "Tổng tiền (VND)"}</Text>
+        <Text style={[figmaType.bodySmall, styles.fieldLabel, currencyWarning && { color: colors.warning }]}>{currencyWarning ? "Số tiền đọc được (chưa xác nhận tiền tệ)" : "Tổng tiền (VND)"}</Text>
         <TextInput money
           accessibilityLabel="Tổng tiền hóa đơn"
           editable={receiptEligible}
@@ -534,26 +552,39 @@ export default function CaptureReceiptScreen() {
           keyboardType="number-pad"
           placeholder="Ví dụ: 45000"
           placeholderTextColor={colors.muted}
-          style={styles.input}
+          style={styles.amountInput}
         />
+        </View>
+        <ReceiptDivider />
+        <Text style={[figmaType.bodySmall, styles.fieldLabel, !hasObservedDate && { color: colors.warning }]}>{typeof hasObservedDate === "boolean" && !hasObservedDate ? "Ngày hóa đơn (chưa đọc được trên ảnh — tạm điền hôm nay)" : "Ngày hóa đơn"}</Text>
+        <TextInput date accessibilityLabel="Ngày hóa đơn" value={calendarReceiptDay({ purchasedAt }) ?? ""} onChangeText={(day) => { explicitDate.current = receiptCalendarDate(day); setHasObservedDate(Boolean(explicitDate.current)); setPurchasedAt(receiptCaptureDate(day, null)); }} style={[styles.input, !hasObservedDate && styles.inputWarning]} />
+        <ReceiptDivider />
 
         {__DEV__ && ocrDurationMs !== null && (
-          <Text style={styles.metric}>Thời gian OCR: {ocrDurationMs} ms</Text>
+          <Text style={figmaType.bodySmall}>Thời gian OCR: {ocrDurationMs} ms</Text>
         )}
+        <Overline>Món trong hoá đơn</Overline>
         {lineItems.length > 0 && (
-          <Text style={styles.metric}>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
             {lineItems.length} sản phẩm
           </Text>
         )}
 
         {lineItems.map((item, index) => (
-          <View key={`${index}-${item.name}`}>
-            <Text style={styles.label}>{item.name}</Text>
-            <Text style={styles.metric}>Số lượng: {item.quantity} · Đơn giá: {currencyWarning ? String(item.unitPrice) : formatMoney(item.unitPrice, "vi", "VND")} · Thành tiền: {currencyWarning ? String(item.total) : formatMoney(item.total, "vi", "VND")}</Text>
-            {item.confidence < 0.7 && <Text style={styles.message}>Số lượng hoặc đơn giá chưa chắc chắn. Hãy đối chiếu ảnh.</Text>}
+          <View key={`${index}-${item.name}`} style={styles.item}>
+            <View style={styles.itemRow}>
+              <Text style={[figmaType.bodyStrong, { color: colors.text, flex: 1 }]}>{item.name}</Text>
+              <Text style={[figmaType.amountRow, { color: colors.text }]}>{currencyWarning ? String(item.total) : formatMoney(item.total, "vi", "VND")}</Text>
+            </View>
+            <Text style={[figmaType.bodySmall, { color: colors.muted }]}>Số lượng: {item.quantity} · Đơn giá: {currencyWarning ? String(item.unitPrice) : formatMoney(item.unitPrice, "vi", "VND")}</Text>
+            {item.confidence < 0.7 && <Text style={[figmaType.bodySmall, { color: colors.warning }]}>Số lượng hoặc đơn giá chưa chắc chắn. Hãy đối chiếu ảnh.</Text>}
           </View>
         ))}
-        {lineItems.length === 0 && <Text style={styles.metric}>Chưa đọc được chi tiết sản phẩm.</Text>}
+        {lineItems.length === 0 && <Text style={[figmaType.bodySmall, { color: colors.muted }]}>Chưa đọc được chi tiết sản phẩm.</Text>}
+        </ReceiptSheet>
+        <View style={styles.pinned}>{pinnedPhoto}</View>
+        <View style={styles.tapeSmall} />
+        </View>
 
         {serverFallbackEnabled && receiptEligible && !localMode && needsFallback && !["completed", "failed", "cancelled", "expired"].includes(fallbackStatus ?? "") && (
           <Pressable
@@ -561,21 +592,40 @@ export default function CaptureReceiptScreen() {
             accessibilityState={{ busy: isQueueingFallback, disabled: isRecognizing || isQueueingFallback }}
             disabled={isRecognizing || isQueueingFallback}
             onPress={confirmServerFallback}
-            style={[
-              styles.secondary,
-              (isRecognizing || isQueueingFallback) && styles.disabled,
-            ]}
+            style={[styles.advanced, (isRecognizing || isQueueingFallback) && styles.disabled]}
           >
-            <Text style={styles.secondaryText}>
+            <AppIcon name="shimmer" size={16} color={colors.primary} />
+            <Text style={[figmaType.captionStrong, { color: colors.primary }]}>
               {isQueueingFallback
                 ? "Đang tạo yêu cầu…"
-                : "Nhận diện nâng cao (cần mạng)"}
+                : "Đọc chưa đúng? Nhận diện nâng cao (cần mạng)"}
             </Text>
           </Pressable>
         )}
         {fallbackStatus && (
-          <Text style={styles.metric}>{fallbackStatus === "completed" ? "Đã nhận diện xong" : fallbackStatus === "failed" || fallbackStatus === "expired" ? "Chưa nhận diện được, bạn có thể nhập tay" : "Đang nhận diện nâng cao…"}</Text>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{fallbackStatus === "completed" ? "Đã nhận diện xong" : fallbackStatus === "failed" || fallbackStatus === "expired" ? "Chưa nhận diện được, bạn có thể nhập tay" : "Đang nhận diện nâng cao…"}</Text>
         )}
+
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busyAny }}
+            disabled={busyAny}
+            onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
+            style={[styles.secondary, busyAny && styles.disabled]}
+          >
+            <AppIcon name="camera-outline" size={20} color={colors.primary} /><Text style={styles.secondaryText}>Chụp lại</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busyAny }}
+            disabled={busyAny}
+            onPress={() => void choose("library")}
+            style={[styles.secondary, busyAny && styles.disabled]}
+          >
+            <AppIcon name="image-outline" size={20} color={colors.primary} /><Text style={styles.secondaryText}>Chọn từ thư viện</Text>
+          </Pressable>
+        </View>
 
         {!localMode && <Pressable
           accessibilityLabel="Đính kèm ảnh hóa đơn vào giao dịch"
@@ -589,127 +639,120 @@ export default function CaptureReceiptScreen() {
             {attachReceipt && <Text style={styles.checkmark}>✓</Text>}
           </View>
           <View style={styles.consentCopy}>
-            <Text style={styles.consentTitle}>Đính kèm ảnh vào giao dịch</Text>
-            <Text style={styles.consentText}>
+            <Text style={[figmaType.bodyStrong, { color: colors.text }]}>Đính kèm ảnh vào giao dịch</Text>
+            <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
               Chỉ tải ảnh khi bạn lưu giao dịch.
             </Text>
           </View>
         </Pressable>}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ busy: isContinuing, disabled: !receiptEligible || !!currencyWarning || isContinuing || isQueueingFallback }}
-          disabled={!receiptEligible || !!currencyWarning || isContinuing || isQueueingFallback}
-          onPress={() => void continueToTransaction()}
-          style={[styles.primary, (isRecognizing || !!currencyWarning || isContinuing || isQueueingFallback) && styles.disabled]}
-        >
-          {isContinuing ? (
-            <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.onPrimary} />
-          ) : (
-            <Text style={styles.primaryText}>Kiểm tra và tạo giao dịch</Text>
-          )}
-        </Pressable>
         </>}
       </ScrollView>
+      {receiptEligible && (
+        <View style={styles.sticky}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ busy: isContinuing, disabled: !receiptEligible || !!currencyWarning || isContinuing || isQueueingFallback }}
+            disabled={!receiptEligible || !!currencyWarning || isContinuing || isQueueingFallback}
+            onPress={() => void continueToTransaction()}
+            style={[styles.primary, (isRecognizing || !!currencyWarning || isContinuing || isQueueingFallback) && styles.disabled]}
+          >
+            {isContinuing ? (
+              <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.onPrimary} />
+            ) : (
+              <Text style={styles.primaryText}>Kiểm tra và tạo giao dịch</Text>
+            )}
+          </Pressable>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.cream },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", padding: paperSpace.screen, gap: 14, paddingBottom: 48 },
-  back: { color: colors.link, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700" },
-  subtitle: { color: colors.muted, lineHeight: 21 },
-  placeholder: {
-    height: 300,
-    backgroundColor: colors.peach,
-    borderColor: colors.peach,
-    borderWidth: 1,
-    borderRadius: paperShape.card,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 28,
-  },
-  placeholderIcon: { fontSize: 50, color: colors.link },
-  placeholderTitle: {
-    color: colors.ink,
-    fontWeight: "700",
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 12,
-  },
-  image: { height: 340, borderRadius: radii.large, backgroundColor: colors.white },
-  actions: { gap: 10 },
+  safe: { flex: 1, backgroundColor: colors.canvas },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", paddingHorizontal: 20, paddingTop: 8, gap: 20, paddingBottom: 124 },
+  centerText: { textAlign: "center" },
+  intro: { gap: 6, alignItems: "flex-start" },
+  notReceipt: { height: 262, alignItems: "center", marginTop: 4 },
+  bigPhoto: { width: 200, height: 250, marginTop: 10, borderRadius: 8, padding: 8, backgroundColor: colors.paper, transform: [{ rotate: "3deg" }], ...figmaShadow("paper") },
+  bigImage: { flex: 1, borderRadius: 4, backgroundColor: colors.elevated },
+  bigArt: { flex: 1, borderRadius: 4, backgroundColor: colors.elevated },
+  tape: { position: "absolute", top: -2, alignSelf: "center", width: 54, height: 16, borderRadius: 3, backgroundColor: colors.pocketCoral, transform: [{ rotate: "-4deg" }] },
+  tips: { gap: 12, backgroundColor: colors.surface },
+  tip: { flexDirection: "row", alignItems: "center", gap: 10 },
+  tipCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.successSurface, alignItems: "center", justifyContent: "center" },
+  sheetWrap: { paddingTop: 14 },
+  sheet: { gap: 8, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 14 },
+  storeBlock: { gap: 2, paddingRight: 80 },
+  fieldLabel: { color: colors.muted, fontSize: 11, lineHeight: 16 },
+  storeInput: { ...figmaType.titleSection, color: colors.text, paddingVertical: 0, minHeight: 28 },
+  amountInput: { ...figmaType.amountHero, color: colors.text, paddingVertical: 0, minHeight: 42 },
+  pinned: { position: "absolute", top: -7, right: 8, width: 91, height: 114, padding: 5, paddingBottom: 14, borderRadius: 6, backgroundColor: colors.paper, transform: [{ rotate: "-5deg" }], ...figmaShadow("paper") },
+  pinnedImage: { width: 72, height: 88, borderRadius: 3, backgroundColor: colors.elevated },
+  pinnedArt: { width: 72, height: 88, borderRadius: 3, backgroundColor: colors.elevated },
+  tapeSmall: { position: "absolute", top: -6, right: 40, width: 46, height: 14, backgroundColor: colors.pocketCoral, transform: [{ rotate: "10deg" }] },
+  item: { gap: 2 },
+  itemRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  actions: { gap: 8 },
   primary: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 10,
-    backgroundColor: colors.mauve,
-    borderRadius: paperShape.button,
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 24,
     justifyContent: "center",
-    minHeight: paperControl.height,
-    paddingHorizontal: 14,
+    height: 48,
+    paddingLeft: 16,
+    paddingRight: 20,
   },
-  primaryText: { color: colors.onPrimary, fontWeight: "700", fontSize: 15 },
+  primaryText: { ...figmaType.button, color: colors.onPrimary },
   secondary: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 10,
-    backgroundColor: colors.white,
-    borderColor: colors.peach,
-    borderWidth: 1,
-    borderRadius: paperShape.button,
+    gap: 8,
+    backgroundColor: colors.selectedSurface,
+    borderRadius: 24,
     justifyContent: "center",
-    minHeight: paperControl.height,
-    paddingHorizontal: 14,
-  },
-  secondaryText: { color: colors.link, fontWeight: "700", fontSize: 15 },
-  disabled: { opacity: 0.55 },
-  progress: { flexDirection: "row", alignItems: "center", gap: 10 },
-  progressText: { color: colors.muted, fontWeight: "700" },
-  label: { color: colors.ink, fontWeight: "700", marginTop: 4 },
-  input: {
-    backgroundColor: colors.white,
-    borderColor: colors.controlBorder,
-    borderWidth: 1,
-    borderRadius: paperShape.input,
-    minHeight: paperControl.height,
+    height: 40,
     paddingHorizontal: 16,
-    color: colors.ink,
   },
-  message: { color: colors.ink, lineHeight: 20 },
-  metric: { color: colors.muted, fontSize: 12 },
+  secondaryText: { ...figmaType.button, color: colors.primary },
+  textButton: { alignItems: "center", justifyContent: "center", height: 40 },
+  disabled: { opacity: 0.55 },
+  input: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 14,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    ...figmaType.bodyStrong,
+    color: colors.text,
+  },
+  inputWarning: { backgroundColor: colors.warningSurface, borderColor: colors.warningSurface },
+  message: { color: colors.text },
+  advanced: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" },
   consent: {
     alignItems: "flex-start",
-    backgroundColor: colors.white,
-    borderColor: colors.peach,
-    borderRadius: radii.small,
-    borderWidth: 1,
+    backgroundColor: colors.paper,
+    borderRadius: 18,
     flexDirection: "row",
     gap: 12,
     padding: 14,
+    ...figmaShadow("paper"),
   },
   checkbox: {
     alignItems: "center",
-    borderColor: colors.primaryOutline,
-    borderRadius: 5,
+    borderColor: colors.primary,
+    borderRadius: 6,
     borderWidth: 2,
     height: 22,
     justifyContent: "center",
     marginTop: 1,
     width: 22,
   },
-  checkboxSelected: { backgroundColor: colors.mauve },
-  checkmark: { color: colors.onPrimary, fontSize: 14, fontWeight: "900" },
+  checkboxSelected: { backgroundColor: colors.primary },
+  checkmark: { color: colors.onPrimary, fontSize: 14, fontWeight: "800" },
   consentCopy: { flex: 1 },
-  consentTitle: { color: colors.ink, fontWeight: "700" },
-  consentText: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 4 },
-  privacy: {
-    color: colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: "center",
-    marginTop: 8,
-  },
+  sticky: { position: "absolute", left: 0, right: 0, bottom: 0, backgroundColor: colors.canvas, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 },
 });

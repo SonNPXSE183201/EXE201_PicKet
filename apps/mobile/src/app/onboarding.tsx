@@ -1,4 +1,7 @@
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { figmaRadii, figmaType } from "@picket/design-tokens";
+import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
+import { IconButton } from "@/core/ui/picket-ui";
+import { PaperArt } from "@/core/ui/paper-art";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
@@ -6,7 +9,6 @@ import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
 import type { Dispatch, SetStateAction } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -23,7 +25,6 @@ const personas = ["Đi làm", "Sinh viên", "Tự do", "Gia đình"] as const;
 const currencies = ["VND", "USD"] as const;
 
 export default function OnboardingScreen() {
-  const { t } = useTranslation("common");
   const { colors, styles } = useMobileStyles(createStyles);
   const { loading: authLoading, session } = useAuth();
   const { completeOnboarding, loading: profileLoading, profile } = useProfile();
@@ -33,24 +34,24 @@ export default function OnboardingScreen() {
   const [persona, setPersona] = useState<(typeof personas)[number]>("Đi làm");
   const [goal, setGoal] = useState<(typeof goals)[number]>("Hiểu chi tiêu");
   const [currencyCode, setCurrencyCode] = useState<(typeof currencies)[number]>("VND");
-  const [walletName, setWalletName] = useState(t("Tiền mặt"));
+  const [walletName, setWalletName] = useState("Tiền mặt");
   const [openingBalance, setOpeningBalance] = useState("0");
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   if (authLoading || (session && profileLoading)) {
-    return <View style={styles.loading}><ActivityIndicator accessibilityLabel={t("Đang tải thiết lập")} color={colors.link} /></View>;
+    return <View style={styles.loading}><ActivityIndicator accessibilityLabel="Đang tải thiết lập" color={colors.primary} /></View>;
   }
   if (!session) return <Redirect href={routes.login} />;
   if (profile?.onboardingCompleted) return <Redirect href={routes.home} />;
 
   async function next() {
     setMessage(null);
-    if (step === 1 && !displayName.trim()) return setMessage(t("Hãy nhập tên hiển thị."));
-    if (step === 5 && !walletName.trim()) return setMessage(t("Hãy nhập tên ví."));
-    if (step === 6 && !/^\d+$/.test(openingBalance)) return setMessage(t("Số dư chưa hợp lệ."));
-    if (step === 7 && !privacyAccepted) return setMessage(t("Bạn cần xác nhận chính sách dữ liệu."));
+    if (step === 1 && !displayName.trim()) return setMessage("Hãy nhập tên hiển thị.");
+    if (step === 5 && !walletName.trim()) return setMessage("Hãy nhập tên ví.");
+    if (step === 6 && !/^\d+$/.test(openingBalance)) return setMessage("Số dư chưa hợp lệ.");
+    if (step === 7 && !privacyAccepted) return setMessage("Bạn cần xác nhận chính sách dữ liệu.");
     if (step < 7) return setStep((current) => current + 1);
 
     setBusy(true);
@@ -66,30 +67,35 @@ export default function OnboardingScreen() {
       await refreshAccounts();
       router.replace(routes.home);
     } catch {
-      setMessage(t("Chưa lưu được lựa chọn. Hãy kiểm tra kết nối và thử lại."));
+      setMessage("Chưa lưu được lựa chọn. Hãy kiểm tra kết nối và thử lại.");
     } finally {
       setBusy(false);
     }
   }
 
+  const skippable = step >= 2 && step <= 4;
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View accessibilityLabel={t("Tiến độ thiết lập {{step}} trên 8", { step: step + 1 })} accessibilityRole="progressbar" accessibilityValue={{ max: 8, min: 1, now: step + 1 }} style={styles.progressTrack}><View style={[styles.progress, { width: `${((step + 1) / 8) * 100}%` }]} /></View>
+      <View style={styles.top}>
+        {step > 0 ? <IconButton icon="chevron-left" label="Quay lại" variant="surface" disabled={busy} onPress={() => setStep((current) => current - 1)} /> : <View style={styles.topSpacer} />}
+        <View accessibilityLabel={`Tiến độ thiết lập ${step + 1} trên 8`} accessibilityRole="progressbar" accessibilityValue={{ max: 8, min: 1, now: step + 1 }} style={styles.dots}>
+          {Array.from({ length: 8 }, (_, index) => <View key={index} style={[styles.dot, index === step && styles.dotActive]} />)}
+        </View>
+        {skippable ? <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setStep((current) => current + 1)}><Text style={styles.skip}>Bỏ qua</Text></Pressable> : <View style={styles.topSpacer} />}
+      </View>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.counter}>{t("Thiết lập {{step}}/8", { step: step + 1 })}</Text>
-        {step === 0 && <Step title={t("Giữ từng chi tiêu. Gom từng kỷ niệm.")} description={t("Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn.")} />}
-        {step === 1 && <Step title={t("Mình gọi bạn là gì?")} description={t("Tên này chỉ dùng để cá nhân hóa trải nghiệm.")}><Field value={displayName} onChangeText={setDisplayName} placeholder={t("Tên hiển thị")} /></Step>}
-        {step === 2 && <Step title={t("Nhịp sống của bạn")} description={t("Chọn nhóm gần nhất với hoàn cảnh hiện tại.")}><Choices values={personas} selected={persona} onSelect={setPersona} /></Step>}
-        {step === 3 && <Step title={t("Mục tiêu chính")} description={t("Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này.")}><Choices values={goals} selected={goal} onSelect={setGoal} /></Step>}
-        {step === 4 && <Step title={t("Đơn vị tiền tệ")} description={t("Bạn có thể thay đổi lựa chọn này sau.")}><Choices values={currencies} selected={currencyCode} onSelect={setCurrencyCode} /></Step>}
-        {step === 5 && <Step title={t("Tạo ví đầu tiên")} description={t("Ví có thể là tiền mặt, tài khoản ngân hàng hoặc quỹ riêng.")}><Field value={walletName} onChangeText={setWalletName} placeholder={t("Tên ví")} /></Step>}
-        {step === 6 && <Step title={t("Số dư hiện tại")} description={t("Nhập số dư để báo cáo bắt đầu đúng từ hôm nay.")}><Field money value={openingBalance} onChangeText={setOpeningBalance} keyboardType="number-pad" placeholder={t("Số dư")} /></Step>}
-        {step === 7 && <Step title={t("Sẵn sàng bắt đầu")} description={t("{{name}}, bạn sẽ bắt đầu với ví “{{wallet}}”.", { name: displayName, wallet: walletName })}><Pressable accessibilityLabel={t("Đồng ý lưu và đồng bộ dữ liệu tài chính")} accessibilityRole="checkbox" accessibilityState={{ checked: privacyAccepted }} onPress={() => setPrivacyAccepted((value) => !value)} style={styles.consent}><View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.checkbox, privacyAccepted && styles.checked]} /><Text style={styles.consentText}>{t("Tôi hiểu dữ liệu tài chính sẽ được lưu và đồng bộ an toàn theo cài đặt của mình.")}</Text></Pressable></Step>}
+        {step === 0 && <Step title="Giữ từng chi tiêu. Gom từng kỷ niệm." description="Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn."><View style={styles.art}><PaperArt id="bloom" style={{ width: 160, height: 160 }} /></View></Step>}
+        {step === 1 && <Step title="Mình gọi bạn là gì?" description="Picket dùng tên này để chào bạn mỗi ngày."><View style={styles.nameCard}><Text style={styles.overline}>TÊN HIỂN THỊ</Text><TextInput accessibilityLabel="Tên hiển thị" value={displayName} onChangeText={setDisplayName} placeholder="Tên hiển thị" placeholderTextColor={colors.muted} selectionColor={colors.primary} style={styles.nameInput} /><View style={styles.underline} /><Text style={styles.hint}>Tên thật hay biệt danh đều được.</Text></View></Step>}
+        {step === 2 && <Step title="Nhịp sống của bạn" description="Chọn nhóm gần nhất với hoàn cảnh hiện tại."><Choices values={personas} selected={persona} onSelect={setPersona} /></Step>}
+        {step === 3 && <Step title="Mục tiêu chính" description="Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này."><Choices values={goals} selected={goal} onSelect={setGoal} /></Step>}
+        {step === 4 && <Step title="Đơn vị tiền tệ" description="Bạn có thể thay đổi lựa chọn này sau."><Choices values={currencies} selected={currencyCode} onSelect={setCurrencyCode} /></Step>}
+        {step === 5 && <Step title="Tạo ví đầu tiên" description="Ví có thể là tiền mặt, tài khoản ngân hàng hoặc quỹ riêng."><Field value={walletName} onChangeText={setWalletName} placeholder="Tên ví" /></Step>}
+        {step === 6 && <Step title="Số dư hiện tại" description="Nhập số dư để báo cáo bắt đầu đúng từ hôm nay."><Field money value={openingBalance} onChangeText={setOpeningBalance} keyboardType="number-pad" placeholder="Số dư" /></Step>}
+        {step === 7 && <Step title="Sẵn sàng bắt đầu" description={`${displayName}, bạn sẽ bắt đầu với ví “${walletName}”.`}><Pressable accessibilityLabel="Đồng ý lưu và đồng bộ dữ liệu tài chính" accessibilityRole="checkbox" accessibilityState={{ checked: privacyAccepted }} onPress={() => setPrivacyAccepted((value) => !value)} style={styles.consent}><View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.checkbox, privacyAccepted && styles.checked]} /><Text style={styles.consentText}>Tôi hiểu dữ liệu tài chính sẽ được lưu và đồng bộ an toàn theo cài đặt của mình.</Text></Pressable></Step>}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
       </ScrollView>
       <View style={styles.actions}>
-        {step > 0 && <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => setStep((current) => current - 1)} style={styles.secondary}><Text style={styles.secondaryText}>{t("Quay lại")}</Text></Pressable>}
-        <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled: busy }} disabled={busy} onPress={() => void next()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel={t("Đang hoàn tất thiết lập")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{step === 7 ? t("Bắt đầu cùng Picket") : t("Tiếp tục")}</Text>}</Pressable>
+        <FigmaButton label={step === 7 ? "Bắt đầu cùng Picket" : "Tiếp tục"} onPress={() => void next()} busy={busy} fullWidth />
       </View>
     </SafeAreaView>
   );
@@ -107,35 +113,39 @@ function Field(props: React.ComponentProps<typeof TextInput>) {
 }
 
 function Choices<T extends string>({ values, selected, onSelect }: { values: readonly T[]; selected: T; onSelect: Dispatch<SetStateAction<T>> }) {
-  const { t } = useTranslation("common");
   const { styles } = useMobileStyles(createStyles);
-  return <View accessibilityRole="radiogroup" style={styles.choices}>{values.map((value) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected === value }} key={value} onPress={() => onSelect(value)} style={[styles.choice, selected === value && styles.choiceSelected]}><Text style={[styles.choiceText, selected === value && styles.choiceTextSelected]}>{value === "VND" || value === "USD" ? value : t(value)}</Text></Pressable>)}</View>;
+  return <View accessibilityRole="radiogroup" style={styles.choices}>{values.map((value) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected === value }} key={value} onPress={() => onSelect(value)} style={[styles.choice, selected === value && styles.choiceSelected]}><Text style={[styles.choiceText, selected === value && styles.choiceTextSelected]}>{value}</Text></Pressable>)}</View>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
-  loading: { alignItems: "center", backgroundColor: colors.cream, flex: 1, justifyContent: "center" },
-  progressTrack: { backgroundColor: colors.peach, height: 5 },
-  progress: { backgroundColor: colors.mauve, height: 5 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1, justifyContent: "center", padding: paperSpace.screen },
-  counter: { color: colors.link, fontSize: 13, fontWeight: "700", marginBottom: 24 },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
-  description: { color: colors.muted, fontSize: 16, lineHeight: 24, marginTop: 12 },
-  stepBody: { marginTop: 28 },
-  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
-  choices: { gap: 12 },
-  choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.chip, borderWidth: 1, minHeight: paperControl.height, padding: 16 },
-  choiceSelected: { backgroundColor: colors.mauve, borderColor: colors.primaryOutline },
-  choiceText: { color: colors.ink, fontSize: 16, fontWeight: "700" },
-  choiceTextSelected: { color: colors.onPrimary },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
+  loading: { alignItems: "center", backgroundColor: colors.canvas, flex: 1, justifyContent: "center" },
+  top: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 24 },
+  topSpacer: { width: 44 },
+  dots: { alignItems: "center", flexDirection: "row", gap: 6 },
+  dot: { backgroundColor: colors.border, borderRadius: 3, height: 6, width: 6 },
+  dotActive: { backgroundColor: colors.primary, width: 22 },
+  skip: { ...figmaType.captionStrong, color: colors.muted, textAlign: "right", width: 44 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1, paddingHorizontal: 20, paddingTop: 20 },
+  title: { ...figmaType.display, color: colors.text },
+  description: { ...figmaType.bodySmall, color: colors.muted, marginTop: 4 },
+  stepBody: { marginTop: 20 },
+  art: { alignItems: "center", paddingTop: 24 },
+  nameCard: { backgroundColor: colors.paper, borderRadius: figmaRadii.receipt, gap: 8, paddingBottom: 12, paddingHorizontal: 16, paddingTop: 16, ...figmaShadow("paper") },
+  overline: { ...figmaType.overline, color: colors.muted },
+  nameInput: { ...figmaType.amountHero, color: colors.text, padding: 0 },
+  underline: { backgroundColor: colors.border, height: 1 },
+  hint: { ...figmaType.bodySmall, color: colors.muted },
+  input: { backgroundColor: colors.paper, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: 56, paddingHorizontal: 16 },
+  choices: { gap: 10 },
+  choice: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, justifyContent: "center", minHeight: 56, paddingHorizontal: 16 },
+  choiceSelected: { backgroundColor: colors.selectedSurface, borderColor: colors.primary, borderWidth: 1.5 },
+  choiceText: { ...figmaType.bodyStrong, color: colors.text },
+  choiceTextSelected: { color: colors.primary, fontWeight: "800" },
   consent: { alignItems: "flex-start", flexDirection: "row", gap: 12 },
-  checkbox: { borderColor: colors.primaryOutline, borderRadius: 4, borderWidth: 2, height: 22, width: 22 },
-  checked: { backgroundColor: colors.mauve },
-  consentText: { color: colors.ink, flex: 1, fontSize: 15, lineHeight: 22 },
-  error: { color: colors.danger, fontSize: 14, marginTop: 20 },
-  actions: { flexDirection: "row", gap: 12, padding: 20 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, flex: 1, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 16 },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
-  secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 16 },
-  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  checkbox: { borderColor: colors.primary, borderRadius: 6, borderWidth: 2, height: 22, width: 22 },
+  checked: { backgroundColor: colors.primary },
+  consentText: { ...figmaType.bodySmall, color: colors.text, flex: 1 },
+  error: { ...figmaType.bodySmall, color: colors.expense, marginTop: 16 },
+  actions: { paddingBottom: 24, paddingHorizontal: 20, paddingTop: 12 },
 });

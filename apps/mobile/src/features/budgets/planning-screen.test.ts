@@ -55,6 +55,7 @@ function harness() {
     "@/core/sync/offline-cache": { withLocalOwnerAccess: async (owner: string, operation: () => Promise<unknown>) => {
       assert.equal(owner, session.user.id); await fenceWait; if (state.retired) throw Error("Retired owner"); return operation();
     } },
+    "@/features/sync/use-pull-refresh": { usePullRefresh: () => async () => {} },
     "@/features/auth/auth-context": { useAuth: () => ({ session, localMode: false }) },
     "@/core/local/guest-finance-context": { useGuestFinance: () => ({ data: {}, loading: false }) },
     "@/features/budgets/budgets-context": { useBudgets: () => ({ budgets, update: async () => {} }) },

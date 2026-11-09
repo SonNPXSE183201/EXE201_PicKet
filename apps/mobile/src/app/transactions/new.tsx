@@ -1,4 +1,3 @@
-import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useTransactionCopy, type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
@@ -14,10 +13,13 @@ import { completeDuplicateCapture } from "@/core/receipts/duplicate-capture-comp
 import { receiptRequestTextError } from "@/core/receipts/receipt-request-journal";
 import { durableReceiptStoragePath } from "@/core/receipts/receipt-storage-policy";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ChoiceChip, PicketScreen, PrimaryAction, TopAppBar } from "@/core/ui/picket-ui";
+import { CategoryPickerSheet, WalletPickerSheet } from "@/core/ui/picker-sheets";
+import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
+import { figmaType } from "@picket/design-tokens";
+import { categoryTile } from "@/features/home/home-recent";
+import { useFigmaCopy } from "@/features/transactions/figma-copy";
+import { AmountPaper, ChildBar, ErrorLine, FigmaScreen, FormRow, HeadingPair, NoticeCard, PaperCard, heroAmount } from "@/features/transactions/figma-parts";
 import { AppIcon } from "@/core/ui/app-icon";
-import { PaperArt } from "@/core/ui/paper-art";
-import { categoryArt } from "@/core/theme/category-art";
 import { picketApi } from "@/core/api/client";
 import {
   getPendingReceiptDraft,
@@ -48,6 +50,7 @@ type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
 
 export default function NewTransactionScreen() {
   const { tx, locale, money } = useTransactionCopy();
+  const copy = useFigmaCopy();
   const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const owner = session?.user.id ?? (localMode ? guestOwnerId : null);
@@ -72,6 +75,8 @@ export default function NewTransactionScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<TransactionNotice | null>(null);
   const [receiptDraft, setReceiptDraft] = useState<PendingReceiptDraft | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [pickWallet, setPickWallet] = useState(false);
   const [loadingDraft, setLoadingDraft] = useState(Boolean(params.receiptDraftId));
 
   useEffect(() => {
@@ -348,11 +353,31 @@ export default function NewTransactionScreen() {
     }
   }
 
-  return (
-    <PicketScreen>
-      <TopAppBar title={tx("Ghi chép giao dịch")} subtitle={tx("Ghi lại khoản thu hoặc chi của bạn.")} />
+  const wallet = accounts.find((account) => account.id === selectedAccountId);
+  const noWallet = accounts.length === 0;
+  const shownCategories = effectiveCategories.slice(0, 3);
+  const parsedAmountNow = Number.parseInt(amount, 10);
+  const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+  const duplicate = receiptDraft || !Number.isSafeInteger(parsedAmountNow) || parsedAmountNow <= 0 ? null
+    : transactions.find((item) => item.kind === kind && item.amount === parsedAmountNow && Date.parse(item.occurredAt) >= dayStart.getTime()) ?? null;
+  const today = new Date();
+  const dateText = `${today.getDate()}/${today.getMonth() + 1}`;
+  const signColor = kind === "expense" ? colors.expense : colors.income;
+  const cta = receiptDraft?.transactionRequest ? tx("Thử lại yêu cầu cũ") : noWallet && !localMode ? copy("createWalletFirst") : copy("save");
+  const onCta = () => { if (noWallet && !localMode && !receiptDraft) router.push(routes.newAccount); else void submit(); };
 
-      {loadingDraft && <ActivityIndicator accessibilityLabel={tx("Đang tải bản nháp hóa đơn")} color={colors.link} />}
+  return (
+    <FigmaScreen footer={<>
+      <FigmaButton fullWidth icon="check" busy={busy} disabled={loadingDraft} label={cta} onPress={onCta} />
+      {!localMode && receiptDraft?.transactionRequest && !receiptDraft.transactionId && (
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void recoverReceiptAttempt()} style={{ marginTop: 8, alignItems: "center" }}>
+          <Text style={styles.manageCategoryLink}>{tx("Kiểm tra để sửa yêu cầu")}</Text>
+        </Pressable>
+      )}
+    </>}>
+      <ChildBar title={copy("addTitle")} />
+
+      {loadingDraft && <ActivityIndicator accessibilityLabel={tx("Đang tải bản nháp hóa đơn")} color={colors.primary} />}
 
       {receiptDraft && (
         <View style={styles.receiptCard}>
@@ -361,501 +386,124 @@ export default function NewTransactionScreen() {
             <Text style={styles.receiptTitle}>{tx("Có đính kèm hóa đơn")}</Text>
             <Text style={styles.receiptHint}>
               {tx("Ảnh chỉ được tải lên khi bạn bấm Lưu giao dịch.")}
-              {receiptDraft.lineItems.length > 0
-                ? tx("receiptItems", { count: receiptDraft.lineItems.length })
-                : tx(" Không có dòng sản phẩm đủ tin cậy; bạn có thể thêm sau.")}
+              {receiptDraft.lineItems.length > 0 ? tx("receiptItems", { count: receiptDraft.lineItems.length }) : tx(" Không có dòng sản phẩm đủ tin cậy; bạn có thể thêm sau.")}
             </Text>
           </View>
         </View>
       )}
 
-      {/* Segment Pills: Chi tiêu / Thu nhập / Chuyển ví matching screen_09 */}
       {!receiptDraft?.transactionRequest && (
         <View accessibilityRole="radiogroup" style={styles.segment}>
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityState={{ checked: kind === "expense" }}
-            onPress={() => {
-              setKind("expense");
-              setCategoryId("");
-            }}
-            style={styles.segmentPressable}
-          >
-            <View style={[styles.segmentPill, kind === "expense" && styles.segmentPillSelected]}>
-              <Text style={[styles.segmentText, kind === "expense" && styles.segmentTextSelected]}>
-                {tx("Khoản chi")}
-              </Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityState={{ checked: kind === "income" }}
-            onPress={() => {
-              setKind("income");
-              setCategoryId("");
-            }}
-            style={styles.segmentPressable}
-          >
-            <View style={[styles.segmentPill, kind === "income" && styles.segmentPillSelected]}>
-              <Text style={[styles.segmentText, kind === "income" && styles.segmentTextSelected]}>
-                {tx("Khoản thu")}
-              </Text>
-            </View>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push(routes.newTransfer)}
-            style={styles.segmentPressable}
-          >
-            <View style={styles.segmentPill}>
-              <Text style={styles.segmentText}>{tx("Chuyển ví")}</Text>
-            </View>
-          </Pressable>
-        </View>
-      )}
-
-      {/* Hero Amount Card matching screen_09 */}
-      {receiptDraft?.transactionRequest ? (
-        <View style={styles.heroAmountCard}>
-          <Text style={styles.heroAmountLabel}>{tx("Yêu cầu gốc đã được lưu an toàn")}</Text>
-          <Text style={styles.receiptHint}>
-            {tx("Thử lại sẽ giữ nguyên ví, danh mục, thời gian và số tiền để không tạo giao dịch trùng. Hoàn tất yêu cầu này trước khi sửa giao dịch.")}
-          </Text>
-          <Text style={styles.heroAmountValue}>{money(receiptDraft.transactionRequest.amount)}</Text>
-          <Text style={styles.receiptHint}>
-            {accounts.find((account) => account.id === receiptDraft.transactionRequest?.accountId)?.name ?? tx("Ví của yêu cầu gốc")} ·{" "}
-            {receiptDraft.transactionRequest.kind === "expense" ? tx("Khoản chi") : tx("Khoản thu")}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.heroAmountCard}>
-          <Text style={styles.heroAmountLabel}>{tx("Số tiền giao dịch (VND):")}</Text>
-          <View style={styles.amountInputRow}>
-            <Text
-              style={[
-                styles.amountSignText,
-                { color: kind === "expense" ? colors.expense : colors.income },
-              ]}
-            >
-              {kind === "expense" ? "−" : "+"}
-            </Text>
-            <TextInput
-              money
-              borderless
-              accessibilityLabel={tx("Số tiền giao dịch")}
-              keyboardType="number-pad"
-              placeholder="0"
-              placeholderTextColor={colors.muted}
-              style={[
-                styles.amountInputField,
-                { color: kind === "expense" ? colors.expense : colors.income },
-              ]}
-              value={amount}
-              onChangeText={setAmount}
-            />
-            <Text
-              style={[
-                styles.amountCurrencyText,
-                { color: kind === "expense" ? colors.expense : colors.income },
-              ]}
-            >
-              {"đ"}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* 4x2 Category Grid matching screen_09 */}
-      {!receiptDraft?.transactionRequest && (
-        <View style={styles.categorySection}>
-          <View style={styles.categoryHeaderRow}>
-            <Text style={styles.categorySectionTitle}>{tx("CHỌN DANH MỤC")}</Text>
-            <Pressable accessibilityRole="link" onPress={() => router.push(routes.categories)}>
-              <Text style={styles.manageCategoryLink}>{tx("Quản lý")}</Text>
+          {([["expense", copy("expense")], ["income", copy("incomeKind")]] as const).map(([value, label]) => (
+            <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: kind === value }} onPress={() => { setKind(value); setCategoryId(""); }} style={[styles.segmentPill, kind === value && styles.segmentPillSelected]}>
+              <Text style={[styles.segmentText, kind === value && styles.segmentTextSelected]}>{label}</Text>
             </Pressable>
-          </View>
+          ))}
+          <Pressable accessibilityRole="button" onPress={() => router.push(routes.newTransfer)} style={styles.segmentPill}>
+            <Text style={styles.segmentText}>{copy("transfer")}</Text>
+          </Pressable>
+        </View>
+      )}
 
+      <View>
+        <View accessible={false} style={styles.stub}>
+          <Text style={[figmaType.overline, { color: colors.text }]}>{copy("stubToday", { date: dateText }).toUpperCase()}</Text>
+          {wallet ? <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{wallet.name}</Text> : null}
+        </View>
+        <View style={{ marginTop: -26 }}>
+          <AmountPaper overline={copy("amountOverline")} footer={receiptDraft?.transactionRequest ? undefined : (
+            <View style={styles.noteLine}>
+              <AppIcon name="pencil-outline" size={14} color={colors.muted} />
+              <TextInput accessibilityLabel={tx("Nội dung giao dịch")} borderless placeholder={tx("Ví dụ: Ăn trưa")} placeholderTextColor={colors.muted} style={styles.titleInput} value={title} onChangeText={setTitle} />
+            </View>
+          )}>
+            {receiptDraft?.transactionRequest ? (
+              <View style={{ alignItems: "center", gap: 6 }}>
+                <Text style={[heroAmount, { color: colors.text }]}>{money(receiptDraft.transactionRequest.amount)}</Text>
+                <Text style={styles.receiptHint}>{tx("Thử lại sẽ giữ nguyên ví, danh mục, thời gian và số tiền để không tạo giao dịch trùng. Hoàn tất yêu cầu này trước khi sửa giao dịch.")}</Text>
+                <Text style={styles.receiptHint}>{accounts.find((account) => account.id === receiptDraft.transactionRequest?.accountId)?.name ?? tx("Ví của yêu cầu gốc")} · {receiptDraft.transactionRequest.kind === "expense" ? tx("Khoản chi") : tx("Khoản thu")}</Text>
+              </View>
+            ) : (
+              <View style={styles.amountRow}>
+                <TextInput money borderless accessibilityLabel={tx("Số tiền giao dịch")} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={[styles.amountInput, { color: amount ? colors.text : colors.muted }]} value={amount} onChangeText={setAmount} />
+                <Text style={[heroAmount, { color: signColor, textDecorationLine: "underline" }]}>₫</Text>
+              </View>
+            )}
+          </AmountPaper>
+        </View>
+      </View>
+
+      {duplicate && (
+        <NoticeCard title={copy("dupTitle")} body={`${duplicate.title} · ${money(duplicate.amount)} · ${new Date(duplicate.occurredAt).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`} action={copy("dupView")} onAction={() => router.push(routes.transaction(duplicate.id))} />
+      )}
+
+      {message && <ErrorLine>{tx(message)}</ErrorLine>}
+
+      {!receiptDraft?.transactionRequest && (
+        <View style={{ gap: 12 }}>
+          <HeadingPair overline={copy("categoryOverline")} title={copy("categoryTitle")} />
           <View style={styles.categoryGrid}>
-            {effectiveCategories.slice(0, 8).map((category) => {
-              const isSelected = selectedCategoryId === category.id;
-              const artId = categoryArt(category.icon, category.name);
+            {shownCategories.map((category) => {
+              const selected = selectedCategoryId === category.id;
+              const tile = categoryTile(category.icon, category.name, kind === "income", colors);
               return (
-                <Pressable
-                  key={category.id}
-                  onPress={() => setCategoryId(category.id)}
-                  style={[styles.categoryTile, isSelected && styles.categoryTileSelected]}
-                >
-                  <View style={[styles.categoryIconWrap, isSelected && styles.categoryIconWrapSelected]}>
-                    <PaperArt id={artId} style={{ width: 30, height: 30 }} />
-                  </View>
-                  <Text
-                    numberOfLines={1}
-                    style={[styles.categoryTileName, isSelected && styles.categoryTileNameSelected]}
-                  >
-                    {category.name}
-                  </Text>
+                <Pressable key={category.id} accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={category.name} onPress={() => setCategoryId(category.id)} style={styles.categoryCell}>
+                  <View style={[styles.categoryTile, selected && { backgroundColor: tile.color, borderColor: colors.primary, borderWidth: 1.5 }]}><AppIcon name={tile.name} size={22} color={colors.text} /></View>
+                  <Text numberOfLines={1} style={[styles.categoryName, selected && { fontWeight: "800", color: colors.primary }]}>{category.name}</Text>
                 </Pressable>
               );
             })}
-          </View>
-        </View>
-      )}
-
-      {/* Grouped Details Card matching screen_09 */}
-      <View style={styles.groupedCard}>
-        {/* Row 1: Tài khoản / Ví thanh toán */}
-        <View style={styles.groupedRow}>
-          <View style={styles.rowIconBadge}>
-            <AppIcon name="wallet-outline" size={18} color={colors.mauve} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowLabelText}>{tx("Ví / tài khoản thanh toán")}</Text>
-            {accounts.length === 0 ? (
-              <Pressable accessibilityRole="button" onPress={() => router.push(routes.newAccount)}>
-                <Text style={styles.manageCategoryLink}>{tx("Tạo ví đầu tiên")}</Text>
+            {effectiveCategories.length > 3 && (
+              <Pressable accessibilityRole="button" onPress={() => setShowAllCategories(true)} style={styles.categoryCell}>
+                <View style={styles.categoryTile}><AppIcon name="dots-horizontal" size={22} color={colors.text} /></View>
+                <Text numberOfLines={1} style={styles.categoryName}>{copy("more")}</Text>
               </Pressable>
-            ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.accountChipsRow}>
-                {accounts.map((account) => (
-                  <ChoiceChip
-                    checked={selectedAccountId === account.id}
-                    key={account.id}
-                    label={account.name}
-                    onPress={() => setAccountId(account.id)}
-                  />
-                ))}
-              </ScrollView>
             )}
           </View>
+          <Pressable accessibilityRole="link" onPress={() => router.push(routes.categories)}><Text style={styles.manageCategoryLink}>{tx("Quản lý")}</Text></Pressable>
+          <CategoryPickerSheet visible={showAllCategories} title={copy("categoryPickTitle")} searchPlaceholder={copy("categorySearch")} closeLabel={copy("close")} selectedId={selectedCategoryId}
+            options={effectiveCategories.map((item) => { const tile = categoryTile(item.icon, item.name, kind === "income", colors); return { id: item.id, name: item.name, icon: tile.name, tint: tile.color }; })}
+            onSelect={(id) => { setCategoryId(id); setShowAllCategories(false); }} onClose={() => setShowAllCategories(false)} />
         </View>
-
-        <View style={styles.rowDivider} />
-
-        {/* Row 2: Ngày giao dịch */}
-        <View style={styles.groupedRow}>
-          <View style={styles.rowIconBadge}>
-            <AppIcon name="calendar-month-outline" size={18} color={colors.mauve} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rowLabelText}>{tx("Ngày giao dịch")}</Text>
-            <Text style={styles.rowValueText}>
-              {tx("Hôm nay")}, {new Date().toLocaleDateString(locale)}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.rowDivider} />
-
-        {/* Row 3: Nội dung giao dịch */}
-        <View style={styles.groupedRow}>
-          <View style={styles.rowIconBadge}>
-            <AppIcon name="note-text-outline" size={18} color={colors.mauve} />
-          </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={styles.rowLabelText}>{tx("Nội dung giao dịch")}</Text>
-            <TextInput
-              accessibilityLabel={tx("Nội dung giao dịch")}
-              placeholder={tx("Ví dụ: Ăn trưa")}
-              placeholderTextColor={colors.muted}
-              style={styles.detailInput}
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-        </View>
-
-        <View style={styles.rowDivider} />
-
-        {/* Row 4: Ảnh hóa đơn đính kèm */}
-        <View style={styles.groupedRow}>
-          <View style={styles.rowIconBadge}>
-            <AppIcon name="camera-outline" size={18} color={colors.mauve} />
-          </View>
-          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={styles.rowLabelText}>{tx("Ảnh hóa đơn đính kèm")}</Text>
-            <Text style={styles.rowHintText}>
-              {receiptDraft ? tx("Có đính kèm hóa đơn") : tx("Chưa đính kèm")}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {message && (
-        <Text accessibilityLiveRegion="polite" role="alert" style={styles.errorText}>
-          {tx(message)}
-        </Text>
       )}
 
-      {/* Solid Plum Pill CTA matching screen_09 */}
-      <View style={{ marginTop: 16, marginBottom: 24 }}>
-        <PrimaryAction
-          busy={busy}
-          disabled={loadingDraft}
-          label={receiptDraft?.transactionRequest ? tx("Thử lại yêu cầu cũ") : tx("Lưu giao dịch")}
-          onPress={() => void submit()}
-        />
-        {!localMode && receiptDraft?.transactionRequest && !receiptDraft.transactionId && (
-          <Pressable accessibilityRole="button" disabled={busy} onPress={() => void recoverReceiptAttempt()} style={{ marginTop: 8 }}>
-            <Text style={styles.manageCategoryLink}>{tx("Kiểm tra để sửa yêu cầu")}</Text>
-          </Pressable>
-        )}
-      </View>
-    </PicketScreen>
+      <PaperCard>
+        <FormRow icon="wallet-outline" label={copy("rowWallet")} value={wallet?.name ?? copy("noWallet")} tone={noWallet ? "warning" : undefined} onPress={noWallet ? () => router.push(routes.newAccount) : accounts.length > 1 ? () => setPickWallet(!pickWallet) : undefined} />
+        <WalletPickerSheet visible={pickWallet} title={copy("walletPickTitle")} closeLabel={copy("close")} selectedId={selectedAccountId}
+          options={accounts.map((account) => ({ id: account.id, name: account.name }))} onSelect={(id) => { setAccountId(id); setPickWallet(false); }} onClose={() => setPickWallet(false)} />
+        <FormRow icon="calendar-month-outline" label={copy("rowDate")} value={`${tx("Hôm nay")}, ${today.toLocaleDateString(locale)}`} />
+        {!receiptDraft?.transactionRequest ? (
+          <FormRow icon="pencil-outline" label={copy("rowNote")} last={!receiptDraft}>
+            <TextInput accessibilityLabel={copy("rowNote")} borderless placeholder={copy("notePlaceholder")} placeholderTextColor={colors.muted} style={styles.noteInput} value={note} onChangeText={setNote} />
+          </FormRow>
+        ) : null}
+        {receiptDraft ? <FormRow icon="camera-outline" label={tx("Ảnh hóa đơn đính kèm")} value={tx("Có đính kèm hóa đơn")} last /> : null}
+      </PaperCard>
+    </FigmaScreen>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    segment: {
-      backgroundColor: colors.surface,
-      borderRadius: 22,
-      borderWidth: 1,
-      borderColor: colors.border,
-      flexDirection: "row",
-      marginBottom: 14,
-      padding: 4,
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    segmentPressable: {
-      flex: 1,
-      minHeight: 40,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    segmentPill: {
-      height: 32,
-      borderRadius: 16,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: 14,
-      overflow: "hidden",
-    },
-    segmentPillSelected: {
-      backgroundColor: colors.mauve,
-      borderRadius: 16,
-      overflow: "hidden",
-    },
-    segmentText: {
-      color: colors.ink,
-      fontSize: 13,
-      fontWeight: "600",
-    },
-    segmentTextSelected: {
-      color: colors.onPrimary,
-      fontWeight: "700",
-    },
-    receiptCard: {
-      alignItems: "center",
-      backgroundColor: colors.surface,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-      flexDirection: "row",
-      gap: 12,
-      padding: 10,
-      marginBottom: 12,
-    },
-    receiptImage: {
-      backgroundColor: colors.cream,
-      borderRadius: 8,
-      height: 60,
-      width: 46,
-    },
-    receiptCopy: { flex: 1 },
-    receiptTitle: { color: colors.ink, fontSize: 13, fontWeight: "700" },
-    receiptHint: { color: colors.muted, fontSize: 11, lineHeight: 16, marginTop: 2 },
-
-    /* Hero Amount Card */
-    heroAmountCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingVertical: 16,
-      paddingHorizontal: 18,
-      marginBottom: 14,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
-    },
-    heroAmountLabel: {
-      color: colors.muted,
-      fontSize: 12,
-      fontWeight: "600",
-      letterSpacing: 0.2,
-      marginBottom: 6,
-    },
-    amountInputRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "flex-start",
-    },
-    amountSignText: {
-      fontSize: 32,
-      fontWeight: "800",
-      marginRight: 4,
-    },
-    amountInputField: {
-      flex: 1,
-      fontSize: 32,
-      fontWeight: "800",
-      fontVariant: ["tabular-nums"],
-      minHeight: 48,
-      paddingVertical: 0,
-      paddingHorizontal: 0,
-    },
-    amountCurrencyText: {
-      fontSize: 22,
-      fontWeight: "700",
-      marginLeft: 4,
-    },
-    heroAmountValue: {
-      fontSize: 28,
-      fontWeight: "800",
-      color: colors.ink,
-      fontVariant: ["tabular-nums"],
-      marginVertical: 4,
-    },
-
-    /* Category Section & Grid */
-    categorySection: {
-      marginBottom: 14,
-    },
-    categoryHeaderRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 8,
-      paddingHorizontal: 2,
-    },
-    categorySectionTitle: {
-      color: colors.muted,
-      fontSize: 12,
-      fontWeight: "700",
-      letterSpacing: 0.5,
-    },
-    manageCategoryLink: {
-      color: colors.mauve,
-      fontSize: 13,
-      fontWeight: "700",
-    },
-    categoryGrid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 8,
-      justifyContent: "flex-start",
-    },
-    categoryTile: {
-      width: "23%",
-      backgroundColor: colors.surface,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingVertical: 10,
-      paddingHorizontal: 4,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-    },
-    categoryTileSelected: {
-      borderColor: colors.mauve,
-      borderWidth: 1.5,
-      backgroundColor: colors.pocketLilac,
-    },
-    categoryIconWrap: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.cream,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    categoryIconWrapSelected: {
-      backgroundColor: colors.surface,
-    },
-    categoryTileName: {
-      color: colors.ink,
-      fontSize: 11,
-      fontWeight: "600",
-      textAlign: "center",
-    },
-    categoryTileNameSelected: {
-      color: colors.mauve,
-      fontWeight: "700",
-    },
-
-    /* Grouped Details Card */
-    groupedCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: colors.border,
-      overflow: "hidden",
-      marginBottom: 6,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
-      shadowRadius: 3,
-      elevation: 1,
-    },
-    groupedRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 14,
-      gap: 12,
-    },
-    rowIconBadge: {
-      width: 34,
-      height: 34,
-      borderRadius: 17,
-      backgroundColor: colors.cream,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    rowLabelText: {
-      color: colors.ink,
-      fontSize: 13,
-      fontWeight: "600",
-    },
-    rowValueText: {
-      color: colors.muted,
-      fontSize: 12,
-      marginTop: 2,
-    },
-    rowHintText: {
-      color: colors.muted,
-      fontSize: 12,
-    },
-    rowDivider: {
-      height: 1,
-      backgroundColor: colors.border,
-      marginLeft: 60,
-    },
-    accountChipsRow: {
-      flexDirection: "row",
-      gap: 6,
-      marginTop: 6,
-    },
-    detailInput: {
-      backgroundColor: colors.cream,
-      borderRadius: 10,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      fontSize: 13,
-      color: colors.ink,
-      minHeight: 36,
-    },
-    errorText: {
-      color: colors.danger,
-      fontSize: 13,
-      marginTop: 6,
-    },
+    segment: { backgroundColor: colors.elevated, borderRadius: 24, flexDirection: "row", padding: 4, gap: 4 },
+    segmentPill: { flex: 1, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    segmentPillSelected: { backgroundColor: colors.paper, ...figmaShadow("stub") },
+    segmentText: { ...figmaType.button, color: colors.muted },
+    segmentTextSelected: { color: colors.text },
+    stub: { alignSelf: "flex-end", backgroundColor: colors.paper, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 32, borderRadius: 4, width: 150, transform: [{ rotate: "3deg" }], marginRight: 4, ...figmaShadow("stub") },
+    noteLine: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 4, alignSelf: "stretch", justifyContent: "center" },
+    titleInput: { ...figmaType.bodySmall, color: colors.muted, minWidth: 140, paddingVertical: 2, paddingHorizontal: 0, backgroundColor: "transparent", borderWidth: 0, textAlign: "center" },
+    amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+    amountInput: { ...heroAmount, minWidth: 80, textAlign: "center", paddingHorizontal: 0, backgroundColor: "transparent", borderWidth: 0 },
+    categoryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+    categoryCell: { width: "22%", alignItems: "center", gap: 6 },
+    categoryTile: { width: 56, height: 56, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+    categoryName: { ...figmaType.bodySmall, color: colors.text },
+    noteInput: { fontSize: 15, lineHeight: 22, fontWeight: "800", color: colors.text, padding: 0, minHeight: 24, backgroundColor: "transparent", borderWidth: 0 },
+    manageCategoryLink: { ...figmaType.button, color: colors.primary },
+    receiptCard: { flexDirection: "row", gap: 12, padding: 12, borderRadius: 18, backgroundColor: colors.paper, ...figmaShadow("paper") },
+    receiptImage: { width: 56, height: 72, borderRadius: 8, backgroundColor: colors.elevated },
+    receiptCopy: { flex: 1, gap: 2 },
+    receiptTitle: { ...figmaType.bodyStrong, color: colors.text },
+    receiptHint: { ...figmaType.bodySmall, color: colors.muted, textAlign: "center" },
   });

@@ -7,7 +7,6 @@ import { PicketText as Text } from "@/core/ui/picket-text";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { paperShape, paperSpace } from "@/core/theme/paper-foundations";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { formatInstant } from "@/core/i18n/formatters";
@@ -17,6 +16,8 @@ import { parseEditedConflictPayload } from "@/core/sync/conflict-resolution";
 import { useAuth } from "@/features/auth/auth-context";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { TransactionMergeEditor } from "./transaction-merge-editor";
+import { FigmaHeader } from "@/features/settings/settings-figma";
+import { figmaShadow } from "@/core/ui/figma-ui";
 
 type Notice = "loadError" | "dismissError" | "retryError" | "invalidPayload" | "queued" | "merged" | "dismissed";
 
@@ -91,14 +92,14 @@ export function ConflictScreenContent({ owner }: { owner: string }) {
 
   return <SafeAreaView style={styles.safe}>
     <ScrollView contentContainerStyle={styles.content}>
-      <Pressable accessibilityRole="button" disabled={busy} accessibilityState={{ disabled: busy }} onPress={() => { if (!operationBusy.current && isCurrent()) router.replace(routes.home); }}><Text style={styles.back}>{t("home")}</Text></Pressable>
+      <FigmaHeader title={t("home")} backDisabled={busy} onBack={() => { if (!operationBusy.current && isCurrent()) router.replace(routes.home); }} />
       <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
       <Text style={styles.subtitle}>{t("subtitle")}</Text>
       {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}
       {loading && <ActivityIndicator accessibilityLabel={t("loading")} color={colors.link} />}
       {message === "loadError" && <Pressable accessibilityRole="button" disabled={busy} accessibilityState={{ disabled: busy }} onPress={() => reload()} style={styles.button}><Text style={styles.buttonText}>{t("reload")}</Text></Pressable>}
-      {items.map(item => <View key={item.id} style={styles.card}>
-        <Text style={styles.name}>{t("kind." + item.kind, { defaultValue: t("change") })}</Text>
+      {items.map(item => <View key={item.id} style={[styles.card, figmaShadow("paper")]}>
+        <Text style={styles.overline}>{t("kind." + item.kind, { defaultValue: t("change") }).toUpperCase()}</Text>
         <Text style={styles.meta}>{item.entityKey ?? t("newChange")}</Text>
         <Text style={styles.meta}>{t("reason")}</Text>
         <Text style={styles.meta}>{failedAt(item.failedAt)}</Text>
@@ -126,11 +127,12 @@ export function ConflictScreenContent({ owner }: { owner: string }) {
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.cream }, content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
-  back: { color: colors.link, fontWeight: "700" }, title: { color: colors.ink, fontSize: 26, fontWeight: "700" },
-  subtitle: { color: colors.muted, lineHeight: 21 }, card: { backgroundColor: colors.white, borderRadius: paperShape.card, gap: 7, padding: 16 },
-  name: { color: colors.ink, fontSize: 16, fontWeight: "700" }, meta: { color: colors.muted, fontSize: 12 },
-  button: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, marginTop: 8, minHeight: 48, justifyContent: "center", paddingHorizontal: 12 },
-  buttonText: { color: colors.link, fontWeight: "700" }, empty: { color: colors.muted, textAlign: "center", marginTop: 30 },
-  message:{color:colors.ink,fontSize:13},help:{color:colors.muted,fontSize:12,lineHeight:18},editor:{backgroundColor:colors.cream,borderColor:colors.peach,borderRadius:paperShape.card,borderWidth:1,color:colors.ink,fontFamily:"monospace",minHeight:150,padding:12,textAlignVertical:"top"},retry:{alignItems:"center",backgroundColor:colors.mauve,borderRadius:paperShape.button,justifyContent:"center",minHeight:48},retryText:{color:colors.onPrimary,fontWeight:"700"},
+  safe: { flex: 1, backgroundColor: colors.canvas }, content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, paddingHorizontal: 20, paddingBottom: 48 },
+  back: { color: colors.link, fontWeight: "700" }, title: { color: colors.text, fontSize: 22, fontWeight: "800", lineHeight: 29, marginTop: 6 },
+  subtitle: { color: colors.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 }, card: { backgroundColor: colors.paper, borderRadius: 18, gap: 6, padding: 16 },
+  name: { color: colors.text, fontSize: 16, fontWeight: "800" }, meta: { color: colors.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+  overline: { color: colors.muted, fontSize: 11, fontWeight: "800", letterSpacing: 1.1, lineHeight: 16 },
+  button: { alignItems: "center", borderColor: colors.border, backgroundColor: colors.surface, borderRadius: 24, borderWidth: 1, marginTop: 8, minHeight: 48, justifyContent: "center", paddingHorizontal: 12 },
+  buttonText: { color: colors.text, fontSize: 14, fontWeight: "800" }, empty: { color: colors.muted, textAlign: "center", marginTop: 30 },
+  message:{color:colors.text,fontSize:13},help:{color:colors.muted,fontSize:12,lineHeight:18},editor:{backgroundColor:colors.warningSurface,borderColor:colors.border,borderRadius:14,borderWidth:1,color:colors.text,fontFamily:"monospace",minHeight:150,padding:12,textAlignVertical:"top"},retry:{alignItems:"center",backgroundColor:colors.primary,borderRadius:24,justifyContent:"center",minHeight:48},retryText:{color:colors.onPrimary,fontSize:14,fontWeight:"800"},
 });

@@ -5,7 +5,7 @@ import { paperTextStyle } from "./paper-text-style";
 test("all text roles use the bundled Vietnamese font and keep room for accents", () => {
   for (const fontSize of [11, 13, 15, 18, 26, 38]) {
     const style = paperTextStyle({ fontSize }, true);
-    assert.equal(style.fontFamily, "PicketDisplay");
+    assert.equal(style.fontFamily, "PicketNunito");
     assert.ok(style.lineHeight! >= fontSize * 1.25);
   }
 });
@@ -22,7 +22,9 @@ test("a failed font load uses the native fallback without blocking text", () => 
 
 
 test("display weight roles select real static font faces instead of an Android variable-font default", () => {
-  assert.equal(paperTextStyle({ fontWeight: "600" }, true).fontFamily, "PicketSemibold");
-  assert.equal(paperTextStyle({ fontWeight: "700" }, true).fontFamily, "PicketBold");
-  assert.equal(paperTextStyle({ fontWeight: "800", fontFamily: "PicketDisplay" }, true).fontFamily, "PicketExtraBold");
+  assert.deepEqual(pick(paperTextStyle({ fontWeight: "600" }, true)), ["PicketNunito", "600"]);
+  assert.deepEqual(pick(paperTextStyle({ fontWeight: "700" }, true)), ["PicketNunito", "700"]);
+  assert.deepEqual(pick(paperTextStyle({ fontWeight: "800", fontFamily: "PicketDisplay" }, true)), ["PicketNunito", "800"]);
 });
+
+function pick(style: { fontFamily?: string; fontWeight?: string }) { return [style.fontFamily, style.fontWeight]; }

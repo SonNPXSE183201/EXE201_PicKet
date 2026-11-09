@@ -53,6 +53,8 @@ function harness(merge = false) {
     "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
     "@/core/ui/picket-text-input": { PicketTextInput: "TextInput" },
     "@/core/ui/accessible-pressable": { AccessiblePressable: "Pressable" },
+    "@/core/ui/figma-ui": { figmaShadow: () => ({}) },
+    "@/features/settings/settings-figma": { FigmaHeader: "Header" },
     "@/core/ui/picket-ui": { ChoiceChip: "ChoiceChip", PrimaryAction: "PrimaryAction" },
     "@/core/theme/paper-foundations": { paperShape: {}, paperSpace: {} },
     "@/core/theme/use-mobile-styles": { useMobileStyles: () => ({ colors: styles, styles }) },

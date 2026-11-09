@@ -1,6 +1,14 @@
-import { TopAppBar } from "@/core/ui/picket-ui";
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
-import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { figmaType } from "@picket/design-tokens";
+import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
+import { AppIcon } from "@/core/ui/app-icon";
+import { categoryTile } from "@/features/home/home-recent";
+import { useAccounts } from "@/features/accounts/accounts-context";
+import { useProfile } from "@/features/profile/profile-context";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { useFigmaCopy } from "@/features/transactions/figma-copy";
+import { AmountPaper, ChildBar, ErrorLine, FigmaScreen, FormRow, PaperCard, heroAmount } from "@/features/transactions/figma-parts";
+import { dayKeyAt, dayLabel } from "@/features/transactions/spending-list";
+import { formatMoney } from "@/core/i18n/formatters";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
@@ -9,7 +17,7 @@ import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, StyleSheet } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routes";
@@ -19,11 +27,15 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function RefundScreen() {
-  const {tx,money:formatVnd}=useTransactionCopy();
+  const {tx}=useTransactionCopy();
   const { colors, styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
-  const { createRefund, loading, transactions } = useTransactions();
+  const { categories, createRefund, loading, transactions } = useTransactions();
+  const copy = useFigmaCopy();
+  const { language } = useAppTheme();
+  const { profile } = useProfile();
+  const { accounts } = useAccounts();
   const original = transactions.find((item) => item.id === id);
   const refunded = transactions
     .filter((item) => item.kind === "refund" && item.refundOfTransactionId === id)
@@ -68,37 +80,62 @@ export default function RefundScreen() {
     }
   }
 
+  const timeZone = profile?.timezone ?? "Asia/Ho_Chi_Minh";
+  const account = accounts.find((item) => item.id === original.accountId);
+  const currency = account?.currencyCode ?? "VND";
+  const category = categories.find((item) => item.id === original.categoryId);
+  const tile = categoryTile(category?.icon ?? null, category?.name || original.title, false, colors);
+  const time = new Date(original.occurredAt).toLocaleTimeString(language === "en" ? "en-US" : "vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone });
+  const today = new Date();
+  const parsed = Number.parseInt(amount, 10);
+  const hint = category ? copy("refundHint", { category: category.name, amount: formatMoney(Number.isFinite(parsed) ? parsed : 0, language, currency) }) : copy("refundHintShort");
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <TopAppBar title={tx("Hoàn tiền")} backDisabled={busy} />
-        <Text style={styles.subtitle}>{original.title}</Text>
-        <Text style={styles.remaining}>{tx("Có thể hoàn:")}{" "}{formatVnd(remaining)}</Text>
-        <TextInput money accessibilityLabel={tx("Số tiền hoàn")} keyboardType="number-pad" placeholder={tx("Số tiền hoàn")} placeholderTextColor={colors.muted} style={styles.input} value={amount} onChangeText={setAmount} />
-        <TextInput accessibilityLabel={tx("Lý do hoặc ghi chú hoàn tiền")} multiline placeholder={tx("Lý do hoặc ghi chú")} placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
-        {message && <Text style={styles.error}>{tx(message)}</Text>}
-        <Pressable disabled={busy || remaining === 0} onPress={() => void submit()} style={[styles.primary, remaining === 0 && styles.disabled]}>
-          {busy ? <ActivityIndicator accessibilityLabel={tx("Đang tạo khoản hoàn")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{tx("Tạo khoản hoàn")}</Text>}
-        </Pressable>
-        <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>{tx("Hủy")}</Text></Pressable>
-      </ScrollView>
-    </SafeAreaView>
+    <FigmaScreen footer={<FigmaButton fullWidth icon="check" busy={busy} disabled={remaining === 0 || !amount} label={copy("refundCreate")} onPress={() => void submit()} />}>
+      <ChildBar title={copy("refundTitle")} backDisabled={busy} />
+      <View style={{ gap: 8 }}>
+        <Text style={[figmaType.overline, { color: colors.muted }]}>{copy("originalOverline").toUpperCase()}</Text>
+        <View style={[styles.original, figmaShadow("paper")]}>
+          <View style={[styles.tile, { backgroundColor: tile.color }]}><AppIcon name={tile.name} size={18} color={colors.text} /></View>
+          <View style={{ flex: 1, minWidth: 1 }}>
+            <Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{original.title}</Text>
+            <Text numberOfLines={1} style={[figmaType.bodySmall, { color: colors.muted }]}>{[category?.name, `${dayLabel(dayKeyAt(original.occurredAt, timeZone), language, true)} ${time}`].filter(Boolean).join(" · ")}</Text>
+          </View>
+          <Text style={[figmaType.amountRow, { color: colors.expense }]}>−{formatMoney(original.amount, language, currency)}</Text>
+        </View>
+        <Text style={[figmaType.bodySmall, { color: colors.muted, paddingHorizontal: 4 }]}>{copy("maxRefund")}  <Text style={[figmaType.captionStrong, { color: colors.text }]}>{formatMoney(remaining, language, currency)}</Text></Text>
+      </View>
+
+      <AmountPaper overline={copy("refundAmount")} footer={
+        <View style={styles.noteLine}><AppIcon name="pencil-outline" size={14} color={colors.muted} />
+          <TextInput accessibilityLabel={tx("Lý do hoặc ghi chú hoàn tiền")} borderless placeholder={copy("refundNotePh")} placeholderTextColor={colors.muted} style={styles.noteInput} value={note} onChangeText={setNote} /></View>}>
+        <View style={styles.amountRow}>
+          <Text style={[heroAmount, { color: colors.income }]}>+</Text>
+          <TextInput money borderless accessibilityLabel={tx("Số tiền hoàn")} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={[styles.amountInput, { color: amount ? colors.income : colors.muted }]} value={amount} onChangeText={setAmount} />
+          <Text style={[heroAmount, { color: colors.income, textDecorationLine: "underline" }]}>{currency === "VND" ? "₫" : currency}</Text>
+        </View>
+      </AmountPaper>
+
+      {message && <ErrorLine>{tx(message)}</ErrorLine>}
+
+      <PaperCard>
+        <FormRow icon="wallet-outline" label={copy("toWallet")} value={account?.name ?? "—"} />
+        <FormRow icon="calendar-month-outline" label={copy("rowDate")} value={`${tx("Hôm nay")}, ${today.toLocaleDateString(language === "en" ? "en-US" : "vi-VN")}`} last />
+      </PaperCard>
+      <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 4 }}><AppIcon name="shimmer" size={16} color={colors.muted} /><Text style={[figmaType.bodySmall, { color: colors.muted, flex: 1 }]}>{hint}</Text></View>
+    </FigmaScreen>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700", marginTop: 20 },
-  subtitle: { color: colors.ink, fontSize: 17, fontWeight: "700" },
-  remaining: { color: colors.income, fontSize: 15, fontWeight: "700", marginBottom: 8 },
-  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
-  note: { minHeight: 82, paddingTop: 14, textAlignVertical: "top" },
+  original: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, borderRadius: 18, backgroundColor: colors.paper },
+  tile: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 2 },
+  amountInput: { ...heroAmount, minWidth: 80, textAlign: "center", paddingHorizontal: 0, backgroundColor: "transparent", borderWidth: 0 },
+  noteLine: { flexDirection: "row", alignItems: "center", gap: 6, paddingTop: 4, justifyContent: "center", alignSelf: "stretch" },
+  noteInput: { ...figmaType.bodySmall, color: colors.muted, minWidth: 140, padding: 0, backgroundColor: "transparent", borderWidth: 0, textAlign: "center" },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
-  disabled: { opacity: 0.45 },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
   secondary: { alignItems: "center", minHeight: 44, padding: 12 },
-  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  secondaryText: { color: colors.primary, fontSize: 15, fontWeight: "700" },
 });

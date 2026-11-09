@@ -53,7 +53,7 @@ test("Paper navigation exposes five destinations and opens capture as an action 
     const camera = controls[2];
     assert.equal(camera.props.accessibilityRole, "button");
     assert.equal(camera.props.accessibilityState, undefined);
-    assert.ok(elements(camera).some(n => n.type === "Icon" && n.props.color === "#FFFFFF"));
+    assert.ok(elements(camera).some(n => n.type === "Icon" && n.props.color === "#793268"));
     await camera.props.onPress();
     assert.deepEqual(calls, ["/capture"]);
     // Only the rounded active tile represents selection; no extra dot element.

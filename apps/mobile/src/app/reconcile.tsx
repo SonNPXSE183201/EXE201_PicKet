@@ -18,6 +18,11 @@ import { guestOwnerId } from "@/core/local/guest-finance";
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { TopAppBar, ChoiceChip, EmptyState, PicketScreen, PrimaryAction, SectionTitle, Surface } from "@/core/ui/picket-ui";
+import { figmaType } from "@picket/design-tokens";
+import { FigmaButton, ReceiptDivider, ReceiptEdge, TransactionRow, figmaShadow } from "@/core/ui/figma-ui";
+import { AppIcon } from "@/core/ui/app-icon";
+import { FieldOverline, PaperCard } from "@/features/management/management-ui";
+import { categoryTile } from "@/features/home/home-recent";
 import { useAccounts } from "@/features/accounts/accounts-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
@@ -39,12 +44,12 @@ export default function ReconcileScreen() {
   const {t:tx}=useTranslation("reconciliation");
   const {language}=useAppTheme();
   const money=(value:number)=>formatMoney(value,language,"VND");
-  const { styles } = useMobileStyles(createStyles);
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const owner = localMode ? guestOwnerId : session?.user.id ?? "";
   const guest = useGuestFinance();
   const { accounts, refresh: refreshAccounts } = useAccounts();
-  const { refresh: refreshRecent } = useTransactions();
+  const { categories, refresh: refreshRecent } = useTransactions();
   const { transactions, loading, error, refresh } = useTransactionHistory();
   const [accountId, setAccountId] = useState<string | null>(null);
   const [statementDate, setStatementDate] = useState(localToday);
@@ -144,17 +149,35 @@ export default function ReconcileScreen() {
       })}
     </Surface>}
     {accounts.length === 0 ? <EmptyState title={tx("noWallet")} description={tx("noWalletBody")} /> : <>
-      <SectionTitle title={tx("wallet")} /><View style={styles.chips}>{accounts.map((item) => <ChoiceChip checked={item.id===currentAccount?.id} key={item.id} label={item.name} onPress={() => setAccountId(item.id)} />)}</View>
-      <Text style={styles.label}>{tx("statementDate")}</Text><TextInput date accessibilityLabel={tx("statementDate")} onChangeText={setStatementDate} style={styles.input} value={statementDate} />
-      <Text style={styles.label}>{tx("statementBalanceVnd")}</Text><TextInput money accessibilityLabel={tx("statementBalance")} keyboardType="numbers-and-punctuation" onChangeText={setStatementBalance} style={styles.input} value={statementBalance} />
-      <Surface peach><Text style={styles.title}>{tx("cleared",{amount:money(clearedBalance)})}</Text>{difference !== null && <Text style={styles.hint}>{tx("difference",{amount:money(difference)})}</Text>}</Surface>
-      <SectionTitle title={tx("selection",{selected:eligibleSelected.length,total:eligible.length})} />
-      <View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setSelected(eligible.map((item) => item.id))}><Text style={styles.link}>{tx("selectAll")}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setSelected([])}><Text style={styles.link}>{tx("deselect")}</Text></Pressable></View>
-      <Surface>{eligible.map((item) => <Pressable accessibilityLabel={tx("selectTransaction",{action:tx(selected.includes(item.id) ? "deselect" : "select"),title:item.title,amount:money(item.amount)})} accessibilityRole="checkbox" accessibilityState={{ checked:selected.includes(item.id) }} key={item.id} onPress={() => toggle(item.id)} style={styles.row}><Text style={styles.check}>{selected.includes(item.id) ? "☑" : "□"}</Text><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.hint}>{new Date(item.occurredAt).toLocaleDateString(localeFor(language))}</Text></View><Text style={styles.value}>{money(effect(item,currentAccount!.id))}</Text></Pressable>)}</Surface>
-      <Text style={styles.label}>{tx("reasonLabel")}</Text><TextInput accessibilityLabel={tx("reason")} onChangeText={setReason} style={styles.input} value={reason} />
-      <PrimaryAction busy={busy} disabled={loading || Boolean(error) || difference === null} label={difference === 0 ? tx("confirm") : tx("confirmAdjustment")} onPress={() => void submit()} />
+      <View style={styles.chips}>{accounts.map((item) => <ChoiceChip checked={item.id===currentAccount?.id} key={item.id} label={item.name} onPress={() => setAccountId(item.id)} />)}</View>
+      <View style={[styles.sheet, figmaShadow("paper")]}>
+        <View style={styles.sheetBody}>
+          <FieldOverline>{tx("statementBalanceVnd")}</FieldOverline>
+          <TextInput money accessibilityLabel={tx("statementBalance")} keyboardType="numbers-and-punctuation" onChangeText={setStatementBalance} placeholder="0" placeholderTextColor={colors.muted} style={styles.amount} value={statementBalance} />
+          <ReceiptDivider />
+          <View style={styles.compare}>
+            <View style={styles.compareRow}><Text style={[figmaType.bodySmall, { color: colors.muted }]}>{tx("cleared",{amount:""}).replace(/[:\s]+$/, "")}</Text><Text style={[figmaType.bodyStrong, { color: colors.text }]}>{money(clearedBalance)}</Text></View>
+            {difference !== null && <View style={styles.compareRow}><Text style={[figmaType.bodySmall, { color: colors.muted }]}>{tx("difference",{amount:""}).replace(/[:\s]+$/, "")}</Text><Text style={[figmaType.amountRow, { color: difference === 0 ? colors.success : colors.warning }]}>{difference > 0 ? "+" : difference < 0 ? "−" : ""}{money(Math.abs(difference))}</Text></View>}
+          </View>
+        </View>
+        <ReceiptEdge direction="bottom" />
+      </View>
+      <View style={styles.block}><FieldOverline>{tx("statementDate")}</FieldOverline><TextInput date accessibilityLabel={tx("statementDate")} onChangeText={setStatementDate} style={styles.input} value={statementDate} /></View>
+      <View style={styles.block}>
+        <View style={styles.selectHeader}><FieldOverline>{tx("selection",{selected:eligibleSelected.length,total:eligible.length})}</FieldOverline>
+          <View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setSelected(eligible.map((item) => item.id))}><Text style={styles.link}>{tx("selectAll")}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setSelected([])}><Text style={styles.link}>{tx("deselect")}</Text></Pressable></View></View>
+        <PaperCard>{eligible.map((item, index) => { const on = selected.includes(item.id); const value = effect(item,currentAccount!.id); const category = categories.find((entry) => entry.id === item.categoryId); const tile = categoryTile(category?.icon ?? null, category?.name ?? item.title, value > 0, colors);
+          return <View key={item.id}>{index > 0 && <ReceiptDivider />}
+            <Pressable accessibilityLabel={tx("selectTransaction",{action:tx(on ? "deselect" : "select"),title:item.title,amount:money(item.amount)})} accessibilityRole="checkbox" accessibilityState={{ checked:on }} onPress={() => toggle(item.id)} style={styles.row}>
+              <View style={[styles.select, on ? styles.selectOn : null]}>{on ? <AppIcon name="check" size={13} color={colors.onPrimary} /> : null}</View>
+              <View style={styles.copy}><TransactionRow tileColor={tile.color} tile={<AppIcon name={tile.name} size={18} color={colors.text} />} title={item.title} meta={new Date(item.occurredAt).toLocaleDateString(localeFor(language))} amount={`${value > 0 ? "+" : value < 0 ? "−" : ""}${money(Math.abs(value))}`} amountColor={value < 0 ? colors.expense : colors.income} /></View>
+            </Pressable></View>; })}</PaperCard>
+      </View>
+      {difference !== null && <View style={styles.notice}><View style={styles.noticeTile}><AppIcon name="check" size={18} color={colors.success} /></View><Text style={[figmaType.bodySmall, { color: colors.muted, flex: 1 }]}>{difference === 0 ? tx("confirm") : tx("difference",{amount:money(difference)})}</Text></View>}
+      {difference !== null && difference !== 0 && <View style={styles.block}><FieldOverline>{tx("reasonLabel")}</FieldOverline><TextInput accessibilityLabel={tx("reason")} onChangeText={setReason} style={styles.input} value={reason} /></View>}
+      <View style={styles.block}><FigmaButton fullWidth icon="check" busy={busy} disabled={busy || loading || Boolean(error) || difference === null} label={difference === 0 ? tx("confirm") : tx("confirmAdjustment")} onPress={() => void submit()} /></View>
     </>}
   </PicketScreen>;
 }
 
-const createStyles = (colors: MobileThemeColors) => StyleSheet.create({back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:16,marginTop:7},error:{color:colors.danger,fontSize:13,marginBottom:10},message:{color:colors.ink,fontSize:14,marginVertical:12},hint:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:5},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginBottom:12},label:{color:colors.ink,fontSize:14,fontWeight:"700",marginBottom:8,marginTop:14},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,minHeight:paperControl.height,paddingHorizontal:14,marginBottom:14},title:{color:colors.ink,fontSize:15,fontWeight:"700"},actions:{flexDirection:"row",gap:20,marginBottom:12},link:{color:colors.link,fontWeight:"700"},row:{alignItems:"center",borderBottomColor:colors.line,borderBottomWidth:1,flexDirection:"row",minHeight:65},check:{color:colors.link,fontSize:23,width:38},copy:{flex:1},value:{color:colors.ink,fontSize:13,fontWeight:"700"}});
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({block:{marginTop:20,gap:8},sheet:{alignSelf:"stretch",marginTop:8},sheetBody:{backgroundColor:colors.paper,borderTopLeftRadius:18,borderTopRightRadius:18,paddingTop:18,paddingBottom:12,paddingHorizontal:16,gap:8,alignItems:"center"},amount:{...figmaType.amountHero,color:colors.text,textAlign:"center",alignSelf:"stretch",padding:0,minHeight:42},compare:{alignSelf:"stretch",gap:6},compareRow:{flexDirection:"row",justifyContent:"space-between",alignItems:"center"},selectHeader:{flexDirection:"row",justifyContent:"space-between",alignItems:"center"},select:{width:22,height:22,borderRadius:11,borderWidth:1.5,borderColor:colors.border,alignItems:"center",justifyContent:"center"},selectOn:{backgroundColor:colors.primary,borderColor:colors.primary},notice:{flexDirection:"row",alignItems:"center",gap:12,marginTop:20,paddingLeft:12,paddingRight:14,paddingVertical:12,borderRadius:16,borderWidth:1,borderColor:colors.border,backgroundColor:colors.surface},noticeTile:{width:36,height:36,borderRadius:12,backgroundColor:colors.successSurface,alignItems:"center",justifyContent:"center"},back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:16,marginTop:7},error:{color:colors.danger,fontSize:13,marginBottom:10},message:{color:colors.ink,fontSize:14,marginVertical:12},hint:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:5},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginBottom:12},label:{color:colors.ink,fontSize:14,fontWeight:"700",marginBottom:8,marginTop:14},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,minHeight:paperControl.height,paddingHorizontal:14,marginBottom:14},title:{color:colors.ink,fontSize:15,fontWeight:"700"},actions:{flexDirection:"row",gap:16},link:{color:colors.link,fontWeight:"700"},row:{alignItems:"center",flexDirection:"row",gap:12,paddingHorizontal:8,minHeight:56},check:{color:colors.link,fontSize:23,width:38},copy:{flex:1,minWidth:0},value:{color:colors.ink,fontSize:13,fontWeight:"700"}});

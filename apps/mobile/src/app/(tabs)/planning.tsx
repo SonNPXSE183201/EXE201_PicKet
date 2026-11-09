@@ -1,3 +1,4 @@
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { paperControl , paperShape } from "@/core/theme/paper-foundations";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
@@ -19,7 +20,10 @@ import { guestBudgetSpent } from "@/core/local/guest-finance";
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { TopAppBar, ChoiceChip, EmptyState, PicketScreen, PrimaryAction, SectionTitle, Surface } from "@/core/ui/picket-ui";
+import { figmaType } from "@picket/design-tokens";
 import { AppIcon } from "@/core/ui/app-icon";
+import { SectionHeader } from "@/core/ui/figma-ui";
+import { PlanningHero } from "@/features/budgets/planning-hero";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBudgets } from "@/features/budgets/budgets-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
@@ -32,6 +36,7 @@ const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth()
 type ReviewSnapshot = { scope: string; transactions: unknown; allocations: unknown; budgets: unknown; limits: unknown };
 
 export default function PlanningScreen() {
+  const pullRefresh = usePullRefresh();
   const {t,i18n}=useTranslation("planning");
   const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
   const money=(amount:number)=>formatMoney(amount,language,"VND");
@@ -82,6 +87,7 @@ export default function PlanningScreen() {
   }, [session, selectedMonth, scope]);
   if (!session && !localMode) return <Redirect href={routes.login} />;
   const limitOf = (id: string) => planning?.periods.find((item) => item.budgetId === id)?.limit ?? budgets.find((item) => item.id === id)?.defaultLimit ?? 0;
+  const spentOf = (budget: (typeof budgets)[number]) => localMode ? guestBudgetSpent(guest.data, budget, selectedMonth) : budgetOverview(budget, selectedMonth, transactions, null, splits).spent;
   async function writeCloud<T>(write:()=>Promise<T>):Promise<T>{
     if(!session)throw new Error("Missing planning owner");
     return withLocalOwnerAccess(session.user.id,()=>{if(!isCurrent())throw new Error("Stale planning operation");return write();});
@@ -135,16 +141,16 @@ export default function PlanningScreen() {
     catch { if(isCurrent())setMessage("thresholdFailed"); }
     finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
-  return <PicketScreen>
+  return <PicketScreen onRefresh={pullRefresh}>
     <TopAppBar title={t("title")} back={false} />
     <Text style={styles.subtitle}>{localMode ? t("deviceSubtitle") : t("cloudSubtitle")}</Text>
     {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}
-    <SectionTitle title={t("method")} />
+    <View style={styles.monthPager}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" style={styles.arrowBtn} disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><AppIcon name="chevron-left" size={20} color={colors.text} /></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" style={styles.arrowBtn} disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><AppIcon name="chevron-right" size={20} color={colors.text} /></Pressable></View>
+    <PlanningHero language={language} planned={budgets.reduce((sum, budget) => sum + limitOf(budget.id), 0)} spent={splitLoading || splitError ? null : budgets.reduce((sum, budget) => sum + spentOf(budget), 0)} remaining={splitLoading || splitError ? null : budgets.reduce((sum, budget) => sum + limitOf(budget.id) - spentOf(budget), 0)} daysLeft={selectedMonth === monthKey(new Date()) ? new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate() - new Date().getDate() : null} formatMoney={money} />
+    <SectionHeader overline={language==="vi"?"Phương pháp":"Method"} title={t("method")} style={styles.section} />
     <View style={styles.chips}>{methods.map(([value,label]) => <ChoiceChip checked={planning?.method === value} key={value} label={t(label)} disabled={busy||!planning} onPress={() => void changeMethod(value)} />)}</View>
     <Text style={styles.hint}>{t("methodHelp")}</Text>
-    <SectionTitle title={t("viewingMonth")} />
-    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><AppIcon name="chevron-left" size={20} color={colors.ink} /></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><AppIcon name="chevron-right" size={20} color={colors.ink} /></Pressable></View></Surface>
-    <SectionTitle title={t("overview")} />
+    <SectionHeader overline={language==="vi"?"Tháng này":"This month"} title={t("overview")} style={styles.section} />
     <Surface><Text style={styles.title}>{t("incomeExpense",{income:historyLoading||historyError?"—":money(income),expense:historyLoading||historyError?"—":money(expense)})}</Text>
       {historyError && <Text style={styles.message}>{t("historyUnavailable")}</Text>}
       {splitError && <Text style={styles.message}>{t("splitsUnavailable")}</Text>}
@@ -165,4 +171,4 @@ export default function PlanningScreen() {
   </PicketScreen>;
 }
 
-const createStyles = (colors: MobileThemeColors) => StyleSheet.create({back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginTop:7},message:{color:colors.expense,fontSize:13,marginTop:15},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginVertical:8},hint:{color:colors.muted,fontSize:13,lineHeight:19,marginTop:8},monthRow:{alignItems:"center",flexDirection:"row",justifyContent:"space-between",gap:8},arrow:{color:colors.link,fontSize:30},month:{color:colors.ink,fontSize:16,fontWeight:"700",flex:1,textAlign:"center"},title:{color:colors.ink,fontSize:15,fontWeight:"700",flexShrink:1},label:{color:colors.ink,fontSize:13,fontWeight:"700",marginTop:12},input:{backgroundColor:colors.cream,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,marginVertical:10,minHeight:paperControl.height,paddingHorizontal:14}});
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({monthPager:{alignItems:"center",flexDirection:"row",justifyContent:"center",gap:12,marginTop:12,marginBottom:16},arrowBtn:{alignItems:"center",backgroundColor:colors.surface,borderColor:colors.border,borderRadius:18,borderWidth:1,height:36,justifyContent:"center",width:36},section:{marginTop:24,marginBottom:12},back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.text,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginTop:7},message:{color:colors.expense,fontSize:13,marginTop:15},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginVertical:8},hint:{color:colors.muted,fontSize:13,lineHeight:19,marginTop:8},monthRow:{alignItems:"center",flexDirection:"row",justifyContent:"space-between",gap:8},arrow:{color:colors.link,fontSize:30},month:{...figmaType.bodyStrong,color:colors.text,textAlign:"center"},title:{color:colors.text,fontSize:15,fontWeight:"700",flexShrink:1},label:{color:colors.text,fontSize:13,fontWeight:"700",marginTop:12},input:{backgroundColor:colors.surface,borderColor:colors.border,borderRadius:paperShape.input,borderWidth:1,color:colors.text,fontSize:16,marginVertical:10,minHeight:paperControl.height,paddingHorizontal:14}});

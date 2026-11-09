@@ -48,13 +48,18 @@ function harness() {
   const modules: Record<string, any> = {
     react: { useState: state, useRef: (value: any) => { const index = cursor++; return slots[index] ??= { current: value }; }, useEffect: effect },
     "react/jsx-runtime": { jsx: (type: any, props: any) => ({ type, props }), jsxs: (type: any, props: any) => ({ type, props }) },
-    "react-native": { View: "View", AppState: { addEventListener: (_event: string, callback: typeof foreground) => { foreground = callback; return { remove() {} }; } }, Linking: { openURL: async (url: string) => { calls.push({ url }); } } },
+    "react-native": { View: "View", StyleSheet: { create: (s: any) => s }, AppState: { addEventListener: (_event: string, callback: typeof foreground) => { foreground = callback; return { remove() {} }; } }, Linking: { openURL: async (url: string) => { calls.push({ url }); } } },
     "expo-router": { Redirect: "Redirect" }, "expo-crypto": { randomUUID: () => `request-${++uuid}` },
     "@picket/domain": { ...domain, formatVnd: (amount: number) => String(amount) },
     "@/core/api/client": { picketApi: api },
     "@/features/auth/auth-context": { useAuth: () => ({ session: { user: { id: "qa" }, access_token: "session" } }) },
     "@/features/auth/auth-screen": Object.fromEntries(["AuthField", "AuthMessage", "AuthScreen", "PrimaryButton", "TextLink"].map((name) => [name, name])),
     "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-ui": { PicketScreen: "PicketScreen", TopAppBar: "TopAppBar" },
+    "@/core/ui/figma-ui": { Chip: "Chip", FigmaButton: "FigmaButton", ReceiptDivider: "ReceiptDivider", Skeleton: "Skeleton", figmaShadow: () => ({}) },
+    "@/features/billing/billing-title": { planScreenTitle: "Gói dịch vụ" },
+    "@picket/design-tokens": { figmaType: new Proxy({}, { get: () => ({}) }) },
+    "@/core/theme/use-mobile-styles": { useMobileStyles: () => ({ colors: {}, styles: {} }) },
     "react-i18next": { useTranslation: () => ({ t: (key: string, values: Record<string, unknown> = {}) => key.replace(/{{(\w+)}}/g, (_m: string, name: string) => String(values[name])) }) },
   };
   const module = { exports: {} as any };

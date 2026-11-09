@@ -13,6 +13,11 @@ export const homeDesignVi = {
   pocketDeviceOnly: "Minh họa và màu giấy được lưu riêng trên thiết bị này.", pocketCreatedArtError: "Đã tạo ngân sách, nhưng chưa lưu được diện mạo. Bạn có thể chọn lại từ menu chiếc túi.",
   paperFood: "Ăn uống", paperTransport: "Di chuyển", paperLeisure: "Vui chơi", paperShopping: "Mua sắm", paperHome: "Nhà cửa", paperHealth: "Sức khỏe", paperGift: "Quà tặng", paperBloom: "Mầm xanh", paperReceipt: "Hóa đơn",
   paperCoral: "Đào", paperMint: "Xanh lá", paperBlue: "Xanh trời", paperLilac: "Tím nhạt", filterDay: "Ngày {{day}}", filterClearDay: "Bỏ lọc ngày",
+  rhythmWeekTotal: "Tuần này đã chi {{amount}}", rhythmWeekLoading: "Tuần này đã chi …", rhythmEmptyHint: "Khoản chi đầu tiên sẽ hiện thành cột ở đây.",
+  rhythmWeekLower: "Ít hơn {{amount}} so với cùng kỳ tuần trước", rhythmWeekHigher: "Nhiều hơn {{amount}} so với cùng kỳ tuần trước", rhythmWeekEqual: "Bằng cùng kỳ tuần trước",
+  homeWallets: "{{count}} ví", homeStubToday: "Hôm nay · {{count}} khoản", homeStubTodayHidden: "Hôm nay", homeStubEmpty: "Chưa ghi khoản nào", homeBudgetLeft: "còn lại", homeBudgetUsed: "{{percent}}% của {{limit}}", homeBudgetNear: "Sắp chạm hạn mức", homeBudgetAdd: "Thêm túi",
+  homeFirstPocket: "Thêm chiếc túi đầu tiên", homeFirstPocketBody: "Đặt ngân sách cho điều bạn quan tâm — ăn uống, đi lại, vui chơi…", homeRecentOverline: "Gần đây", homeRecentTitle: "Giao dịch mới nhất",
+  homeEmptyTitle: "Chưa có giao dịch nào", homeEmptyBody: "Bấm Chụp ở dưới để quét hoá đơn đầu tiên, hoặc ghi tay nếu bạn trả tiền mặt.", homeManualAdd: "Ghi tay một khoản", homeTodayLabel: "Hôm nay", homeWeekdayDate: "{{weekday}} {{date}}",
 };
 export const homeDesignEn: Record<keyof typeof homeDesignVi, string> = {
   receiptCalendarTitle: "Saved receipt calendar",
@@ -29,4 +34,9 @@ export const homeDesignEn: Record<keyof typeof homeDesignVi, string> = {
   pocketDeviceOnly: "Illustrations and paper colors are saved on this device only.", pocketCreatedArtError: "Budget created, but appearance was not saved. Choose it again from the pocket menu.",
   paperFood: "Food", paperTransport: "Transport", paperLeisure: "Leisure", paperShopping: "Shopping", paperHome: "Home", paperHealth: "Health", paperGift: "Gifts", paperBloom: "Bloom", paperReceipt: "Receipts",
   paperCoral: "Peach", paperMint: "Mint", paperBlue: "Sky", paperLilac: "Lilac", filterDay: "Day {{day}}", filterClearDay: "Clear day filter",
+  rhythmWeekTotal: "Spent {{amount}} this week", rhythmWeekLoading: "Spent … this week", rhythmEmptyHint: "Your first expense will appear as a bar here.",
+  rhythmWeekLower: "{{amount}} less than the same point last week", rhythmWeekHigher: "{{amount}} more than the same point last week", rhythmWeekEqual: "Same as last week",
+  homeWallets: "{{count}} wallets", homeStubToday: "Today · {{count}} entries", homeStubTodayHidden: "Today", homeStubEmpty: "Nothing recorded yet", homeBudgetLeft: "left", homeBudgetUsed: "{{percent}}% of {{limit}}", homeBudgetNear: "Near the limit", homeBudgetAdd: "Add pocket",
+  homeFirstPocket: "Add your first pocket", homeFirstPocketBody: "Set a budget for what you care about: food, transport, fun…", homeRecentOverline: "Recent", homeRecentTitle: "Latest transactions",
+  homeEmptyTitle: "No transactions yet", homeEmptyBody: "Tap Capture below to scan your first receipt, or add it by hand if you paid in cash.", homeManualAdd: "Add manually", homeTodayLabel: "Today", homeWeekdayDate: "{{weekday}} {{date}}",
 };

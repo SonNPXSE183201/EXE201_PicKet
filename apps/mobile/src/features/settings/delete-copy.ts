@@ -1,0 +1,4 @@
+/** Extra strings for the Figma delete-account screen (vi + en). */
+const vi = { header: "Xoá tài khoản", warnTitle: "Sẽ bị xoá vĩnh viễn", items: ["Tài khoản đăng nhập của bạn", "Ảnh hoá đơn riêng tư đã lưu trên cloud", "Dữ liệu tài chính trên máy chủ: ví, giao dịch, túi, hoá đơn"], keepTip: "Muốn giữ dữ liệu?", keepLink: "Tạo bản sao .picket", keepTail: "trước khi xoá." };
+const en: typeof vi = { header: "Delete account", warnTitle: "Will be permanently deleted", items: ["Your sign-in account", "Private receipt photos stored in the cloud", "Financial data on the server: wallets, transactions, pockets, bills"], keepTip: "Want to keep your data?", keepLink: "Create a .picket backup", keepTail: "before deleting." };
+export function deleteCopy(language: string) { return language === "vi" ? vi : en; }

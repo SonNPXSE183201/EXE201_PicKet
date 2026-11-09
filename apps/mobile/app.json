@@ -11,7 +11,7 @@
       "package": "com.picket.mobile",
       "versionCode": 30,
       "adaptiveIcon": {
-        "backgroundColor": "#FFF8F0",
+        "backgroundColor": "#FFF8ED",
         "foregroundImage": "./assets/picket-logo.png"
       },
       "predictiveBackGestureEnabled": false
@@ -22,6 +22,36 @@
       "./plugins/with-safe-launcher-icon",
       "./plugins/with-network-pool-guard",
       "./plugins/with-current-activity-intent",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "PicketNunito",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/nunito-400.ttf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./assets/fonts/nunito-600.ttf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./assets/fonts/nunito-700.ttf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./assets/fonts/nunito-800.ttf",
+                    "weight": 800
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
       "expo-router",
       "expo-status-bar",
       "expo-secure-store",
@@ -59,7 +89,7 @@
           "image": "./assets/picket-logo.png",
           "imageWidth": 128,
           "resizeMode": "contain",
-          "backgroundColor": "#FFF8F0"
+          "backgroundColor": "#FFF8ED"
         }
       ],
       "expo-sharing",

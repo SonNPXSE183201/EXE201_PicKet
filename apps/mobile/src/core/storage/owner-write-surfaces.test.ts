@@ -16,9 +16,9 @@ test("receipt/OCR/restore cloud writes and thumbnail temporary files share the o
 test("new export artifacts are fenced by owner and use unique names rather than overwriting another export",()=>{
   const json=readFileSync(new URL("../export/export-finance.ts",import.meta.url),"utf8");
   const backup=readFileSync(new URL("../export/flutter-compatible-backup.ts",import.meta.url),"utf8");
-  const profile=readFileSync(new URL("../../app/profile.tsx",import.meta.url),"utf8");
+  const profile=readFileSync(new URL("../../app/restore.tsx",import.meta.url),"utf8");
   assert.match(json,/withLocalOwnerAccess\(userId/);assert.match(json,/Crypto.randomUUID\(\)/);
   assert.match(backup,/withLocalOwnerAccess\(owner/);assert.match(backup,/Crypto.randomUUID\(\)/);
-  assert.match(profile,/exportAndShareFinance\(session.access_token,session.user.id\)/);
-  assert.match(profile,/exportFinanceCsv\(session.access_token,session.user.id\)/);
+  assert.match(profile,/exportAndShareFinance\(session!\.access_token, session!\.user\.id\)/);
+  assert.match(profile,/exportFinanceCsv\(session!\.access_token, session!\.user\.id\)/);
 });

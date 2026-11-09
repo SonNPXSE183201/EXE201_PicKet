@@ -1,7 +1,10 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { paperControl, paperSpace } from "@/core/theme/paper-foundations";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
+import { planScreenTitle } from "@/features/billing/billing-title";
+import { TopAppBar } from "@/core/ui/picket-ui";
+import { figmaType } from "@picket/design-tokens";
 
 import { useTranslation } from "react-i18next";
 import type { billingVi } from "@/core/i18n/billing-resources";
@@ -19,7 +22,7 @@ import {
   type ProductSubscription,
   type Purchase,
 } from "expo-iap";
-import { Redirect, router } from "expo-router";
+import { Redirect } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -343,24 +346,13 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         {!storeReady && <Text accessibilityLiveRegion="polite" style={{color:colors.muted}}>{t(checkingStore ? "checking" : "notReady")}</Text>}
-        <View style={styles.topHeader}>
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.ink} />
-          </Pressable>
-          <Text accessibilityRole="header" style={styles.headerTitle}>Nâng cấp Picket Plus</Text>
-        </View>
-        <View style={styles.heroCenter}>
-          <Text style={styles.heroMain}>Quản lý tài chính không giới hạn</Text>
-          <Text style={styles.heroSubtitle}>Mở khóa trọn bộ tính năng cao cấp & OCR AI thông minh</Text>
-        </View>
+        <TopAppBar title={planScreenTitle} />
         {entitlements && <View style={styles.currentPlan}>
-          <View style={styles.currentHeading}>
-            <View style={styles.currentIcon}><MaterialCommunityIcons name={entitlements.tier === "pro" ? "crown-outline" : entitlements.tier === "plus" ? "star-four-points-outline" : "sprout-outline"} size={28} color={colors.ink} /></View>
-            <View style={styles.flex}><Text style={styles.currentPlanTitle}>{t("current",{tier:entitlements.tier.toUpperCase()})}</Text><Text style={styles.currentPlanText}>{t("remainingLabel")}</Text></View>
-            <Text style={styles.allowance}>{entitlements.ocrFallbackRemaining}<Text style={styles.allowanceTotal}>/{entitlements.ocrFallbackDailyLimit}</Text></Text>
-          </View>
+          <View pointerEvents="none" style={styles.stitch} />
+          <Text style={styles.pouchLabel}>{t("current",{tier:entitlements.tier.toUpperCase()})}</Text>
+          <Text style={styles.allowance}>{entitlements.ocrFallbackRemaining}<Text style={styles.allowanceTotal}>/{entitlements.ocrFallbackDailyLimit}</Text></Text>
           <View style={styles.meter}><View style={[styles.meterFill,{width:`${Math.min(100,Math.max(0,entitlements.ocrFallbackRemaining/Math.max(1,entitlements.ocrFallbackDailyLimit)*100))}%`}]} /></View>
-          <Text style={styles.currentPlanText}>{t("quota",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}</Text>
+          <Text style={styles.pouchCaption}>{t("remainingLabel")} · {t("quota",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}</Text>
           {entitlements.ocrFallbackRemaining===0&&<Text accessibilityLiveRegion="polite" style={styles.exhausted}>{t("exhausted")}</Text>}
         </View>}
         <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>{t("compare")}</Text><MaterialCommunityIcons name="receipt-text-outline" size={24} color={colors.link} /></View>
@@ -470,42 +462,45 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   intro: {color:colors.ink,fontSize:22,lineHeight:30,fontWeight:"800"},
   currentHeading:{flexDirection:"row",alignItems:"center",gap:12},
   currentIcon:{width:48,height:48,borderRadius:16,alignItems:"center",justifyContent:"center",backgroundColor:colors.surface},
-  allowance:{color:colors.ink,fontSize:30,fontWeight:"800"},allowanceTotal:{fontSize:15,color:colors.muted},
-  meter:{height:6,borderRadius:3,backgroundColor:colors.surface,overflow:"hidden",marginVertical:8},meterFill:{height:6,backgroundColor:colors.primary,borderRadius:3},
-  exhausted:{color:colors.danger,fontSize:13,lineHeight:20},
+  allowance:{...figmaType.amountHero,color:colors.onCamera},allowanceTotal:{fontSize:15,color:colors.onCamera},
+  meter:{height:8,borderRadius:4,backgroundColor:colors.onCamera,overflow:"hidden",marginVertical:8},meterFill:{height:8,backgroundColor:colors.pocketCoral,borderRadius:4},
+  exhausted:{color:colors.onCamera,fontSize:13,lineHeight:20,fontWeight:"700"},
   sectionHeading:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",marginTop:8},
-  sectionTitle:{color:colors.ink,fontSize:18,fontWeight:"800"},
-  cadenceTabs:{flexDirection:"row",backgroundColor:colors.elevated,borderRadius:paperShape.button,padding:4,gap:4},
-  cadenceTab:{flex:1,alignItems:"center",justifyContent:"center",minHeight:48,borderRadius:paperShape.button},
-  cadenceSelected:{backgroundColor:colors.primary},cadenceText:{color:colors.muted,fontSize:14,fontWeight:"700"},cadenceSelectedText:{color:colors.onPrimary},
+  sectionTitle:{...figmaType.titleSection,color:colors.ink},
+  cadenceTabs:{flexDirection:"row",backgroundColor:colors.elevated,borderRadius:22,padding:4,gap:4,height:44},
+  cadenceTab:{flex:1,alignItems:"center",justifyContent:"center",borderRadius:18},
+  cadenceSelected:{backgroundColor:colors.paper},cadenceText:{...figmaType.captionStrong,color:colors.muted},cadenceSelectedText:{...figmaType.button,color:colors.primary},
   planIcon:{width:48,height:48,borderRadius:16,alignItems:"center",justifyContent:"center"},
   benefitRow:{flexDirection:"row",gap:10,alignItems:"center"},benefitTitle:{color:colors.ink,fontSize:15,fontWeight:"700"},
   currentBadge:{color:colors.link,fontSize:10,fontWeight:"800",letterSpacing:0.5,marginTop:4},
-  freeRow:{flexDirection:"row",alignItems:"center",gap:12,paddingVertical:12,borderBottomWidth:1,borderBottomColor:colors.line},
+  freeRow:{flexDirection:"row",alignItems:"center",gap:12,paddingVertical:14,paddingHorizontal:16,borderRadius:18,backgroundColor:colors.paper},
   freeIcon:{width:44,height:44,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:colors.pocketBlue},
 
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
   content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: paperSpace.section, padding: paperSpace.screen, paddingBottom: 48 },
   back: { color: colors.link, fontSize: 15, fontWeight: "700" },
   title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
   description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
-  currentPlan: { backgroundColor: colors.peach, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 6, padding: 16 },
+  currentPlan: { backgroundColor: colors.camera, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderBottomRightRadius: 32, borderBottomLeftRadius: 16, gap: 6, paddingHorizontal: 24, paddingVertical: 22 },
+  stitch: { position: "absolute", left: 8, right: 8, top: 8, bottom: 8, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.onCamera, borderTopLeftRadius: 25, borderTopRightRadius: 25, borderBottomRightRadius: 25, borderBottomLeftRadius: 10 },
+  pouchLabel: { ...figmaType.captionStrong, color: colors.onCamera },
+  pouchCaption: { ...figmaType.bodySmall, color: colors.onCamera },
   currentPlanTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
   currentPlanText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
   loadingRow: { alignItems: "center", flexDirection: "row", gap: 10 },
   notice: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 14, padding: paperControl.cardPadding },
+  planCard: { backgroundColor: colors.pocketLilac, borderColor: colors.pocketLilac, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderBottomRightRadius: 22, borderBottomLeftRadius: 10, borderWidth: 1.5, gap: 14, padding: paperControl.cardPadding },
   planHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, justifyContent: "space-between" },
   planNameBlock: { flex: 1, minWidth: 0 },
   planName: { color: colors.ink, fontSize: 18, fontWeight: "700" },
   cadence: { color: colors.muted, fontSize: 13, marginTop: 3 },
   price: { color: colors.link, fontSize: 19, fontWeight: "800", flexShrink: 1, textAlign: "right" },
   planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
+  primary: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 24, justifyContent: "center", minHeight: 48 },
+  primaryText: { ...figmaType.button, color: colors.onPrimary },
   disabled: { opacity: 0.45 },
-  secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
-  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  secondary: { alignItems: "center", backgroundColor: colors.paper, borderColor: colors.border, borderRadius: 24, borderWidth: 1, justifyContent: "center", minHeight: 48 },
+  secondaryText: { ...figmaType.button, color: colors.text },
   linkButton: { alignItems: "center", justifyContent: "center" },
   linkText: { color: colors.link, fontSize: 14, fontWeight: "700", textAlign: "center" },
   footnote: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
