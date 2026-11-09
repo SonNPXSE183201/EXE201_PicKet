@@ -141,6 +141,32 @@ void _validatePayload(Map<String, dynamic> data) {
   if (!(data['customCategories'] as List).every((item) => _text(item, 80))) {
     throw const FormatException('Invalid custom categories.');
   }
+  // Optional since 07/11/2026: categories with ids so restore keeps them.
+  if (data.containsKey('categories')) {
+    final categories = data['categories'];
+    if (categories is! List || categories.length > 1000) {
+      throw const FormatException('Invalid categories.');
+    }
+    final categoryIds = <String>{};
+    for (final value in categories) {
+      final item = _object(value, 'Invalid category.');
+      if (!_validUuid(item['id']) ||
+          !categoryIds.add(item['id'] as String) ||
+          !_text(item['name'], 80) ||
+          !{'expense', 'income', 'both'}.contains(item['kind']) ||
+          (item['isCustom'] != null && item['isCustom'] is! bool) ||
+          (item['icon'] != null &&
+              (item['icon'] is! String ||
+                  (item['icon'] as String).length > 80)) ||
+          (item['color'] != null &&
+              (item['color'] is! String ||
+                  !RegExp(
+                    r'^#[0-9A-Fa-f]{6}$',
+                  ).hasMatch(item['color'] as String)))) {
+        throw const FormatException('Invalid category.');
+      }
+    }
+  }
 
   final walletIds = <String>{};
   for (final value in data['wallets'] as List) {

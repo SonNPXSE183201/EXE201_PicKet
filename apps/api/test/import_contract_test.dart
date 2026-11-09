@@ -39,6 +39,73 @@ void main() {
     wallet['currencyCode'] = 'USD';
     expect(FinanceImportEnvelope.fromJson(value).summary.wallets, 1);
   });
+  test('a transfer entry keeps the legacy category label and validates', () {
+    final value = validExport();
+    final data = value['data'] as Map<String, dynamic>;
+    (data['wallets'] as List).add({
+      'id': '22222222-2222-4222-8222-222222222222',
+      'name': 'Bank',
+      'openingBalance': 0,
+    });
+    data['entries'] = [
+      {
+        'id': '33333333-3333-4333-8333-333333333333',
+        'title': 'Rút tiền',
+        'amount': 200000,
+        'type': 'transfer',
+        'walletId': '11111111-1111-4111-8111-111111111111',
+        'destinationId': '22222222-2222-4222-8222-222222222222',
+        'category': 'Khác',
+        'date': '2026-10-01T08:00:00.000Z',
+        'parts': <Object?>[],
+        'reconciledWalletIds': <Object?>[],
+      },
+    ];
+    expect(FinanceImportEnvelope.fromJson(value).summary.entries, 1);
+  });
+  test('categories with ids are optional and validated when present', () {
+    final value = validExport();
+    final data = value['data'] as Map<String, dynamic>;
+    expect(FinanceImportEnvelope.fromJson(value).summary.wallets, 1);
+    data['categories'] = [
+      {
+        'id': '44444444-4444-4444-8444-444444444444',
+        'name': 'Cà phê',
+        'kind': 'expense',
+        'color': null,
+        'icon': 'coffee',
+        'isCustom': true,
+      },
+    ];
+    expect(FinanceImportEnvelope.fromJson(value).summary.wallets, 1);
+    for (final bad in [
+      {'id': 'not-a-uuid', 'name': 'X', 'kind': 'expense'},
+      {
+        'id': '44444444-4444-4444-8444-444444444444',
+        'name': '',
+        'kind': 'expense',
+      },
+      {
+        'id': '44444444-4444-4444-8444-444444444444',
+        'name': 'X',
+        'kind': 'transfer',
+      },
+      {
+        'id': '44444444-4444-4444-8444-444444444444',
+        'name': 'X',
+        'kind': 'both',
+        'color': 'red',
+      },
+    ]) {
+      data['categories'] = [bad];
+      expect(
+        () => FinanceImportEnvelope.fromJson(value),
+        throwsFormatException,
+      );
+    }
+    data['categories'] = 'nope';
+    expect(() => FinanceImportEnvelope.fromJson(value), throwsFormatException);
+  });
   test('appearance restore rejects invalid fields before any write', () {
     for (final preferences in [
       {'themeMode': 'neon'},

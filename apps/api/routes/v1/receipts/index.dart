@@ -3,13 +3,20 @@ import 'dart:io';
 import 'package:dart_frog/dart_frog.dart';
 import 'package:picket_api/src/authenticated_route.dart';
 import 'package:picket_api/src/receipt_contract.dart';
+import 'package:picket_api/src/resource_validation.dart';
 
 Future<Response> onRequest(RequestContext context) => handleAuthenticated(
   context,
   methods: {HttpMethod.get, HttpMethod.post},
   action: (gateway, token, request) async {
     if (request.method == HttpMethod.get) {
-      final receipts = await gateway.listReceipts(token);
+      final transactionId = request.uri.queryParameters['transactionId'];
+      final receipts = await gateway.listReceipts(
+        token,
+        transactionId: transactionId == null
+            ? null
+            : validateUuid(transactionId),
+      );
       return Response.json(
         body: {'receipts': receipts.map((item) => item.toJson()).toList()},
       );
