@@ -22,7 +22,8 @@ if ($health.status -ne "ok") {
   throw "API health check did not return status=ok."
 }
 
-$web = Invoke-WebRequest -Uri $webBase -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 20
+# The app root only redirects (to /login or /session); check the sign-in page.
+$web = Invoke-WebRequest -Uri "$webBase/login" -MaximumRedirection 0 -SkipHttpErrorCheck -TimeoutSec 20
 if ($web.StatusCode -lt 200 -or $web.StatusCode -ge 400) {
   throw "Web smoke test failed with HTTP $($web.StatusCode)."
 }

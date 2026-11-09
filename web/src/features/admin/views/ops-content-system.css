@@ -1,0 +1,131 @@
+/* Operations, content and system admin views (prefix ao-). Built on the ap- tokens. */
+
+.ao-filter-actions { display: flex; align-items: center; gap: 4px; }
+.ao-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ao-anchor { position: absolute; margin-top: -88px; }
+.ao-warn { display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--ap-warning-bg); font-size: 12px; line-height: 18px; font-weight: 600; color: var(--ap-warning); }
+.ao-warn svg { flex: none; }
+.ao-mono { font-size: 11px; font-weight: 800; color: var(--ap-muted); }
+
+/* Two-column layouts with a fixed-width side panel. */
+.ao-split { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 24px; align-items: start; }
+.ao-editor { position: sticky; top: 16px; }
+
+/* Health */
+.ao-health-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.ao-component { gap: 10px; padding: 18px 18px 14px; border: 1px solid var(--ap-line); box-shadow: none; }
+.ao-component.is-attention { border: 1.5px solid #b45309; background: var(--ap-warning-bg); }
+.ao-component-head { display: flex; align-items: center; gap: 10px; }
+.ao-component-head h2 { flex: 1; min-width: 0; margin: 0; font-size: 14px; line-height: 21px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ao-component-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ao-component-main strong { font-size: 22px; line-height: 30px; font-weight: 800; letter-spacing: -.3px; font-variant-numeric: tabular-nums; }
+.ao-component-main span { font-size: 12px; font-weight: 600; color: var(--ap-muted); overflow-wrap: anywhere; }
+.ao-component-foot { margin: 0; font-size: 11px; line-height: 16px; font-weight: 600; color: var(--ap-muted); }
+.ao-segments { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 3px; height: 14px; }
+.ao-segments span { border-radius: 4px; background: var(--ap-mint); }
+.ao-segments span.is-bad { background: #854d0e; }
+.ao-segments span.is-empty { background: var(--ap-line); }
+.ao-vitals { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ao-vitals li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1.5px dashed var(--ap-line); }
+.ao-vitals li:last-child { border-bottom: 0; }
+.ao-vitals b { display: block; font-size: 13px; font-weight: 700; }
+.ao-vitals small { display: block; font-size: 10px; line-height: 15px; font-weight: 800; color: var(--ap-muted); }
+.ao-vitals strong { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Incidents */
+.ao-row-link { display: block; min-width: 0; }
+.ao-row-link b { display: block; font-size: 14px; line-height: 21px; font-weight: 700; }
+.ao-row-link small { display: block; font-size: 10px; line-height: 15px; font-weight: 800; color: var(--ap-muted); }
+.ao-row-link[aria-current="true"] b { color: var(--ap-mauve); }
+.ao-detail { position: relative; }
+.ao-facts { display: grid; gap: 8px; margin: 0; }
+.ao-facts div { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; font-weight: 600; }
+.ao-facts dt { color: var(--ap-muted); }
+.ao-facts dd { margin: 0; font-weight: 700; text-align: right; overflow-wrap: anywhere; }
+
+/* Content */
+.ao-lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin: 0; padding: 0; list-style: none; }
+.ao-lesson { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: 18px; background: var(--ap-card); box-shadow: var(--ap-shadow); transition: transform .15s, box-shadow .15s; }
+.ao-lesson:hover { transform: translateY(-1px); box-shadow: var(--ap-shadow-strong); }
+.ao-lesson.is-selected { outline: 2px solid var(--ap-mauve); outline-offset: 0; }
+.ao-lesson-top { position: relative; display: block; min-height: 96px; padding: 14px 16px; }
+.ao-lesson-top img { position: absolute; right: 12px; bottom: 6px; width: 84px; height: 84px; object-fit: contain; }
+.ao-lesson-body { display: grid; gap: 8px; padding: 14px 16px 16px; }
+.ao-lesson-body b { font-size: 14px; line-height: 21px; font-weight: 700; }
+.ao-lesson-body small { font-size: 10px; font-weight: 800; color: var(--ap-muted); }
+
+/* Partners */
+.ao-partners { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 0; padding: 0; list-style: none; }
+.ao-partner { display: grid; grid-template-columns: 150px minmax(0, 1fr); min-height: 140px; overflow: hidden; border-radius: 18px; background: var(--ap-card); box-shadow: var(--ap-shadow); }
+.ao-partner.is-off { background: var(--ap-surface); box-shadow: none; }
+.ao-partner.is-off .ao-partner-body h3 { color: var(--ap-muted); }
+.ao-partner.is-selected { outline: 2px solid var(--ap-mauve); }
+.ao-partner-logo { display: grid; place-content: center; justify-items: center; gap: 6px; padding: 12px; border-right: 2px dashed rgb(255 255 255 / 70%); text-align: center; }
+.ao-partner-logo img { width: 56px; height: 56px; object-fit: contain; }
+.ao-partner-logo b { font-size: 13px; line-height: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.ao-partner-body { display: grid; align-content: center; gap: 4px; min-width: 0; padding: 16px 20px; }
+.ao-partner-body h3 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 800; overflow-wrap: anywhere; }
+.ao-partner-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ao-partner-url, .ao-partner-date { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.ao-partner-url { color: var(--ap-mauve); }
+.ao-partner-url:hover { text-decoration: underline; }
+.ao-partner-date { color: var(--ap-muted); }
+.ao-partner-body .ap-link { justify-self: start; margin-top: 4px; }
+.ao-switch { position: relative; width: 40px; height: 22px; flex: none; border-radius: 999px; background: var(--ap-line); }
+.ao-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+.ao-switch.is-on { background: var(--ap-mauve); }
+.ao-switch.is-on::after { transform: translateX(18px); }
+.ao-partner-editor { max-width: 640px; scroll-margin-top: 16px; }
+
+/* Integrations */
+.ao-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 24px; }
+.ao-source { gap: 10px; padding: 18px; border: 1px solid var(--ap-line); box-shadow: none; align-items: flex-start; }
+.ao-source.is-attention { border: 1.5px solid #b45309; }
+.ao-source h2 { margin: 0; font-size: 14px; line-height: 21px; font-weight: 700; }
+.ao-source p { margin: 0; font-size: 10px; line-height: 15px; font-weight: 800; color: var(--ap-muted); }
+
+/* Audit */
+.ao-target { display: block; min-width: 0; }
+.ao-target b { display: block; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.ao-target small { display: block; font-size: 10px; line-height: 15px; font-weight: 800; color: var(--ap-muted); overflow-wrap: anywhere; }
+
+/* Staff */
+.ao-roles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.ao-role { display: grid; align-content: start; gap: 2px; min-height: 100px; padding: 14px; border-radius: 16px; border: 1px solid rgb(48 33 51 / 8%); }
+.ao-role strong { font-size: 22px; line-height: 28px; font-weight: 800; }
+.ao-role b { font-size: 14px; line-height: 21px; font-weight: 700; }
+.ao-role small { font-size: 10px; line-height: 15px; font-weight: 800; color: var(--ap-muted); }
+
+/* Settings */
+.ap-form fieldset.ao-settings { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.ap-form fieldset.ao-inner { gap: 12px; }
+.ao-fields-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.ao-fields-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+@media (max-width: 1280px) {
+  .ao-split { grid-template-columns: minmax(0, 1fr) 340px; }
+  .ao-roles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ao-partner { grid-template-columns: 120px minmax(0, 1fr); }
+}
+@media (max-width: 1100px) {
+  .ao-split, .ap-form fieldset.ao-settings { grid-template-columns: minmax(0, 1fr); }
+  .ao-editor { position: static; }
+  .ao-health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ao-partners { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .ao-health-grid { grid-template-columns: minmax(0, 1fr); }
+  .ao-fields-3, .ao-fields-2 { grid-template-columns: minmax(0, 1fr); }
+  .ao-roles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ao-filter-actions { width: 100%; }
+  .ao-filter-actions .ap-btn:first-child { flex: 1; }
+  .ao-partner { grid-template-columns: 96px minmax(0, 1fr); }
+  .ao-partner-body { padding: 14px; }
+  .ao-lessons { grid-template-columns: minmax(0, 1fr); }
+  .ao-section-head .ap-btn { width: 100%; }
+}
+@media (max-width: 360px) {
+  .ao-roles { grid-template-columns: minmax(0, 1fr); }
+  .ao-partner { grid-template-columns: minmax(0, 1fr); }
+  .ao-partner-logo { grid-template-columns: auto 1fr; justify-items: start; place-content: center start; border-right: 0; border-bottom: 2px dashed rgb(255 255 255 / 70%); text-align: left; }
+}

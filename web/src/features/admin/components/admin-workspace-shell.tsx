@@ -1,211 +1,203 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, type ReactNode } from "react";
-import {
-  adminSections,
-  canViewAdminSection,
-  type AdminSection,
-} from "../admin-permissions";
+import Link, { useLinkStatus } from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { adminSections, canViewAdminSection, type AdminSection } from "../admin-permissions";
 import { adminLabel } from "../admin-labels";
-import { Icon } from "@/core/ui/workspace-icon";
 import { signOut } from "@/app/dashboard/actions";
-import "../admin-platform.css";
-const groups: { title: string; icon: string; sections: AdminSection[] }[] = [
-  {
-    title: "Khách hàng",
-    icon: "person",
-    sections: ["users", "tickets", "billing", "revenue", "payments"],
-  },
-  {
-    title: "Tăng trưởng",
-    icon: "chart",
-    sections: ["acquisition", "engagement", "ocr"],
-  },
-  {
-    title: "Vận hành",
-    icon: "shield",
-    sections: ["health", "incidents", "releases"],
-  },
-  { title: "Nội dung", icon: "receipt", sections: ["content", "partners"] },
-  {
-    title: "Hệ thống",
-    icon: "grid",
-    sections: ["integrations", "audit", "staff", "permissions", "settings", "exports"],
-  },
+import { AdminIcon } from "../ui/admin-icon";
+import { AdminRealtime } from "./admin-realtime";
+import "../ui/admin-paper.css";
+
+/* Navigation groups follow Figma › Admin Web; modules that exist only in the
+   backend (revenue, payments, announcements, promotions, permissions) sit in
+   the group they belong to. */
+const groups: { title: string; sections: AdminSection[] }[] = [
+  { title: "Khách hàng", sections: ["users", "tickets", "billing", "revenue", "payments"] },
+  { title: "Tăng trưởng", sections: ["acquisition", "engagement", "ocr"] },
+  { title: "Vận hành", sections: ["health", "incidents", "releases", "announcements"] },
+  { title: "Nội dung", sections: ["content", "partners", "promotions"] },
+  { title: "Hệ thống", sections: ["integrations", "audit", "staff", "permissions", "settings", "exports"] },
 ];
-export function AdminWorkspaceShell({
-  children,
-  role,
-  permissions,
-}: {
-  children: ReactNode;
-  role: string | null;
-  permissions: readonly string[];
+export const sectionIcons: Record<AdminSection, string> = {
+  overview: "home", users: "users", tickets: "mail", billing: "wallet", revenue: "chart", payments: "receipt",
+  acquisition: "chart", engagement: "calendar", ocr: "receipt", health: "shield", incidents: "alert", releases: "grid",
+  announcements: "bell", content: "note", partners: "heart", promotions: "sparkle", integrations: "bolt", audit: "list",
+  staff: "lock", permissions: "shield", settings: "filter", exports: "download", security: "shield",
+};
+const ranges = ["7", "30", "90"] as const;
+
+export function AdminWorkspaceShell({ children, role, permissions, email, mfaVerified }: {
+  children: ReactNode; role: string | null; permissions: readonly string[]; email?: string | null; mfaVerified?: boolean;
 }) {
-  const path = usePathname(),
-    account = useRef<HTMLDetailsElement>(null),
-    mobile = useRef<HTMLDetailsElement>(null);
-  const current =
-    (Object.keys(adminSections) as AdminSection[]).find(
-      (s) => adminSections[s].href === path,
-    ) ?? "overview";
+  const path = usePathname();
+  const params = useSearchParams();
+  const router = useRouter();
+  // The mobile menu is open only for the path it was opened on, so navigating closes it.
+  const [menuPath, setMenuPath] = useState<string | null>(null);
+  const menuOpen = menuPath === path;
+  const setMenuOpen = (open: boolean | ((v: boolean) => boolean)) => setMenuPath((typeof open === "function" ? open(menuOpen) : open) ? path : null);
+  const account = useRef<HTMLDetailsElement>(null);
+  const search = useRef<HTMLInputElement>(null);
+  const [navigating, startNavigation] = useTransition();
+  const go = (href: string) => startNavigation(() => router.push(href));
+  const current = (Object.keys(adminSections) as AdminSection[]).find((s) => adminSections[s].href === path) ?? "overview";
+  const days = ranges.includes(params.get("days") as (typeof ranges)[number]) ? params.get("days") : "30";
+  const name = displayName(email);
+  const roleLabel = adminLabel(role ?? "");
+
+  useEffect(() => { account.current?.removeAttribute("open"); }, [path]);
   useEffect(() => {
     const close = (event: PointerEvent) => {
-      for (const ref of [account, mobile])
-        if (
-          event.target instanceof Node &&
-          !ref.current?.contains(event.target)
-        )
-          ref.current?.removeAttribute("open");
+      if (event.target instanceof Node && !account.current?.contains(event.target)) account.current?.removeAttribute("open");
+    };
+    const key = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      if (event.key === "/" && !typing) { event.preventDefault(); search.current?.focus(); }
+      if (event.key === "Escape") { setMenuOpen(false); account.current?.removeAttribute("open"); }
     };
     document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", key); };
   }, []);
-  function closeMenus() {
-    account.current?.removeAttribute("open");
-    mobile.current?.removeAttribute("open");
-  }
-  const navigation = (prefix: string) => (
-    <nav aria-label={prefix === "desktop" ? "Quản trị" : "Điều hướng quản trị"}>
-      {canViewAdminSection(role,'overview',permissions) && <Link
-        className="admin-nav-overview"
-        href="/admin"
-        aria-current={current === "overview" ? "page" : undefined}
-        onClick={closeMenus}
-      >
-        <Icon name="home" />
-        <span>Tổng quan</span>
-      </Link>}
-      {groups.map((group) => {
-        const sections = group.sections.filter((s) =>
-          canViewAdminSection(role, s, permissions),
-        );
-        if (!sections.length) return null;
-        return (
-          <details
-            className="admin-nav-group"
-            name={`admin-navigation-${prefix}`}
-            key={group.title}
-            open={sections.includes(current)}
-          >
-            <summary>
-              <Icon name={group.icon} />
-              <span>{group.title}</span>
-              <span className="admin-nav-chevron" aria-hidden="true">
-                ⌄
-              </span>
-            </summary>
-            <div>
-              {sections.map((s) => (
-                <Link
-                  key={s}
-                  href={adminSections[s].href}
-                  aria-current={current === s ? "page" : undefined}
-                  onClick={closeMenus}
-                >
-                  {adminSections[s].title}
-                </Link>
-              ))}
-            </div>
-          </details>
-        );
-      })}
-    </nav>
-  );
+
+  // Filter forms (method="get") navigate client-side instead of reloading the
+  // whole document; server-action forms (POST) are left alone.
+  useEffect(() => {
+    const onSubmit = (event: SubmitEvent) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement) || form.getAttribute("method")?.toLowerCase() !== "get") return;
+      if (!form.closest(".ap-root")) return;
+      event.preventDefault();
+      const target = new URL(form.getAttribute("action") || window.location.pathname, window.location.origin);
+      const query = new URLSearchParams();
+      for (const [key, value] of new FormData(form, event.submitter)) {
+        if (typeof value === "string" && value.trim() !== "") query.append(key, value);
+      }
+      startNavigation(() => router.push(`${target.pathname}${query.size ? `?${query}` : ""}`));
+    };
+    document.addEventListener("submit", onSubmit);
+    return () => document.removeEventListener("submit", onSubmit);
+  }, [router]);
+
+  const rangeHref = (value: string) => {
+    const next = new URLSearchParams(params.toString());
+    next.set("days", value);
+    next.delete("page");
+    return `${path}?${next}`;
+  };
+  const visible = (s: AdminSection) => canViewAdminSection(role, s, permissions);
+
   return (
-    <div className="workspace-admin admin-shell">
-      <a className="skip-link" href="#workspace-content">
-        Bỏ qua điều hướng
-      </a>
-      <aside className="admin-sidebar">
-        <Link className="admin-shell-brand" href="/admin">
-          <Image src="/picket-logo.png" width={38} height={38} alt="" />
-          <span>
-            Picket<small>Không gian quản trị</small>
-          </span>
+    <div className={`ap-root ap-shell workspace-admin${menuOpen ? " is-menu-open" : ""}`}>
+      <a className="ap-skip" href="#workspace-content">Bỏ qua điều hướng</a>
+      <div className={`ap-route-progress${navigating ? " is-active" : ""}`} role="progressbar" aria-hidden={!navigating} aria-label="Đang tải dữ liệu" />
+      <div className="ap-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+      <aside className="ap-sidebar" id="admin-sidebar" aria-label="Điều hướng quản trị">
+        <Link className="ap-brand" href="/admin">
+          <span className="ap-coin"><img src="/admin-paper/picket-mark-192.png" alt="" width={30} height={30} /></span>
+          <span><strong>Picket</strong><small>Không gian quản trị</small></span>
         </Link>
-        <p className="admin-nav-label">QUẢN LÝ ỨNG DỤNG</p>
-        <div className="admin-sidebar-navigation">{navigation("desktop")}</div>
-        <div className="admin-sidebar-footer">
-          <Link href="/admin/security" onClick={closeMenus}>
-            <Icon name="shield" />
-            <span>Bảo mật & MFA</span>
-          </Link>
-          <span className="admin-role-badge">{adminLabel(role ?? "")}</span>
+        <p className="ap-nav-label">QUẢN LÝ ỨNG DỤNG</p>
+        <nav className="ap-nav" aria-label="Quản trị">
+          {visible("overview") && (
+            <NavLink href="/admin" current={current === "overview"}>
+              <AdminIcon name="home" />Tổng quan<NavPending />
+            </NavLink>
+          )}
+          {groups.map((group) => {
+            const sections = group.sections.filter(visible);
+            if (!sections.length) return null;
+            return (
+              <details className="ap-nav-group" key={group.title} open={sections.includes(current) || undefined}>
+                <summary>{group.title}<AdminIcon name="chevron-right" size={14} /></summary>
+                <div>
+                  {sections.map((s) => (
+                    <NavLink key={s} href={adminSections[s].href} current={current === s}>
+                      <AdminIcon name={sectionIcons[s]} />{adminSections[s].title}<NavPending />
+                    </NavLink>
+                  ))}
+                </div>
+              </details>
+            );
+          })}
+        </nav>
+        <div className={`ap-security${mfaVerified === false ? " is-unverified" : ""}`}>
+          <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
+          <p><span className="ap-dot" />{mfaVerified === false ? "MFA chưa xác minh" : "MFA đã xác minh"}{roleLabel ? ` · ${roleLabel}` : ""}</p>
         </div>
       </aside>
-      <div className="admin-shell-body">
-        <header className="admin-topbar">
-          <div className="admin-topbar-context">
+
+      <div className="ap-main">
+        <header className="ap-topbar">
+          <button className="ap-icon-btn ap-menu-toggle" type="button" aria-controls="admin-sidebar" aria-expanded={menuOpen} aria-label="Mở menu quản trị" onClick={() => setMenuOpen((v) => !v)}>
+            <AdminIcon name="list" size={20} />
+          </button>
+          <div className="ap-context">
             <span>Picket / Quản trị</span>
-            <strong>{adminSections[current].title}</strong>
+            <h1>{adminSections[current].title}</h1>
           </div>
-          <details
-            ref={mobile}
-            className="admin-mobile-navigation"
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.currentTarget.open = false;
-                e.currentTarget.querySelector("summary")?.focus();
-              }
-            }}
-          >
-            <summary>
-              <Icon name="grid" />
-              <span>Điều hướng</span>
+          {visible("users") && (
+            <form className="ap-search" role="search" action="/admin/users" onSubmit={(e) => {
+              e.preventDefault();
+              const value = search.current?.value.trim() ?? "";
+              go(value ? `/admin/users?search=${encodeURIComponent(value.slice(0, 160))}` : "/admin/users");
+            }}>
+              <AdminIcon name="search" size={16} />
+              <input ref={search} name="search" type="search" placeholder="Tìm email, User ID…" aria-label="Tìm người dùng theo email, số điện thoại hoặc User ID" maxLength={160} />
+              <kbd className="ap-kbd" aria-hidden="true">/</kbd>
+            </form>
+          )}
+          <nav className="ap-range" aria-label="Khoảng thời gian">
+            {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
+          </nav>
+          <AdminRealtime current={current} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
+          {visible("incidents") && (
+            <Link className="ap-icon-btn" href="/admin/incidents" aria-label="Sự cố và cảnh báo"><AdminIcon name="bell" size={22} /></Link>
+          )}
+          <details ref={account} className="ap-account">
+            <summary aria-label="Mở menu tài khoản">
+              <span className="ap-avatar">{name.slice(0, 1)}</span>
+              <span className="ap-account-who"><b>{name}</b><small>{roleLabel || "Quản trị"}</small></span>
+              <AdminIcon name="chevron-down" size={14} />
             </summary>
-            <div className="admin-mobile-nav-panel">{navigation("mobile")}</div>
+            <div className="ap-account-panel">
+              <p>Tài khoản quản trị<small>{email ?? roleLabel}</small></p>
+              <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
+              <a href="https://picketfinance.com/"><AdminIcon name="arrow-up-right" size={16} />Trang giới thiệu</a>
+              <form action={signOut}><button type="submit"><AdminIcon name="logout" size={16} />Đăng xuất</button></form>
+            </div>
           </details>
-          <div className="admin-topbar-actions">
-            <Link
-              className="admin-landing-link"
-              href="https://picketfinance.com/"
-            >
-              Trang giới thiệu ↗
-            </Link>
-            <details
-              ref={account}
-              className="admin-account"
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.currentTarget.open = false;
-                  e.currentTarget.querySelector("summary")?.focus();
-                }
-              }}
-            >
-              <summary aria-label="Mở menu tài khoản">
-                <Icon name="shield" />
-                <span>{adminLabel(role ?? "")}</span>
-                <span aria-hidden="true">⌄</span>
-              </summary>
-              <div className="admin-account-panel">
-                <p>
-                  Tài khoản quản trị<small>{adminLabel(role ?? "")}</small>
-                </p>
-                <Link href="/admin/security" onClick={closeMenus}>
-                  <Icon name="shield" />
-                  Bảo mật & MFA
-                </Link>
-                <form action={signOut}>
-                  <button type="submit">
-                    <Icon name="logout" />
-                    Đăng xuất
-                  </button>
-                </form>
-              </div>
-            </details>
-          </div>
         </header>
-        <div
-          id="workspace-content"
-          className="admin-shell-content"
-          tabIndex={-1}
-        >
-          {children}
-        </div>
+        <div id="workspace-content" className="ap-stack" tabIndex={-1} aria-busy={navigating}>{children}</div>
       </div>
     </div>
+  );
+}
+
+function displayName(email?: string | null) {
+  const local = (email ?? "").split("@")[0];
+  if (!local) return "Quản trị viên";
+  return local.split(/[._-]+/).filter(Boolean).map((p) => p[0].toUpperCase() + p.slice(1)).join(" ");
+}
+
+/** Small pulsing dot on the link being opened, so a click gets instant feedback. */
+function NavPending() {
+  const { pending } = useLinkStatus();
+  return <span className={`ap-nav-pending${pending ? " is-pending" : ""}`} aria-hidden="true" />;
+}
+
+/** Sidebar link that fetches the full screen (data included) as soon as the
+    user shows intent — hover, focus or touch — so the click usually lands on
+    an already-loaded page. Before intent only the default lightweight prefetch runs. */
+function NavLink({ href, current, children }: { href: string; current: boolean; children: ReactNode }) {
+  const [intent, setIntent] = useState(false);
+  const warm = () => setIntent(true);
+  return (
+    <Link className="ap-nav-item" href={href} prefetch={intent ? true : null} aria-current={current ? "page" : undefined}
+      onMouseEnter={warm} onFocus={warm} onTouchStart={warm}>
+      {children}
+    </Link>
   );
 }

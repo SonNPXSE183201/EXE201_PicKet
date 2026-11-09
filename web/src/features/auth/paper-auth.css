@@ -1,0 +1,196 @@
+/* Sign-in / sign-up / verification in the Paper design
+   (Figma › User Web › 01 Đăng ký & xác thực, Admin Web › 01 Đăng nhập). */
+@font-face { font-family: PaNunito; src: url("/admin-paper/nunito-600.ttf") format("truetype"); font-weight: 400 600; font-display: swap; }
+@font-face { font-family: PaNunito; src: url("/auth-paper/nunito-700.ttf") format("truetype"); font-weight: 700; font-display: swap; }
+@font-face { font-family: PaNunito; src: url("/admin-paper/nunito-800.ttf") format("truetype"); font-weight: 800 900; font-display: swap; }
+
+.pa-root {
+  --pa-canvas: #fff8ed; --pa-card: #fff; --pa-cream: #fbebdd; --pa-ink: #302132; --pa-muted: #72636e;
+  --pa-mauve: #793268; --pa-mauve-hover: #632654; --pa-line: #eaddd5; --pa-coral: #ffb4a2; --pa-mint: #bce0b4;
+  --pa-success: #166534; --pa-success-bg: #e8f5ef; --pa-danger: #9f2545;
+  min-height: 100vh; display: grid; grid-template-columns: minmax(0, 660px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 24px; padding: 16px;
+  background: var(--pa-canvas); color: var(--pa-ink); font-family: PaNunito, "Segoe UI", system-ui, sans-serif; font-synthesis: none; -webkit-font-smoothing: antialiased;
+}
+.pa-root *, .pa-root *::before, .pa-root *::after { box-sizing: border-box; }
+.pa-root a { color: inherit; }
+.pa-root :focus-visible { outline: 2px solid var(--pa-mauve); outline-offset: 2px; }
+.pa-skip { position: absolute; left: 16px; top: -48px; z-index: 10; padding: 10px 16px; border-radius: 999px; background: var(--pa-mauve); color: #fff; font-weight: 800; }
+.pa-skip:focus { top: 16px; }
+
+/* Purple "pouch" story panel */
+.pa-pouch { grid-row: 1 / span 2; position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: calc(100vh - 32px); padding: 56px; border-radius: 28px; background: var(--pa-mauve); color: #fff; }
+.pa-pouch::before { content: ""; position: absolute; inset: 10px; border: 1.5px dashed rgb(255 255 255 / 35%); border-radius: 20px; pointer-events: none; }
+.pa-brand { position: relative; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.pa-coin { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--pa-coral); overflow: hidden; }
+.pa-coin img { width: 34px; height: 34px; object-fit: contain; }
+.pa-brand strong { display: block; font-size: 16px; line-height: 26px; font-weight: 800; }
+.pa-brand small { display: block; font-size: 10px; line-height: 15px; font-weight: 800; color: rgb(255 255 255 / 70%); }
+.pa-story { position: relative; margin-top: 70px; max-width: 540px; }
+.pa-story h1 { margin: 0; font-size: clamp(34px, 3.7vw, 52px); line-height: 1.15; font-weight: 800; letter-spacing: -.6px; white-space: pre-line; }
+.pa-story p { margin: 20px 0 0; font-size: 14px; line-height: 21px; font-weight: 700; color: rgb(255 255 255 / 75%); }
+.pa-cards { position: relative; flex: 1; min-height: 300px; margin-top: 24px; }
+.pa-ticket { position: absolute; width: 276px; padding: 18px 18px 14px; background: #fff; color: var(--pa-ink); filter: drop-shadow(0 8px 18px rgb(48 33 50 / 18%)); }
+.pa-ticket::after { content: ""; position: absolute; left: 0; right: 0; bottom: -8px; height: 8px; background: linear-gradient(-45deg, transparent 5.6px, #fff 0) 0 0 / 12px 8px repeat-x, linear-gradient(45deg, transparent 5.6px, #fff 0) 0 0 / 12px 8px repeat-x; }
+.pa-ticket-head { display: flex; align-items: center; gap: 10px; font-size: 12px; line-height: 18px; font-weight: 700; color: var(--pa-muted); }
+.pa-ticket-head span:first-child { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 11px; background: var(--pa-coral); color: var(--pa-ink); }
+.pa-ticket b { display: block; margin-top: 10px; font-size: 34px; line-height: 42px; font-weight: 800; white-space: nowrap; }
+.pa-ticket small { display: block; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); }
+.pa-ticket.is-a { left: 12px; top: 130px; transform: rotate(5deg); }
+.pa-ticket.is-b { left: 280px; top: 50px; transform: rotate(-6deg); }
+.pa-ticket.is-b .pa-ticket-head span:first-child { background: var(--pa-mint); }
+.pa-art { position: absolute; right: -10px; bottom: -6px; width: 190px; height: auto; pointer-events: none; }
+
+/* Form column */
+.pa-main { display: grid; place-items: center; padding: 32px 24px; }
+.pa-form-wrap { width: min(420px, 100%); display: grid; gap: 16px; }
+.pa-eyebrow { margin: 0; font-size: 11px; line-height: 16px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--pa-mauve); }
+.pa-title { margin: 0; font-size: 22px; line-height: 29px; font-weight: 800; letter-spacing: -.3px; }
+.pa-copy { margin: 0; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); }
+.pa-copy strong { color: var(--pa-ink); }
+.pa-head { display: grid; gap: 8px; margin-bottom: 8px; }
+.pa-fields { display: grid; padding: 22px; border-radius: 24px; background: var(--pa-card); box-shadow: 0 3px 10px rgb(48 33 51 / 7%); }
+.pa-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px; border-radius: 14px; cursor: text; }
+.pa-row + .pa-row { border-top: 1.5px dashed var(--pa-line); border-radius: 0; margin-top: 6px; padding-top: 14px; }
+.pa-row:focus-within .pa-tile { background: var(--pa-coral); }
+.pa-tile { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 12px; background: var(--pa-cream); color: var(--pa-ink); transition: background-color .15s; }
+.pa-row-text { flex: 1; min-width: 0; display: grid; }
+.pa-row-text > span { font-size: 11px; line-height: 16px; font-weight: 600; color: var(--pa-muted); }
+.pa-row-text input { width: 100%; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; line-height: 21px; font-weight: 700; color: var(--pa-ink); }
+.pa-row-text input::placeholder { color: #b7a9b2; font-weight: 600; }
+.pa-eye { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 0; border-radius: 50%; background: none; color: var(--pa-ink); cursor: pointer; }
+.pa-eye:hover { background: var(--pa-cream); }
+.pa-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--pa-cream); }
+.pa-tabs button { flex: 1; min-height: 34px; border: 0; border-radius: 999px; background: none; font: inherit; font-size: 12px; font-weight: 600; color: var(--pa-muted); cursor: pointer; }
+.pa-tabs button[aria-pressed="true"] { background: var(--pa-card); color: var(--pa-mauve); font-weight: 700; }
+.pa-rules { display: grid; gap: 6px; margin: 0; padding: 0 0 0 4px; list-style: none; }
+.pa-rules li { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); }
+.pa-rules li::before { content: ""; display: grid; width: 16px; height: 16px; flex: none; border: 1.5px solid var(--pa-line); border-radius: 8px; }
+.pa-rules li.is-ok { color: var(--pa-ink); }
+.pa-rules li.is-ok::before { border-color: transparent; background: var(--pa-success-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E") center no-repeat; }
+.pa-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 20px; border: 1px solid transparent; border-radius: 24px; background: var(--pa-mauve); color: #fff; font: inherit; font-size: 13px; line-height: 19px; font-weight: 800; cursor: pointer; text-decoration: none; transition: background-color .15s; }
+.pa-btn:hover { background: var(--pa-mauve-hover); }
+.pa-btn:disabled { opacity: .55; cursor: not-allowed; }
+.pa-btn.is-secondary { background: var(--pa-card); border-color: var(--pa-line); color: var(--pa-ink); }
+.pa-btn.is-secondary:hover { border-color: var(--pa-mauve); background: #fffcf5; }
+.pa-btn svg { flex: none; }
+.pa-root .pa-link { justify-self: center; border: 0; background: none; font: inherit; font-size: 13px; line-height: 19px; font-weight: 800; color: var(--pa-mauve); cursor: pointer; text-decoration: none; }
+.pa-link:hover { text-decoration: underline; }
+.pa-link:disabled { color: var(--pa-muted); cursor: default; text-decoration: none; }
+.pa-meta { justify-self: center; margin: 0; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); text-align: center; }
+.pa-meta a, .pa-meta button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--pa-mauve); text-decoration: none; cursor: pointer; }
+.pa-meta a:hover, .pa-meta button:hover { text-decoration: underline; }
+.pa-note { display: flex; align-items: center; gap: 6px; margin: 24px 0 0; font-size: 10px; line-height: 15px; font-weight: 800; color: var(--pa-muted); }
+.pa-root .pa-back { display: inline-flex; align-items: center; gap: 6px; margin-top: 24px; font-size: 12px; font-weight: 700; color: var(--pa-muted); text-decoration: none; }
+.pa-back:hover { color: var(--pa-mauve); }
+.pa-message { margin: 0; padding: 10px 14px; border-radius: 14px; background: #fbe4e6; font-size: 12px; line-height: 18px; font-weight: 700; color: var(--pa-danger); }
+.pa-message.is-info { background: var(--pa-success-bg); color: var(--pa-success); }
+.pa-divider { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 700; color: var(--pa-muted); }
+.pa-divider::before, .pa-divider::after { content: ""; flex: 1; border-top: 1.5px dashed var(--pa-line); }
+
+/* OTP */
+.pa-otp-card { display: grid; gap: 12px; padding: 18px 22px; border-radius: 24px; background: var(--pa-card); box-shadow: 0 3px 10px rgb(48 33 51 / 7%); }
+.pa-otp { display: flex; gap: 10px; }
+.pa-otp input { width: 46px; height: 52px; padding: 0; border: 1px solid var(--pa-line); border-radius: 12px; background: var(--pa-card); text-align: center; font: inherit; font-size: 20px; font-weight: 800; color: var(--pa-ink); caret-color: var(--pa-mauve); }
+.pa-otp input:placeholder-shown { background: #fde6d8; border-color: transparent; }
+.pa-otp input:focus { outline: 0; border: 2px solid var(--pa-mauve); background: var(--pa-card); }
+.pa-otp-hint { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 11px; font-weight: 700; color: var(--pa-muted); }
+.pa-otp-hint button { border: 0; background: none; padding: 0; font: inherit; color: var(--pa-mauve); font-weight: 800; cursor: pointer; }
+.pa-otp-hint button:disabled { color: var(--pa-muted); cursor: default; }
+
+/* Footer */
+.pa-footer { grid-column: 2; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 0 8px 4px; font-size: 11px; font-weight: 600; color: var(--pa-muted); }
+.pa-footer nav { display: flex; gap: 16px; }
+.pa-footer a { text-decoration: none; }
+.pa-footer a:hover { color: var(--pa-mauve); }
+
+/* Legacy auth markup (forgot/reset password) inside the Paper shell */
+.pa-root .auth-card { width: min(420px, 100%); display: grid; gap: 14px; padding: 0; border: 0; background: none; box-shadow: none; }
+.pa-root .auth-title { margin: 0; font-size: 22px; line-height: 29px; font-weight: 800; color: var(--pa-ink); }
+.pa-root .auth-copy, .pa-root .auth-card > p { margin: 0; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); }
+.pa-root .auth-form { display: grid; gap: 14px; padding: 22px; border-radius: 24px; background: var(--pa-card); box-shadow: 0 3px 10px rgb(48 33 51 / 7%); }
+.pa-root .auth-form label, .pa-root .paper-auth-field > label { display: grid; gap: 4px; font-size: 11px; font-weight: 600; color: var(--pa-muted); }
+.pa-root .auth-form input { width: 100%; min-height: 44px; padding: 0 14px; border: 1px solid var(--pa-line); border-radius: 12px; font: inherit; font-size: 14px; font-weight: 700; color: var(--pa-ink); background: #fff; }
+.pa-root .auth-form input:focus { outline: 0; border-color: var(--pa-mauve); box-shadow: 0 0 0 3px rgb(121 50 104 / 12%); }
+.pa-root .paper-auth-password { display: flex; gap: 8px; }
+.pa-root .paper-auth-password button { min-width: 64px; border: 1px solid var(--pa-line); border-radius: 12px; background: #fff; font: inherit; font-size: 12px; font-weight: 800; color: var(--pa-mauve); cursor: pointer; }
+.pa-root .paper-auth-hint { margin: 2px 0 0; font-size: 11px; color: var(--pa-muted); }
+.pa-root .button { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 48px; border: 1px solid var(--pa-line); border-radius: 24px; background: #fff; font: inherit; font-size: 13px; font-weight: 800; color: var(--pa-ink); cursor: pointer; }
+.pa-root .button.primary { border-color: transparent; background: var(--pa-mauve); color: #fff; }
+.pa-root .button.primary:hover { background: var(--pa-mauve-hover); }
+.pa-root .form-message { margin: 0; padding: 10px 14px; border-radius: 14px; background: #fbe4e6; font-size: 12px; font-weight: 700; color: var(--pa-danger); }
+.pa-root .back-link, .pa-root .auth-links a { justify-self: center; font-size: 13px; font-weight: 800; color: var(--pa-mauve); text-decoration: none; }
+.pa-root .eyebrow { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--pa-mauve); }
+
+/* Tablet: story panel becomes a compact header */
+@media (max-width: 1100px) {
+  .pa-root { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: 0; padding: 12px; }
+  .pa-pouch { grid-row: auto; }
+  .pa-footer { grid-column: 1; }
+  .pa-pouch { min-height: 0; padding: 32px 32px 28px; }
+  .pa-story { margin-top: 28px; max-width: 620px; }
+  .pa-story h1 { font-size: 34px; }
+  .pa-cards { display: none; }
+  .pa-art { width: 140px; right: 12px; bottom: -14px; }
+  .pa-main { padding: 32px 12px 24px; place-items: start center; }
+}
+/* Phones, Surface Duo single screen, Galaxy Z Fold */
+@media (max-width: 720px) {
+  .pa-root { padding: 8px; }
+  .pa-pouch { padding: 22px 20px 20px; border-radius: 22px; }
+  .pa-pouch::before { inset: 7px; border-radius: 16px; }
+  .pa-story { margin-top: 18px; padding-right: 96px; }
+  .pa-story h1 { font-size: 26px; letter-spacing: -.3px; }
+  .pa-story p { display: none; }
+  .pa-art { width: 104px; right: 4px; bottom: -10px; }
+  .pa-main { padding: 24px 4px 16px; }
+  .pa-fields, .pa-otp-card { padding: 14px; border-radius: 20px; }
+  .pa-otp { gap: 6px; }
+  .pa-otp input { width: 40px; height: 48px; }
+  .pa-footer { padding: 0 4px 4px; }
+}
+@media (max-width: 360px) {
+  .pa-story { padding-right: 0; }
+  .pa-story h1 { font-size: 22px; }
+  .pa-art { display: none; }
+  .pa-row { gap: 8px; padding: 6px 2px; }
+  .pa-tile { width: 32px; height: 32px; }
+  .pa-otp input { width: 34px; height: 44px; font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .pa-root * { transition: none !important; } }
+
+/* Edge/IE add their own reveal/clear buttons to password fields; we already
+   provide one eye toggle, so hide the browser's to avoid two icons. */
+.pa-root input::-ms-reveal, .pa-root input::-ms-clear { display: none; }
+
+/* PIN */
+.pa-pin-label { font-size: 11px; font-weight: 700; color: var(--pa-muted); }
+.pa-otp input[type="password"] { font-size: 26px; letter-spacing: 0; }
+.pa-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: pa-step; }
+.pa-steps li { position: relative; padding-left: 34px; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); counter-increment: pa-step; }
+.pa-steps li::before { content: counter(pa-step); position: absolute; left: 0; top: -2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pa-cream); font-size: 12px; font-weight: 800; color: var(--pa-mauve); }
+.pa-steps b { color: var(--pa-ink); }
+.pa-pin-cta { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--pa-coral); border-radius: 18px; background: rgb(255 180 162 / 22%); text-decoration: none; color: var(--pa-ink); }
+.pa-pin-cta:hover { background: rgb(255 180 162 / 35%); }
+.pa-pin-cta span:nth-child(2) { flex: 1; }
+.pa-pin-cta b { display: block; font-size: 13px; font-weight: 800; }
+.pa-pin-cta small { display: block; font-size: 11px; font-weight: 600; color: var(--pa-muted); }
+.pa-pin-cta .pa-tile { background: #fff; }
+/* Paper auth content embedded inside the user workspace (no full-page grid). */
+.pa-root.is-inline { display: grid; gap: 16px; min-height: 0; padding: 24px; background: var(--pa-canvas); border-radius: 24px; }
+.pa-root.is-inline .pa-form-wrap { width: min(440px, 100%); }
+.pa-root a.pa-btn { color: #fff; }
+.pa-root a.pa-btn.is-secondary { color: var(--pa-ink); }
+.pa-pin-status { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; background: var(--pa-card); box-shadow: 0 3px 10px rgb(48 33 51 / 7%); }
+.pa-pin-status > span:nth-child(2) { flex: 1; min-width: 0; }
+.pa-pin-status b { display: block; font-size: 14px; font-weight: 800; }
+.pa-pin-status small { display: block; font-size: 11px; font-weight: 700; color: var(--pa-muted); }
+.pa-switch { position: relative; display: inline-flex; width: 44px; height: 26px; flex: none; cursor: pointer; }
+.pa-switch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.pa-switch span[aria-hidden] { width: 100%; border-radius: 999px; background: var(--pa-line); transition: background-color .15s; }
+.pa-switch span[aria-hidden]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 20%); transition: transform .15s; }
+.pa-switch input:checked + span[aria-hidden] { background: var(--pa-mauve); }
+.pa-switch input:checked + span[aria-hidden]::after { transform: translateX(18px); }
+.pa-switch input:focus-visible + span[aria-hidden] { outline: 2px solid var(--pa-mauve); outline-offset: 2px; }
+.pa-pin-actions { display: grid; gap: 10px; }
+.pa-root .pa-btn.is-danger { color: var(--pa-danger); }
+.pa-root .ap-sr, .pa-root .pa-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

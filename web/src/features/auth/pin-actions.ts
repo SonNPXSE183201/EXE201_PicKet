@@ -103,3 +103,28 @@ export async function revokePinDevice(): Promise<void> {
     store.delete(deviceCookie);
   }
 }
+
+/** Replace this browser's PIN: save the new one (locks the session, as enabling
+    does), then revoke the previous device. Needs a recent password sign-in. */
+export async function changePin(form: FormData): Promise<boolean> {
+  const previous = (await cookies()).get(deviceCookie)?.value;
+  const saved = await lockWithPin(form);
+  if (saved && previous) {
+    try {
+      await request({ action: "revoke", deviceToken: previous });
+    } catch {
+      /* The old device expires on its own; the new PIN is already active. */
+    }
+  }
+  return saved;
+}
+
+/** Turn PIN quick unlock off for this browser; the current session stays signed in. */
+export async function disablePin(): Promise<boolean> {
+  try {
+    await revokePinDevice();
+    return true;
+  } catch {
+    return false;
+  }
+}
