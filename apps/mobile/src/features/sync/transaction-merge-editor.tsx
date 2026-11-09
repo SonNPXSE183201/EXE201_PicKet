@@ -107,9 +107,9 @@ export function TransactionMergeEditor({ conflict, onQueued, onBusyChange }: {
     {loading && <ActivityIndicator accessibilityLabel={t("mergeLoading")} color={colors.link} />}
     {message && <Text accessibilityLiveRegion="polite" style={{ color: colors.expense }}>{t(message)}</Text>}
     {!loading && !currentServer && <PrimaryAction disabled={busy} label={t("reloadServer")} onPress={() => { if (isCurrent() && !operationBusy.current) setRevision(value => value + 1); }} />}
-    {fields.map(field => <View key={field.key} style={{ gap: 6 }}>
-      <Text accessibilityRole="header" style={{ color: colors.text, fontWeight: "700" }}>{t("field." + field.key)}</Text>
-      <Text style={{ color: colors.text }}>{t("deviceValue", { value: display(field.key, field.local, "local") })}</Text>
+    {fields.map(field => <View key={field.key} style={{ gap: 6, backgroundColor: choices[field.key] ? "transparent" : colors.warningSurface, borderRadius: 14, padding: 10 }}>
+      <Text accessibilityRole="header" style={{ color: colors.muted, fontSize: 12, fontWeight: "700" }}>{t("field." + field.key)}</Text>
+      <Text style={{ color: colors.text, fontSize: 14, fontWeight: "800" }}>{t("deviceValue", { value: display(field.key, field.local, "local") })}</Text>
       <Text style={{ color: colors.muted }}>{t("serverValue", { value: display(field.key, field.server, "server") })}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <ChoiceChip disabled={busy} label={t("useLocal", { field: t("field." + field.key) })} checked={choices[field.key] === "local"} onPress={() => { if (isCurrent() && !operationBusy.current) setChoices(current => ({ ...current, [field.key]: "local" })); }} />

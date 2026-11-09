@@ -2,17 +2,18 @@ import { PicketText as Text } from "@/core/ui/picket-text";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { formatVnd } from "@picket/domain";
-import { Redirect, router } from "expo-router";
+import { Redirect } from "expo-router";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { EmptyState, PicketScreen } from "@/core/ui/picket-ui";
+import { PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
+import { figmaType } from "@picket/design-tokens";
+import { ReceiptDivider, ReceiptEdge, figmaShadow } from "@/core/ui/figma-ui";
+import { FieldOverline, ManagementEmpty } from "@/features/management/management-ui";
 import { AppIcon } from "@/core/ui/app-icon";
-import { PaperArt } from "@/core/ui/paper-art";
-import { categoryArt } from "@/core/theme/category-art";
 import { useAuth } from "@/features/auth/auth-context";
 import { useProfile } from "@/features/profile/profile-context";
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
@@ -55,136 +56,101 @@ export default function InsightsScreen() {
         icon: cat?.icon ?? null,
       };
     });
-    return { income, expense: Math.max(0, expense - refunds), breakdown };
-  }, [categories, month, transactions, selectedMonth, splits, t]);
+    const weeks = [0, 0, 0, 0];
+    for (const item of selected) if (item.kind === "expense") weeks[Math.min(3, Math.floor((new Date(item.occurredAt).getDate() - 1) / 7))] += item.amount;
+    return { income, expense: Math.max(0, expense - refunds), breakdown, weeks, hasData: selected.length > 0 };
+  }, [categories, month, t, transactions, selectedMonth, splits]);
+
+  const prevKey = `${new Date(month.getFullYear(), month.getMonth() - 1, 1).getFullYear()}-${String(new Date(month.getFullYear(), month.getMonth() - 1, 1).getMonth() + 1).padStart(2, "0")}`;
+  const previous = useMemo(() => new Map(categorySpending(transactions, prevKey, []).map((row) => [row.id, row.amount])), [transactions, prevKey]);
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
-  // Progress bar colors corresponding to Master Design Screen 25
-  const barColors = [colors.mauve, "#F87171", "#60A5FA", "#34D399", "#FBBF24", "#A78BFA"];
+  const hidden = Boolean(profile?.hideBalance);
+  const money = (value: number) => (hidden ? "••••••" : formatVnd(value));
+  const tones = [colors.pocketCoral, colors.pocketLilac, colors.pocketMint, colors.pocketBlue];
+  const top = summary.breakdown.slice(0, 4);
+  const restAmount = summary.breakdown.slice(4).reduce((sum, item) => sum + item.amount, 0);
+  const rows = [...top.map((item, index) => ({ key: item.id, name: item.name, amount: item.amount, color: tones[index % tones.length] })), ...(restAmount > 0 ? [{ key: "rest", name: t("Khác"), amount: restAmount, color: colors.elevated }] : [])];
+  const percentOf = (amount: number) => (summary.expense > 0 ? Math.round((amount / summary.expense) * 100) : 0);
+  const maxRow = Math.max(1, ...rows.map((row) => row.amount));
+  const maxWeek = Math.max(1, ...summary.weeks);
+  const shortTr = (value: number) => t("{{value}}tr", { value: (value / 1_000_000).toFixed(1).replace(".", ",").replace(",0", "") });
+  const today = new Date();
+  const currentWeek = monthOffset === 0 ? Math.min(3, Math.floor((today.getDate() - 1) / 7)) : -1;
+  const lead = summary.breakdown.map((item) => ({ item, before: previous.get(item.id) ?? 0 })).filter((row) => row.before > 0).map((row) => ({ ...row, change: Math.round(((row.item.amount - row.before) / row.before) * 100) })).sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0];
+  const title = t("Tháng {{month}}, {{year}}", { month: month.getMonth() + 1, year: month.getFullYear() });
+  const prevMonthNumber = new Date(month.getFullYear(), month.getMonth() - 1, 1).getMonth() + 1;
 
-  // Format short total for donut center
-  function formatShortM(amount: number) {
-    if (amount >= 1_000_000) {
-      return `${(amount / 1_000_000).toFixed(1)}M`;
-    }
-    if (amount >= 1_000) {
-      return `${Math.round(amount / 1_000)}k`;
-    }
-    return String(amount);
-  }
-
-  const prevMonth = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+  const switcher = <View style={styles.switcher}>
+    <Pressable accessibilityLabel={t("Tháng trước")} accessibilityRole="button" onPress={() => setMonthOffset((value) => value - 1)} style={styles.monthBtn}><AppIcon name="chevron-left" size={16} color={colors.text} /></Pressable>
+    <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{title}</Text>
+    <Pressable accessibilityLabel={t("Tháng sau")} accessibilityRole="button" disabled={monthOffset >= 0} onPress={() => setMonthOffset((value) => Math.min(0, value + 1))} style={[styles.monthBtn, monthOffset >= 0 && { opacity: 0.4 }]}><AppIcon name="chevron-right" size={16} color={colors.text} /></Pressable>
+  </View>;
 
   return (
     <PicketScreen>
-      {/* Master Design Screen 25 Header */}
-      <View style={styles.headerRow}>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => router.back()}
-          style={styles.backBtn}
-        >
-          <AppIcon name="arrow-left" color={colors.ink} size={24} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          {t("Phân tích tài chính")}
-        </Text>
-      </View>
-
-      {/* Month Pills: e.g. Tháng 10 / Tháng 09 */}
-      <View style={styles.monthPillsRow}>
-        <Pressable
-          onPress={() => setMonthOffset(0)}
-          style={[styles.monthPill, monthOffset === 0 && styles.monthPillActive]}
-        >
-          <Text style={[styles.monthPillText, monthOffset === 0 && styles.monthPillTextActive]}>
-            {t("Tháng {{month}}", { month: month.getMonth() + 1 })}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setMonthOffset(-1)}
-          style={[styles.monthPill, monthOffset === -1 && styles.monthPillActive]}
-        >
-          <Text style={[styles.monthPillText, monthOffset === -1 && styles.monthPillTextActive]}>
-            {t("Tháng {{month}}", { month: prevMonth.getMonth() + 1 })}
-          </Text>
-        </Pressable>
-      </View>
-
+      <TopAppBar title={t("Thống kê")} />
+      <View style={styles.block}>{switcher}</View>
       {error && (
         <Pressable accessibilityRole="button" onPress={() => void refresh()}>
-          <Text accessibilityLiveRegion="polite" style={styles.warning}>
-            {t("{{error}} Chạm để tải lại.", { error })}
-          </Text>
+          <Text accessibilityLiveRegion="polite" style={styles.warning}>{t("{{error}} Chạm để tải lại.", { error })}</Text>
         </Pressable>
       )}
-
-      {/* Master Donut Chart Card */}
-      <View style={styles.donutCard}>
-        <Text style={styles.donutCardTitle}>{t("Cơ cấu chi tiêu theo nhóm")}</Text>
-        <Text style={styles.donutCardSubtitle}>
-          {t("Tổng chi tiêu: {{amount}}", { amount: profile?.hideBalance ? "••••••" : formatVnd(summary.expense) })}
-        </Text>
-
-        <View style={styles.donutGraphicContainer}>
-          <View style={styles.donutRing}>
-            <View style={styles.donutInnerHole}>
-              <Text style={styles.donutCenterAmount}>
-                {profile?.hideBalance ? "••" : formatShortM(summary.expense)}
-              </Text>
-              <Text style={styles.donutCenterLabel}>{t("đã chi")}</Text>
+      {splitError ? <Text accessibilityLiveRegion="polite" style={styles.warning}>{splitError}</Text> : null}
+      {!summary.hasData && !splitLoading ? (
+        <ManagementEmpty art="bloom" title={t("Tháng {{month}} chưa có số liệu", { month: month.getMonth() + 1 })} body={t("Ghi vài khoản chi để thấy tiền\nđang đi về đâu.")} />
+      ) : (
+        <>
+          <View style={[styles.block, styles.summary]}>
+            <View style={{ gap: 2 }}>
+              <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Đã chi")}</Text>
+              <Text style={[figmaType.titleSection, styles.large]}>{money(summary.expense)}</Text>
+            </View>
+            <View style={{ gap: 2, alignItems: "flex-end" }}>
+              <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Đã thu")}</Text>
+              <Text style={[figmaType.bodyStrong, { color: colors.income }]}>{hidden ? "••••••" : `+${formatVnd(summary.income)}`}</Text>
             </View>
           </View>
-        </View>
-      </View>
 
-      {/* Section: DANH MỤC CHI TIÊU HÀNG ĐẦU */}
-      <Text style={styles.sectionHeaderLabel}>{t("DANH MỤC CHI TIÊU HÀNG ĐẦU")}</Text>
-
-      {splitError ? (
-        <Text accessibilityLiveRegion="polite" style={styles.warning}>{splitError}</Text>
-      ) : splitLoading ? null : summary.breakdown.length === 0 ? (
-        <EmptyState
-          title={t("Chưa có chi tiêu trong tháng")}
-          description={t("Phân bổ sẽ xuất hiện khi bạn ghi giao dịch.")}
-          symbol="▥"
-        />
-      ) : (
-        <View style={styles.breakdownList}>
-          {summary.breakdown.map((item, index) => {
-            const percent = summary.expense > 0 ? Math.round((item.amount / summary.expense) * 100) : 0;
-            const barColor = barColors[index % barColors.length];
-            return (
-              <View key={item.id} style={styles.categoryProgressCard}>
-                <View style={styles.categoryArtBox}>
-                  <PaperArt
-                    id={categoryArt(item.icon, item.name)}
-                    style={{ width: 36, height: 36 }}
-                  />
-                </View>
-                <View style={styles.categoryCopyCol}>
-                  <Text style={styles.categoryName}>{item.name}</Text>
-                  <Text style={styles.categoryAmountSub}>
-                    {profile?.hideBalance ? "••••••" : formatVnd(item.amount)} ({percent}%)
-                  </Text>
-                </View>
-                <View style={styles.progressBarTrack}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${Math.min(100, Math.max(8, percent))}%`,
-                        backgroundColor: barColor,
-                      },
-                    ]}
-                  />
-                </View>
+          {rows.length > 0 && <View style={[styles.block, figmaShadow("paper")]}>
+            <View style={styles.paper}>
+              <FieldOverline>{t("Theo danh mục")}</FieldOverline>
+              <View style={styles.bars}>
+                {rows.map((row) => <View key={row.key} style={styles.barCol}>
+                  <Text style={[figmaType.captionStrong, { color: colors.text }]}>{percentOf(row.amount)}%</Text>
+                  <View style={[styles.bar, { height: Math.max(24, Math.round((row.amount / maxRow) * 118)), backgroundColor: row.color }]} />
+                  <Text numberOfLines={1} style={[figmaType.micro, { color: colors.muted, maxWidth: 56 }]}>{row.name}</Text>
+                </View>)}
               </View>
-            );
-          })}
-        </View>
+              <ReceiptDivider />
+              {rows.map((row) => <View key={row.key} style={styles.legend}>
+                <View style={[styles.swatch, { backgroundColor: row.color }]} />
+                <Text numberOfLines={1} style={[figmaType.bodySmall, { color: colors.text, flex: 1 }]}>{row.name}</Text>
+                <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{percentOf(row.amount)}%</Text>
+                <Text style={[figmaType.amountRow, { color: colors.text, width: 100, textAlign: "right" }]}>{money(row.amount)}</Text>
+              </View>)}
+            </View>
+            <ReceiptEdge direction="bottom" />
+          </View>}
+
+          <View style={[styles.block, { gap: 10 }]}>
+            <FieldOverline>{t("Nhịp 4 tuần")}</FieldOverline>
+            <View style={styles.weeks}>
+              {summary.weeks.map((value, index) => { const now = index === currentWeek; const fill = Math.round((value / maxWeek) * 52);
+                return <View key={index} style={styles.weekCol}>
+                  <Text style={[figmaType.micro, { color: now ? colors.primary : colors.muted }]}>{hidden ? "••" : shortTr(value)}</Text>
+                  <View style={[styles.track, { backgroundColor: now ? colors.selectedSurface : colors.border }]}><View style={{ position: "absolute", bottom: 0, width: 26, height: Math.max(value > 0 ? 13 : 0, fill), borderRadius: 13, backgroundColor: now ? colors.primary : colors.pocketLilac }} /></View>
+                  <Text style={[now ? figmaType.tabActive : figmaType.tab, { color: now ? colors.primary : colors.muted }]}>{t("Tuần {{week}}", { week: index + 1 })}</Text>
+                </View>; })}
+            </View>
+          </View>
+
+          {lead && <View style={styles.insight}>
+            <View style={styles.insightTile}><AppIcon name="star-four-points-outline" size={18} color={colors.text} /></View>
+            <Text style={[figmaType.bodySmall, { color: colors.text, flex: 1 }]}>{lead.change <= 0 ? t("{{name}} giảm {{percent}}% so với tháng {{month}}. Bạn đang đi đúng hướng.", { name: lead.item.name, percent: Math.abs(lead.change), month: prevMonthNumber }) : t("{{name}} tăng {{percent}}% so với tháng {{month}}. Hãy để mắt tới khoản này.", { name: lead.item.name, percent: lead.change, month: prevMonthNumber })}</Text>
+          </View>}
+        </>
       )}
     </PicketScreen>
   );
@@ -192,172 +158,21 @@ export default function InsightsScreen() {
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      marginTop: 4,
-      marginBottom: 12,
-    },
-    backBtn: {
-      padding: 4,
-    },
-    headerTitle: {
-      color: colors.ink,
-      fontSize: 22,
-      fontWeight: "800",
-      letterSpacing: -0.3,
-    },
-    monthPillsRow: {
-      flexDirection: "row",
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 20,
-      padding: 4,
-      alignSelf: "center",
-      width: "100%",
-      maxWidth: 240,
-      marginBottom: 16,
-    },
-    monthPill: {
-      flex: 1,
-      minHeight: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    monthPillActive: {
-      backgroundColor: colors.mauve,
-    },
-    monthPillText: {
-      color: colors.muted,
-      fontSize: 13,
-      fontWeight: "700",
-    },
-    monthPillTextActive: {
-      color: colors.onPrimary,
-    },
-    donutCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 22,
-      padding: 18,
-      marginBottom: 18,
-      alignItems: "center",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.04,
-      shadowRadius: 4,
-      elevation: 1,
-    },
-    donutCardTitle: {
-      color: colors.ink,
-      fontSize: 16,
-      fontWeight: "800",
-      alignSelf: "flex-start",
-    },
-    donutCardSubtitle: {
-      color: colors.muted,
-      fontSize: 13,
-      alignSelf: "flex-start",
-      marginTop: 3,
-      marginBottom: 14,
-    },
-    donutGraphicContainer: {
-      alignItems: "center",
-      justifyContent: "center",
-      marginVertical: 10,
-    },
-    donutRing: {
-      width: 140,
-      height: 140,
-      borderRadius: 70,
-      borderWidth: 20,
-      borderColor: colors.mauve,
-      borderTopColor: "#93C5FD",
-      borderRightColor: "#6EE7B7",
-      borderLeftColor: "#FCA5A5",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    donutInnerHole: {
-      width: 86,
-      height: 86,
-      borderRadius: 43,
-      backgroundColor: colors.surface,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    donutCenterAmount: {
-      color: colors.ink,
-      fontSize: 18,
-      fontWeight: "800",
-      lineHeight: 22,
-    },
-    donutCenterLabel: {
-      color: colors.muted,
-      fontSize: 11,
-      fontWeight: "600",
-    },
-    sectionHeaderLabel: {
-      color: colors.muted,
-      fontSize: 12,
-      fontWeight: "700",
-      letterSpacing: 0.6,
-      marginBottom: 10,
-      textTransform: "uppercase",
-    },
-    breakdownList: {
-      gap: 10,
-      paddingBottom: 40,
-    },
-    categoryProgressCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 16,
-      padding: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-    },
-    categoryArtBox: {
-      width: 44,
-      height: 44,
-      borderRadius: 14,
-      backgroundColor: colors.pocketLilac,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    categoryCopyCol: {
-      flex: 1,
-    },
-    categoryName: {
-      color: colors.ink,
-      fontSize: 15,
-      fontWeight: "700",
-    },
-    categoryAmountSub: {
-      color: colors.muted,
-      fontSize: 12,
-      marginTop: 2,
-    },
-    progressBarTrack: {
-      width: 90,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.cream,
-      overflow: "hidden",
-    },
-    progressBarFill: {
-      height: 8,
-      borderRadius: 4,
-    },
-    warning: {
-      color: colors.expense,
-      fontSize: 13,
-      marginVertical: 8,
-    },
+    block: { marginTop: 20 },
+    switcher: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" },
+    monthBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
+    summary: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" },
+    large: { fontSize: 20, lineHeight: 26, letterSpacing: -0.3, color: colors.text },
+    warning: { color: colors.warning, fontSize: 13, marginTop: 12 },
+    paper: { backgroundColor: colors.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingTop: 16, paddingBottom: 12, paddingHorizontal: 16, gap: 10 },
+    bars: { flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", paddingTop: 6 },
+    barCol: { alignItems: "center", gap: 6 },
+    bar: { width: 40, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 },
+    legend: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 4 },
+    swatch: { width: 10, height: 10, borderRadius: 3 },
+    weeks: { flexDirection: "row", justifyContent: "space-between" },
+    weekCol: { width: 44, alignItems: "center", gap: 6 },
+    track: { width: 26, height: 52, borderRadius: 13, overflow: "hidden" },
+    insight: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 20, paddingLeft: 12, paddingRight: 14, paddingVertical: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.paper },
+    insightTile: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.pocketMint, alignItems: "center", justifyContent: "center" },
   });

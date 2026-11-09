@@ -274,6 +274,7 @@ class SupabaseGateway {
           body: jsonEncode(request.toRpcJson(idempotencyKey)),
         )
         .timeout(const Duration(seconds: 20));
+    _learningAttemptError(response);
     _ensureSuccess(response);
     try {
       return LearningAttemptResult.fromJson(jsonDecode(response.body));
@@ -387,6 +388,20 @@ class SupabaseGateway {
           body: jsonEncode(request.toFunctionJson()),
         )
         .timeout(const Duration(seconds: 35));
+    // The function answers 422 when Google says the purchase is not valid for
+    // this account, and 503 when Google Play is unreachable or not set up.
+    if (response.statusCode == HttpStatus.unprocessableEntity) {
+      throw const GatewayException(
+        HttpStatus.unprocessableEntity,
+        'Purchase could not be verified.',
+      );
+    }
+    if (response.statusCode == HttpStatus.serviceUnavailable) {
+      throw const GatewayException(
+        HttpStatus.serviceUnavailable,
+        'Purchase verification is temporarily unavailable.',
+      );
+    }
     _ensureSuccess(response);
     try {
       return PlayPurchaseVerification.fromJson(jsonDecode(response.body));
@@ -1982,9 +1997,12 @@ class SupabaseGateway {
       'id,receipt_id,name,quantity,unit_price,total,confidence,row_version,'
       'created_at,updated_at';
 
+  /// Owner-scoped (RLS) receipts, newest first. [transactionId] narrows to the
+  /// receipt of one transaction, so older receipts are found beyond [limit].
   Future<List<ReceiptResource>> listReceipts(
     String accessToken, {
     int limit = 50,
+    String? transactionId,
   }) async {
     await authenticate(accessToken);
     final response = await _client
@@ -1992,6 +2010,8 @@ class SupabaseGateway {
           _uri('/rest/v1/receipts', {
             'select': _receiptColumns,
             'archived_at': 'is.null',
+            if (transactionId != null)
+              'transaction_id': 'eq.${validateUuid(transactionId)}',
             'order': 'created_at.desc,id.desc',
             'limit': '$limit',
           }),
@@ -2157,6 +2177,38 @@ class SupabaseGateway {
         .toList();
   }
 
+  /// submit_learning_attempt raises 22023 with a fixed message; keep it
+  /// instead of the generic "Supabase request failed." 400.
+  void _learningAttemptError(http.Response response) {
+    if (response.statusCode < 400) return;
+    Object? body;
+    try {
+      body = jsonDecode(response.body);
+    } on FormatException {
+      return;
+    }
+    if (body is! Map || body['code'] != '22023') return;
+    switch (body['message']) {
+      case 'Lesson not available':
+        throw const GatewayException(
+          HttpStatus.notFound,
+          'Lesson not available.',
+        );
+      case 'Complete every question':
+        throw const GatewayException(
+          HttpStatus.badRequest,
+          'Complete every question.',
+        );
+      case 'Invalid answer':
+        throw const GatewayException(HttpStatus.badRequest, 'Invalid answer.');
+      case 'Invalid attempt key':
+        throw const GatewayException(
+          HttpStatus.badRequest,
+          'Invalid attempt key.',
+        );
+    }
+  }
+
   void _ensureSuccess(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     try {
@@ -2178,6 +2230,14 @@ class SupabaseGateway {
         throw const GatewayException(
           HttpStatus.conflict,
           'Business rule conflict.',
+        );
+      }
+      // RPCs raise P0002 (no_data_found) for missing or foreign rows, e.g.
+      // reconciling another owner's wallet: report 404, never a gateway error.
+      if (body is Map && body['code'] == 'P0002') {
+        throw const GatewayException(
+          HttpStatus.notFound,
+          'Resource not found.',
         );
       }
       if (body is Map && body['code'] == '23505') {

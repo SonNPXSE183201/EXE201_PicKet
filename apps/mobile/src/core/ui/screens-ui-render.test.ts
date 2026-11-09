@@ -17,16 +17,17 @@ test("categoryArt maps typical transaction categories to valid 3D PaperArt asset
   assert.equal(categoryArt(null, "Shopee Mua sắm"), "shopping");
 });
 
-test("HomeScreen renders PaperArt in recent transactions list", () => {
-  const homeSource = readFileSync(new URL("../../app/index.tsx", import.meta.url), "utf8");
+test("HomeScreen recent list uses category stroke icons on tinted tiles (Figma Row/Transaction)", () => {
+  const homeSource = readFileSync(new URL("../../features/home/home-recent.tsx", import.meta.url), "utf8");
   assert.match(homeSource, /categoryArt/);
-  assert.match(homeSource, /<PaperArt id=\{artId\}/);
+  assert.match(homeSource, /categoryTile/);
 });
 
-test("TransactionsScreen renders PaperArt in transaction rows", () => {
-  const txSource = readFileSync(new URL("../../app/transactions/index.tsx", import.meta.url), "utf8");
-  assert.match(txSource, /categoryArt/);
-  assert.match(txSource, /<PaperArt id=\{artId\}/);
+test("TransactionsScreen renders Figma day papers with category tiles in transaction rows", () => {
+  const txSource = readFileSync(new URL("../../app/(tabs)/transactions.tsx", import.meta.url), "utf8");
+  const listSource = readFileSync(new URL("../../features/transactions/spending-list.tsx", import.meta.url), "utf8");
+  assert.match(txSource, /DayPaper/);
+  assert.match(listSource, /categoryTile/);
 });
 
 test("NavigationShell has canonical destination label Picket", () => {

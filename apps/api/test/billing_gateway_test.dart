@@ -89,4 +89,75 @@ void main() {
     );
     gateway.close();
   });
+
+  SupabaseGateway gatewayAnswering(int status, Object body) => SupabaseGateway(
+    ApiConfig(
+      supabaseUrl: Uri.parse('https://project.supabase.co'),
+      supabasePublishableKey: 'sb_publishable_test_key',
+    ),
+    client: MockClient((request) async {
+      if (request.url.path == '/auth/v1/user') {
+        return http.Response(jsonEncode({'id': 'user-id'}), 200);
+      }
+      return http.Response(jsonEncode(body), status);
+    }),
+  );
+
+  Matcher gatewayStatus(int status) => throwsA(
+    isA<GatewayException>().having((e) => e.statusCode, 'statusCode', status),
+  );
+
+  test(
+    'an invalid or forged Google token is a 422, not a gateway error',
+    () async {
+      final gateway = gatewayAnswering(422, {
+        'error': 'Purchase could not be verified',
+      });
+      await expectLater(
+        gateway.verifyPlayPurchase(
+          'user-jwt',
+          const VerifyPlayPurchaseRequest(
+            productId: 'picket_plus_monthly',
+            purchaseToken: 'fake',
+          ),
+        ),
+        gatewayStatus(422),
+      );
+      gateway.close();
+    },
+  );
+
+  test(
+    'a Google Play outage is reported as 503 so clients can retry',
+    () async {
+      final gateway = gatewayAnswering(503, {
+        'error': 'Unable to verify purchase',
+      });
+      await expectLater(
+        gateway.verifyPlayPurchase(
+          'user-jwt',
+          const VerifyPlayPurchaseRequest(
+            productId: 'picket_plus_monthly',
+            purchaseToken: 'x',
+          ),
+        ),
+        gatewayStatus(503),
+      );
+      gateway.close();
+    },
+  );
+
+  test("reconciling another owner's wallet (P0002) is a 404", () async {
+    final gateway = gatewayAnswering(400, {
+      'code': 'P0002',
+      'message': 'Wallet not found',
+    });
+    await expectLater(
+      gateway.reconcileWallet('user-jwt', {
+        'p_wallet_id': '11111111-1111-4111-8111-111111111111',
+      }),
+      gatewayStatus(404),
+    );
+    gateway.close();
+  });
 }

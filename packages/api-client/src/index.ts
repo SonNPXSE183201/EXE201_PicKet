@@ -750,11 +750,25 @@ export class PicketApiClient {
   listReceipts(
     accessToken: string,
     signal?: AbortSignal,
+    options: { transactionId?: string } = {},
   ): Promise<ReceiptRecordsResponse> {
-    return this.request<ReceiptRecordsResponse>("/v1/receipts", {
+    const query = options.transactionId
+      ? `?transactionId=${encodeURIComponent(options.transactionId)}`
+      : "";
+    return this.request<ReceiptRecordsResponse>(`/v1/receipts${query}`, {
       headers: this.authHeaders(accessToken),
       signal,
     });
+  }
+
+  /** The receipt linked to one transaction (not limited to the newest 50). */
+  async findReceiptByTransaction(
+    accessToken: string,
+    transactionId: string,
+    signal?: AbortSignal,
+  ): Promise<ReceiptRecordsResponse["receipts"][number] | null> {
+    const { receipts } = await this.listReceipts(accessToken, signal, { transactionId });
+    return receipts.find((receipt) => receipt.transactionId === transactionId) ?? null;
   }
 
   getReceipt(

@@ -24,14 +24,14 @@ test("device lock keeps children mounted and setting busy alone cannot lock the 
   assert.match(lock, /display: locked \? "none" : "flex"/);
 });
 test("dashboard retains loaded content during background refresh", () => {
-  assert.match(source("../../app/index.tsx"), /!profile && \(profileLoading \|\| accountsLoading\)/);
+  assert.match(source("../../app/(tabs)/index.tsx"), /!profile && \(profileLoading \|\| accountsLoading\)/);
 });
 test("launcher icon has a mask-safe inset and brand image cannot shrink inside a header", () => {
   assert.match(source("../../../plugins/with-safe-launcher-icon.js"), /inset="18%"/);
   assert.match(source("./brand-logo.tsx"), /flexShrink: 0/);
 });
 test("profile visibility switch persists directly instead of waiting for the save button", () => {
-  assert.match(source("../../app/profile.tsx"), /onValueChange=\{\(next\) => void changeVisibility\(next\)\}/);
+  assert.match(source("../../app/(tabs)/profile.tsx"), /onValueChange=\{\(next\) => void changeVisibility\(next\)\}/);
 });
 
 test("receipt calendar does not depend on unrelated session/transaction object identity or offer a header reload", () => {
@@ -45,5 +45,5 @@ test("receipt calendar does not depend on unrelated session/transaction object i
 });
 
 test("planning does not insert technical loading text when changing methods", () => {
-  assert.doesNotMatch(source("../../app/planning.tsx"), /Đang tải toàn bộ giao dịch để tính chi tiêu/);
+  assert.doesNotMatch(source("../../app/(tabs)/planning.tsx"), /Đang tải toàn bộ giao dịch để tính chi tiêu/);
 });

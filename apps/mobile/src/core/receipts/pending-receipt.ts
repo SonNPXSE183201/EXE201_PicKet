@@ -5,6 +5,7 @@ import type { CreateTransactionRequest, ReceiptLineItemInput } from "@picket/dom
 import { decryptLocalPayload, encryptLocalPayload, withLocalOwnerAccess, isOfflineCacheOwnerRetired } from "@/core/sync/offline-cache";
 import { createReceiptRequestJournal, parseReceiptRequest } from "./receipt-request-journal";
 import { purgeReceiptOwner, receiptImageIsOwned } from "./receipt-retirement";
+import { copyOptimizedReceiptImage } from "./receipt-image-optimize";
 
 export type PendingReceiptDraft = {
   id: string;
@@ -107,7 +108,7 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
     const temp = new File(folder, `${id}-${Crypto.randomUUID()}.tmp`);
     const tempUri = temp.uri;
     try {
-      await new File(input.imageUri).copy(temp);
+      await copyOptimizedReceiptImage(input.imageUri, temp);
       // A prior process may have died before committing this unreferenced ID.
       if (destination.exists) destination.delete();
       await temp.move(destination);

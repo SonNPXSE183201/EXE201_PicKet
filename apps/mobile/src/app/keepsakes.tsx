@@ -4,17 +4,20 @@ import { PicketText as Text } from "@/core/ui/picket-text";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import * as Crypto from "expo-crypto";
-import { formatVnd } from "@picket/domain";
 import { ApiError } from "@picket/api-client";
 import { Redirect, router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ChoiceChip, EmptyState, PicketScreen, PrimaryAction, Surface, TopAppBar } from "@/core/ui/picket-ui";
+import { ChoiceChip, EmptyState, IconButton, PicketScreen, PrimaryAction, TopAppBar } from "@/core/ui/picket-ui";
+import { figmaType } from "@picket/design-tokens";
+import { Chip, FigmaButton, Skeleton } from "@/core/ui/figma-ui";
+import { ManagementEmpty } from "@/features/management/management-ui";
+import { KeepsakePolaroid } from "@/features/keepsakes/keepsake-polaroid";
 import { useAuth } from "@/features/auth/auth-context";
 import { archiveCloudKeepsake, loadKeepsakeCollection, saveCloudKeepsake, type DisplayKeepsake } from "@/features/keepsakes/cloud-keepsakes";
 import { keepsakeDeleteMessage } from "@/features/keepsakes/delete-copy";
@@ -33,6 +36,7 @@ export default function KeepsakesScreen() {
   const { session, localMode } = useAuth();
   const [items, setItems] = useState<DisplayKeepsake[]>([]);
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<string | null>(null);
   const [editing, setEditing] = useState<DisplayKeepsake | "new" | null>(null);
   const [fields, setFields] = useState(blank);
   const [pickedPhotoUri, setPickedPhotoUri] = useState<string | null>(null);
@@ -119,11 +123,12 @@ export default function KeepsakesScreen() {
       })() },
     ]);
   }
-  const visible = items.filter((item) => `${item.title} ${item.category} ${item.note}`.toLocaleLowerCase("vi-VN").includes(query.toLocaleLowerCase("vi-VN")));
+  const visible = items.filter((item) => (!filter || item.category === filter) && `${item.title} ${item.category} ${item.note}`.toLocaleLowerCase("vi-VN").includes(query.toLocaleLowerCase("vi-VN")));
+  const usedCategories = itemCategories.filter((category) => items.some((item) => item.category === category));
   const collectionState = keepsakeCollectionState(loading, loadFailed, visible.length, query);
   return <PicketScreen>
-    <TopAppBar title={editing ? editing === "new" ? t("Một món đồ mới") : t("Chỉnh sửa món đồ") : t("Bộ sưu tập")} onBack={() => editing ? setEditing(null) : router.back()} backDisabled={busy} />
-    <Text style={styles.subtitle}>{t("Một món đồ. Một câu chuyện. Chỉ riêng bạn.")}</Text>
+    <TopAppBar title={editing ? editing === "new" ? t("Một món đồ mới") : t("Chỉnh sửa món đồ") : t("Kỷ vật")} onBack={() => editing ? setEditing(null) : router.back()} backDisabled={busy} action={editing ? undefined : <IconButton icon="plus" label={t("Thêm món đồ")} variant="surface" onPress={() => open("new")} />} />
+    <Text style={[figmaType.bodySmall, { color: colors.muted, marginTop: 20 }]}>{t("Những món đáng nhớ bạn đã mua, kèm hoá đơn và bảo hành.")}</Text>
     <Text style={styles.local}>{localMode ? t("Món đồ và ảnh chỉ lưu trên điện thoại này; chưa có bản sao trên cloud.") : t("Món đồ mới được đồng bộ với tài khoản. Món đồ cũ trên thiết bị sẽ được chuyển lên khi có kết nối.")}</Text>
     {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text>}
     {editing ? <View style={styles.form}>
@@ -138,17 +143,21 @@ export default function KeepsakesScreen() {
       <PrimaryAction busy={busy} label={t("Lưu món đồ")} onPress={() => void save()} />
       {editing !== "new" && <Pressable accessibilityRole="button" onPress={() => confirmDelete(editing)} style={styles.photoButton}><Text style={styles.delete}>{t("Xóa món đồ")}</Text></Pressable>}
     </View> : <>
-      <TextInput accessibilityLabel={t("Tìm món đồ")} onChangeText={setQuery} placeholder={t("Tìm món đồ")} style={styles.input} value={query} />
-      <PrimaryAction label={t("+ Thêm món đồ")} onPress={() => open("new")} />
-      {collectionState === "loading" && <ActivityIndicator accessibilityLabel={t("Đang tải bộ sưu tập")} color={colors.link} />}
+      {items.length > 0 && <View style={styles.filters}>
+        <Chip label={t("Tất cả")} tone={filter === null ? "neutral" : "outline"} onPress={() => setFilter(null)} />
+        {usedCategories.map((category) => <Chip key={category} label={t(category)} tone={filter === category ? "neutral" : "outline"} onPress={() => setFilter(category)} />)}
+      </View>}
+      {items.length > 0 && <TextInput accessibilityLabel={t("Tìm món đồ")} onChangeText={setQuery} placeholder={t("Tìm món đồ")} style={[styles.input, { marginTop: 12 }]} value={query} />}
+      {collectionState === "loading" && <View accessibilityLabel={t("Đang tải bộ sưu tập")} style={styles.polaroids}>{[0, 1, 2, 3].map((i) => <Skeleton key={i} width={144} height={176} radius={6} />)}</View>}
       {collectionState === "error" && <><Text accessibilityLiveRegion="polite" style={styles.error}>{t("Chưa tải được bộ sưu tập.")}</Text><PrimaryAction label={t("Thử tải lại")} onPress={() => void reload()} /></>}
-      {collectionState === "empty" && <EmptyState illustration="gift" title={t("Góc kỷ niệm còn trống")} description={t("Thêm món đồ hoặc câu chuyện đầu tiên.")} />}
+      {collectionState === "empty" && <ManagementEmpty art="leisure" title={t("Bộ sưu tập còn trống")} body={t("Lưu món đồ đáng nhớ cùng hoá đơn\nvà hạn bảo hành.")} action={<FigmaButton variant="outline" size="medium" label={t("Thêm kỷ vật đầu tiên")} onPress={() => open("new")} />} />}
       {collectionState === "no-results" && <EmptyState illustration="shopping" title={t("Không tìm thấy món đồ")} description={t("Thử tên, ghi chú hoặc danh mục khác.")} />}
-      {collectionState === "items" && <View style={styles.list}>{visible.map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => open(item)}><Surface>{item.photoUri && <KeepsakePhoto owner={item.userId} accessibilityLabel={t("Ảnh {{title}}", { title: item.title })} uri={item.photoUri} style={styles.photo} />}<Text style={styles.itemTitle}>{item.title}</Text><Text style={styles.meta}>{formatVnd(item.amount)} · {new Date(item.date).toLocaleDateString("vi-VN")} · {t(item.category)}</Text>{item.warrantyUntil && <Text style={styles.meta}>{t("Bảo hành đến {{date}}", { date: item.warrantyUntil })}</Text>}{item.returnUntil && <Text style={styles.meta}>{t("Đổi trả đến {{date}}", { date: item.returnUntil })}</Text>}</Surface></Pressable>)}</View>}
+      {collectionState === "items" && <View style={styles.polaroids}>{visible.map((item, index) => <KeepsakePolaroid key={item.id} item={item} index={index} onPress={() => open(item)} />)}</View>}
     </>}
   </PicketScreen>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,marginTop:7},local:{color:colors.expense,fontSize:12,lineHeight:18,marginBottom:18,marginTop:8},error:{color:colors.danger,fontSize:14,marginBottom:10},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,minHeight:paperControl.height,paddingHorizontal:14},form:{gap:8},label:{color:colors.ink,fontSize:14,fontWeight:"700",marginTop:8},chips:{flexDirection:"row",flexWrap:"wrap",gap:8},photo:{borderRadius:14,height:220,marginVertical:8,width:"100%"},photoButton:{alignItems:"center",borderColor:colors.primaryOutline,borderRadius:paperShape.button,borderWidth:1,justifyContent:"center",minHeight:52},link:{color:colors.link,fontWeight:"700"},delete:{color:colors.danger,fontWeight:"700"},multiline:{minHeight:90,textAlignVertical:"top"},list:{gap:14,marginTop:18},itemTitle:{color:colors.ink,fontSize:20,fontWeight:"700"},meta:{color:colors.muted,fontSize:13,marginTop:7},
+  filters:{flexDirection:"row",flexWrap:"wrap",gap:8,marginTop:20},polaroids:{flexDirection:"row",flexWrap:"wrap",columnGap:12,rowGap:20,paddingTop:6,marginTop:14},
+  back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,marginTop:7},local:{color:colors.muted,fontSize:12,lineHeight:18,marginBottom:18,marginTop:8},error:{color:colors.danger,fontSize:14,marginBottom:10},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,minHeight:paperControl.height,paddingHorizontal:14},form:{gap:8},label:{color:colors.ink,fontSize:14,fontWeight:"700",marginTop:8},chips:{flexDirection:"row",flexWrap:"wrap",gap:8},photo:{borderRadius:14,height:220,marginVertical:8,width:"100%"},photoButton:{alignItems:"center",borderColor:colors.primaryOutline,borderRadius:paperShape.button,borderWidth:1,justifyContent:"center",minHeight:paperControl.height},link:{color:colors.link,fontWeight:"700"},delete:{color:colors.danger,fontWeight:"700"},multiline:{minHeight:90,textAlignVertical:"top"},list:{gap:14,marginTop:18},itemTitle:{color:colors.ink,fontSize:20,fontWeight:"700"},meta:{color:colors.muted,fontSize:13,marginTop:7},
 });

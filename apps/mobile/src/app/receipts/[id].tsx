@@ -1,15 +1,19 @@
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
-import { TopAppBar } from "@/core/ui/picket-ui";
+import { paperControl, paperShape } from "@/core/theme/paper-foundations";
+import { figmaType } from "@picket/design-tokens";
+import { Chip, FigmaButton, Overline, ReceiptDivider, ReceiptSheet, figmaShadow } from "@/core/ui/figma-ui";
+import { ReceiptImageViewer, shareableReceiptUri } from "@/core/ui/receipt-image-viewer";
+import * as Sharing from "expo-sharing";
+import { receiptArt } from "@/features/capture/capture-art";
+import { ActionSheet, IconButton, MenuRow, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { radii } from "@/core/ui/mobile-palette";
 import { formatVnd, MAX_MONEY, type ReceiptRecord } from "@picket/domain";
 import { ApiError } from "@picket/api-client";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -18,8 +22,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
+import { AppIcon } from "@/core/ui/app-icon";
 import { routes } from "@/core/navigation/routes";
-import { supabase } from "@/core/supabase/client";
+import { loadCloudReceiptImage } from "@/core/receipts/cloud-receipt-gallery";
+import { recallReceipt, rememberReceipt } from "@/core/receipts/receipt-memory";
 import { useAuth } from "@/features/auth/auth-context";
 
 function statusText(status: ReceiptRecord["status"], t: TFunction<"common">) {
@@ -37,6 +43,13 @@ type EditableLine = {
   total: string;
 };
 
+/** Figma D5: "03/11/2026 · 12:40" in the device time zone. */
+function receiptDateLabel(iso: string) {
+  const date = new Date(iso);
+  const two = (value: number) => String(value).padStart(2, "0");
+  return `${two(date.getDate())}/${two(date.getMonth() + 1)}/${date.getFullYear()} · ${two(date.getHours())}:${two(date.getMinutes())}`;
+}
+
 function dateInput(value: string | null) {
   return value ? value.slice(0, 10) : "";
 }
@@ -44,11 +57,17 @@ function dateInput(value: string | null) {
 export default function ReceiptDetailScreen() {
   const { t } = useTranslation("common");
   const { colors, styles } = useMobileStyles(createStyles);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, edit } = useLocalSearchParams<{ id: string; edit?: string }>();
   const { session } = useAuth();
-  const [receipt, setReceipt] = useState<ReceiptRecord | null>(null);
+  // A receipt already read on the transaction screen renders immediately.
+  const [receipt, setReceipt] = useState<ReceiptRecord | null>(() => (session && id ? recallReceipt(session.user.id, id) : null));
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const editStarted = useRef(false);
+  const [menu, setMenu] = useState(false);
+  const [ocrOpen, setOcrOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [loading, setLoading] = useState(() => receipt === null);
   const [message, setMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -61,20 +80,24 @@ export default function ReceiptDetailScreen() {
     if (!session || !id || !picketApi) return;
     let active = true;
     const controller = new AbortController();
+    const owner = session.user.id;
+    const showImage = (path: string) => {
+      void loadCloudReceiptImage(owner, path, controller.signal).then((uri) => { if (active && uri) setImageUrl(uri); });
+    };
+    const known = recallReceipt(owner, id);
+    if (known?.storagePath) showImage(known.storagePath);
     void picketApi
       .getReceipt(session.access_token, id, controller.signal)
-      .then(async ({ receipt: result }) => {
+      .then(({ receipt: result }) => {
         if (!active) return;
+        rememberReceipt(owner, result);
         setReceipt(result);
-        if (supabase) {
-          const signed = await supabase.storage
-            .from("picket-media")
-            .createSignedUrl(result.storagePath, 300);
-          if (active && !signed.error) setImageUrl(signed.data.signedUrl);
-        }
+        setLoading(false);
+        if (edit === "1" && !editStarted.current) { editStarted.current = true; beginEditing(result); }
+        if (result.storagePath && result.storagePath !== known?.storagePath) showImage(result.storagePath);
       })
       .catch((error: unknown) => {
-        if (active && !(error instanceof Error && error.name === "AbortError")) {
+        if (active && !known && !(error instanceof Error && error.name === "AbortError")) {
           setMessage(t("Không tải được hóa đơn."));
         }
       })
@@ -88,8 +111,10 @@ export default function ReceiptDetailScreen() {
   }, [id, session, t]);
 
   if (!session) return <Redirect href={routes.login} />;
+  if (receipt?.transactionId && edit !== "1") return <Redirect href={routes.transaction(receipt.transactionId)} />;
 
-  function beginEditing() {
+  function beginEditing(source: ReceiptRecord | null = receipt) {
+    const receipt = source;
     if (!receipt) return;
     setMerchant(receipt.merchant ?? "");
     setTotal(receipt.detectedTotal === null ? "" : String(receipt.detectedTotal));
@@ -193,8 +218,11 @@ export default function ReceiptDetailScreen() {
         lineItems: parsedLines,
       });
       setReceipt(result.receipt);
+      rememberReceipt(session.user.id, result.receipt);
       setEditing(false);
       setMessage(t("Đã lưu kết quả kiểm tra hóa đơn."));
+      // Opened from the transaction's D5 screen: return there with the new lines.
+      if (edit === "1" && router.canGoBack()) router.back();
     } catch (error) {
       setMessage(
         error instanceof ApiError && error.status === 409
@@ -212,19 +240,62 @@ export default function ReceiptDetailScreen() {
   }, 0);
   const editedReceiptTotal = Number.parseInt(total, 10);
 
+  const purchasedLabel = receipt?.purchasedAt ? receiptDateLabel(receipt.purchasedAt) : t("Chưa nhận diện ngày mua");
+
+  async function shareImage(dialogTitle: string) {
+    if (!imageUrl || sharing) return;
+    setSharing(true);
+    setMessage(null);
+    try {
+      const local = await shareableReceiptUri(imageUrl, `picket-${receipt?.merchant ?? "hoa-don"}`);
+      if (!(await Sharing.isAvailableAsync())) throw new Error("Sharing unavailable");
+      await Sharing.shareAsync(local, { mimeType: "image/jpeg", dialogTitle });
+    } catch {
+      setMessage(t("Chưa lưu được ảnh. Hãy thử lại."));
+    } finally {
+      setSharing(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
-        <TopAppBar title={t("Chi tiết hóa đơn")} illustration="receipt" onBack={() => router.canGoBack() ? router.back() : router.replace(routes.transactions)} />
+        <TopAppBar
+          title={editing ? t("Kiểm tra và chỉnh sửa") : t("Ảnh hoá đơn")}
+          onBack={() => editing && edit !== "1" ? setEditing(false) : router.canGoBack() ? router.back() : router.replace(routes.transactions)}
+          action={receipt && !editing ? <IconButton variant="surface" icon="dots-horizontal" expanded={menu} label={t("Công cụ hoá đơn")} onPress={() => setMenu(!menu)} /> : undefined}
+        />
+        {menu && receipt && !editing && (
+          <Surface style={{ paddingVertical: 4 }}>
+            <MenuRow icon="pencil-outline" title={t("Kiểm tra và chỉnh sửa")} onPress={() => { setMenu(false); beginEditing(); }} />
+            {receipt.rawText ? <MenuRow icon="text-box-search-outline" title={t("Văn bản OCR đã đọc")} onPress={() => { setMenu(false); setOcrOpen(true); }} /> : null}
+            {receipt.transactionId ? <MenuRow icon="swap-horizontal" title={t("Mở giao dịch")} onPress={() => { setMenu(false); router.push(routes.transaction(receipt.transactionId!)); }} /> : null}
+          </Surface>
+        )}
         {loading && <ActivityIndicator accessibilityLabel={t("Đang tải hóa đơn")} color={colors.link} style={styles.loader} />}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         {receipt && (
           <>
-            {imageUrl ? (
-              <Image accessibilityLabel={t("Ảnh hóa đơn đã lưu")} source={{ uri: imageUrl }} resizeMode="contain" style={styles.image} />
-            ) : (
-              <View style={[styles.image, styles.imagePlaceholder]}>
-                <Text style={styles.hint}>{t("Không tải được ảnh xem trước.")}</Text>
+            {!editing && (
+              <View style={styles.pinWrap}>
+                <View style={styles.frame}>
+                  {imageUrl ? (
+                    <Pressable accessibilityRole="imagebutton" accessibilityLabel={t("Xem ảnh hoá đơn")} onPress={() => setViewerOpen(true)} style={{ flex: 1 }}>
+                      <Image accessible={false} source={{ uri: imageUrl }} resizeMode="cover" style={styles.photo} />
+                    </Pressable>
+                  ) : (
+                    <View style={[styles.photo, styles.imagePlaceholder]}>
+                      <Image accessible={false} source={receiptArt} resizeMode="contain" style={styles.placeholderArt} />
+                      {!loading && <Text style={[figmaType.bodySmall, styles.hint]}>{t("Không tải được ảnh xem trước.")}</Text>}
+                    </View>
+                  )}
+                </View>
+                <View style={styles.tape} />
+                {imageUrl && (
+                  <Pressable accessibilityRole="button" accessibilityLabel={t("Phóng to ảnh hoá đơn")} onPress={() => setViewerOpen(true)} style={styles.zoom}>
+                    <AppIcon name="magnify" size={22} color={colors.text} />
+                  </Pressable>
+                )}
               </View>
             )}
             {editing ? (
@@ -237,25 +308,39 @@ export default function ReceiptDetailScreen() {
                 <TextInput date accessibilityLabel={t("Ngày mua")} value={purchasedAt} onChangeText={setPurchasedAt} style={styles.input} />
               </View>
             ) : (
-              <View style={styles.card}>
-                <Text style={styles.merchant}>{receipt.merchant ?? t("Hóa đơn")}</Text>
-                <Text style={styles.amount}>
-                  {receipt.detectedTotal === null
-                    ? t("Chưa có tổng tiền")
-                    : formatVnd(receipt.detectedTotal)}
-                </Text>
-                <Text style={styles.meta}>{statusText(receipt.status, t)}</Text>
-                <Text style={styles.meta}>
-                  {receipt.purchasedAt
-                    ? new Date(receipt.purchasedAt).toLocaleString("vi-VN")
-                    : t("Chưa nhận diện ngày mua")}
-                </Text>
-                <Text style={styles.meta}>
-                  {t("OCR: {{provider}} · Độ tin cậy: {{confidence}}", { provider: receipt.ocrProvider, confidence: receipt.confidence === null ? "—" : `${Math.round(receipt.confidence * 100)}%` })}
-                </Text>
-              </View>
+              <ReceiptSheet style={styles.sheet}>
+                <Text style={[figmaType.titleSection, { color: colors.text }]}>{receipt.merchant ?? t("Hóa đơn")}</Text>
+                <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{purchasedLabel}</Text>
+                {receipt.status !== "confirmed" && <Chip tone="warning" size="small" label={statusText(receipt.status, t)} style={{ alignSelf: "flex-start" }} />}
+                <ReceiptDivider />
+                {receipt.lineItems.length === 0 ? (
+                  <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Chưa nhận diện chi tiết từng sản phẩm.")}</Text>
+                ) : (
+                  receipt.lineItems.map((item) => (
+                    <View key={item.id} style={styles.sheetLine}>
+                      <Text style={[figmaType.bodySmall, { color: colors.text, flex: 1 }]}>
+                        {item.name}{item.quantity !== 1 ? ` × ${item.quantity}` : ""}
+                      </Text>
+                      <Text style={[figmaType.bodySmall, { color: colors.text, fontVariant: ["tabular-nums"] }]}>{formatVnd(item.total)}</Text>
+                    </View>
+                  ))
+                )}
+                <ReceiptDivider />
+                <View style={styles.sheetLine}>
+                  <Text style={[figmaType.bodyStrong, { color: colors.text, fontSize: 16 }]}>{t("Tổng cộng")}</Text>
+                  <Text style={[figmaType.bodyStrong, { color: colors.text, fontSize: 16, fontVariant: ["tabular-nums"] }]}>
+                    {receipt.detectedTotal === null ? t("Chưa có tổng tiền") : formatVnd(receipt.detectedTotal)}
+                  </Text>
+                </View>
+                {receipt.transactionId ? (
+                  <Pressable accessibilityRole="link" onPress={() => router.push(routes.transaction(receipt.transactionId!))} style={styles.openTx}>
+                    <Text style={[figmaType.bodyStrong, { color: colors.primary }]}>{t("Mở giao dịch")}</Text>
+                    <AppIcon name="chevron-right" size={16} color={colors.primary} />
+                  </Pressable>
+                ) : null}
+              </ReceiptSheet>
             )}
-            <Text accessibilityRole="header" style={styles.sectionTitle}>{t("Sản phẩm")}</Text>
+            {editing && <Overline>{t("Sản phẩm")}</Overline>}
             {editing ? (
               <>
                 {lines.map((line, index) => (
@@ -274,89 +359,63 @@ export default function ReceiptDetailScreen() {
                     <TextInput money accessibilityLabel={t("Thành tiền sản phẩm {{index}}", { index: index + 1 })} value={line.total} onChangeText={(value) => updateLine(line.key, "total", value)} keyboardType="number-pad" placeholder={t("Thành tiền")} placeholderTextColor={colors.muted} style={styles.input} />
                   </View>
                 ))}
-                <Pressable disabled={lines.length >= 100} onPress={() => setLines((current) => [...current, { key: `new-${Date.now()}-${current.length}`, name: "", quantity: "1", unitPrice: "", total: "" }])} style={[styles.outlineButton, lines.length >= 100 && styles.disabled]}>
-                  <Text style={styles.outlineText}>{t("+ Thêm sản phẩm")}</Text>
-                </Pressable>
+                <FigmaButton fullWidth variant="outline" size="medium" disabled={lines.length >= 100} label={t("+ Thêm sản phẩm")} onPress={() => setLines((current) => [...current, { key: `new-${Date.now()}-${current.length}`, name: "", quantity: "1", unitPrice: "", total: "" }])} />
                 {lines.length > 0 && Number.isSafeInteger(editedReceiptTotal) && editedLineTotal !== editedReceiptTotal && (
                   <Text style={styles.warning}>{t("Tổng các dòng là {{lineTotal}}, khác tổng hóa đơn {{receiptTotal}}. Có thể do thuế hoặc giảm giá.", { lineTotal: formatVnd(editedLineTotal), receiptTotal: formatVnd(editedReceiptTotal) })}</Text>
                 )}
-              </>
-            ) : receipt.lineItems.length === 0 ? (
-              <View style={styles.card}>
-                <Text style={styles.hint}>{t("Chưa nhận diện chi tiết từng sản phẩm.")}</Text>
-              </View>
-            ) : (
-              receipt.lineItems.map((item) => (
-                <View key={item.id} style={styles.lineItem}>
-                  <View style={styles.lineCopy}>
-                    <Text style={styles.lineName}>{item.name}</Text>
-                    <Text style={styles.hint}>{t("Số lượng {{quantity}}", { quantity: item.quantity })}</Text>
-                  </View>
-                  <Text style={styles.lineTotal}>{formatVnd(item.total)}</Text>
-                </View>
-              ))
-            )}
-            {editing ? (
-              <View style={styles.editorActions}>
-                <Pressable disabled={saving} onPress={() => void saveReview()} style={styles.primaryButton}>
-                  {saving ? <ActivityIndicator accessibilityLabel={t("Đang lưu kết quả kiểm tra hóa đơn")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{t("Lưu kết quả kiểm tra")}</Text>}
-                </Pressable>
-                <Pressable disabled={saving} onPress={() => { setEditing(false); setMessage(null); }} style={styles.outlineButton}>
-                  <Text style={styles.outlineText}>{t("Hủy chỉnh sửa")}</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable onPress={beginEditing} style={styles.primaryButton}>
-                <Text style={styles.primaryText}>{t("Kiểm tra và chỉnh sửa")}</Text>
-              </Pressable>
-            )}
-            {receipt.rawText && (
-              <>
-                <Text accessibilityRole="header" style={styles.sectionTitle}>{t("Văn bản OCR")}</Text>
-                <View style={styles.card}>
-                  <Text style={styles.rawText}>{receipt.rawText}</Text>
+                <View style={styles.editorActions}>
+                  <FigmaButton fullWidth busy={saving} label={t("Lưu kết quả kiểm tra")} onPress={() => void saveReview()} />
+                  <FigmaButton fullWidth variant="text" size="medium" disabled={saving} label={t("Hủy chỉnh sửa")} onPress={() => { if (edit === "1" && router.canGoBack()) { router.back(); return; } setEditing(false); setMessage(null); }} />
                 </View>
               </>
+            ) : (
+              <View style={styles.actions}>
+                <FigmaButton variant="outline" disabled={!imageUrl || sharing} label={t("Chia sẻ")} onPress={() => void shareImage(t("Chia sẻ ảnh hoá đơn"))} style={{ flex: 1 }} />
+                <FigmaButton variant="outline" disabled={!imageUrl || sharing} label={t("Lưu vào máy")} onPress={() => void shareImage(t("Lưu ảnh hoá đơn"))} style={{ flex: 1 }} />
+              </View>
             )}
           </>
         )}
       </ScrollView>
+      <ReceiptImageViewer visible={viewerOpen} uri={imageUrl} title={receipt?.merchant || t("Hóa đơn")} onClose={() => setViewerOpen(false)} />
+      <ActionSheet title={t("Văn bản OCR đã đọc")} visible={ocrOpen} onClose={() => setOcrOpen(false)}>
+        <Text style={[figmaType.captionStrong, { color: colors.muted }]}>
+          {t("OCR: {{provider}} · Độ tin cậy: {{confidence}}", { provider: receipt?.ocrProvider ?? "—", confidence: receipt?.confidence == null ? "—" : `${Math.round(receipt.confidence * 100)}%` })}
+        </Text>
+        <Text selectable style={styles.rawText}>{receipt?.rawText ?? ""}</Text>
+        <Text style={[figmaType.captionStrong, { color: colors.muted }]}>{t("Nhấn giữ để chọn và sao chép văn bản.")}</Text>
+      </ActionSheet>
     </SafeAreaView>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safe: { backgroundColor: colors.cream, flex: 1 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
-  back: { color: colors.link, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700" },
+  safe: { backgroundColor: colors.canvas, flex: 1 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 20, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 40 },
   loader: { marginTop: 32 },
-  image: { backgroundColor: colors.white, borderRadius: radii.large, height: 360, width: "100%" },
-  imagePlaceholder: { alignItems: "center", justifyContent: "center" },
-  card: { backgroundColor: colors.white, borderRadius: paperShape.card, gap: 6, padding: 18 },
-  merchant: { color: colors.ink, fontSize: 20, fontWeight: "700" },
-  amount: { color: colors.expense, fontSize: 24, fontWeight: "900" },
-  meta: { color: colors.muted, fontSize: 13, lineHeight: 19 },
-  sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: "700", marginTop: 6 },
-  lineItem: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", padding: 15 },
-  lineCopy: { flex: 1 },
-  lineName: { color: colors.ink, fontWeight: "700" },
-  lineTotal: { color: colors.ink, fontWeight: "700" },
+  pinWrap: { height: 372, alignItems: "center", marginTop: 4 },
+  frame: { marginTop: 22, width: 261, height: 338, borderRadius: 6, padding: 8, backgroundColor: colors.paper, transform: [{ rotate: "2deg" }], ...figmaShadow("paper") },
+  photo: { flex: 1, borderRadius: 3, backgroundColor: colors.elevated },
+  imagePlaceholder: { alignItems: "center", justifyContent: "center", gap: 8 },
+  placeholderArt: { width: 160, height: 160 },
+  tape: { position: "absolute", top: 8, width: 65, height: 22, backgroundColor: colors.pocketCoral, transform: [{ rotate: "-4deg" }] },
+  zoom: { position: "absolute", right: 30, bottom: 2, width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.border },
+  sheet: { gap: 8, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  sheetLine: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, paddingVertical: 2 },
+  openTx: { flexDirection: "row", alignItems: "center", gap: 4, alignSelf: "flex-start", minHeight: 44 },
+  actions: { flexDirection: "row", gap: 12 },
+  card: { backgroundColor: colors.paper, borderRadius: paperShape.card, gap: 6, padding: 18 },
+  lineName: { color: colors.text, fontWeight: "700" },
   hint: { color: colors.muted, fontSize: 12, lineHeight: 18 },
-  rawText: { color: colors.ink, fontFamily: "monospace", fontSize: 12, lineHeight: 18 },
+  rawText: { color: colors.text, fontFamily: "monospace", fontSize: 12, lineHeight: 18 },
   error: { color: colors.danger, fontWeight: "700" },
-  fieldLabel: { color: colors.ink, fontSize: 13, fontWeight: "700", marginTop: 3 },
-  input: { backgroundColor: colors.cream, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, minHeight: 48, paddingHorizontal: 13 },
+  fieldLabel: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 3 },
+  input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: paperShape.input, borderWidth: 1, color: colors.text, minHeight: paperControl.height, paddingHorizontal: 13 },
   inputRow: { flexDirection: "row", gap: 10 },
   flexInput: { flex: 1 },
-  editLine: { backgroundColor: colors.white, borderRadius: radii.small, gap: 9, padding: 14 },
+  editLine: { backgroundColor: colors.paper, borderRadius: 18, gap: 9, padding: 14 },
   lineHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   remove: { color: colors.expense, fontSize: 13, fontWeight: "700" },
-  warning: { backgroundColor: colors.warningSurface, borderRadius: radii.small, color: colors.ink, fontSize: 12, lineHeight: 18, padding: 12 },
-  editorActions: { gap: 10, marginTop: 4 },
-  primaryButton: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 14 },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
-  outlineButton: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 14 },
-  outlineText: { color: colors.link, fontSize: 14, fontWeight: "700" },
-  disabled: { opacity: 0.55 },
+  warning: { backgroundColor: colors.warningSurface, borderRadius: 18, color: colors.text, fontSize: 12, lineHeight: 18, padding: 12 },
+  editorActions: { gap: 8, marginTop: 4 },
 });

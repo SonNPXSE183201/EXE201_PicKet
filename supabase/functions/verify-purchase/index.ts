@@ -15,6 +15,9 @@ Deno.serve(async (request) => {
     ) return json({ error: "Invalid purchase" }, 400);
     return json(await verifyPlayPurchase(user.id, purchaseToken, productId));
   } catch (error) {
+    if (error instanceof Error && error.name === "InvalidPurchaseError") {
+      return json({ error: "Purchase could not be verified" }, 422);
+    }
     return json(
       { error: "Unable to verify purchase" },
       error instanceof Error && error.message === "Unauthorized" ? 401 : 503,

@@ -55,6 +55,7 @@ function harness() {
     "@/core/sync/offline-cache": { withLocalOwnerAccess: async (owner: string, operation: () => Promise<unknown>) => {
       assert.equal(owner, session.user.id); await fenceWait; if (state.retired) throw Error("Retired owner"); return operation();
     } },
+    "@/features/sync/use-pull-refresh": { usePullRefresh: () => async () => {} },
     "@/features/auth/auth-context": { useAuth: () => ({ session, localMode: false }) },
     "@/core/local/guest-finance-context": { useGuestFinance: () => ({ data: {}, loading: false }) },
     "@/features/budgets/budgets-context": { useBudgets: () => ({ budgets, update: async () => {} }) },
@@ -71,7 +72,7 @@ function harness() {
     "@/core/ui/picket-ui": { PicketScreen: "Screen", ChoiceChip: "ChoiceChip", PrimaryAction: "PrimaryAction" },
   };
   const module = { exports: {} as { default(): Element } };
-  const compiled = ts.transpileModule(readFileSync("src/app/planning.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
+  const compiled = ts.transpileModule(readFileSync("src/app/(tabs)/planning.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   runInNewContext(compiled, { exports: module.exports, require: (id: string) => adapters[id] ?? {}, Date });
   function render() { cursor = 0; return module.exports.default(); }
   function find(type: string, label: string) {

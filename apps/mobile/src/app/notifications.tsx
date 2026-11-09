@@ -1,19 +1,25 @@
 import { AnnouncementInbox } from "@/features/announcements/announcement-views";
+import { SwipeableRow } from "@/core/ui/swipeable-row";
+import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { PicketText as Text } from "@/core/ui/picket-text";
+import { notificationScreenCopy } from "@/features/notifications/notification-screen-copy";
 import { useReminderCalendar } from "@/features/notifications/use-reminder-calendar";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { Redirect, router, useFocusEffect } from "expo-router";
+import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Switch, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { guestOwnerId } from "@/core/local/guest-finance";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { EmptyState, PicketScreen } from "@/core/ui/picket-ui";
-import { AppIcon } from "@/core/ui/app-icon";
+import { PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
+import { figmaType } from "@picket/design-tokens";
+import { ReceiptDivider, figmaShadow } from "@/core/ui/figma-ui";
+import { FieldOverline, ManagementEmpty } from "@/features/management/management-ui";
+import { AppIcon, type IconName } from "@/core/ui/app-icon";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBills } from "@/features/bills/bills-context";
 import { useBudgets } from "@/features/budgets/budgets-context";
@@ -35,6 +41,7 @@ import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { useReminderPeriods } from "@/features/notifications/use-reminder-periods";
 
 export default function NotificationsScreen() {
+  const pullRefresh = usePullRefresh();
   const { t: tx } = useTranslation("notifications");
   const { language } = useAppTheme();
   const { colors, styles } = useMobileStyles(createStyles);
@@ -210,50 +217,81 @@ export default function NotificationsScreen() {
   // If items only exist in one partition, ensure sensible display
   const hasReminders = dueSoon.length > 0;
 
-  function iconForReminder(item: ReminderItem) {
+  const copy = notificationScreenCopy(language);
+  function iconForReminder(item: ReminderItem): { icon: IconName; tone: string } {
     const text = item.label.toLowerCase();
-    if (text.includes("hóa đơn") || text.includes("bill")) return "lightning-bolt-outline";
-    if (text.includes("ngân sách") || text.includes("vượt")) return "alert-circle-outline";
-    if (text.includes("quét") || text.includes("camera")) return "camera-outline";
-    if (text.includes("báo cáo") || text.includes("report")) return "chart-bar";
-    return "bell-outline";
+    if (/h[óo]a đơn|bill/.test(text)) return { icon: "lightning-bolt-outline", tone: colors.pocketCoral };
+    if (/ngân sách|vượt|túi|budget/.test(text)) return { icon: "target", tone: colors.pocketLilac };
+    if (/bảo hành|kỷ vật|warranty|return|đổi trả/.test(text)) return { icon: "heart-outline", tone: colors.pocketMint };
+    if (/định kỳ|thuê bao|subscription|due/.test(text)) return { icon: "calendar-blank-outline", tone: colors.pocketBlue };
+    return { icon: "bell-outline", tone: colors.pocketBlue };
   }
 
-  function formatTimeTag(item: ReminderItem) {
+  function timeOf(item: ReminderItem) {
     const itemDate = new Date(item.dueAt);
-    const diffHours = (now - itemDate.getTime()) / (1000 * 60 * 60);
-    if (diffHours < 24 && diffHours >= 0) {
-      return `${String(itemDate.getHours()).padStart(2, "0")}:${String(itemDate.getMinutes()).padStart(2, "0")} · ${tx("Hôm nay")}`;
-    }
-    if (diffHours >= 24 && diffHours < 48) return tx("Hôm qua");
-    return tx("Tuần trước");
+    return `${String(itemDate.getHours()).padStart(2, "0")}:${String(itemDate.getMinutes()).padStart(2, "0")}`;
   }
+
+  async function markAllRead() {
+    for (const item of dueSoon) if (!read.includes(item.id)) await markRead(item.id);
+  }
+
+  const renderGroup = (title: string, list: ReminderItem[]) => (
+    <View style={styles.block}>
+      <FieldOverline>{title}</FieldOverline>
+      <View style={[styles.card, figmaShadow("paper")]}>
+        {list.map((item, index) => {
+          const isRead = read.includes(item.id);
+          const look = iconForReminder(item);
+          return (
+            <View key={item.id}>
+              {index > 0 && <ReceiptDivider />}
+              <SwipeableRow
+                tone="primary"
+                disabled={isRead}
+                actionLabel={tx("Đã đọc")}
+                // eslint-disable-next-line react-hooks/refs
+                onAction={() => void markRead(item.id)}
+              ><Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${item.label}, ${isRead ? tx("đã đọc") : tx("chưa đọc")}`}
+                onPress={() => void markRead(item.id)}
+                style={styles.row}
+              >
+                <View style={[styles.tile, { backgroundColor: look.tone }]}><AppIcon name={look.icon} size={18} color={colors.text} /></View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{item.label}</Text>
+                  <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
+                    {item.notifyAt ? tx("Nhắc hẹn định kỳ Picket") : tx("Kiểm tra chi tiêu trong ngày của bạn")}
+                  </Text>
+                </View>
+                <View style={{ alignItems: "flex-end", gap: 6 }}>
+                  <Text style={[figmaType.micro, { color: colors.muted }]}>{timeOf(item)}</Text>
+                  {!isRead && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
+                </View>
+              </Pressable></SwipeableRow>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
 
   return (
-    <PicketScreen>
+    <PicketScreen onRefresh={pullRefresh}>
+      <TopAppBar title={tx("Thông báo")} />
       <AnnouncementInbox />
-      {/* Master Design Screen 17 Header */}
-      <View style={styles.headerRow}>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => router.back()}
-          style={styles.backBtn}
-        >
-          <AppIcon name="arrow-left" color={colors.ink} size={24} />
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.headerTitle}>
-          {tx("Thông báo & Lịch nhắc")}
-        </Text>
-      </View>
 
-      {/* Top Setting Card: Lịch nhắc thông minh */}
-      <View style={styles.smartReminderCard}>
-        <View style={styles.smartReminderCopy}>
-          <Text style={styles.smartTitle}>{tx("Lịch nhắc thông minh")}</Text>
-          <Text style={styles.smartSub}>
-            {tx("Tự động nhắc ghi chép cuối ngày & cảnh báo hóa đơn")}
-          </Text>
+      {message && (
+        <Text accessibilityLiveRegion="polite" style={styles.message}>
+          {tx(message, { defaultValue: message })}
+        </Text>
+      )}
+
+      <View style={styles.settingRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{tx("Lịch nhắc thông minh")}</Text>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{tx("Tự động nhắc ghi chép cuối ngày & cảnh báo hóa đơn")}</Text>
         </View>
         <Switch
           accessibilityLabel={tx("Lịch nhắc thông minh")}
@@ -266,85 +304,16 @@ export default function NotificationsScreen() {
         />
       </View>
 
-      {message && (
-        <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {tx(message, { defaultValue: message })}
-        </Text>
-      )}
-
       {!hasReminders ? (
-        <EmptyState
-          title={tx("Chưa có thông báo mới")}
-          description={tx("Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý.")}
-        />
+        <ManagementEmpty art="savings" title={copy.emptyTitle} body={copy.emptyBody} />
       ) : (
-        <View style={styles.contentSections}>
-          {/* Section: Hôm nay */}
-          {todayReminders.length > 0 && (
-            <View style={styles.sectionBlock}>
-              <Text style={styles.sectionTitle}>{tx("Hôm nay")}</Text>
-              <View style={styles.reminderList}>
-                {todayReminders.map((item) => {
-                  const isRead = read.includes(item.id);
-                  return (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.label}, ${isRead ? tx("đã đọc") : tx("chưa đọc")}`}
-                      key={item.id}
-                      onPress={() => void markRead(item.id)}
-                      style={[styles.notificationCard, !isRead && styles.unreadCard]}
-                    >
-                      <View style={styles.notifIconCircle}>
-                        <AppIcon name={iconForReminder(item)} color={colors.mauve} size={20} />
-                      </View>
-                      <View style={styles.notifBody}>
-                        <Text style={styles.notifTitle}>{item.label}</Text>
-                        <Text style={styles.notifDesc}>
-                          {item.notifyAt ? tx("Nhắc hẹn định kỳ Picket") : tx("Kiểm tra chi tiêu trong ngày của bạn")}
-                        </Text>
-                        <Text style={styles.notifTime}>{formatTimeTag(item)}</Text>
-                      </View>
-                      {!isRead && <View style={styles.unreadDot} />}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-
-          {/* Section: Trước đó */}
-          {earlierReminders.length > 0 && (
-            <View style={styles.sectionBlock}>
-              <Text style={styles.sectionTitle}>{tx("Trước đó")}</Text>
-              <View style={styles.reminderList}>
-                {earlierReminders.map((item) => {
-                  const isRead = read.includes(item.id);
-                  return (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`${item.label}, ${isRead ? tx("đã đọc") : tx("chưa đọc")}`}
-                      key={item.id}
-                      onPress={() => void markRead(item.id)}
-                      style={[styles.notificationCard, !isRead && styles.unreadCard]}
-                    >
-                      <View style={styles.notifIconCircle}>
-                        <AppIcon name={iconForReminder(item)} color={colors.mauve} size={20} />
-                      </View>
-                      <View style={styles.notifBody}>
-                        <Text style={styles.notifTitle}>{item.label}</Text>
-                        <Text style={styles.notifDesc}>
-                          {item.notifyAt ? "Đã ghi nhận trong kỳ" : "Kiểm tra chi tiêu trong ngày của bạn"}
-                        </Text>
-                        <Text style={styles.notifTime}>{formatTimeTag(item)}</Text>
-                      </View>
-                      {!isRead && <View style={styles.unreadDot} />}
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-        </View>
+        <>
+          <Pressable accessibilityRole="button" onPress={() => void markAllRead()} style={styles.readAll}>
+            <Text style={[figmaType.captionStrong, { color: colors.primary }]}>{copy.readAll}</Text>
+          </Pressable>
+          {todayReminders.length > 0 && renderGroup(tx("Hôm nay"), todayReminders)}
+          {earlierReminders.length > 0 && renderGroup(tx("Trước đó"), earlierReminders)}
+        </>
       )}
     </PicketScreen>
   );
@@ -352,118 +321,12 @@ export default function NotificationsScreen() {
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      marginBottom: 16,
-      marginTop: 4,
-    },
-    backBtn: {
-      padding: 4,
-    },
-    headerTitle: {
-      color: colors.ink,
-      fontSize: 22,
-      fontWeight: "800",
-      letterSpacing: -0.3,
-    },
-    smartReminderCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 16,
-      padding: 14,
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 18,
-    },
-    smartReminderCopy: {
-      flex: 1,
-      paddingRight: 10,
-    },
-    smartTitle: {
-      color: colors.ink,
-      fontSize: 15,
-      fontWeight: "700",
-    },
-    smartSub: {
-      color: colors.muted,
-      fontSize: 12,
-      marginTop: 3,
-      lineHeight: 18,
-    },
-    contentSections: {
-      gap: 18,
-    },
-    sectionBlock: {
-      gap: 8,
-    },
-    sectionTitle: {
-      color: colors.ink,
-      fontSize: 16,
-      fontWeight: "800",
-      marginBottom: 4,
-    },
-    reminderList: {
-      gap: 10,
-    },
-    notificationCard: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 16,
-      padding: 14,
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: 12,
-      position: "relative",
-    },
-    unreadCard: {
-      borderColor: colors.mauve,
-    },
-    notifIconCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: colors.pocketLilac,
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 2,
-    },
-    notifBody: {
-      flex: 1,
-      gap: 4,
-    },
-    notifTitle: {
-      color: colors.ink,
-      fontSize: 15,
-      fontWeight: "700",
-      lineHeight: 20,
-    },
-    notifDesc: {
-      color: colors.muted,
-      fontSize: 13,
-      lineHeight: 19,
-    },
-    notifTime: {
-      color: colors.mauve,
-      fontSize: 12,
-      fontWeight: "600",
-      marginTop: 4,
-    },
-    unreadDot: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.mauve,
-      position: "absolute",
-      top: 14,
-      right: 14,
-    },
-    message: {
-      color: colors.expense,
-      fontSize: 13,
-      marginBottom: 12,
-    },
+    block: { marginTop: 16, gap: 8 },
+    settingRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 16 },
+    readAll: { alignSelf: "flex-end", minHeight: 32, justifyContent: "center", marginTop: 8 },
+    card: { backgroundColor: colors.paper, borderRadius: 18, paddingHorizontal: 8, paddingVertical: 6 },
+    row: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingHorizontal: 8, paddingVertical: 12 },
+    tile: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    unreadDot: { width: 8, height: 8, borderRadius: 4 },
+    message: { color: colors.ink, fontSize: 13, marginTop: 12 },
   });

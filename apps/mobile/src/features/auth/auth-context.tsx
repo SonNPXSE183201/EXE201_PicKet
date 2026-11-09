@@ -5,7 +5,7 @@ import { passwordLoginCredentials } from '@picket/domain';
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import {
   createContext,
   type PropsWithChildren,
@@ -13,6 +13,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -95,6 +96,27 @@ async function exchangeCallbackUrl(url: string): Promise<boolean> {
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
+  // Supabase refreshes the access token roughly hourly (and right after a
+  // resume). Keeping the same Session object for the same owner stops every
+  // [session] effect from refetching all data; tokenVersion still re-renders
+  // consumers so they read the new access_token.
+  const sessionRef = useRef<Session | null>(null);
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+  const [tokenVersion, setTokenVersion] = useState(0);
+  // Supabase's React Native guidance: refresh only while foregrounded, so the
+  // token is renewed right on resume instead of by a stalled background timer.
+  useEffect(() => {
+    if (!supabase) return;
+    const auth = supabase.auth;
+    if (AppState.currentState === "active") void auth.startAutoRefresh();
+    const listener = AppState.addEventListener("change", (state) => {
+      if (state === "active") void auth.startAutoRefresh();
+      else void auth.stopAutoRefresh();
+    });
+    return () => listener.remove();
+  }, []);
   const [loading, setLoading] = useState(supabase !== null);
   const [localMode, setLocalMode] = useState(false);
   const [localModeLoading, setLocalModeLoading] = useState(true);
@@ -130,6 +152,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       // guarded bootstrap decide; a real SIGNED_OUT must always invalidate it.
       if (event === "INITIAL_SESSION" && !next) return;
       authRevision++;
+      const current = sessionRef.current;
+      if (event === "TOKEN_REFRESHED" && current && next && current.user.id === next.user.id) {
+        Object.assign(current, next);
+        setTokenVersion((value) => value + 1);
+        setLoading(false);
+        return;
+      }
       setSession(next);
       if (next) {
         setLocalMode(false);
@@ -274,7 +303,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }));
       },
     }),
-    [loading, localMode, localModeLoading, recovery, requireClient, session],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tokenVersion re-publishes the refreshed token
+    [loading, localMode, localModeLoading, recovery, requireClient, session, tokenVersion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

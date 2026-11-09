@@ -1,5 +1,11 @@
-import { TopAppBar } from "@/core/ui/picket-ui";
-import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { ActionSheet } from "@/core/ui/picket-ui";
+import { FigmaButton, ReceiptDivider, ReceiptSheet } from "@/core/ui/figma-ui";
+import { AppIcon } from "@/core/ui/app-icon";
+import { FieldRow, FigmaHeader, GroupLabel, NoticeCard, PaperGroup } from "@/features/settings/settings-figma";
+import { backupCopy } from "@/features/settings/backup-copy";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { exportAndShareFinance } from "@/core/export/export-finance";
+import { exportEncryptedBackup, exportFinanceCsv, exportGuestBackup } from "@/core/export/flutter-compatible-backup";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
@@ -16,7 +22,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { Redirect, router } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Animated, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -45,6 +51,7 @@ interface PendingRestore {
 
 export default function RestoreScreen() {
   const {t}=useTranslation("restore");
+  const { language } = useAppTheme();
   const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const guest = useGuestFinance();
@@ -58,14 +65,20 @@ export default function RestoreScreen() {
   const {refresh:refreshBills}=useBills();
   const {refresh:refreshSubscriptions}=useSubscriptions();
   const { refresh: refreshProfile } = useProfile();
-  const { refresh: refreshAccounts } = useAccounts();
-  const { refresh: refreshTransactions } = useTransactions();
-  const { refresh: refreshBudgets } = useBudgets();
+  const { refresh: refreshAccounts, accounts } = useAccounts();
+  const { refresh: refreshTransactions, transactions } = useTransactions();
+  const { refresh: refreshBudgets, budgets } = useBudgets();
   const [pending, setPending] = useState<PendingRestore | null>(null);
   const [confirmation, setConfirmation] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [backupPw, setBackupPw] = useState("");
+  const [backupPw2, setBackupPw2] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupNote, setBackupNote] = useState<{ ok: boolean; text: string } | null>(null);
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
@@ -169,81 +182,169 @@ export default function RestoreScreen() {
     }finally{operationBusy.current=false;if(isCurrent())setBusy(false);}
   }
 
+  const bc = backupCopy(language);
+  const stats = [
+    { label: bc.wallets, value: localMode ? guest.data.accounts.length : accounts.length },
+    { label: bc.entries, value: localMode ? guest.data.transactions.length : transactions.length },
+    { label: bc.pockets, value: localMode ? guest.data.budgets.length : budgets.length },
+  ];
+  const sheetReady = backupPw.length >= 12 && backupPw === backupPw2;
+  const needsConfirm = !awaitingReload && confirmation !== "RESTORE";
+
+  async function createBackup(kind: "csv" | "picket" | "json") {
+    if (busy || backupBusy) return;
+    setBackupBusy(true);
+    setMessage(null);
+    try {
+      if (localMode) await exportGuestBackup(guest.data, backupPw);
+      else if (kind === "json") await exportAndShareFinance(session!.access_token, session!.user.id);
+      else if (kind === "csv") await exportFinanceCsv(session!.access_token, session!.user.id);
+      else await exportEncryptedBackup(session!.access_token, session!.user.id, backupPw);
+      if (mounted.current) { setBackupNote({ ok: true, text: localMode ? bc.madeLocal : bc.madeFile }); setSheetOpen(false); setBackupPw(""); setBackupPw2(""); }
+    } catch {
+      if (mounted.current) setBackupNote({ ok: false, text: bc.failed });
+    } finally {
+      if (mounted.current) setBackupBusy(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <TopAppBar title={t("title")} backDisabled={busy} />
-        <Text style={styles.description}>
-          {localMode ? t("deviceDescription") : t("cloudDescription")}
-        </Text>
-        <View style={styles.notice}>
-          <Text style={styles.noticeTitle}>{t("notice")}</Text>
-          <Text style={styles.noticeText}>{localMode ? t("deviceNotice") : t("cloudNotice")}</Text>
+        <FigmaHeader title={bc.title} backDisabled={busy || backupBusy} />
+        <View style={styles.statusRow}>
+          <View style={styles.statusTile}><AppIcon name="check" size={22} color={colors.success} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.statusTitle}>{localMode ? bc.localState : bc.synced}</Text>
+            <Text style={styles.statusMeta}>{localMode ? bc.localStateMeta : bc.syncedMeta}</Text>
+          </View>
         </View>
-        <TextInput accessibilityLabel={t("password")} autoCapitalize="none" autoComplete="off" onChangeText={setPassword} placeholder={t("passwordPlaceholder")} editable={!busy} secureTextEntry style={styles.input} value={password} />
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void chooseBackup()} style={styles.secondary}>
-          {busy && !pending ? <ActivityIndicator accessibilityLabel={t("reading")} color={colors.link} /> : <Text style={styles.secondaryText}>{t("choose")}</Text>}
-        </Pressable>
+
+        <View style={styles.block}>
+          <GroupLabel muted>{bc.createLabel}</GroupLabel>
+          <ReceiptSheet style={{ gap: 12, padding: 16 }}>
+            <View style={styles.statsRow}>
+              {stats.map((stat) => (
+                <View key={stat.label} style={styles.stat}>
+                  <Text style={styles.statValue}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+            <ReceiptDivider />
+            <Text style={styles.noteText}>{bc.encryptedNote}</Text>
+            {backupBusy ? <BackupProgress /> : null}
+            <FigmaButton label={backupBusy ? bc.creating : bc.create} disabled={busy || (localMode && guest.loading)} busy={backupBusy} onPress={() => setSheetOpen(true)} fullWidth />
+            {!localMode && (
+              <View style={styles.exportRow}>
+                <FigmaButton variant="text" size="medium" label={bc.exportJson} disabled={busy || backupBusy} onPress={() => void createBackup("json")} />
+                <FigmaButton variant="text" size="medium" label={bc.exportCsv} disabled={busy || backupBusy} onPress={() => void createBackup("csv")} />
+              </View>
+            )}
+          </ReceiptSheet>
+          {backupNote && <Text accessibilityLiveRegion="polite" style={backupNote.ok ? styles.success : styles.error}>{backupNote.text}</Text>}
+        </View>
+
+        <View style={styles.block}>
+          <GroupLabel muted>{bc.restoreLabel}</GroupLabel>
+          <PaperGroup>
+            <FieldRow icon="lock-outline" meta={bc.filePassword} title={password ? "•".repeat(Math.min(password.length, 12)) : " "} trailing="none">
+              <TextInput accessibilityLabel={t("password")} autoCapitalize="none" autoComplete="off" onChangeText={setPassword} placeholder={t("passwordPlaceholder")} editable={!busy} secureTextEntry style={styles.inlineInput} value={password} />
+            </FieldRow>
+            <FieldRow
+              icon="format-list-bulleted"
+              meta={bc.pickMeta}
+              title={bc.pickFile}
+              disabled={busy}
+              onPress={() => void chooseBackup()}
+              accessibilityLabel={t("choose")}
+              trailing={busy && !pending ? <ActivityIndicator accessibilityLabel={t("reading")} color={colors.primary} /> : <Text style={styles.openText}>{bc.open}</Text>}
+            />
+          </PaperGroup>
+        </View>
+
         {pending && (
-          <View style={styles.summary}>
-            <Text style={styles.summaryTitle}>{pending.fileName}</Text>
-            <Text style={styles.summaryText}>{t("wallets",{count:pending.summary.wallets})}</Text>
-            <Text style={styles.summaryText}>{t("entries",{count:pending.summary.entries})}</Text>
-            {localMode && <Text style={styles.summaryText}>{t("receipts",{count:pending.guest?.receipts.length ?? 0})}</Text>}
-            <Text style={styles.summaryText}>{t("budgets",{count:pending.summary.budgets})}</Text>
-            <Text style={styles.summaryText}>{t("bills",{count:pending.summary.bills})}</Text>
-            <Text style={styles.summaryText}>{t("keepsakes",{count:pending.summary.keepsakes})}</Text>
-            <Text style={styles.summaryText}>{t("subscriptions",{count:pending.summary.subscriptions})}</Text>
-            {!localMode && <Text style={styles.revision}>{t("revision",{revision:pending.currentRevision})}</Text>}
+          <View style={styles.block}>
+            <GroupLabel muted>{pending.fileName}</GroupLabel>
+            <PaperGroup>
+              <FieldRow icon="wallet-outline" title={t("wallets", { count: pending.summary.wallets })} trailing="none" />
+              <FieldRow icon="format-list-bulleted" title={t("entries", { count: pending.summary.entries })} trailing="none" />
+              {localMode && <FieldRow icon="image-outline" title={t("receipts", { count: pending.guest?.receipts.length ?? 0 })} trailing="none" />}
+              <FieldRow icon="shopping-outline" title={t("budgets", { count: pending.summary.budgets })} trailing="none" />
+              <FieldRow icon="flash-outline" title={t("bills", { count: pending.summary.bills })} trailing="none" />
+              <FieldRow icon="heart-outline" title={t("keepsakes", { count: pending.summary.keepsakes })} trailing="none" />
+              <FieldRow icon="calendar-month-outline" title={t("subscriptions", { count: pending.summary.subscriptions })} trailing="none" />
+            </PaperGroup>
+            {!localMode && <Text style={styles.noteText}>{t("revision", { revision: pending.currentRevision })}</Text>}
+            <Text style={styles.noteText}>{t("confirmation")}</Text>
+            <PaperGroup>
+              <FieldRow icon="lock-outline" meta={t("confirmation")} title={confirmation || " "} trailing="none" tone="warning">
+                <TextInput accessibilityLabel={t("confirmationLabel")} autoCapitalize="characters" autoComplete="off" editable={!busy} onChangeText={setConfirmation} style={styles.inlineInput} value={confirmation} />
+              </FieldRow>
+            </PaperGroup>
+            <FigmaButton label={t(awaitingReload ? "retryReload" : "restore")} busy={busy} disabled={busy || needsConfirm} onPress={() => void restore()} fullWidth />
           </View>
         )}
-        {pending && (
-          <>
-            <Text style={styles.label}>{t("confirmation")}</Text>
-            <TextInput
-              accessibilityLabel={t("confirmationLabel")}
-              autoCapitalize="characters"
-              autoComplete="off"
-              editable={!busy} onChangeText={setConfirmation}
-              style={styles.input}
-              value={confirmation}
-            />
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || (!awaitingReload && confirmation !== "RESTORE")}
-              onPress={() => void restore()}
-              style={[styles.primary, (busy || (!awaitingReload && confirmation !== "RESTORE")) && styles.disabled]}
-            >
-              {busy ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{t(awaitingReload?"retryReload":"restore")}</Text>}
-            </Pressable>
-          </>
-        )}
+
         {message && <Text accessibilityLiveRegion="polite" style={message==="valid" ? styles.success : styles.error}>{t(message)}</Text>}
+
+        <NoticeCard icon="format-list-bulleted">{localMode ? t("deviceNotice") : t("cloudNotice")}</NoticeCard>
+        <Text style={styles.noteText}>{bc.restoreNote}</Text>
       </ScrollView>
+
+      <ActionSheet title={bc.sheetTitle} visible={sheetOpen} onClose={() => { if (!backupBusy) setSheetOpen(false); }}>
+        <NoticeCard icon="lock-outline">{bc.sheetWarning}</NoticeCard>
+        <View style={{ height: 16 }} />
+        <PaperGroup>
+          <FieldRow icon="lock-outline" meta={bc.password} title="" trailing={<EyeToggle shown={showPw} label={showPw ? bc.hide : bc.show} onPress={() => setShowPw(!showPw)} />}>
+            <TextInput accessibilityLabel={bc.password} autoCapitalize="none" autoComplete="off" onChangeText={setBackupPw} secureTextEntry={!showPw} style={styles.inlineInput} value={backupPw} />
+          </FieldRow>
+          <FieldRow icon="lock-outline" meta={bc.confirmPassword} title="" trailing={<EyeToggle shown={showPw} label={showPw ? bc.hide : bc.show} onPress={() => setShowPw(!showPw)} />}>
+            <TextInput accessibilityLabel={bc.confirmPassword} autoCapitalize="none" autoComplete="off" onChangeText={setBackupPw2} secureTextEntry={!showPw} style={styles.inlineInput} value={backupPw2} />
+          </FieldRow>
+        </PaperGroup>
+        <Text style={[styles.noteText, { marginVertical: 12 }]}>{sheetReady || backupPw.length === 0 ? bc.forgetNote : bc.minNote}</Text>
+        <FigmaButton label={bc.save} disabled={!sheetReady} busy={backupBusy} onPress={() => void createBackup("picket")} fullWidth />
+      </ActionSheet>
     </SafeAreaView>
   );
 }
 
+function EyeToggle({ shown, label, onPress }: { shown: boolean; label: string; onPress(): void }) {
+  const { colors } = useMobileStyles(createStyles);
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} hitSlop={12} onPress={onPress}><AppIcon name={shown ? "eye-off-outline" : "eye-outline"} size={22} color={colors.muted} /></Pressable>;
+}
+
+/** Indeterminate progress bar while the encrypted backup is being written. */
+function BackupProgress() {
+  const { styles } = useMobileStyles(createStyles);
+  const [value] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([Animated.timing(value, { toValue: 1, duration: 1100, useNativeDriver: false }), Animated.timing(value, { toValue: 0, duration: 0, useNativeDriver: false })]));
+    loop.start();
+    return () => loop.stop();
+  }, [value]);
+  return <View accessible={false} style={styles.progressTrack}><Animated.View style={[styles.progressFill, { width: value.interpolate({ inputRange: [0, 1], outputRange: ["8%", "100%"] }) }]} /></View>;
+}
+
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 16, padding: paperSpace.screen, paddingBottom: 48 },
-  back: { color: colors.link, fontSize: 15, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
-  description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
-  notice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 5, padding: 16 },
-  noticeTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  noticeText: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
-  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
-  summary: { backgroundColor: colors.white, borderRadius: paperShape.card, gap: 6, padding: 18 },
-  summaryTitle: { color: colors.ink, fontSize: 16, fontWeight: "700", marginBottom: 4 },
-  summaryText: { color: colors.ink, fontSize: 14 },
-  revision: { color: colors.muted, fontSize: 12, marginTop: 6 },
-  label: { color: colors.ink, fontSize: 14, fontWeight: "700" },
-  input: { backgroundColor: colors.white, borderColor: colors.primaryOutline, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: paperControl.height, paddingHorizontal: 16 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
-  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
-  disabled: { opacity: 0.45 },
+  safeArea: { backgroundColor: colors.canvas, flex: 1 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 24, paddingHorizontal: 20, paddingBottom: 48 },
+  block: { gap: 10 },
+  statusRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  statusTile: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.successSurface, alignItems: "center", justifyContent: "center" },
+  statusTitle: { color: colors.text, fontSize: 14, fontWeight: "800", lineHeight: 21 },
+  statusMeta: { color: colors.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+  statsRow: { flexDirection: "row", justifyContent: "space-between" },
+  stat: { alignItems: "center", flex: 1 },
+  statValue: { color: colors.text, fontSize: 22, fontWeight: "800", lineHeight: 28 },
+  statLabel: { color: colors.muted, fontSize: 11, fontWeight: "700", lineHeight: 16 },
+  noteText: { color: colors.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+  exportRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" },
+  progressTrack: { height: 6, borderRadius: 3, backgroundColor: colors.elevated, overflow: "hidden" },
+  progressFill: { height: 6, borderRadius: 3, backgroundColor: colors.primary },
+  inlineInput: { color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: 24, padding: 0 },
+  openText: { color: colors.primary, fontSize: 12, fontWeight: "700", lineHeight: 18 },
   error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   success: { color: colors.income, fontSize: 14, fontWeight: "700", lineHeight: 20 },
 });

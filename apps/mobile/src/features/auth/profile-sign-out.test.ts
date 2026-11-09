@@ -4,7 +4,7 @@ import path from "node:path";
 import test from "node:test";
 
 const profileSource = readFileSync(
-  path.resolve(import.meta.dirname, "../../app/profile.tsx"),
+  path.resolve(import.meta.dirname, "../../app/(tabs)/profile.tsx"),
   "utf8",
 );
 

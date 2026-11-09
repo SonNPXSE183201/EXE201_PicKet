@@ -7,6 +7,13 @@ export const products: Record<string, string> = {
   picket_pro_monthly: "pro",
   picket_pro_yearly: "pro",
 };
+/** The purchase itself is not valid for this account (not an outage): HTTP 422. */
+export class InvalidPurchaseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidPurchaseError";
+  }
+}
 export async function googleToken() {
   const config = JSON.parse(
     Deno.env.get("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON") ?? "{}",
@@ -48,12 +55,16 @@ export async function verifyPlayPurchase(
       signal: AbortSignal.timeout(15000),
     },
   );
+  // Google answers 400/404/410 for unknown, malformed or expired tokens.
+  if ([400, 404, 410].includes(response.status)) {
+    throw new InvalidPurchaseError("Purchase verification failed");
+  }
   if (!response.ok) throw new Error("Purchase verification failed");
   const purchase = await response.json();
   if (
     purchase.externalAccountIdentifiers?.obfuscatedExternalAccountId !==
       await sha256(userId)
-  ) throw new Error("Account mismatch");
+  ) throw new InvalidPurchaseError("Account mismatch");
   const lines = (purchase.lineItems ?? []).filter((
     item: { productId: string },
   ) =>
@@ -64,7 +75,7 @@ export async function verifyPlayPurchase(
   );
   const line = lines[0];
   if (!line?.expiryTime || !Number.isFinite(Date.parse(line.expiryTime))) {
-    throw new Error("Product mismatch");
+    throw new InvalidPurchaseError("Product mismatch");
   }
   const active = [
     "SUBSCRIPTION_STATE_ACTIVE",

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AppState, Linking, View } from "react-native";
+import { AppState, Linking, StyleSheet, View } from "react-native";
 import { Redirect } from "expo-router";
 import * as Crypto from "expo-crypto";
 import {
@@ -9,19 +9,21 @@ import {
   PAYMENT_ORDER_PHASE_LABELS,
   paymentOrderPhase,
   paymentSecondsLeft,
+  type Entitlements,
   type PaymentCustomer,
 } from "@picket/domain";
 import { picketApi } from "@/core/api/client";
 import { useAuth } from "@/features/auth/auth-context";
-import {
-  AuthField,
-  AuthMessage,
-  AuthScreen,
-  PrimaryButton,
-  TextLink,
-} from "@/features/auth/auth-screen";
+import { AuthField, AuthMessage } from "@/features/auth/auth-screen";
+import { PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
+import { planScreenTitle } from "@/features/billing/billing-title";
+import { BillingSection, CadenceToggle, CurrentPlanHero, IncludedList, PlanTiles, ThankYouCard, type Cadence, type PlanTileModel } from "@/features/billing/billing-ui";
+import { Chip, FigmaButton, ReceiptDivider, Skeleton, figmaShadow } from "@/core/ui/figma-ui";
+import { figmaType } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { PicketText as Text } from "@/core/ui/picket-text";
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 export function PayosBillingScreen() {
   const { session } = useAuth();
@@ -33,12 +35,20 @@ export function PayosBillingScreen() {
     />
   );
 }
+
+type Phase = ReturnType<typeof paymentOrderPhase>;
+const phaseTone = (phase: Phase) =>
+  phase === "paid" ? "success" : phase === "pending" || phase === "verifying" || phase === "review" ? "warning" : "outline";
+
 function PayosBillingContent({ token }: { token: string }) {
-  const {t}=useTranslation('auth');
+  const { t } = useTranslation("auth");
   const [data, setData] = useState<PaymentCustomer | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [tier, setTier] = useState<string | null>(null);
+  const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null);
+  const [cadence, setCadence] = useState<Cadence>("monthly");
+  const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [confirmSku, setConfirmSku] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
@@ -67,6 +77,7 @@ function PayosBillingContent({ token }: { token: string }) {
       ) {
         setData(next);
         setTier(entitlement?.tier ?? "free");
+        setQuota(quotaOf(entitlement));
       }
     } catch {
       if (active.current && tokenRef.current === scope)
@@ -88,7 +99,8 @@ function PayosBillingContent({ token }: { token: string }) {
       void Promise.all([
         picketApi.paymentCustomer(token),
         picketApi.currentEntitlements(token),
-      ]).then(([next, entitlement]) => {
+      ])
+        .then(([next, entitlement]) => {
           if (
             active.current &&
             tokenRef.current === token &&
@@ -96,6 +108,7 @@ function PayosBillingContent({ token }: { token: string }) {
           ) {
             setData(next);
             setTier(entitlement?.tier ?? "free");
+        setQuota(quotaOf(entitlement));
           }
         })
         .catch(() => {
@@ -146,113 +159,142 @@ function PayosBillingContent({ token }: { token: string }) {
       return result;
     });
   }
+  const { colors } = useMobileStyles(createStyles);
+  const paid = tier !== null && tier !== "free";
+  const tierName = (value: string) => (value === "pro" ? "Pro" : value === "plus" ? "Plus" : t("Miễn phí"));
+  const hasYearly = Boolean(data?.catalog.some((plan) => plan.months === 12));
+  const plans = (data?.catalog ?? []).filter((plan) => !hasYearly || plan.months === (cadence === "yearly" ? 12 : 1));
+  const selected = plans.find((plan) => plan.sku === selectedSku) ?? plans[0];
+  const tiles: PlanTileModel[] = plans.map((plan) => ({
+    id: plan.sku,
+    tier: plan.tier,
+    name: tierName(plan.tier),
+    quota: t("{{count}} lượt / 24 giờ", { count: plan.tier === "pro" ? 100 : 30 }),
+    price: `${formatVnd(plan.amount)}${plan.months === 12 ? t(" / năm") : t(" / tháng")}`,
+    badge: plan.promotion ? `-${plan.promotion.percent}%` : null,
+    note: plan.promotion && plan.list_amount
+      ? [
+          t("Giảm {{percent}}% từ {{price}}", { percent: plan.promotion.percent, price: formatVnd(plan.list_amount) }),
+          plan.promotion.name,
+          plan.promotion.slotsLeft !== null ? t("Còn {{count}} suất", { count: plan.promotion.slotsLeft }) : "",
+          plan.promotion.endsAt ? t("Đến {{date}}", { date: new Date(plan.promotion.endsAt).toLocaleDateString() }) : "",
+        ].filter(Boolean).join(" · ")
+      : null,
+  }));
   return (
-    <AuthScreen
-      title="Gói dịch vụ"
-      subtitle="Thanh toán trước qua PayOS. Không tự động gia hạn."
-    >
-      {message && <AuthMessage>{t(message)}</AuthMessage>}
-      {tier && <Text>{t("Gói hiện tại")}: {tier.toUpperCase()}</Text>}
-      {tier && tier !== "free" && <Text>{t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}</Text>}
-      {!data && <Text>{t('Đang tải…')}</Text>}
-      {data && !data.catalog.length && <Text>{t('Các gói PayOS chưa mở bán.')}</Text>}
-      {!!data?.catalog.length && tier === "free" && (
-        <AuthField
-          value={promoCode}
-          onChangeText={setPromoCode}
-          placeholder={t("Mã ưu đãi (nếu có)")}
-          autoCapitalize="characters"
-          maxLength={32}
-        />
-      )}
-      {data?.catalog.map((plan) => (
-        <View key={plan.sku}>
-          <Text>
-            {plan.tier.toUpperCase()} ·{" "}
-            {t(plan.months === 12 ? "1 năm" : "1 tháng")} ·{" "}
-            {formatVnd(plan.amount)}
-            {plan.promotion && plan.list_amount
-              ? ` (${t("Giảm {{percent}}% từ {{price}}", { percent: plan.promotion.percent, price: formatVnd(plan.list_amount) })})`
-              : ""}
-          </Text>
-          {plan.promotion && (
-            <Text>
-              {plan.promotion.name}
-              {plan.promotion.slotsLeft !== null
-                ? ` · ${t("Còn {{count}} suất", { count: plan.promotion.slotsLeft })}`
-                : ""}
-              {plan.promotion.endsAt
-                ? ` · ${t("Đến {{date}}", { date: new Date(plan.promotion.endsAt).toLocaleDateString() })}`
-                : ""}
-            </Text>
-          )}
-          <PrimaryButton
-            label="Tạo thanh toán"
-            disabled={busy || tier === null || tier !== "free"}
-            onPress={() => (open ? setConfirmSku(plan.sku) : checkout(plan.sku))}
+    <PicketScreen>
+      <TopAppBar title={planScreenTitle} />
+      <View style={{ marginTop: 16, gap: 16 }}>
+        {message ? <AuthMessage>{t(message)}</AuthMessage> : null}
+        {tier ? (
+          <CurrentPlanHero
+            label={t("Gói hiện tại · {{tier}}", { tier: paid ? tier.toUpperCase() : tierName(tier) })}
+            headline={quota ? t("{{remaining}}/{{limit}} lượt", { remaining: quota.remaining, limit: quota.limit }) : tierName(tier)}
+            meter={quota ? quota.remaining / Math.max(1, quota.limit) : null}
+            caption={paid ? t("Thanh toán trước qua PayOS. Không tự động gia hạn.") : t("Lượt quét cloud hôm nay")}
           />
-        </View>
-      ))}
-      {confirmSku && open && (
-        <View>
-          <AuthMessage>
-            {t("Link thanh toán đang mở sẽ bị hủy. Mỗi lần mua dùng một link mới có hạn 15 phút.")}
-          </AuthMessage>
-          <PrimaryButton
-            label="Hủy link cũ và tạo link mới"
-            disabled={busy}
-            onPress={() => checkout(confirmSku)}
+        ) : (
+          <Skeleton height={150} radius={28} />
+        )}
+        {paid && (
+          <ThankYouCard
+            title={t("Cảm ơn bạn đã ủng hộ Picket!")}
+            body={t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}
           />
-          <TextLink label="Giữ link hiện tại" onPress={() => setConfirmSku(null)} />
-        </View>
-      )}
-      <Text accessibilityRole="header">{t('Lịch sử thanh toán')}</Text>
-      {data?.orders.map((order) => (
-        <View key={order.id}>
-          <Text>
-            #{order.order_code} · {formatVnd(order.amount)} ·{" "}
-            {t(PAYMENT_ORDER_PHASE_LABELS[paymentOrderPhase(order, now)])}
-          </Text>
-          {paymentOrderPhase(order, now) === "pending" && (
-            <>
-              <Text>
-                {t("Link hết hạn sau")}{" "}
-                {formatPaymentCountdown(paymentSecondsLeft(order, now))}
-              </Text>
-              {order.checkout_url && (
-                <PrimaryButton
-                  label="Mở thanh toán"
-                  disabled={busy}
-                  onPress={() =>
-                    void Linking.openURL(order.checkout_url!).catch(() =>
-                      setMessage("Không mở được trình duyệt."),
-                    )
-                  }
-                />
-              )}
-              <TextLink
-                label="Kiểm tra thanh toán"
-                onPress={() =>
-                  void run(() =>
-                    picketApi!.paymentAction(token, order.id, "refresh"),
-                  )
-                }
-              />
-              <PrimaryButton
-                label="Hủy thanh toán"
+        )}
+        {!data && <Skeleton height={168} radius={18} />}
+        {data && !data.catalog.length && <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Các gói PayOS chưa mở bán.")}</Text>}
+        {!paid && !!tiles.length && (
+          <>
+            {hasYearly && (
+              <CadenceToggle
+                value={cadence}
                 disabled={busy}
-                onPress={() =>
-                  void run(() => picketApi!.paymentAction(token, order.id, "cancel"))
-                }
+                onChange={(value) => { setCadence(value); setSelectedSku(null); }}
+                monthlyLabel={t("Theo tháng")}
+                yearlyLabel={t("Theo năm")}
               />
-            </>
-          )}
+            )}
+            <PlanTiles plans={tiles} selectedId={selected?.sku ?? null} onSelect={setSelectedSku} disabled={busy} currentLabel={t("Gói hiện tại")} />
+            <AuthField
+              value={promoCode}
+              onChangeText={setPromoCode}
+              placeholder={t("Mã ưu đãi (nếu có)")}
+              autoCapitalize="characters"
+              maxLength={32}
+            />
+          </>
+        )}
+        <IncludedList
+          title={t("Gói nào cũng có")}
+          items={[t("Quét hoá đơn trên máy, không trừ lượt"), t("Thu chi, ví, túi ngân sách không giới hạn"), t("Đồng bộ và sao lưu dữ liệu")]}
+        />
+        {!paid && selected && (
+          <FigmaButton
+            fullWidth
+            label={t("Nâng cấp lên {{name}}", { name: tierName(selected.tier) })}
+            disabled={busy || tier === null}
+            onPress={() => (open ? setConfirmSku(selected.sku) : checkout(selected.sku))}
+          />
+        )}
+        {confirmSku && open && (
+          <View style={[{ backgroundColor: colors.paper, borderRadius: 18, padding: 16, gap: 10 }, figmaShadow("paper")]}>
+            <Text style={[figmaType.bodySmall, { color: colors.text }]}>
+              {t("Link thanh toán đang mở sẽ bị hủy. Mỗi lần mua dùng một link mới có hạn 15 phút.")}
+            </Text>
+            <FigmaButton fullWidth label="Hủy link cũ và tạo link mới" disabled={busy} onPress={() => checkout(confirmSku)} />
+            <FigmaButton fullWidth variant="text" size="medium" label="Giữ link hiện tại" onPress={() => setConfirmSku(null)} />
+          </View>
+        )}
+        {!!data?.orders.length && (
+          <BillingSection title={t("Lịch sử thanh toán")}>
+            {data.orders.map((order, index) => {
+              const phase = paymentOrderPhase(order, now);
+              return (
+                <View key={order.id}>
+                  {index > 0 && <ReceiptDivider />}
+                  <View style={{ paddingVertical: 8, gap: 8 }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                      <Text style={[figmaType.bodyStrong, { color: colors.text, flex: 1 }]}>#{order.order_code} · {formatVnd(order.amount)}</Text>
+                      <Chip tone={phaseTone(phase)} label={t(PAYMENT_ORDER_PHASE_LABELS[phase])} />
+                    </View>
+                    {phase === "pending" && (
+                      <>
+                        <Text style={[figmaType.captionStrong, { color: colors.muted }]}>
+                          {t("Link hết hạn sau")} {formatPaymentCountdown(paymentSecondsLeft(order, now))}
+                        </Text>
+                        <View style={{ flexDirection: "row", gap: 10, flexWrap: "wrap" }}>
+                          {order.checkout_url && (
+                            <FigmaButton
+                              size="medium"
+                              label="Mở thanh toán"
+                              disabled={busy}
+                              onPress={() => void Linking.openURL(order.checkout_url!).catch(() => setMessage("Không mở được trình duyệt."))}
+                            />
+                          )}
+                          <FigmaButton variant="outline" size="medium" label="Kiểm tra thanh toán" disabled={busy} onPress={() => void run(() => picketApi!.paymentAction(token, order.id, "refresh"))} />
+                          <FigmaButton variant="text" size="medium" label="Hủy thanh toán" disabled={busy} onPress={() => void run(() => picketApi!.paymentAction(token, order.id, "cancel"))} />
+                        </View>
+                      </>
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </BillingSection>
+        )}
+        <View style={{ alignItems: "center" }}>
+          <FigmaButton variant="text" size="medium" label="Tải lại" onPress={() => void run(() => picketApi!.paymentCustomer(token))} />
         </View>
-      ))}
-      <TextLink
-        label="Tải lại"
-        onPress={() => void run(() => picketApi!.paymentCustomer(token))}
-      />
-    </AuthScreen>
+      </View>
+    </PicketScreen>
   );
 }
+
+function quotaOf(entitlement: Partial<Entitlements> | null | undefined) {
+  return typeof entitlement?.ocrFallbackRemaining === "number" && typeof entitlement.ocrFallbackDailyLimit === "number"
+    ? { remaining: entitlement.ocrFallbackRemaining, limit: entitlement.ocrFallbackDailyLimit }
+    : null;
+}
+
+const createStyles = (_colors: MobileThemeColors) => StyleSheet.create({});

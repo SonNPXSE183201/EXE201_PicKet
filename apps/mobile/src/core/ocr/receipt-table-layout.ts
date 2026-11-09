@@ -1,19 +1,100 @@
 import {parseReceiptItemMoney} from "./receipt-money";
 import type {ReceiptTextLine} from "./receipt-parser";
 import {receiptTableTokens} from "./receipt-table-tokens";
+import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptSummary} from "./receipt-semantics";
 type PositionedLine=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
 const clean=(value:string)=>value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/\s+/g," ").replace(/^[|\s]+|[|\s]+$/g,"");
 const namePattern=/^(ten\s*(mon|hang|san pham|hang hoa)(?:,?\s*dich vu)?|san pham|mat hang|item|description)$/;
 const quantityPattern=/^(sl|s\.l\.?|so luong|qty|quantity)$/;
 const unitPattern=/^(don gia|d[.]?g[.]?|gia|unit price|price)$/;
 const totalPattern=/^(thanh tien|t[. ]?tien|tt|t tren|amount|total)$/;
-const optionalPattern=/^(stt|don vi tinh|dvt|thue suat|\(%\)|bh|bao hanh|giam gia)$/;
+const optionalPattern=/^(stt|don vi tinh|dvt|thue suat|\(%\)|bh|bao hanh|ck|chiet khau|giam gia)$/;
 function positioned(line:ReceiptTextLine):line is PositionedLine{
  return [line.left,line.right,line.top,line.bottom].every(value=>typeof value==="number"&&Number.isFinite(value))&&line.right!>line.left!&&line.bottom!>line.top!;
 }
 const centerY=(line:PositionedLine)=>(line.top+line.bottom)/2;
 export function receiptHasTableColumns(lines:ReceiptTextLine[]):boolean{
  return [namePattern,quantityPattern,unitPattern,totalPattern].every(pattern=>lines.some(line=>pattern.test(clean(line.text))));
+}
+
+type OrderedColumn="name"|"quantity"|"unit"|"total"|"warranty"|"measure"|"discount"|"ordinal"|"tax";
+type OrderedRow={name:ReceiptTextLine;cells:ReceiptTextLine[];text:string;confidence:number};
+function orderedColumn(text:string):OrderedColumn|null {
+ const label=clean(text);
+ if(namePattern.test(label))return "name";
+ if(quantityPattern.test(label))return "quantity";
+ if(unitPattern.test(label))return "unit";
+ if(totalPattern.test(label))return "total";
+ if(/^(bh|bao hanh)$/.test(label))return "warranty";
+ if(/^(dvt|don vi tinh)$/.test(label))return "measure";
+ if(/^(ck|chiet khau|giam gia)$/.test(label))return "discount";
+ if(label==="stt")return "ordinal";
+ if(/^(thue suat|\(%\))$/.test(label))return "tax";
+ return null;
+}
+
+/** Without frames, require a complete, contiguous header and complete value cells.
+ * Header order defines roles, including optional cells that must never become prices.
+ * Try row/column traversal; refuse conflicting interpretations instead of guessing.
+ */
+function orderedTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[] {
+ const used=new Set<ReceiptTextLine>(),replacements=new Map<ReceiptTextLine,ReceiptTextLine>();
+ for(let start=0;start<lines.length;start++){
+  const columns:OrderedColumn[]=[],headers:ReceiptTextLine[]=[];
+  let end=start;
+  while(end<lines.length){
+   const role=orderedColumn(lines[end].text);
+   if(role===null)break;
+   columns.push(role);headers.push(lines[end++]);
+  }
+  if(headers.length===0)continue;
+  start=end-1;
+  if(columns.length<4||new Set(columns).size!==columns.length||
+   !["name","quantity","unit","total"].every(role=>columns.includes(role as OrderedColumn)))continue;
+  const body:ReceiptTextLine[]=[];
+  for(let index=end;index<lines.length&&body.length<=columns.length*100;index++){
+   const line=lines[index];
+   if(orderedColumn(line.text)!==null||isReceiptSummary(line.text)||isReceiptMetadata(line.text)||isReceiptDocumentLabel(line.text))break;
+   body.push(line);
+  }
+  // Existing spatial rules own every table with geometry. Flattened order must
+  // never override coordinates, nor invent cells for an incomplete row.
+  if(body.length===0||body.length>columns.length*100||body.length%columns.length!==0||
+   [...headers,...body].some(line=>[line.left,line.right,line.top,line.bottom].some(value=>value!==undefined)))continue;
+  const count=body.length/columns.length;
+  const candidates:OrderedRow[][]=[];
+  for(const columnMajor of [false,true]){
+   const rows:OrderedRow[]=[];
+   for(let row=0;row<count;row++){
+    const cells=columns.map((_,column)=>body[columnMajor?column*count+row:row*columns.length+column]);
+    const cell=(role:OrderedColumn)=>cells[columns.indexOf(role)];
+    const name=cell("name"),quantityText=cell("quantity").text.trim();
+    const quantity=/^\d+(?:[.,]\d+)?$/.test(quantityText)?Number(quantityText.replace(",",".")):NaN;
+    const unit=parseReceiptItemMoney(cell("unit").text),total=parseReceiptItemMoney(cell("total").text);
+    if(name.text.length<3||name.text.length>200||(name.text.match(/[\p{L}]/gu)??[]).length<2||
+     isReceiptMetadata(name.text)||isReceiptSummary(name.text)||isReceiptDocumentLabel(name.text)||
+     !Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||unit===null||total===null)break;
+    const optionalValid=columns.every((role,index)=>{
+     const text=clean(cells[index].text);
+     if(role==="measure")return /^[\p{L}][\p{L}\d .²³/^-]{0,29}$/u.test(text);
+     if(role==="warranty")return /^(?:-|\d+(?:\s*(?:thang|months?))?)$/.test(text);
+     if(role==="ordinal")return /^\d+$/.test(text);
+     if(role==="discount"||role==="tax")return text==="-"||/^\d+(?:[.,]\d+)?\s*%$/.test(text)||parseReceiptItemMoney(text)!==null;
+     return true;
+    });
+    if(!optionalValid)break;
+    rows.push({name,cells,text:`${name.text} ${quantity} x ${unit} | ${total}`,
+     confidence:Math.min(...[...headers,...cells].map(line=>line.confidence??0.75))});
+   }
+   if(rows.length===count)candidates.push(rows);
+  }
+  if(candidates.length===0||candidates.some(rows=>rows.some((row,index)=>row.text!==candidates[0][index].text)))continue;
+  for(const row of candidates[0]){
+   replacements.set(row.name,{...row.name,text:row.text,confidence:row.confidence});
+   row.cells.filter(line=>line!==row.name).forEach(line=>used.add(line));
+  }
+ }
+ return lines.filter(line=>!used.has(line)).map(line=>replacements.get(line)??line);
 }
 /** Headers may be centered; match cells by column bounds and header-relative row offset. */
 export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
@@ -84,5 +165,5 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
    parts.slice(1).forEach(part=>used.add(part));[...quantities,...units,total].forEach(cell=>used.add(cell));
   }
  }
- return lines.filter(line=>!used.has(line)).map(line=>replacements.get(line)??line);
+ return orderedTableRows(lines.filter(line=>!used.has(line)).map(line=>replacements.get(line)??line));
 }

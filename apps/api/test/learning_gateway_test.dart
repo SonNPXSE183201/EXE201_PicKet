@@ -64,4 +64,48 @@ void main() {
     expect(await gateway.listLearningProgress('token'), isEmpty);
     gateway.close();
   });
+
+  for (final (message, status) in [
+    ('Lesson not available', 404),
+    ('Complete every question', 400),
+    ('Invalid answer', 400),
+  ]) {
+    test(
+      'learning attempt "$message" keeps its own status and message',
+      () async {
+        final gateway = SupabaseGateway(
+          ApiConfig(
+            supabaseUrl: Uri.parse('https://test.supabase.co'),
+            supabasePublishableKey: 'sb_publishable_test',
+          ),
+          client: MockClient((request) async {
+            if (request.url.path == '/auth/v1/user') {
+              return http.Response('{"id":"ownerA"}', 200);
+            }
+            return http.Response(
+              jsonEncode({'code': '22023', 'message': message}),
+              400,
+            );
+          }),
+        );
+        await expectLater(
+          gateway.submitLearningAttempt(
+            'token',
+            LearningAttemptRequest.fromJson({
+              'lessonId': 'picket.vi.financial.v1.13',
+              'contentVersion': 1,
+              'answers': [1, 0, 2],
+            }),
+            'attempt_2',
+          ),
+          throwsA(
+            isA<GatewayException>()
+                .having((e) => e.statusCode, 'statusCode', status)
+                .having((e) => e.message, 'message', '$message.'),
+          ),
+        );
+        gateway.close();
+      },
+    );
+  }
 }

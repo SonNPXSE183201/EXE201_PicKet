@@ -20,6 +20,8 @@ import { useTransactions } from "@/features/transactions/transactions-context";
 type SyncValue = { pendingCount: number; conflictCount: number; syncing: boolean; realtimeConnection: FinanceRealtimeConnection; lastSyncedAt: number | null; refreshRemote(): Promise<void>; flush(): Promise<void> };
 const SyncContext = createContext<SyncValue | null>(null);
 
+/** A resume within this window relies on realtime instead of re-downloading every slice. */
+export const REMOTE_REFRESH_STALE_MS = 60_000;
 export function SyncProvider({ children }: PropsWithChildren) {
   const { session } = useAuth();
   const { refresh: refreshProfile } = useProfile();
@@ -36,6 +38,8 @@ export function SyncProvider({ children }: PropsWithChildren) {
   const syncingRef = useRef(false);
   const pendingCountRef = useRef(0);
   const refreshingRemoteRef = useRef(false);
+  const lastRemoteRefreshRef = useRef(0);
+  const realtimeRef = useRef<FinanceRealtimeConnection>("disconnected");
   const refreshRemote = useCallback(async (tables?: readonly string[]) => {
     if (!session || !picketApi || refreshingRemoteRef.current) return;
     refreshingRemoteRef.current = true;
@@ -51,6 +55,7 @@ export function SyncProvider({ children }: PropsWithChildren) {
         bills: refreshBills,
         subscriptions: refreshSubscriptions,
       }, tables);
+      if (!tables) lastRemoteRefreshRef.current = Date.now();
     } finally {
       refreshingRemoteRef.current = false;
     }
@@ -99,10 +104,17 @@ export function SyncProvider({ children }: PropsWithChildren) {
       }).catch(() => undefined);
       void mutationConflictCount(session.user.id).then((count) => { if (active) setConflictCount(count); }).catch(() => undefined);
     });
+    // Realtime pushes changes while connected; a full re-download of every
+    // slice on each resume and every 30s made the app feel like it kept
+    // reloading. Pending edits are still flushed immediately.
+    const refreshIfStale = () => {
+      const stale = Date.now() - lastRemoteRefreshRef.current > REMOTE_REFRESH_STALE_MS;
+      if (stale || realtimeRef.current !== "connected") void refreshRemote().catch(() => undefined);
+    };
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
         void flush().catch(() => undefined);
-        void refreshRemote().catch(() => undefined);
+        refreshIfStale();
       }
     });
     const unsubscribeRealtime = subscribeToFinanceChanges({
@@ -117,6 +129,7 @@ export function SyncProvider({ children }: PropsWithChildren) {
       },
       onConnectionChange(connection) {
         if (!active) return;
+        realtimeRef.current = connection;
         setRealtimeConnection(connection);
         if (connection === "connected") queueWake.request(pendingCountRef.current, syncingRef.current);
       },
@@ -127,7 +140,7 @@ export function SyncProvider({ children }: PropsWithChildren) {
     }, 0);
     const remotePoll = setInterval(() => {
       void flush().catch(() => undefined);
-      void refreshRemote();
+      if (realtimeRef.current !== "connected") void refreshRemote().catch(() => undefined);
     }, 30_000);
     return () => { active = false; queueWake.dispose(); clearTimeout(initialTimer); clearInterval(remotePoll); subscription.remove(); unsubscribeRealtime(); unsubscribe(); };
   }, [session, flush, refreshRemote]);

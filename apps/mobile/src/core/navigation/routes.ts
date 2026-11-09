@@ -48,6 +48,8 @@ export const routes = {
     ({ pathname: "/transactions/[id]", params: { id } }) as unknown as Href,
   receipt: (id: string) =>
     ({ pathname: "/receipts/[id]", params: { id } }) as unknown as Href,
+  receiptEdit: (id: string) =>
+    ({ pathname: "/receipts/[id]", params: { id, edit: "1" } }) as unknown as Href,
   refund: (id: string) =>
     ({ pathname: "/transactions/[id]/refund", params: { id } }) as unknown as Href,
   splits: (id: string) =>

@@ -15,7 +15,7 @@ test("refund month uses original split; archived rows and transfers do not becom
 });
 test("uncategorized spending is preserved and split-loading failure cannot authorize month close", () => {
   assert.deepEqual(categorySpending([{...expense,categoryId:null}],"2026-10",[]),[{id:"uncategorized",amount:1000}]);
-  const planning=readFileSync(new URL("../../app/planning.tsx",import.meta.url),"utf8");
+  const planning=readFileSync(new URL("../../app/(tabs)/planning.tsx",import.meta.url),"utf8");
   assert.match(planning,/useSpendingSplits/);
   assert.match(planning,/budgetOverview/);
   assert.match(planning,/splitLoading \|\| splitError/);

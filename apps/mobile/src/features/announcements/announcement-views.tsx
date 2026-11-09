@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next";
 import { safeAnnouncementTarget, type Announcement } from "@picket/domain";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { PrimaryAction, Surface } from "@/core/ui/picket-ui";
+import { Chip, FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
+import { figmaType } from "@picket/design-tokens";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { useAnnouncements } from "./announcements-context";
 
@@ -23,22 +24,23 @@ export function AnnouncementCard({ item }: { item: Announcement }) {
   const accent = item.severity === "critical" ? colors.expense : item.severity === "warning" ? colors.primary : colors.link;
   const target = safeAnnouncementTarget(item);
   return (
-    <Surface style={StyleSheet.flatten([styles.card, { borderLeftColor: accent }])}>
-      <Text accessibilityRole="header" style={styles.title}>{item.title}</Text>
-      {!!item.body && <Text style={styles.body}>{item.body}</Text>}
-      <View style={styles.actions}>
-        {target && (
-          <Pressable accessibilityRole="button" onPress={() => openTarget(item)} style={styles.action}>
-            <Text style={[styles.actionText, { color: colors.link }]}>{item.cta_label || t("Xem chi tiết")}</Text>
-          </Pressable>
-        )}
-        {item.dismissible && (
-          <Pressable accessibilityRole="button" accessibilityLabel={t("Ẩn thông báo {{title}}", { title: item.title })} onPress={() => dismiss(item)} style={styles.action}>
-            <Text style={styles.actionText}>{t("Ẩn")}</Text>
-          </Pressable>
-        )}
-      </View>
-    </Surface>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderLeftColor: accent }, figmaShadow("paper")]}>
+      {item.severity !== "info" && (
+        <Chip size="small" tone={item.severity === "critical" ? "warning" : "neutral"} label={t(item.severity === "critical" ? "Quan trọng" : "Lưu ý")} style={styles.chip} />
+      )}
+      <Text accessibilityRole="header" style={[figmaType.bodyStrong, { color: colors.text }]}>{item.title}</Text>
+      {!!item.body && <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{item.body}</Text>}
+      {(target || item.dismissible) && (
+        <View style={styles.actions}>
+          {target && <FigmaButton size="medium" label={item.cta_label || t("Xem chi tiết")} onPress={() => openTarget(item)} />}
+          {item.dismissible && (
+            <Pressable accessibilityRole="button" accessibilityLabel={t("Ẩn thông báo {{title}}", { title: item.title })} onPress={() => dismiss(item)} style={styles.dismiss}>
+              <Text style={[figmaType.button, { color: colors.muted }]}>{t("Ẩn")}</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -51,11 +53,12 @@ export function AnnouncementBanner() {
 
 export function AnnouncementInbox() {
   const { t } = useTranslation("common");
+  const { colors } = useAppTheme();
   const { items } = useAnnouncements();
   if (!items.length) return null;
   return (
     <View style={styles.inbox}>
-      <Text accessibilityRole="header" style={styles.inboxTitle}>{t("Thông báo từ Picket")}</Text>
+      <Text accessibilityRole="header" style={[figmaType.overline, styles.inboxTitle, { color: colors.muted }]}>{t("Thông báo từ Picket").toUpperCase()}</Text>
       {items.map((item) => <AnnouncementCard key={item.id} item={item} />)}
     </View>
   );
@@ -69,28 +72,29 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
   if (!gate) return <>{children}</>;
   return (
     <View style={[styles.gate, { backgroundColor: colors.canvas }]} accessibilityViewIsModal>
-      <Text accessibilityRole="header" style={styles.gateTitle}>{gate.title || t("Picket đang bảo trì")}</Text>
-      {!!gate.body && <Text style={styles.body}>{gate.body}</Text>}
-      {gate.endsAt && (
-        <Text style={styles.body}>
-          {t("Dự kiến xong lúc {{time}}", { time: new Date(gate.endsAt).toLocaleString() })}
-        </Text>
-      )}
-      <Text style={styles.body}>{t("Dữ liệu trên điện thoại của bạn vẫn được giữ nguyên.")}</Text>
-      <PrimaryAction label={t("Thử lại")} onPress={refresh} />
+      <View style={[styles.gateCard, { backgroundColor: colors.surface }, figmaShadow("paper")]}>
+        <Chip size="small" tone="warning" label={t("Bảo trì")} style={styles.chip} />
+        <Text accessibilityRole="header" style={[figmaType.titleSection, { color: colors.text }]}>{gate.title || t("Picket đang bảo trì")}</Text>
+        {!!gate.body && <Text style={[figmaType.bodySmall, { color: colors.text }]}>{gate.body}</Text>}
+        {gate.endsAt && (
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
+            {t("Dự kiến xong lúc {{time}}", { time: new Date(gate.endsAt).toLocaleString() })}
+          </Text>
+        )}
+        <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Dữ liệu trên điện thoại của bạn vẫn được giữ nguyên.")}</Text>
+        <FigmaButton fullWidth label={t("Thử lại")} onPress={refresh} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderLeftWidth: 4, gap: 6, marginBottom: 12 },
-  title: { fontSize: 16, fontWeight: "700" },
-  body: { fontSize: 14, lineHeight: 20 },
-  actions: { flexDirection: "row", gap: 16, flexWrap: "wrap" },
-  action: { minHeight: 44, justifyContent: "center" },
-  actionText: { fontSize: 14, fontWeight: "600" },
+  card: { borderRadius: 18, borderLeftWidth: 4, padding: 16, gap: 6, marginBottom: 12 },
+  chip: { alignSelf: "flex-start" },
+  actions: { flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4 },
+  dismiss: { minHeight: 44, minWidth: 44, justifyContent: "center", paddingHorizontal: 8 },
   inbox: { marginBottom: 16 },
-  inboxTitle: { fontSize: 18, fontWeight: "700", marginBottom: 8 },
-  gate: { flex: 1, justifyContent: "center", padding: 24, gap: 12 },
-  gateTitle: { fontSize: 22, fontWeight: "700" },
+  inboxTitle: { marginBottom: 8 },
+  gate: { flex: 1, justifyContent: "center", padding: 20 },
+  gateCard: { borderRadius: 22, borderBottomLeftRadius: 10, padding: 20, gap: 12 },
 });

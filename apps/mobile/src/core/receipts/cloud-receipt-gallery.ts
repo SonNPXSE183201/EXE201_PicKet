@@ -1,4 +1,5 @@
 import { fromByteArray } from "base64-js";
+import * as FileSystem from "expo-file-system/legacy";
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { readOfflineCache, writeOfflineCache, withLocalOwnerAccess } from "@/core/sync/offline-cache";
@@ -99,15 +100,45 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
   return { rows, stale: result.stale };
 }
 
+const SIGNED_URL_SECONDS = 1800;
+const signedUrls = new Map<string, { url: string; expiresAt: number }>();
+
 /** The selected-photo viewer, not calendar startup, reads full-size bytes. */
 export async function loadCloudReceiptImage(owner: string, path: string, signal: AbortSignal): Promise<string | null> {
   if (!path.startsWith(owner + "/") || signal.aborted) return null;
+  const local = receiptPhotoFile(path);
+  if (local && (await FileSystem.getInfoAsync(local).catch(() => ({ exists: false }))).exists) return local;
+  if (signal.aborted) return null;
+  const remembered = signedUrls.get(path);
+  if (remembered && remembered.expiresAt > Date.now()) return remembered.url;
   const cached = await readOfflineCache<ReceiptImageCacheEntry[]>(owner, "receipt-images").catch(() => null);
   if (signal.aborted) return null;
   const uri = cached?.value.find(row => row.path === path)?.dataUri;
   if (uri) return uri;
   if (!supabase) return null;
-  const signed = await supabase.storage.from("picket-media").createSignedUrl(path, 300);
+  const signed = await supabase.storage.from("picket-media").createSignedUrl(path, SIGNED_URL_SECONDS);
   if (signal.aborted || signed.error) return null;
+  // Reuse for 25 of the 30 minutes so the same URL hits the native image cache.
+  signedUrls.set(path, { url: signed.data.signedUrl, expiresAt: Date.now() + (SIGNED_URL_SECONDS - 300) * 1000 });
+  if (local) void cacheReceiptPhoto(owner, signed.data.signedUrl, local);
   return signed.data.signedUrl;
+}
+
+const RECEIPT_PHOTO_DIR = "receipt-photos/";
+
+/** App-private cache file for one stored receipt photo (path already starts with the owner id). */
+export function receiptPhotoFile(path: string) {
+  return FileSystem.cacheDirectory ? `${FileSystem.cacheDirectory}${RECEIPT_PHOTO_DIR}${path.replace(/[^\w.-]+/g, "_")}` : null;
+}
+
+async function cacheReceiptPhoto(owner: string, url: string, file: string) {
+  try {
+    await withLocalOwnerAccess(owner, async () => {
+      await FileSystem.makeDirectoryAsync(`${FileSystem.cacheDirectory}${RECEIPT_PHOTO_DIR}`, { intermediates: true }).catch(() => undefined);
+      const partial = `${file}.part`;
+      const result = await FileSystem.downloadAsync(url, partial);
+      if (result.status !== 200) { await FileSystem.deleteAsync(partial, { idempotent: true }); return; }
+      await FileSystem.moveAsync({ from: partial, to: file });
+    });
+  } catch { /* The signed URL still shows the photo; caching is best effort. */ }
 }

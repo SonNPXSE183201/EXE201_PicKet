@@ -4,8 +4,6 @@ import { defaultPocketAppearance, type PocketAppearance } from "@/features/budge
 import { PocketAppearancePicker } from "@/features/budgets/pocket-appearance-picker";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
-import { resolvePaperAsset } from "@/core/theme/paper-assets";
-import { PaperArt } from "@/core/ui/paper-art";
 import { useTranslation } from "react-i18next";
 import { formatMoney, normalizeLanguage } from "@/core/i18n/formatters";
 import { parsePaymentAmount } from "@/core/forms/payment-form";
@@ -25,6 +23,9 @@ import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { ActionSheet, ConnectionNotice, DangerAction, EmptyState, IconButton, MenuRow, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { AppIcon } from "@/core/ui/app-icon";
+import { figmaType } from "@picket/design-tokens";
+import { Chip, SectionHeader, Skeleton } from "@/core/ui/figma-ui";
+import { PocketFolderCard } from "@/features/budgets/pocket-folder-card";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBudgets } from "@/features/budgets/budgets-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
@@ -193,32 +194,38 @@ export default function BudgetsScreen() {
     return sum + (periodLimit ?? b.defaultLimit);
   }, 0);
 
+  const pocketRows = budgets.map((budget) => {
+    const periodLimit = localMode
+      ? guest.data.planningPeriods[`${monthText}:${budget.id}`] ?? null
+      : periodLimits?.month === monthText
+      ? periodLimits.limits[budget.id] ?? null
+      : null;
+    const ready = localMode || cloudSplits?.month === monthText;
+    const base = budgetOverview(
+      budget,
+      monthText,
+      transactions,
+      periodLimit,
+      !localMode && cloudSplits?.month === monthText ? cloudSplits.splits : [],
+    );
+    const spent = localMode ? guestBudgetSpent(guest.data, budget, monthText) : base.spent;
+    const limit = base.limit;
+    return { budget, ready, spent, limit, percent: limit > 0 ? Math.round((spent / limit) * 100) : 0 };
+  });
+  const totalSpent = pocketRows.reduce((sum, row) => sum + row.spent, 0);
+  const nearCount = pocketRows.filter((row) => row.percent >= 80).length;
+  const summaryRatio = totalAllocated > 0 ? Math.min(1, totalSpent / totalAllocated) : 0;
+
   return (
     <PicketScreen>
-      {/* Master Design Screen 08 Top Header */}
       <View style={styles.headerRow}>
+        <IconButton icon="arrow-left" label={t("back", { defaultValue: "Quay lại" })} variant="surface" onPress={() => (router.canGoBack() ? router.back() : router.replace(routes.planning))} />
         <Text accessibilityRole="header" style={styles.headerTitle}>
-          Dự định &amp; Ngân sách
+          {t("title")}
         </Text>
-        <View style={styles.headerRightActions}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push(routes.planning)}
-            style={styles.iconCircleBtn}
-          >
-            <AppIcon name="calendar-check-outline" color={colors.ink} size={20} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setShowCreate(true)}
-            style={styles.iconCircleBtn}
-          >
-            <AppIcon name="plus" color={colors.ink} size={22} />
-          </Pressable>
-        </View>
+        <IconButton icon="calendar-check-outline" label={t("planning", { defaultValue: "Dự định" })} variant="surface" onPress={() => router.push(routes.planning)} />
       </View>
 
-      {/* Month Selector Capsule */}
       <View style={styles.monthSelectorCapsule}>
         <Pressable
           accessibilityLabel={t("previousMonth")}
@@ -226,7 +233,7 @@ export default function BudgetsScreen() {
           onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))}
           style={styles.monthNavArrow}
         >
-          <AppIcon name="chevron-left" color={colors.ink} size={18} />
+          <AppIcon name="chevron-left" color={colors.text} size={18} />
         </Pressable>
         <Text style={styles.monthCapsuleLabel}>
           Tháng {month.getMonth() + 1}, {month.getFullYear()}
@@ -237,55 +244,36 @@ export default function BudgetsScreen() {
           onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))}
           style={styles.monthNavArrow}
         >
-          <AppIcon name="chevron-right" color={colors.ink} size={18} />
+          <AppIcon name="chevron-right" color={colors.text} size={18} />
         </Pressable>
       </View>
 
-      {/* Method Pills: Ngân sách phong bì / Quy tắc 50/30/20 / Đơn giản */}
-      <View style={styles.methodPillsRow}>
-        <Pressable
-          onPress={() => router.push(routes.planning)}
-          style={[styles.methodPill, styles.methodPillActive]}
-        >
-          <Text style={[styles.methodPillText, styles.methodPillTextActive]}>Ngân sách phong bì</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.push(routes.planning)}
-          style={styles.methodPill}
-        >
-          <Text style={styles.methodPillText}>Quy tắc 50/30/20</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => router.push(routes.planning)}
-          style={styles.methodPill}
-        >
-          <Text style={styles.methodPillText}>Đơn giản</Text>
-        </Pressable>
-      </View>
-
-      {/* Master Summary Hero Card */}
-      <View style={styles.heroSummaryCard}>
-        <View style={styles.heroSummaryCopy}>
-          <Text style={styles.heroSummaryLabel}>Tổng hạn mức đã phân bổ:</Text>
-          <Text style={styles.heroSummaryAmount}>{money(totalAllocated)}</Text>
-          <Text style={styles.heroSummarySub}>
-            / {money(15000000)} thu nhập dự kiến (còn {money(Math.max(0, 15000000 - totalAllocated))})
-          </Text>
+      <View style={styles.summary}>
+        <View style={styles.summaryRow}>
+          <View>
+            <Text style={[figmaType.bodySmall, { color: colors.muted }]}>Đã chi trong các túi</Text>
+            <Text style={[figmaType.amountPocket, { color: colors.text, fontSize: 22 }]}>{money(totalSpent)}</Text>
+          </View>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={[figmaType.bodySmall, { color: colors.muted }]}>Tổng hạn mức</Text>
+            <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{money(totalAllocated)}</Text>
+          </View>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setShowCreate(true)}
-          style={styles.addPocketBtn}
-        >
-          <Text style={styles.addPocketText}>+ Thêm túi</Text>
-        </Pressable>
+        <View style={styles.summaryTrack}><View style={[styles.summaryFill, { width: `${Math.round(summaryRatio * 100)}%` }]} /></View>
+        {nearCount > 0 && <View style={{ alignSelf: "flex-start" }}><Chip tone="warning" label={`${nearCount} túi sắp chạm hạn mức`} /></View>}
       </View>
 
-      {/* Section: Những chiếc túi của bạn */}
-      <Text style={styles.sectionHeading}>Những chiếc túi của bạn</Text>
+      <SectionHeader
+        overline="Những chiếc túi"
+        title="Sắp theo mức đã dùng"
+        action="add"
+        actionLabel={designCopy("homeBudgetAdd")}
+        onAction={() => setShowCreate(true)}
+        style={styles.section}
+      />
 
       {loading && budgets.length === 0 ? (
-        <ActivityIndicator accessibilityLabel={t("loading")} color={colors.link} style={styles.loader} />
+        <View style={styles.grid}>{[0, 1].map((i) => <Skeleton key={i} width="48%" height={188} radius={24} />)}</View>
       ) : null}
       {error ? <ConnectionNotice hasData={budgets.length > 0} onRetry={() => void refresh()} /> : null}
       {periodError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t(periodError)}</Text> : null}
@@ -294,67 +282,25 @@ export default function BudgetsScreen() {
       {budgets.length === 0 && !loading ? (
         <EmptyState description={t("emptyDescription")} title={t("emptyTitle")} />
       ) : (
-        <View style={styles.pocketsList}>
-          {budgets.map((budget) => {
+        <View style={styles.grid}>
+          {[...pocketRows].sort((x, y) => y.percent - x.percent).map(({ budget, ready, spent, limit, percent }) => {
             const visual = appearances[budget.id] ?? defaultPocketAppearance(budget.id, budget.name);
-            const periodLimit = localMode
-              ? guest.data.planningPeriods[`${monthText}:${budget.id}`] ?? null
-              : periodLimits?.month === monthText
-              ? periodLimits.limits[budget.id] ?? null
-              : null;
-            const ready = localMode || cloudSplits?.month === monthText;
-            const base = budgetOverview(
-              budget,
-              monthText,
-              transactions,
-              periodLimit,
-              !localMode && cloudSplits?.month === monthText ? cloudSplits.splits : [],
-            );
-            const spent = localMode ? guestBudgetSpent(guest.data, budget, monthText) : base.spent;
-            const { limit: monthlyLimit } = base;
-            const percent = monthlyLimit > 0 ? Math.round((spent / monthlyLimit) * 100) : 0;
-            const barColor = percent > 100 ? colors.expense : percent > 80 ? "#EA580C" : percent > 50 ? "#F59E0B" : "#10B981";
-
             return (
-              <View key={budget.id} style={styles.masterPocketCard}>
-                <View style={styles.pocketTopRow}>
-                  <View style={styles.pocketIconBox}>
-                    <PaperArt id={resolvePaperAsset(visual.assetId)} style={{ width: 38, height: 38 }} />
-                  </View>
-                  <View style={styles.pocketCopy}>
-                    <Text style={styles.pocketName}>{budget.name}</Text>
-                    <Text style={styles.pocketSpentSub}>
-                      Đã chi: {ready ? money(spent) : "—"} / {money(monthlyLimit)}
-                    </Text>
-                  </View>
-                  <IconButton
-                    icon="dots-vertical"
-                    label={t("manageBudget", { name: budget.name })}
-                    onPress={() => {
-                      setMessage(null);
-                      setManagingId(budget.id);
-                    }}
-                  />
-                </View>
-
-                {/* Horizontal Progress Bar matching Master Design Screen 08 */}
-                <View style={styles.pocketBarContainer}>
-                  <View style={styles.pocketBarTrack}>
-                    <View
-                      style={[
-                        styles.pocketBarFill,
-                        {
-                          width: `${Math.min(100, Math.max(0, percent))}%`,
-                          backgroundColor: barColor,
-                        },
-                      ]}
-                    />
-                  </View>
-                  <Text style={[styles.pocketPercentText, { color: percent > 100 ? colors.expense : colors.muted }]}>
-                    {percent}%
-                  </Text>
-                </View>
-              </View>
+              <PocketFolderCard
+                key={budget.id}
+                name={budget.name}
+                appearance={visual}
+                remainingLabel={designCopy("homeBudgetLeft")}
+                remaining={ready ? money(Math.max(0, limit - spent)) : "—"}
+                percent={percent}
+                usedLabel={designCopy("homeBudgetUsed", { percent, limit: money(limit) })}
+                nearLabel={designCopy("homeBudgetNear")}
+                accessibilityLabel={t("manageBudget", { name: budget.name })}
+                onPress={() => {
+                  setMessage(null);
+                  setManagingId(budget.id);
+                }}
+              />
             );
           })}
         </View>
@@ -563,61 +509,28 @@ export default function BudgetsScreen() {
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    headerRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginTop: 4,
-      marginBottom: 12,
-    },
-    headerTitle: {
-      color: colors.ink,
-      fontSize: 24,
-      fontWeight: "800",
-      letterSpacing: -0.4,
-    },
+    summary: { gap: 8 },
+    summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
+    summaryTrack: { height: 8, borderRadius: 4, backgroundColor: colors.elevated, overflow: "hidden" },
+    summaryFill: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
+    section: { marginTop: 24, marginBottom: 12 },
+    grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 16 },
+    headerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 4, marginBottom: 12 },
+    headerTitle: { ...figmaType.titleSection, color: colors.text, flex: 1 },
     headerRightActions: {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
     },
-    iconCircleBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    monthSelectorCapsule: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: 20,
-      paddingHorizontal: 16,
-      paddingVertical: 6,
-      alignSelf: "center",
-      marginBottom: 12,
-      gap: 12,
-    },
-    monthNavArrow: {
-      paddingHorizontal: 6,
-    },
+    iconCircleBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+    monthSelectorCapsule: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 12, marginBottom: 16 },
+    monthNavArrow: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, alignItems: "center", justifyContent: "center" },
     monthArrowText: {
       color: colors.muted,
       fontSize: 16,
       fontWeight: "700",
     },
-    monthCapsuleLabel: {
-      color: colors.ink,
-      fontSize: 14,
-      fontWeight: "700",
-    },
+    monthCapsuleLabel: { ...figmaType.bodyStrong, color: colors.text },
     methodPillsRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -634,8 +547,8 @@ const createStyles = (colors: MobileThemeColors) =>
       paddingVertical: 7,
     },
     methodPillActive: {
-      backgroundColor: colors.mauve,
-      borderColor: colors.mauve,
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
     },
     methodPillText: {
       color: colors.muted,
@@ -671,7 +584,7 @@ const createStyles = (colors: MobileThemeColors) =>
       fontWeight: "600",
     },
     heroSummaryAmount: {
-      color: colors.ink,
+      color: colors.text,
       fontSize: 24,
       fontWeight: "800",
       fontVariant: ["tabular-nums"],
@@ -683,7 +596,7 @@ const createStyles = (colors: MobileThemeColors) =>
       lineHeight: 16,
     },
     addPocketBtn: {
-      backgroundColor: colors.mauve,
+      backgroundColor: colors.primary,
       borderRadius: 18,
       paddingHorizontal: 14,
       paddingVertical: 8,
@@ -694,7 +607,7 @@ const createStyles = (colors: MobileThemeColors) =>
       fontWeight: "700",
     },
     sectionHeading: {
-      color: colors.ink,
+      color: colors.text,
       fontSize: 16,
       fontWeight: "800",
       marginBottom: 12,
@@ -732,7 +645,7 @@ const createStyles = (colors: MobileThemeColors) =>
       flex: 1,
     },
     pocketName: {
-      color: colors.ink,
+      color: colors.text,
       fontSize: 15,
       fontWeight: "700",
     },
@@ -748,7 +661,7 @@ const createStyles = (colors: MobileThemeColors) =>
     pocketBarTrack: {
       height: 7,
       borderRadius: 4,
-      backgroundColor: colors.cream,
+      backgroundColor: colors.canvas,
       overflow: "hidden",
     },
     pocketBarFill: {
@@ -762,7 +675,7 @@ const createStyles = (colors: MobileThemeColors) =>
       marginTop: 2,
     },
     fieldLabel: {
-      color: colors.ink,
+      color: colors.text,
       fontSize: 13,
       fontWeight: "600",
       marginTop: 8,
@@ -774,11 +687,11 @@ const createStyles = (colors: MobileThemeColors) =>
       marginBottom: 8,
     },
     input: {
-      backgroundColor: colors.cream,
+      backgroundColor: colors.canvas,
       borderColor: colors.controlBorder,
       borderRadius: paperShape.input,
       borderWidth: 1,
-      color: colors.ink,
+      color: colors.text,
       fontSize: 15,
       minHeight: paperControl.height,
       paddingHorizontal: 14,
@@ -798,11 +711,11 @@ const createStyles = (colors: MobileThemeColors) =>
       paddingVertical: 8,
     },
     choiceActive: {
-      backgroundColor: colors.mauve,
-      borderColor: colors.mauve,
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
     },
     choiceText: {
-      color: colors.ink,
+      color: colors.text,
       fontSize: 13,
       fontWeight: "600",
     },
@@ -810,7 +723,7 @@ const createStyles = (colors: MobileThemeColors) =>
       color: colors.onPrimary,
     },
     primary: {
-      backgroundColor: colors.mauve,
+      backgroundColor: colors.primary,
       borderRadius: paperShape.button,
       alignItems: "center",
       justifyContent: "center",

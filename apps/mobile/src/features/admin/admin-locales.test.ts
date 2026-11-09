@@ -20,6 +20,6 @@ test("native admin deep links no longer mount management or financial inspection
   const source = readFileSync("src/app/admin.tsx", "utf8");
   assert.match(source, /Redirect/);
   assert.doesNotMatch(source, /loadStaffLedger|loadStaffOverview|performStaffAction|saveStaffSettings/);
-  const profile = readFileSync("src/app/profile.tsx", "utf8");
+  const profile = readFileSync("src/app/(tabs)/profile.tsx", "utf8");
   assert.doesNotMatch(profile, /routes\.admin|isStaff/);
 });

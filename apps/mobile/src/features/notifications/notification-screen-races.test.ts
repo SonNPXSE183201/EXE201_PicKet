@@ -29,9 +29,12 @@ function harness(){
  "@/features/auth/auth-context":{useAuth:()=>({session:{user:{id:owner},access_token:owner},localMode:false})},
  "@/features/bills/bills-context":{useBills:()=>({bills:[]})},"@/features/budgets/budgets-context":{useBudgets:()=>({budgets:[]})},"@/features/subscriptions/subscriptions-context":{useSubscriptions:()=>({subscriptions:[]})},
  "@/features/transactions/use-transaction-history":{useTransactionHistory:()=>({transactions:[],loading:false})},"@/features/transactions/use-spending-splits":{useSpendingSplits:()=>({splits:[]})},"@/features/notifications/use-reminder-periods":{useReminderPeriods:()=>({periodsReady:true})},
+ "@/features/sync/use-pull-refresh":{usePullRefresh:()=>async()=>undefined},
  "@/features/notifications/keepsake-source":{loadReminderKeepsakes:async()=>owner==="A"?[{id:"private-A"}]:[]},
  "@/features/notifications/reminders":{collectReminders:(input:{keepsakes:unknown[]})=>{seenKeepsakes=input.keepsakes;return [];},remindersEnabled:async()=>false,readReminderIds:async()=>[],setRemindersEnabled:async()=>{writes++;await held;return true;},scheduleUserReminders:async()=>{schedules++;}},
  "@/core/ui/picket-ui":{PicketScreen:"Screen"},
+ "@picket/design-tokens":{figmaType:new Proxy({},{get:()=>({})})},
+ "@/features/notifications/notification-screen-copy":{notificationScreenCopy:()=>({emptyTitle:"",emptyBody:"",readAll:""})},
  };
  const exports:{default?:()=>unknown}={};vm.runInNewContext(ts.transpileModule(readFileSync("src/app/notifications.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},Date});
  const render=()=>{cursor=0;return exports.default!();};

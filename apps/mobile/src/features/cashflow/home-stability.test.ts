@@ -11,7 +11,7 @@ test("background refresh does not replace an already populated weekly chart with
   assert.doesNotMatch(read("./home-weekly-rhythm.tsx"), /\{loading \|\| accountsLoading \?/);
 });
 test("the eye updates local display before saving preferences, including offline failure", () => {
-  const home = read("../../app/index.tsx");
+  const home = read("../../app/(tabs)/index.tsx");
   assert.ok(home.indexOf("setBalanceHidden(next)") < home.indexOf("updatePreferences({ hide_balance: next })"));
   assert.match(home, /updatePreferences\(\{ hide_balance: next \}\)\.catch/);
 });

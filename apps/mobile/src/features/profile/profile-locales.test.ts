@@ -6,7 +6,7 @@ import ts from "typescript";
 import { profileVi,profileEn } from "../../core/i18n/profile-resources";
 
 test("profile UI and its controlled messages have English resources",()=>{
-  const file=resolve(process.cwd(),"src/app/profile.tsx");
+  const file=resolve(process.cwd(),"src/app/(tabs)/profile.tsx");
   const source=ts.createSourceFile(file,readFileSync(file,"utf8"),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
   const keys=new Set<string>();
   function visit(node:ts.Node){

@@ -17,6 +17,13 @@ export const billingVi = {
   cancelled: "Bạn đã đóng cửa sổ thanh toán.", purchaseError: "Google Play chưa hoàn tất giao dịch. Vui lòng thử lại.", connectionError: "Không kết nối được Google Play Billing.", verifying: "Đang xác minh giao dịch an toàn với Google Play…", activated: "Đã kích hoạt gói {{tier}}.", expired: "Giao dịch hợp lệ nhưng gói đã hết hạn.", verifyError: "Không thể xác minh giao dịch. Hãy kiểm tra kết nối và thử khôi phục lại.",
   notReady: "Cửa hàng chưa sẵn sàng. Chưa thể bắt đầu mua gói mới.", checking: "Đang kiểm tra cửa hàng…", offerMissing: "Google Play chưa trả về ưu đãi hợp lệ cho gói này.", openError: "Không mở được Google Play.", restoreEmpty: "Không tìm thấy gói Picket đang hoạt động trên tài khoản Google Play này.", restoreSuccess: "Đã xác minh và đồng bộ giao dịch từ Google Play. Xem trạng thái gói hiện tại bên dưới.", restorePartial: "Một số giao dịch chưa xác minh được. Hãy kiểm tra tài khoản và thử khôi phục lại.", restoreFailed: "Chưa xác minh được giao dịch nào. Gói chưa được khôi phục; hãy kiểm tra kết nối và tài khoản rồi thử lại.", restoreError: "Không thể khôi phục giao dịch.", manageError: "Không mở được trang quản lý gói Google Play.",
   current: "Gói hiện tại: {{tier}}", quota: "OCR cloud còn {{remaining}}/{{limit}} lượt trong 24 giờ.", androidOnly: "Thanh toán trong ứng dụng hiện chỉ hỗ trợ Android.", connecting: "Đang kết nối Google Play…", pricesUnavailable: "Chưa tải được bảng giá. Hãy kiểm tra kết nối và dùng bản cài từ Google Play để mua hoặc khôi phục gói.", chooseLabel: "Chọn {{name}} {{cadence}}", buyingLabel: "Đang mua {{name}} {{cadence}}", choose: "Chọn gói", restoring: "Đang khôi phục giao dịch Google Play", restore: "Khôi phục giao dịch", manage: "Quản lý hoặc hủy gói trên Google Play", footnote: "Không nhập thông tin thẻ vào Picket. Hoàn tiền và hủy gia hạn được xử lý theo chính sách Google Play.",
+  quotaHeadline: "{{remaining}}/{{limit}} lượt",
+  thanksTitle: "Cảm ơn bạn đã ủng hộ Picket!",
+  thanksBody: "Gói {{tier}} đã bật trên mọi máy đăng nhập tài khoản này.",
+  upgrade: "Nâng cấp lên {{name}}",
+  includedTitle: "Gói nào cũng có",
+  includedUnlimited: "Thu chi, ví, túi ngân sách không giới hạn",
+  includedSync: "Đồng bộ và sao lưu dữ liệu",
 } as const;
 export const billingEn: Record<keyof typeof billingVi, string> = {
   eyebrow: "MORE ROOM FOR RECEIPTS", intro: "Find your everyday rhythm.",
@@ -37,4 +44,11 @@ export const billingEn: Record<keyof typeof billingVi, string> = {
   cancelled: "You closed the payment window.", purchaseError: "Google Play could not complete the purchase. Please try again.", connectionError: "Could not connect to Google Play Billing.", verifying: "Verifying your purchase with Google Play…", activated: "{{tier}} plan activated.", expired: "The purchase is valid, but the plan has expired.", verifyError: "Could not verify the purchase. Check your connection and try restoring again.",
   notReady: "The store is not ready for new purchases.", checking: "Checking the store…", offerMissing: "Google Play did not return a valid offer for this plan.", openError: "Could not open Google Play.", restoreEmpty: "No active Picket plan was found on this Google Play account.", restoreSuccess: "Google Play purchases verified and synced. Check your current plan below.", restorePartial: "Some purchases could not be verified. Check your account and try restoring again.", restoreFailed: "No purchases could be verified. Your plan has not been restored; check your connection and account, then retry.", restoreError: "Could not restore purchases.", manageError: "Could not open Google Play subscription management.",
   current: "Current plan: {{tier}}", quota: "{{remaining}}/{{limit}} cloud OCR uses remaining in 24 hours.", androidOnly: "In-app purchases currently support Android only.", connecting: "Connecting to Google Play…", pricesUnavailable: "Prices could not be loaded. Check your connection and use the Google Play build to buy or restore a plan.", chooseLabel: "Choose {{name}} {{cadence}}", buyingLabel: "Buying {{name}} {{cadence}}", choose: "Choose plan", restoring: "Restoring Google Play purchases", restore: "Restore purchases", manage: "Manage or cancel your plan on Google Play", footnote: "Do not enter card details in Picket. Refunds and renewal cancellation follow Google Play policies.",
+  quotaHeadline: "{{remaining}}/{{limit}} scans",
+  thanksTitle: "Thanks for supporting Picket!",
+  thanksBody: "{{tier}} is active on every device signed in to this account.",
+  upgrade: "Upgrade to {{name}}",
+  includedTitle: "Every plan includes",
+  includedUnlimited: "Unlimited spending, wallets and budget pockets",
+  includedSync: "Sync and data backup",
 };

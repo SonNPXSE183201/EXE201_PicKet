@@ -1,4 +1,8 @@
-import { paperControl, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { FigmaButton } from "@/core/ui/figma-ui";
+import { FieldRow, FigmaHeader, PaperGroup } from "@/features/settings/settings-figma";
+import { deleteCopy } from "@/features/settings/delete-copy";
+import { useAppTheme } from "@/features/settings/appearance-provider";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useTranslation } from "react-i18next";
@@ -20,7 +24,8 @@ import { AppIcon } from "@/core/ui/app-icon";
 import { useAuth } from "@/features/auth/auth-context";
 
 export default function DeleteAccountScreen() {
-  const { styles } = useMobileStyles(createStyles);
+  const { colors, styles } = useMobileStyles(createStyles);
+  const { language } = useAppTheme();
   const { session, signOut } = useAuth();
   const { t } = useTranslation("accountDeletion");
   const requestOwnerRecovery = useOwnerCacheRecovery();
@@ -107,25 +112,35 @@ export default function DeleteAccountScreen() {
     }
   }
 
+  const dc = deleteCopy(language);
+  const armed = remoteDeleted || isConfirmed;
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.overlay}>
-        {/* Master Design Screen 18 Modal Card */}
-        <View style={styles.modalCard}>
-          <View style={styles.dangerCircleBadge}>
-            <AppIcon name="alert-circle-outline" color="#DC2626" size={28} />
-          </View>
-
-          <Text accessibilityRole="header" style={styles.modalTitle}>
-            {t("title")}
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <FigmaHeader title={dc.header} backDisabled={busy} />
+        <View style={styles.titleBlock}>
+          <Text accessibilityRole="header" style={styles.pageTitle}>{t("title")}</Text>
+          <Text style={styles.pageSub}>{t("description")}</Text>
+        </View>
+        <View style={styles.warnCard}>
+          <Text style={styles.warnOverline}>{dc.warnTitle.toUpperCase()}</Text>
+          {dc.items.map((item) => (
+            <View key={item} style={styles.warnRow}>
+              <AppIcon name="close" size={14} color={colors.warning} />
+              <Text style={styles.warnText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.tipRow}>
+          <AppIcon name="information-outline" size={16} color={colors.muted} />
+          <Text style={styles.tipText}>
+            {dc.keepTip}{" "}
+            <Text accessibilityRole="link" onPress={() => router.push(routes.restore)} style={styles.tipLink}>{dc.keepLink}</Text>
+            {" "}{dc.keepTail}
           </Text>
-
-          <Text style={styles.modalDescription}>
-            {t("description")}
-          </Text>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>{t("confirmation")}</Text>
+        </View>
+        <PaperGroup>
+          <FieldRow icon="lock-outline" meta={t("confirmation")} title={confirmation || " "} trailing="none" tone="warning">
             <TextInput
               accessibilityLabel={t("confirmationLabel")}
               editable={!busy && !remoteDeleted}
@@ -133,159 +148,56 @@ export default function DeleteAccountScreen() {
               autoComplete="off"
               onChangeText={setConfirmation}
               placeholder="DELETE"
-              placeholderTextColor="#FCA5A5"
+              placeholderTextColor={colors.muted}
               style={styles.input}
               value={confirmation}
             />
-          </View>
-
-          {message && (
-            <Text accessibilityLiveRegion="polite" style={styles.error}>
-              {t(message)}
-            </Text>
-          )}
-
-          <View style={styles.modalButtonsRow}>
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={() => router.back()}
-              style={styles.cancelBtn}
-            >
-              <Text style={styles.cancelText}>{t("back")}</Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              disabled={busy || (!remoteDeleted && !isConfirmed)}
-              onPress={() => void remove()}
-              style={[
-                styles.deleteBtn,
-                !remoteDeleted && !isConfirmed && styles.deleteDisabled,
-              ]}
-            >
-              {busy ? (
-                <ActivityIndicator
-                  accessibilityLabel={t(remoteDeleted ? "signingOut" : "deleting")}
-                  color="#FFFFFF"
-                />
-              ) : (
-                <Text style={styles.deleteText}>{remoteDeleted ? t("finishSignOut") : t("remove")}</Text>
-              )}
-            </Pressable>
-          </View>
+          </FieldRow>
+        </PaperGroup>
+        {message && (
+          <Text accessibilityLiveRegion="polite" style={styles.error}>
+            {t(message)}
+          </Text>
+        )}
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy || !armed, busy }}
+            disabled={busy || !armed}
+            onPress={() => void remove()}
+            style={[styles.deleteBtn, !armed && styles.deleteDisabled]}
+          >
+            {busy ? (
+              <ActivityIndicator accessibilityLabel={t(remoteDeleted ? "signingOut" : "deleting")} color={colors.expense} />
+            ) : (
+              <Text style={styles.deleteText}>{remoteDeleted ? t("finishSignOut") : t("remove")}</Text>
+            )}
+          </Pressable>
+          <FigmaButton variant="text" size="medium" disabled={busy} label={t("back")} onPress={() => router.back()} />
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
-    safeArea: { backgroundColor: "#1E293B", flex: 1 },
-    overlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.65)",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: paperSpace.screen,
-    },
-    modalCard: {
-      backgroundColor: colors.surface,
-      borderRadius: 24,
-      padding: 24,
-      width: "100%",
-      maxWidth: 380,
-      alignItems: "center",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 10,
-      elevation: 6,
-    },
-    dangerCircleBadge: {
-      width: 52,
-      height: 52,
-      borderRadius: 26,
-      backgroundColor: "#FEE2E2",
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 14,
-    },
-    modalTitle: {
-      color: "#DC2626",
-      fontSize: 20,
-      fontWeight: "800",
-      textAlign: "center",
-      marginBottom: 10,
-    },
-    modalDescription: {
-      color: colors.muted,
-      fontSize: 13,
-      lineHeight: 20,
-      textAlign: "center",
-      marginBottom: 18,
-    },
-    inputContainer: {
-      width: "100%",
-      marginBottom: 18,
-    },
-    inputLabel: {
-      color: colors.ink,
-      fontSize: 12,
-      fontWeight: "700",
-      marginBottom: 8,
-    },
-    input: {
-      backgroundColor: colors.surface,
-      borderColor: "#DC2626",
-      borderWidth: 1.5,
-      borderRadius: 14,
-      color: "#DC2626",
-      fontSize: 15,
-      fontWeight: "700",
-      minHeight: paperControl.height,
-      paddingHorizontal: 16,
-      textAlign: "center",
-    },
-    modalButtonsRow: {
-      flexDirection: "row",
-      gap: 12,
-      width: "100%",
-    },
-    cancelBtn: {
-      flex: 1,
-      minHeight: 46,
-      borderRadius: 23,
-      backgroundColor: colors.cream,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    cancelText: {
-      color: colors.ink,
-      fontSize: 14,
-      fontWeight: "700",
-    },
-    deleteBtn: {
-      flex: 1,
-      minHeight: 46,
-      borderRadius: 23,
-      backgroundColor: "#DC2626",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    deleteDisabled: {
-      opacity: 0.45,
-    },
-    deleteText: {
-      color: "#FFFFFF",
-      fontSize: 14,
-      fontWeight: "700",
-    },
-    error: {
-      color: "#DC2626",
-      fontSize: 13,
-      textAlign: "center",
-      marginBottom: 10,
-    },
+    safeArea: { backgroundColor: colors.canvas, flex: 1 },
+    content: { flexGrow: 1, gap: 16, paddingHorizontal: 20, paddingBottom: 32, maxWidth: 720, width: "100%", alignSelf: "center" },
+    titleBlock: { gap: 4, marginTop: 8 },
+    pageTitle: { color: colors.text, fontSize: 22, fontWeight: "800", letterSpacing: -0.3, lineHeight: 29 },
+    pageSub: { color: colors.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+    warnCard: { backgroundColor: colors.warningSurface, borderRadius: 24, gap: 10, padding: 16 },
+    warnOverline: { color: colors.warning, fontSize: 11, fontWeight: "800", letterSpacing: 1.1, lineHeight: 16 },
+    warnRow: { alignItems: "center", flexDirection: "row", gap: 10 },
+    warnText: { color: colors.text, flex: 1, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+    tipRow: { alignItems: "center", flexDirection: "row", gap: 8 },
+    tipText: { color: colors.muted, flex: 1, fontSize: 12, fontWeight: "600", lineHeight: 18 },
+    tipLink: { color: colors.primary, fontWeight: "800" },
+    input: { color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: 24, padding: 0 },
+    actions: { gap: 6, marginTop: "auto", paddingTop: 24 },
+    deleteBtn: { alignItems: "center", borderColor: colors.expense, borderRadius: 24, borderWidth: 1, height: 48, justifyContent: "center", backgroundColor: colors.surface },
+    deleteDisabled: { opacity: 0.45 },
+    deleteText: { color: colors.expense, fontSize: 14, fontWeight: "800" },
+    error: { color: colors.danger, fontSize: 13, textAlign: "center" },
   });

@@ -48,13 +48,19 @@ function harness() {
   const modules: Record<string, any> = {
     react: { useState: state, useRef: (value: any) => { const index = cursor++; return slots[index] ??= { current: value }; }, useEffect: effect },
     "react/jsx-runtime": { jsx: (type: any, props: any) => ({ type, props }), jsxs: (type: any, props: any) => ({ type, props }) },
-    "react-native": { View: "View", AppState: { addEventListener: (_event: string, callback: typeof foreground) => { foreground = callback; return { remove() {} }; } }, Linking: { openURL: async (url: string) => { calls.push({ url }); } } },
+    "react-native": { View: "View", StyleSheet: { create: (s: any) => s }, AppState: { addEventListener: (_event: string, callback: typeof foreground) => { foreground = callback; return { remove() {} }; } }, Linking: { openURL: async (url: string) => { calls.push({ url }); } } },
     "expo-router": { Redirect: "Redirect" }, "expo-crypto": { randomUUID: () => `request-${++uuid}` },
     "@picket/domain": { ...domain, formatVnd: (amount: number) => String(amount) },
     "@/core/api/client": { picketApi: api },
     "@/features/auth/auth-context": { useAuth: () => ({ session: { user: { id: "qa" }, access_token: "session" } }) },
     "@/features/auth/auth-screen": Object.fromEntries(["AuthField", "AuthMessage", "AuthScreen", "PrimaryButton", "TextLink"].map((name) => [name, name])),
     "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-ui": { PicketScreen: "PicketScreen", TopAppBar: "TopAppBar" },
+    "@/core/ui/figma-ui": { Chip: "Chip", FigmaButton: "FigmaButton", ReceiptDivider: "ReceiptDivider", Skeleton: "Skeleton", figmaShadow: () => ({}) },
+    "@/features/billing/billing-title": { planScreenTitle: "Gói dịch vụ" },
+    "@/features/billing/billing-ui": Object.fromEntries(["BillingSection", "CadenceToggle", "CurrentPlanHero", "IncludedList", "PlanTiles", "ThankYouCard"].map((name) => [name, name])),
+    "@picket/design-tokens": { figmaType: new Proxy({}, { get: () => ({}) }) },
+    "@/core/theme/use-mobile-styles": { useMobileStyles: () => ({ colors: {}, styles: {} }) },
     "react-i18next": { useTranslation: () => ({ t: (key: string, values: Record<string, unknown> = {}) => key.replace(/{{(\w+)}}/g, (_m: string, name: string) => String(values[name])) }) },
   };
   const module = { exports: {} as any };
@@ -91,27 +97,27 @@ function harness() {
 
 test("an unpaid order can be cancelled from the native screen", async () => {
   const app = harness(); app.render(); await settle();
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   app.press("Hủy thanh toán"); await settle();
   assert.deepEqual(app.calls.at(-1), { id: "request-1", action: "cancel" });
   assert.match(app.text(), /Đã hủy/);
 });
 test("a new checkout after cancellation uses a fresh idempotency key", async () => {
   const app = harness(); app.render(); await settle();
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   app.press("Hủy thanh toán"); await settle();
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   assert.deepEqual(app.calls.filter((call) => call.sku).map((call) => call.key), ["request-1", "request-2"]);
 });
 test("an active paid plan is visible and prevents another checkout", async () => {
   const app = harness(); app.setTier("plus"); app.render(); await settle();
   assert.match(app.text(), /PLUS/);
   assert.match(app.text(), /Gói hiện tại/);
-  assert.equal(app.button("Tạo thanh toán")?.props.disabled, true);
+  assert.equal(app.button("Nâng cấp lên Plus"), undefined, "A paid plan shows the thank-you card instead of a buy button");
 });
 test("returning from checkout refreshes the paid order and plan", async () => {
   const app = harness(); app.render(); await settle();
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   app.press("Mở thanh toán"); await settle();
   app.setTier("plus"); app.setOrders([{ id: "request-1", order_code: 1, amount: 19000, status: "paid" }]);
   app.foreground(); await settle();
@@ -121,14 +127,14 @@ test("returning from checkout refreshes the paid order and plan", async () => {
 });
 test("retry after a lost checkout response reuses its idempotency key", async () => {
   const app = harness(); app.render(); await settle(); app.failNextCheckout();
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   assert.match(app.text(), /Không thể cập nhật thanh toán/);
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   assert.deepEqual(app.calls.filter((call) => call.sku).map((call) => call.key), ["request-1", "request-1"]);
 });
 test("rapid checkout taps dispatch a single payment request", async () => {
   const app = harness(); app.render(); await settle();
-  app.press("Tạo thanh toán"); app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); app.press("Nâng cấp lên Plus"); await settle();
   assert.equal(app.calls.filter((call) => call.sku).length, 1);
 });
 test("a pending link shows its 15-minute countdown", async () => {
@@ -142,7 +148,7 @@ test("buying again while a link is open asks to cancel the old link first", asyn
   const app = harness();
   app.setOrders([{ id: "old", order_code: 1, amount: 19000, status: "pending", checkout_url: "https://pay.payos.vn/web/old", expires_at: new Date(Date.now() + 600_000).toISOString() }]);
   app.render(); await settle();
-  app.press("Tạo thanh toán"); await settle();
+  app.press("Nâng cấp lên Plus"); await settle();
   assert.equal(app.calls.filter((call) => call.sku).length, 0);
   assert.match(app.text(), /sẽ bị hủy/);
   app.press("Hủy link cũ và tạo link mới"); await settle();
@@ -163,6 +169,6 @@ test("a live promotion shows the locked discount and a code is sent with checkou
   app.setCatalog([{ sku: "plus", tier: "plus", months: 1, amount: 11400, list_amount: 19000, promotion: { id: "p", name: "Sáng lập", description: null, percent: 40, endsAt: null, slotsLeft: 7 } }]);
   app.render(); await settle();
   assert.match(app.text(), /11400/); assert.match(app.text(), /40%/); assert.match(app.text(), /19000/); assert.match(app.text(), /Sáng lập/); assert.match(app.text(), /7/);
-  app.typeCode("founder"); app.press("Tạo thanh toán"); await settle();
+  app.typeCode("founder"); app.press("Nâng cấp lên Plus"); await settle();
   assert.deepEqual(app.calls.find((call) => call.sku), { sku: "plus", key: "request-1", code: "FOUNDER" });
 });

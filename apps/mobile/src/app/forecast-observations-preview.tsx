@@ -1,12 +1,13 @@
 import { PicketText as Text } from "@/core/ui/picket-text";
-import { paperShape } from "@/core/theme/paper-foundations";
+import { FigmaHeader } from "@/features/settings/settings-figma";
+import { figmaShadow } from "@/core/ui/figma-ui";
 import {useEffect,useRef,useState} from "react";
 import { Alert, AppState, View } from "react-native";
-import {Redirect,router} from "expo-router";
+import {Redirect} from "expo-router";
 import {useTranslation} from "react-i18next";
 import {PicketTextInput as TextInput} from "@/core/ui/picket-text-input";
 import {AccessiblePressable as Pressable} from "@/core/ui/accessible-pressable";
-import {PicketScreen,TopAppBar} from "@/core/ui/picket-ui";
+import {PicketScreen} from "@/core/ui/picket-ui";
 import {formatCalendarDate,formatInstant,localeFor} from "@/core/i18n/formatters";
 import {useAuth} from "@/features/auth/auth-context";
 import {useAccounts} from "@/features/accounts/accounts-context";
@@ -17,7 +18,7 @@ import type {ObservationDocument} from "@/features/cashflow/forecast-observation
 import {parseScenarioMoney} from "@/features/cashflow/scenario-form";
 
 function HistoryButton({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){
- const {colors:c}=useAppTheme();return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:12,borderWidth:1,borderColor:c.border,borderRadius:paperShape.button}}><Text style={{color:disabled?c.muted:c.primary}}>{label}</Text></Pressable>;
+ const {colors:c}=useAppTheme();return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,paddingHorizontal:16,alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:c.border,backgroundColor:c.surface,borderRadius:24,opacity:disabled?0.5:1}}><Text style={{color:c.text,fontSize:14,fontWeight:"800"}}>{label}</Text></Pressable>;
 }
 export default function ForecastObservationPreview(){
  const {session,localMode}=useAuth();
@@ -45,7 +46,7 @@ function ObservationSession({owner}:{owner:string}){
  const money=(value:number,currency:string)=>{if(!shown)return "••••••";const formatter=new Intl.NumberFormat(localeFor(language),{style:"currency",currency});return formatter.format(value/10**(formatter.resolvedOptions().maximumFractionDigits??2));};
  function remove(record:FrozenForecastCase){Alert.alert(t("deleteTitle"),t("deleteBody"),[{text:t("cancel"),style:"cancel"},{text:t("remove"),style:"destructive",onPress:()=>void perform(()=>forecastObservations.remove(owner,record.id,record.revision),"deleted")}]);}
  return <PicketScreen>
-  <TopAppBar title={t("title")}/><HistoryButton label={t("back")} onPress={()=>router.back()}/>
+  <FigmaHeader title={t("title")}/>
   <Text style={{color:c.muted,lineHeight:22}}>{t("notice")}</Text><Text style={{color:c.muted,lineHeight:22}}>{t("privacy")}</Text>
   <HistoryButton label={t(shown?"hide":"show")} onPress={()=>{setShown(value=>!value);setDraft(null);}}/>
   <HistoryButton label={t("reload")} onPress={()=>void perform(()=>forecastObservations.load(owner))} disabled={busy}/>
@@ -55,7 +56,7 @@ function ObservationSession({owner}:{owner:string}){
   {doc&&[...doc.cases].reverse().slice(page*5,(page+1)*5).map(record=>{
    const result=(()=>{try{return evaluateCapturedForecast(record,clock);}catch{return null;}})();
    const unavailable=record.accountIds.some(id=>!accounts.some(account=>account.id===id));
-   return <View key={record.id} style={{gap:10,padding:14,borderWidth:1,borderColor:c.border,borderRadius:12,marginVertical:10}}>
+   return <View key={record.id} style={[{gap:10,padding:16,backgroundColor:"#FFFFFF",borderRadius:18,marginVertical:10},figmaShadow("paper")]}>
     <Text accessibilityRole="header" style={{color:c.text,fontWeight:"700"}}>{t("case",{day:formatCalendarDate(record.input.startDay,language),days:record.input.days,currency:record.input.currency})}</Text>
     <Text style={{color:c.muted}}>{t("progress",{count:record.observations.length,total:record.input.days,closed:result?.closedDays??0})}</Text>
     <HistoryButton label={t(expanded===record.id?"close":"details")} onPress={()=>{setExpanded(expanded===record.id?null:record.id);setDraft(null);}}/>
@@ -67,7 +68,7 @@ function ObservationSession({owner}:{owner:string}){
      {result?.metrics&&shown?<><Text style={{color:c.text}}>{t("metrics",{amount:new Intl.NumberFormat(localeFor(language),{maximumFractionDigits:2}).format(result.metrics.mae)+" "+t("minorUnits",{currency:record.input.currency})})}</Text><Text style={{color:c.muted}}>{t("alerts",{missed:result.metrics.missedLowBalanceDays,false:result.metrics.falseLowBalanceDays})}</Text></>:<Text style={{color:c.muted}}>{t(result?.metrics?"showForMetrics":"waiting")}</Text>}
      {record.baseline.map(row=>{
       const observed=record.observations.find(item=>item.day===row.day),closed=observationDay(row.day)+86400000<=Date.parse(clock);
-      return <View key={row.day} style={{gap:6,padding:10,borderWidth:1,borderColor:c.border}}>
+      return <View key={row.day} style={{gap:6,padding:10,backgroundColor:c.elevated,borderRadius:14}}>
        <Text style={{color:c.text}}>{formatCalendarDate(row.day,language)} (UTC)</Text><Text style={{color:c.text}}>{t("predicted",{amount:money(row.balance,record.input.currency)})}</Text>
        <Text style={{color:c.muted}}>{observed?t("observed",{amount:money(observed.balance,record.input.currency)}):t("missing")}</Text>
        {!closed&&<Text style={{color:c.muted}}>{t("notClosed")}</Text>}
