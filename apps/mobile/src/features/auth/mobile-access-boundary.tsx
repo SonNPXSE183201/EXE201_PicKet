@@ -13,6 +13,9 @@ import {
   cachedMobileAccessAllowed,
 } from "./mobile-access-policy";
 
+/** Resume re-verification interval; within it, returning to the app is instant. */
+export const ACCESS_RECHECK_MS = 10 * 60 * 1000;
+
 /** Must wrap all owner data providers, including Billing and background sync. */
 export function MobileAccessBoundary({ children }: PropsWithChildren) {
   const { session, signOut } = useAuth();
@@ -30,13 +33,28 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
   }, [signOut]);
   const token = session?.access_token;
   const owner = session?.user.id;
+  // Last successful verification (owner + time). Short trips to the home screen,
+  // the camera, the photo picker or a biometric prompt all fire AppState
+  // "active"; re-verifying (and hiding the app) on each one felt like a reload.
+  const lastVerified = useRef<{ owner: string; at: number } | null>(null);
+  const ownerRef = useRef(owner);
+  useEffect(() => {
+    ownerRef.current = owner;
+  }, [owner]);
   useEffect(() => {
     const listener = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        setChecking(true);
-        setFailed(false);
-        setAttempt((value) => value + 1);
+      if (state !== "active") return;
+      const last = lastVerified.current;
+      if (last && last.owner === ownerRef.current) {
+        // Already verified in this session: re-check quietly (at most every
+        // ACCESS_RECHECK_MS). Revocation still signs out; the app is never
+        // covered by the verification screen after unlocking or returning.
+        if (Date.now() - last.at >= ACCESS_RECHECK_MS) setAttempt((value) => value + 1);
+        return;
       }
+      setChecking(true);
+      setFailed(false);
+      setAttempt((value) => value + 1);
     });
     return () => listener.remove();
   }, []);
@@ -44,13 +62,34 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
     let active = true;
     if (!token || !owner) return;
     const cacheKey = `picket_mobile_access_v1_${owner}`;
+    let quiet = lastVerified.current?.owner === owner;
     void (async () => {
+      // Cold start: an unexpired allowance for this owner (saved by the last
+      // successful check) opens the app at once; the server check below still
+      // runs and an explicit "not allowed" answer signs out.
+      if (!quiet) {
+        try {
+          const cached: unknown = JSON.parse((await SecureStore.getItemAsync(cacheKey)) ?? "null");
+          if (active && cachedMobileAccessAllowed(cached, owner, Date.now())) {
+            lastVerified.current = { owner, at: (cached as { checkedAt: number }).checkedAt };
+            setVerifiedOwner(owner);
+            setVerifiedToken(token);
+            setFailed(false);
+            setBlocked(false);
+            setChecking(false);
+            quiet = true;
+          }
+        } catch {
+          /* No usable allowance: verify before mounting. */
+        }
+      }
       try {
         if (!picketApi) throw new Error("API unavailable");
         const access = await picketApi.accountAccess(token);
         if (!active) return;
         setFailed(false);
         if (mobileAccessAllowed(access)) {
+          lastVerified.current = { owner, at: Date.now() };
           setVerifiedOwner(owner);
           setVerifiedToken(token);
           setBlocked(false);
@@ -88,7 +127,9 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
             /* No verified allowance. */
           }
         }
-        if (active) setFailed(true);
+        // A quiet re-check that cannot reach the server keeps the verified
+        // owner's app open; only an explicit "not allowed" answer blocks it.
+        if (active && !quiet) setFailed(true);
       } finally {
         if (active) setChecking(false);
       }
@@ -99,7 +140,11 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
   }, [token, owner, attempt]);
   if (!blocked && !session) return children;
   const canMount = !blocked && verifiedOwner === owner;
-  const canUse = canMount && verifiedToken === token && !checking && !failed;
+  // A Supabase token refresh for the same owner is verified in the background
+  // (revocation still signs out); only an owner change or a stale resume hides
+  // the app.
+  const refreshing = verifiedToken !== token && verifiedOwner === owner && !checking;
+  const canUse = canMount && (verifiedToken === token || refreshing) && !checking && !failed;
   return (
     <View style={{ flex: 1 }}>
       {/* Keep the authorized owner's navigator mounted during revalidation.

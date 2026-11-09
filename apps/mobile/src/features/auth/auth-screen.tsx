@@ -1,3 +1,4 @@
+import { paperControl } from "@/core/theme/paper-foundations";
 import { figmaRadii, figmaType } from "@picket/design-tokens";
 import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
 import { PaperArt } from "@/core/ui/paper-art";
@@ -91,7 +92,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   title: { ...figmaType.amountHero, color: colors.text },
   subtitle: { ...figmaType.bodySmall, color: colors.muted },
   form: { gap: 12, marginTop: 16, backgroundColor: colors.paper, borderRadius: figmaRadii.receipt, padding: 16, ...figmaShadow("paper") },
-  input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: 56, paddingHorizontal: 16 },
+  input: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontSize: 14, fontWeight: "700", lineHeight: 21, minHeight: paperControl.height, paddingHorizontal: 16 },
   link: { ...figmaType.captionStrong, color: colors.primary, paddingVertical: 6, textAlign: "center" },
   message: { ...figmaType.bodySmall, color: colors.expense },
 });

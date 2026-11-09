@@ -9,11 +9,11 @@ const phoneCalls:unknown[]=[];
 function provider(signInWithPassword:(credentials:domain.PasswordLoginCredentials)=>Promise<{error:Error|null}>){
  const adapters:Record<string,unknown>={
   '@picket/domain':domain,
-  react:{createContext:()=>({Provider:'Provider'}),useCallback:(fn:unknown)=>fn,useMemo:(fn:()=>unknown)=>fn(),useEffect:()=>undefined,useState:(initial:unknown)=>[initial,()=>undefined]},
+  react:{createContext:()=>({Provider:'Provider'}),useCallback:(fn:unknown)=>fn,useMemo:(fn:()=>unknown)=>fn(),useEffect:()=>undefined,useRef:(value:unknown)=>({current:value}),useState:(initial:unknown)=>[initial,()=>undefined]},
   'react/jsx-runtime':{jsx:(type:unknown,props:unknown)=>({type,props})},
   'expo-linking':{createURL:()=> 'com.picket.mobile://auth/callback'},
   'expo-web-browser':{maybeCompleteAuthSession:()=>undefined},
-  'expo-secure-store':{},'react-native':{Platform:{OS:'android'}},
+  'expo-secure-store':{},'react-native':{Platform:{OS:'android'},AppState:{currentState:'active',addEventListener:()=>({remove(){}})}},
   '@/core/supabase/client':{supabase:{auth:{signInWithPassword,setSession:async(tokens:unknown)=>{phoneCalls.push({setSession:tokens});return {error:null};}}},authStorageKey:'fixture'},
   '@/core/api/client':{picketApi:{phoneLogin:async(phone:string,password:string)=>{phoneCalls.push({phone,password});return {access_token:'a',refresh_token:'r'};}}},
   '@/features/auth/phone-sign-in':{phoneSignInTokens:async(api:{phoneLogin:(p:string,w:string)=>Promise<{access_token:string;refresh_token:string}>},phone:string,password:string)=>{const s=await api.phoneLogin(phone,password);return {access_token:s.access_token,refresh_token:s.refresh_token};}},

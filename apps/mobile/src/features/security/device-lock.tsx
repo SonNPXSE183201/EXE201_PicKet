@@ -55,6 +55,9 @@ function DeviceLockSession({ children }: PropsWithChildren) {
   const [locked, setLocked] = useState(Boolean(session));
   const [busy, setBusy] = useState(Boolean(session));
   const [message, setMessage] = useState<string | null>(null);
+  // Until the saved preference is read, content stays hidden but the lock
+  // screen is not drawn: with the lock turned off nobody should ever see it.
+  const [preferenceRead, setPreferenceRead] = useState(false);
   const backgroundAt = useRef<number | null>(null);
   const refreshPreference = useCallback(async () => {
     if (!userId) return;
@@ -88,7 +91,7 @@ function DeviceLockSession({ children }: PropsWithChildren) {
         }
       })
       .finally(() => {
-        if (active) setBusy(false);
+        if (active) { setBusy(false); setPreferenceRead(true); }
       });
     return () => {
       active = false;
@@ -148,7 +151,7 @@ function DeviceLockSession({ children }: PropsWithChildren) {
       <View style={{ flex: 1, display: locked ? "none" : "flex" }} importantForAccessibility={locked ? "no-hide-descendants" : "auto"}>
         {children}
       </View>
-      {session && locked && (
+      {session && locked && preferenceRead && (
         <View style={styles.root}>
           <View style={styles.cardOuter}>
             <View style={styles.lockCard}>

@@ -5,7 +5,7 @@ import { useProfile } from "@/features/profile/profile-context";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { router, usePathname, type Href } from "expo-router";
-import { Keyboard, StyleSheet, View } from "react-native";
+import { InteractionManager, Keyboard, StyleSheet, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/features/auth/auth-context";
@@ -22,6 +22,10 @@ const destinations: { path: "/" | "/transactions" | "/capture" | "/planning" | "
   { path: "/profile", label: "Picket", english: "Picket", icon: "account-outline" },
 ];
 
+const TAB_PATHS = ["/", "/transactions", "/planning", "/profile"] as const;
+const TAB_PRELOAD_DELAY_MS = 2000;
+let tabsPreloadedFor: string | null = null;
+
 /** Keep existing deep links and providers intact while sharing destination navigation. */
 export function NavigationShell() {
   const { language } = useAppTheme();
@@ -30,6 +34,22 @@ export function NavigationShell() {
   const pathname = usePathname().replace(/\/$/, "") || "/";
   const { session, localMode } = useAuth();
   function navigate(path: Href) { router.navigate(path); }
+  // Pre-build the other tabs once, after the first tab has painted and the
+  // phone is idle, so the first visit to Plans/Account is instant too.
+  const onTab = TAB_PATHS.includes(pathname as (typeof TAB_PATHS)[number]);
+  const owner = session?.user.id ?? (localMode ? "device" : null);
+  useEffect(() => {
+    if (!onTab || !owner || tabsPreloadedFor === owner) return;
+    tabsPreloadedFor = owner;
+    let task: { cancel(): void } | null = null;
+    const timer = setTimeout(() => {
+      task = InteractionManager.runAfterInteractions(() => {
+        for (const path of TAB_PATHS) if (path !== pathname) router.prefetch(path as Href);
+      });
+    }, TAB_PRELOAD_DELAY_MS);
+    return () => { clearTimeout(timer); task?.cancel(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per account and app session
+  }, [onTab, owner]);
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   useEffect(() => {
@@ -43,7 +63,8 @@ export function NavigationShell() {
       const camera = item.path === "/capture";
       const profileTab = item.path === "/profile";
       const active = pathname === item.path || (item.path === "/planning" && pathname === "/budgets");
-      const label = language === "vi" ? (profileTab ? profile?.displayName?.trim().split(/\s+/).pop() || item.label : item.label) : item.english;
+      const fallback = language === "vi" ? item.label : item.english;
+      const label = profileTab ? profile?.displayName?.trim().split(/\s+/).pop() || fallback : fallback;
       const initial = (profile?.displayName?.trim().split(/\s+/).pop() || label).charAt(0).toUpperCase();
       return <Pressable clipFeedback={false} key={item.path} accessibilityRole={camera ? "button" : "tab"} accessibilityLabel={label} accessibilityState={camera ? undefined : { selected: active }} onPress={() => { if (!active) void navigate(item.path as Href); }} hitSlop={camera ? { top: 22 } : 0} style={camera ? styles.cameraDestination : styles.destination}>
         {camera ? <View style={styles.camera}><AppIcon name={item.icon} size={24} color={colors.camera} /></View>

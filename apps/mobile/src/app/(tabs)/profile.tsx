@@ -30,7 +30,7 @@ import { signOutCopy } from "@/features/profile/sign-out-copy";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { featureFlags } from "@/core/config/feature-flags";
 
-const moneyBloom = require("../../assets/paper-v3/home/money-bloom-scene-v1.webp") as number;
+const moneyBloom = require("../../../assets/paper-v3/home/money-bloom-scene-v1.webp") as number;
 const personas = ["Đi làm", "Sinh viên", "Tự do", "Gia đình"] as const;
 const goals = ["Hiểu chi tiêu", "Tiết kiệm", "Quản lý hóa đơn"] as const;
 const currencies = ["VND", "USD"] as const;
