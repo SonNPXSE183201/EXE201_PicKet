@@ -29,6 +29,7 @@ const suites = [
   "internal-trigger-execution",
   "admin-realtime-feed",
   "restore-transfer-category",
+  "restore-round-trip",
 ];
 
 // Keep the legacy contract checks on their original schema, then validate every

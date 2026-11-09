@@ -274,6 +274,7 @@ class SupabaseGateway {
           body: jsonEncode(request.toRpcJson(idempotencyKey)),
         )
         .timeout(const Duration(seconds: 20));
+    _learningAttemptError(response);
     _ensureSuccess(response);
     try {
       return LearningAttemptResult.fromJson(jsonDecode(response.body));
@@ -2174,6 +2175,38 @@ class SupabaseGateway {
           ),
         )
         .toList();
+  }
+
+  /// submit_learning_attempt raises 22023 with a fixed message; keep it
+  /// instead of the generic "Supabase request failed." 400.
+  void _learningAttemptError(http.Response response) {
+    if (response.statusCode < 400) return;
+    Object? body;
+    try {
+      body = jsonDecode(response.body);
+    } on FormatException {
+      return;
+    }
+    if (body is! Map || body['code'] != '22023') return;
+    switch (body['message']) {
+      case 'Lesson not available':
+        throw const GatewayException(
+          HttpStatus.notFound,
+          'Lesson not available.',
+        );
+      case 'Complete every question':
+        throw const GatewayException(
+          HttpStatus.badRequest,
+          'Complete every question.',
+        );
+      case 'Invalid answer':
+        throw const GatewayException(HttpStatus.badRequest, 'Invalid answer.');
+      case 'Invalid attempt key':
+        throw const GatewayException(
+          HttpStatus.badRequest,
+          'Invalid attempt key.',
+        );
+    }
   }
 
   void _ensureSuccess(http.Response response) {
