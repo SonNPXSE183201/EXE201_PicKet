@@ -33,3 +33,14 @@ Thứ tự: cơ sở dữ liệu → hàm Google Play → API → kiểm tra nha
 
 ## Lưu ý
 - Không sao lưu được toàn bộ dữ liệu bằng `db dump`: cần Docker Desktop, và lệnh xuất dữ liệu người dùng bị chặn trong phiên tự động. Thay đổi lần này không đụng tới dữ liệu.
+
+## Kết quả triển khai (09/11/2026)
+
+| Đợt | Nội dung | Kết quả |
+|---|---|---|
+| 1 | Migration `20261107090000_restore_transfer_category.sql`, hàm `verify-purchase`, API `picket-api:server-fix-20261107` | Kiểm tra nhanh đạt; gọi thật 73 chức năng: 119 đạt, 4 lỗi |
+| 2 | Migration `20261109090000_restore_closed_months.sql` (khôi phục không còn trùng tháng đã chốt, không bị khoá tháng chặn), API `picket-api:server-fix-20261109` (lỗi bài học báo đúng 404/400) | Kiểm tra nhanh đạt; gọi thật 73 chức năng: **122 đạt, 3 lỗi** |
+
+- 3 lỗi còn lại đều là chấm bài học: đáp án chưa được duyệt và công bố trên trang quản trị (việc cấu hình nội dung).
+- Tài khoản kiểm thử đã xoá, không còn dữ liệu sót.
+- Quay lại bản API trước: trên VPS chép `/opt/picket/deploy/releases/server-fix-20261109/env.before` đè lên `.env.production` rồi `up -d --no-deps api`.
