@@ -23,12 +23,12 @@ export function PlanningHero({ language, remaining, planned, spent, daysLeft, fo
     <View style={styles.hero} accessible accessibilityLabel={`${text.remaining} ${remaining === null ? "" : formatMoney(remaining)}`}>
       <View pointerEvents="none" style={styles.stitch} />
       <Image accessible={false} source={jar} resizeMode="contain" style={styles.art} />
-      <Text style={[figmaType.bodySmall, { color: colors.onPrimary, opacity: 0.85 }]}>
+      <Text style={[figmaType.bodySmall, { color: colors.onCamera, opacity: 0.85 }]}>
         {remaining !== null && remaining < 0 ? text.over : text.remaining}{daysLeft !== null ? ` · ${text.daysLeft(daysLeft)}` : ""}
       </Text>
-      <Text style={[figmaType.amountHero, { color: colors.onPrimary }]}>{remaining === null ? "—" : formatMoney(remaining)}</Text>
+      <Text style={[figmaType.amountHero, { color: colors.onCamera }]}>{remaining === null ? "—" : formatMoney(remaining)}</Text>
       <View style={styles.track}><View style={[styles.fill, { width: `${Math.round(ratio * 100)}%` }]} /></View>
-      <Text style={[figmaType.bodySmall, { color: colors.onPrimary, opacity: 0.85 }]}>
+      <Text style={[figmaType.bodySmall, { color: colors.onCamera, opacity: 0.85 }]}>
         {text.spent} {spent === null ? "—" : formatMoney(spent)} / {formatMoney(planned)}
       </Text>
     </View>

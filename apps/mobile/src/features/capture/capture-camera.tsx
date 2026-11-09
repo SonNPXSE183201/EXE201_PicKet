@@ -1,4 +1,4 @@
-import { figmaType } from "@picket/design-tokens";
+import { figmaColors, figmaType } from "@picket/design-tokens";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -177,7 +177,8 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   promiseRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   promiseTile: { width: 32, height: 32, borderRadius: 10, backgroundColor: colors.elevated, alignItems: "center", justifyContent: "center" },
   permissionFooter: { flexDirection: "row", justifyContent: "center", gap: 8 },
-  safe: { flex: 1, backgroundColor: colors.text, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12, gap: 16 },
+  // Camera chrome is dark in both themes (Figma), so text on it stays onCamera white.
+  safe: { flex: 1, backgroundColor: figmaColors.text, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12, gap: 16 },
   top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   roundButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.16)", alignItems: "center", justifyContent: "center" },
   viewfinder: { flex: 1, minHeight: 180, borderRadius: 12, overflow: "hidden", backgroundColor: "rgba(255,255,255,0.08)" },

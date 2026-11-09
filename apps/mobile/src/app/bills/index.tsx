@@ -20,7 +20,7 @@ import { daysUntil, titleIcon, toneAt } from "@/features/management/management-t
 import { useAuth } from "@/features/auth/auth-context";
 import { useBills } from "@/features/bills/bills-context";
 
-const monthCloseScene = require("../../../assets/management/month-close-scene.png");
+const monthCloseScene = require("../../../assets/management/month-close-scene.webp");
 
 export default function BillsScreen() {
   const pullRefresh = usePullRefresh();

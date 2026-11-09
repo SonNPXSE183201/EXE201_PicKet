@@ -1,3 +1,4 @@
+import { figmaColors } from "@picket/design-tokens";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import { useAppTheme } from "@/features/settings/appearance-provider";
@@ -24,12 +25,12 @@ export function DateField({ label, value, onChange, style, disabled }: {
   const now = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
   const dayOffset = (delta: number) => { const d = new Date(); d.setDate(d.getDate()+delta); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
   return <>
-    <Pressable disabled={disabled} accessibilityLabel={`${label}: ${displayDate()}`} accessibilityHint={t("open")} onPress={() => { Keyboard.dismiss(); const valid = /^\d{4}-\d{2}-\d{2}$/.test(value); setMonth(valid ? value.slice(0,7) : now()); setPending(valid ? value : dayOffset(0)); setOpen(true); }} style={[{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, minHeight: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, style as StyleProp<ViewStyle>]}>
+    <Pressable disabled={disabled} accessibilityLabel={`${label}: ${displayDate()}`} accessibilityHint={t("open")} onPress={() => { Keyboard.dismiss(); const valid = /^\d{4}-\d{2}-\d{2}$/.test(value); setMonth(valid ? value.slice(0,7) : now()); setPending(valid ? value : dayOffset(0)); setOpen(true); }} style={[{ backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }, style as StyleProp<ViewStyle>]}>
       <Text style={{ color: colors.text, fontSize: 14, lineHeight: 21, fontWeight: "700" }}>{displayDate()}</Text><AppIcon name="calendar-outline" color={colors.link} />
     </Pressable>
     <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
       <View style={{ flex: 1, justifyContent: "flex-end" }}>
-        <Pressable accessibilityLabel={t("cancel")} onPress={() => setOpen(false)} style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, backgroundColor: colors.text, opacity: 0.5 }} />
+        <Pressable accessibilityLabel={t("cancel")} onPress={() => setOpen(false)} style={{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, backgroundColor: figmaColors.text, opacity: 0.5 }} />
         <SafeAreaView edges={["bottom"]} accessibilityViewIsModal style={{ backgroundColor: mc.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28 }}>
           <ScrollView style={{ maxHeight: "92%", flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 24, gap: 14 }}>
             <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border }} />

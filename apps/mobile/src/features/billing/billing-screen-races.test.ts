@@ -22,6 +22,9 @@ function harness(){
  const api={billingAvailability:async()=>({newPurchasesEnabled:true}),currentEntitlements:()=>entitlementRead(),verifyPlayPurchase:async()=>{verified++;return {active:true,tier:"plus"};}};
  const adapters:Record<string,unknown>={
   "@expo/vector-icons":{MaterialCommunityIcons:"Icon"},
+  "@/features/billing/billing-ui":Object.fromEntries(["BillingSection","CadenceToggle","CurrentPlanHero","IncludedList","PlanTiles","ThankYouCard"].map(name=>[name,name])),
+  "@/core/ui/figma-ui":{FigmaButton:"FigmaButton",Skeleton:"Skeleton"},
+  "@/core/ui/picket-ui":{PicketScreen:"PicketScreen",TopAppBar:"TopAppBar"},
     "@/core/ui/picket-text": { PicketText: "Text" },
     "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
     "@/core/theme/paper-foundations": { paperShape, paperSpace },
@@ -38,10 +41,11 @@ function harness(){
  const exports:{Content?:(props:{accessToken:string;userId:string})=>unknown}={};
  vm.runInNewContext(ts.transpileModule(readFileSync("src/features/billing/play-billing-screen.tsx","utf8")+'\nexports.Content=BillingContent;',{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},AbortController});
  const render=()=>{cursor=0;return exports.Content!({accessToken,userId:"test-owner"});};
- const restore=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="restore");assert.ok(button);return button.props.onPress as ()=>void;};
- const buy=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose");assert.ok(button);return button.props.onPress as ()=>void;};
- const reloadPrices=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="reloadPrices");assert.ok(button);(button.props.onPress as ()=>void)();render();};
- return {render,selectYearly:()=>{const button=nodes(render()).find(node=>node.props.accessibilityRole==="tab"&&text(node.props.children)==="yearlyTab");assert.ok(button);(button.props.onPress as ()=>void)();},restore,buy,reloadPrices,setProductStatus:(value:string)=>{productStatusAndroid=value;},setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
+ const control=(key:string)=>nodes(render()).find(node=>node.props.label===key);
+ const restore=()=>{const button=control("restore");assert.ok(button);return button.props.onPress as ()=>void;};
+ const buy=()=>{const button=control("upgrade");assert.ok(button);return button.props.onPress as ()=>void;};
+ const reloadPrices=()=>{const button=control("reloadPrices");assert.ok(button);(button.props.onPress as ()=>void)();render();};
+ return {render,selectYearly:()=>{const toggle=nodes(render()).find(node=>node.type==="CadenceToggle");assert.ok(toggle);(toggle.props.onChange as (value:string)=>void)("yearly");},restore,buy,reloadPrices,setProductStatus:(value:string)=>{productStatusAndroid=value;},setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>control("upgrade")?.props.disabled,viewText:()=>JSON.stringify(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
 }
 async function settle(){for(let index=0;index<5;index++)await new Promise(done=>setImmediate(done));}
 test("rapid restore taps query Google Play only once",async()=>{const app=harness();const press=app.restore();press();press();assert.equal(app.reads(),1);app.release();await settle();});
@@ -65,19 +69,17 @@ test("the Play price catalogue can be reloaded without leaving billing",async()=
 test("a rejected catalogue load remains retryable",async()=>{const app=harness();app.setCatalogueRequest(async()=>{throw Error("Store unavailable");});app.buy();await settle();assert.ok(app.viewText().includes("connectionError"));app.setCatalogueRequest(async()=>{});app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.ok(!app.viewText().includes("connectionError"));});
 
 for(const status of ["not-found","no-offers-available","unknown"])test(`unfetched Play product ${status} shows retry instead of an inert purchase card`,async()=>{
- const app=harness();app.setProductStatus(status);app.viewText();await settle();assert.ok(app.viewText().includes("pricesUnavailable"));assert.ok(!app.viewText().includes("choose"));app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.equal(app.purchases(),0);
+ const app=harness();app.setProductStatus(status);app.viewText();await settle();assert.ok(app.viewText().includes("pricesUnavailable"));assert.ok(!app.viewText().includes('"label":"upgrade"'));app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.equal(app.purchases(),0);
 });
 
 
-test("billing compares Plus and Pro in the selected billing period",async()=>{
+test("billing compares Plus and Pro in the selected billing period with one upgrade action",async()=>{
  const app=harness();app.render();await settle();
- const periodTexts=()=>nodes(app.render()).filter(n=>n.type==="Text").map(n=>text(n.props.children));
- assert.equal(periodTexts().filter(t=>t==="monthly").length,2);
- assert.equal(periodTexts().filter(t=>t==="yearly").length,0);
+ const tileIds=()=>((nodes(app.render()).find(n=>n.type==="PlanTiles")?.props.plans??[]) as {id:string}[]).map(plan=>plan.id);
+ assert.deepEqual(tileIds(),["picket_plus_monthly","picket_pro_monthly"]);
  app.selectYearly();
- assert.equal(periodTexts().filter(t=>t==="monthly").length,0);
- assert.equal(periodTexts().filter(t=>t==="yearly").length,2);
- assert.equal(periodTexts().filter(t=>t==="choose").length,2);
+ assert.deepEqual(tileIds(),["picket_plus_yearly","picket_pro_yearly"]);
+ assert.equal(nodes(app.render()).filter(n=>n.props.label==="upgrade").length,1);
  app.stop();
 });
 

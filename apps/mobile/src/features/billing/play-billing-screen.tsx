@@ -1,9 +1,8 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { paperControl, paperSpace } from "@/core/theme/paper-foundations";
-import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { planScreenTitle } from "@/features/billing/billing-title";
-import { TopAppBar } from "@/core/ui/picket-ui";
+import { PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
+import { FigmaButton, Skeleton } from "@/core/ui/figma-ui";
+import { BillingSection, CadenceToggle, CurrentPlanHero, IncludedList, PlanTiles, ThankYouCard, type PlanTileModel } from "@/features/billing/billing-ui";
 import { figmaType } from "@picket/design-tokens";
 
 import { useTranslation } from "react-i18next";
@@ -25,11 +24,9 @@ import {
 import { Redirect } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
 import { routes } from "@/core/navigation/routes";
-import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { useAuth } from "@/features/auth/auth-context";
 import { verifyRestoredPurchases } from "@/features/billing/restore-results";
 import { usePlayBilling } from "@/features/billing/play-billing-provider";
@@ -82,6 +79,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   const { colors, styles } = useMobileStyles(createStyles);
   const { t } = useTranslation("billing");
   const [cadence, setCadence] = useState<"monthly" | "yearly">("monthly");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busyProduct, setBusyProduct] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<{key:keyof typeof billingVi;tier?:string} | null>(null);
@@ -342,168 +340,118 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       PICKET_SUBSCRIPTION_IDS.indexOf(right.id as PicketSubscriptionId),
   );
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {!storeReady && <Text accessibilityLiveRegion="polite" style={{color:colors.muted}}>{t(checkingStore ? "checking" : "notReady")}</Text>}
-        <TopAppBar title={planScreenTitle} />
-        {entitlements && <View style={styles.currentPlan}>
-          <View pointerEvents="none" style={styles.stitch} />
-          <Text style={styles.pouchLabel}>{t("current",{tier:entitlements.tier.toUpperCase()})}</Text>
-          <Text style={styles.allowance}>{entitlements.ocrFallbackRemaining}<Text style={styles.allowanceTotal}>/{entitlements.ocrFallbackDailyLimit}</Text></Text>
-          <View style={styles.meter}><View style={[styles.meterFill,{width:`${Math.min(100,Math.max(0,entitlements.ocrFallbackRemaining/Math.max(1,entitlements.ocrFallbackDailyLimit)*100))}%`}]} /></View>
-          <Text style={styles.pouchCaption}>{t("remainingLabel")} · {t("quota",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}</Text>
-          {entitlements.ocrFallbackRemaining===0&&<Text accessibilityLiveRegion="polite" style={styles.exhausted}>{t("exhausted")}</Text>}
-        </View>}
-        <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>{t("compare")}</Text><MaterialCommunityIcons name="receipt-text-outline" size={24} color={colors.link} /></View>
-        <View accessibilityRole="tablist" style={styles.cadenceTabs}>
-          {(["monthly","yearly"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:cadence===value}} disabled={busyProduct!==null||restoring} onPress={()=>setCadence(value)} style={[styles.cadenceTab,cadence===value&&styles.cadenceSelected]}><Text style={[styles.cadenceText,cadence===value&&styles.cadenceSelectedText]}>{t(value==="monthly"?"monthlyTab":"yearlyTab")}</Text></Pressable>)}
-        </View>
-        {Platform.OS !== "android" ? (
-          <Text style={styles.notice}>{t("androidOnly")}</Text>
-        ) : !connected ? (
-          <View style={styles.loadingRow}>
-            <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.link} />
-            <Text style={styles.notice}>{t("connecting")}</Text>
-          </View>
-        ) : orderedProducts.length === 0 ? (
-          <Text style={styles.notice}>
-            {t("pricesUnavailable")}
-          </Text>
-        ) : (
-          orderedProducts.map((product) => {
-            if (!isPicketSubscriptionId(product.id)) return null;
-            const keys = planKeys[product.id];
-            const isPro=product.id.startsWith("picket_pro_");
-            const isCurrent=entitlements?.tier===(isPro?"pro":"plus");
-            const copy = {name:keys.name,cadence:t(keys.cadence),summary:t(keys.summary)};
-            const offer=purchaseOffer(product);
-            const purchaseDisabled = catalogueLoading || !offer || !storeReady || !connected || busyProduct !== null || restoring;
-            const displayPrice=offer?.displayPrice??t("priceUnavailable");
-            return (
-              <View key={product.id} style={styles.planCard}>
-                <View style={styles.planHeader}>
-                  <View style={[styles.planIcon,{backgroundColor:isPro?colors.pocketLilac:colors.pocketMint}]}><MaterialCommunityIcons name={isPro?"crown-outline":"star-four-points-outline"} size={28} color={colors.ink}/></View>
-                  <View style={styles.planNameBlock}>
-                    <Text style={styles.planName}>{copy.name}</Text>
-                    <Text style={styles.cadence}>{copy.cadence}</Text>
-                    {isCurrent&&<Text style={styles.currentBadge}>{t("currentBadge")}</Text>}
-                  </View>
-                  <Text style={styles.price}>{displayPrice}</Text>
-                </View>
-                <View style={styles.benefitRow}><MaterialCommunityIcons name="cloud-check-outline" size={21} color={colors.link}/><View style={styles.flex}><Text style={styles.benefitTitle}>{t("quotaAmount",{count:isPro?100:30})}</Text><Text style={styles.currentPlanText}>{t("quotaWindow")}</Text></View></View>
-                <View style={styles.benefitRow}><MaterialCommunityIcons name="cellphone-check" size={21} color={colors.link}/><Text style={[styles.currentPlanText,styles.flex]}>{t("localIncluded")}</Text></View>
-                <Text style={styles.cadence}>{t(cadence==="monthly"?"billedMonthly":"billedYearly")}</Text>
-                <Pressable
-                  accessibilityLabel={t("chooseLabel",{name:copy.name,cadence:copy.cadence})}
-                  disabled={purchaseDisabled}
-                  onPress={() => void purchase(product)}
-                  style={[styles.primary, purchaseDisabled && styles.disabled]}
-                >
-                  {busyProduct === product.id ? (
-                    <ActivityIndicator accessibilityLabel={t("buyingLabel",{name:copy.name,cadence:copy.cadence})} color={colors.onPrimary} />
-                  ) : (
-                    <Text style={styles.primaryText}>{t("choose")}</Text>
-                  )}
-                </Pressable>
-              </View>
-            );
-          })
-        )}
+  const tier = entitlements?.tier ?? "free";
+  const selectedProduct = orderedProducts.find((product) => product.id === selectedId) ?? orderedProducts[0];
+  const tiles: PlanTileModel[] = orderedProducts.filter((product) => isPicketSubscriptionId(product.id)).map((product) => {
+    const keys = planKeys[product.id as PicketSubscriptionId];
+    const isPro = product.id.startsWith("picket_pro_");
+    return {
+      id: product.id,
+      tier: isPro ? "pro" : "plus",
+      name: keys.name,
+      quota: t("quotaAmount", { count: isPro ? 100 : 30 }),
+      price: purchaseOffer(product)?.displayPrice ?? t("priceUnavailable"),
+      note: t(keys.cadence),
+      current: entitlements?.tier === (isPro ? "pro" : "plus"),
+    };
+  });
+  const selectedKeys = selectedProduct && isPicketSubscriptionId(selectedProduct.id) ? planKeys[selectedProduct.id] : null;
+  const purchaseDisabled = !selectedProduct || catalogueLoading || !purchaseOffer(selectedProduct) || !storeReady || !connected || busyProduct !== null || restoring;
 
-        <View style={styles.freeRow}><View style={styles.freeIcon}><MaterialCommunityIcons name="sprout-outline" size={25} color={colors.ink}/></View><View style={styles.flex}><Text style={styles.benefitTitle}>{t("freePlan")}</Text><Text style={styles.currentPlanText}>{t("freeAllowance")}</Text></View><MaterialCommunityIcons name="check-circle-outline" size={21} color={colors.income}/></View>
-        <Text style={styles.notice}>{t("allIncluded")}</Text>
-        <Text style={styles.sectionTitle}>{t("storeTools")}</Text>
+  return (
+    <PicketScreen>
+      <TopAppBar title={planScreenTitle} />
+      <View style={styles.content}>
+        {!storeReady && <Text accessibilityLiveRegion="polite" style={styles.notice}>{t(checkingStore ? "checking" : "notReady")}</Text>}
+        {entitlements ? (
+          <CurrentPlanHero
+            label={t("current", { tier: entitlements.tier.toUpperCase() })}
+            headline={t("quotaHeadline", { remaining: entitlements.ocrFallbackRemaining, limit: entitlements.ocrFallbackDailyLimit })}
+            meter={entitlements.ocrFallbackRemaining / Math.max(1, entitlements.ocrFallbackDailyLimit)}
+            caption={t("remainingLabel")}
+            warning={entitlements.ocrFallbackRemaining === 0 ? t("exhausted") : null}
+          />
+        ) : (
+          <Skeleton height={150} radius={28} />
+        )}
+        {tier !== "free" && <ThankYouCard title={t("thanksTitle")} body={t("thanksBody", { tier: tier.toUpperCase() })} />}
+        {tier !== "pro" && (
+          <>
+            <CadenceToggle
+              value={cadence}
+              disabled={busyProduct !== null || restoring}
+              onChange={(value) => { setCadence(value); setSelectedId(null); }}
+              monthlyLabel={t("monthlyTab")}
+              yearlyLabel={t("yearlyTab")}
+            />
+            {Platform.OS !== "android" ? (
+              <Text style={styles.notice}>{t("androidOnly")}</Text>
+            ) : !connected ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.link} />
+                <Text style={styles.notice}>{t("connecting")}</Text>
+              </View>
+            ) : tiles.length === 0 ? (
+              <Text style={styles.notice}>{t("pricesUnavailable")}</Text>
+            ) : (
+              <>
+                <PlanTiles plans={tiles} selectedId={selectedProduct?.id ?? null} onSelect={setSelectedId} disabled={busyProduct !== null || restoring} currentLabel={t("currentBadge")} />
+                <Text style={styles.notice}>{t(cadence === "monthly" ? "billedMonthly" : "billedYearly")}</Text>
+                <FigmaButton
+                  fullWidth
+                  busy={busyProduct !== null && busyProduct === selectedProduct?.id}
+                  disabled={purchaseDisabled}
+                  label={t("upgrade", { name: selectedKeys?.name ?? "" })}
+                  onPress={() => { if (selectedProduct) void purchase(selectedProduct); }}
+                />
+              </>
+            )}
+          </>
+        )}
+        <IncludedList title={t("includedTitle")} items={[t("localIncluded"), t("includedUnlimited"), t("includedSync")]} />
         {message && (
           <Text accessibilityLiveRegion="polite" style={success ? styles.success : styles.error}>
             {t(message.key,{tier:message.tier})}
           </Text>
         )}
-        {connected&&<Pressable
-          accessibilityRole="button"
-          disabled={catalogueLoading||restoring||busyProduct!==null}
-          onPress={()=>{if(!catalogueBusy.current)setCatalogueAttempt(value=>value+1);}}
-          style={styles.secondary}
-        ><Text style={styles.secondaryText}>{t(catalogueLoading?"loadingPrices":"reloadPrices")}</Text></Pressable>}
-        <Pressable
-          disabled={!connected || restoring || busyProduct !== null}
-          onPress={() => void restore()}
-          style={styles.secondary}
-        >
-          {restoring ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.link} /> : <Text style={styles.secondaryText}>{t("restore")}</Text>}
-        </Pressable>
-        <Pressable
-          disabled={Platform.OS !== "android"}
-          onPress={() => void manageSubscription()}
-          style={styles.linkButton}
-        >
-          <Text style={styles.linkText}>{t("manage")}</Text>
-        </Pressable>
-        <Text style={styles.footnote}>
-          {t("footnote")}
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
+        <BillingSection title={t("storeTools")}>
+          {Platform.OS === "android" && tier !== "free" && (
+            <FigmaButton fullWidth variant="outline" size="medium" label={t("manage")} onPress={() => void manageSubscription()} />
+          )}
+          {connected && (
+            <FigmaButton
+              fullWidth
+              variant="outline"
+              size="medium"
+              disabled={catalogueLoading || restoring || busyProduct !== null}
+              label={t(catalogueLoading ? "loadingPrices" : "reloadPrices")}
+              onPress={() => { if (!catalogueBusy.current) setCatalogueAttempt((value) => value + 1); }}
+            />
+          )}
+          <FigmaButton
+            fullWidth
+            variant="text"
+            size="medium"
+            busy={restoring}
+            disabled={!connected || restoring || busyProduct !== null}
+            label={t("restore")}
+            onPress={() => void restore()}
+          />
+          {Platform.OS === "android" && tier === "free" && (
+            <FigmaButton fullWidth variant="text" size="medium" label={t("manage")} onPress={() => void manageSubscription()} />
+          )}
+          <Text style={styles.footnote}>{t("footnote")}</Text>
+        </BillingSection>
+      </View>
+    </PicketScreen>
   );
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  topHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4 },
-  backBtn: { padding: 4 },
-  headerTitle: { color: colors.ink, fontSize: 22, fontWeight: "800", letterSpacing: -0.3 },
-  heroCenter: { alignItems: "center", marginTop: 6, gap: 4, marginBottom: 8 },
-  heroMain: { color: colors.ink, fontSize: 18, fontWeight: "800", textAlign: "center" },
-  heroSubtitle: { color: colors.muted, fontSize: 13, textAlign: "center", lineHeight: 18 },
-  popularBadge: { position: "absolute", top: -12, right: 18, backgroundColor: colors.mauve, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
-  popularBadgeText: { color: colors.onPrimary, fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
-  headingGroup:{gap:8},
-  flex: { flex: 1, minWidth: 0 },
-  eyebrow: {color:colors.link,fontSize:11,fontWeight:"800",letterSpacing:1.1},
-  intro: {color:colors.ink,fontSize:22,lineHeight:30,fontWeight:"800"},
-  currentHeading:{flexDirection:"row",alignItems:"center",gap:12},
-  currentIcon:{width:48,height:48,borderRadius:16,alignItems:"center",justifyContent:"center",backgroundColor:colors.surface},
-  allowance:{...figmaType.amountHero,color:colors.onCamera},allowanceTotal:{fontSize:15,color:colors.onCamera},
-  meter:{height:8,borderRadius:4,backgroundColor:colors.onCamera,overflow:"hidden",marginVertical:8},meterFill:{height:8,backgroundColor:colors.pocketCoral,borderRadius:4},
-  exhausted:{color:colors.onCamera,fontSize:13,lineHeight:20,fontWeight:"700"},
-  sectionHeading:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",marginTop:8},
-  sectionTitle:{...figmaType.titleSection,color:colors.ink},
-  cadenceTabs:{flexDirection:"row",backgroundColor:colors.elevated,borderRadius:22,padding:4,gap:4,height:44},
-  cadenceTab:{flex:1,alignItems:"center",justifyContent:"center",borderRadius:18},
-  cadenceSelected:{backgroundColor:colors.paper},cadenceText:{...figmaType.captionStrong,color:colors.muted},cadenceSelectedText:{...figmaType.button,color:colors.primary},
-  planIcon:{width:48,height:48,borderRadius:16,alignItems:"center",justifyContent:"center"},
-  benefitRow:{flexDirection:"row",gap:10,alignItems:"center"},benefitTitle:{color:colors.ink,fontSize:15,fontWeight:"700"},
-  currentBadge:{color:colors.link,fontSize:10,fontWeight:"800",letterSpacing:0.5,marginTop:4},
-  freeRow:{flexDirection:"row",alignItems:"center",gap:12,paddingVertical:14,paddingHorizontal:16,borderRadius:18,backgroundColor:colors.paper},
-  freeIcon:{width:44,height:44,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:colors.pocketBlue},
-
-  safeArea: { backgroundColor: colors.canvas, flex: 1 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: paperSpace.section, padding: paperSpace.screen, paddingBottom: 48 },
-  back: { color: colors.link, fontSize: 15, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
-  description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
-  currentPlan: { backgroundColor: colors.camera, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderBottomRightRadius: 32, borderBottomLeftRadius: 16, gap: 6, paddingHorizontal: 24, paddingVertical: 22 },
-  stitch: { position: "absolute", left: 8, right: 8, top: 8, bottom: 8, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.onCamera, borderTopLeftRadius: 25, borderTopRightRadius: 25, borderBottomRightRadius: 25, borderBottomLeftRadius: 10 },
-  pouchLabel: { ...figmaType.captionStrong, color: colors.onCamera },
-  pouchCaption: { ...figmaType.bodySmall, color: colors.onCamera },
-  currentPlanTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
-  currentPlanText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
+  content: { gap: 16, marginTop: 16, paddingBottom: 32 },
   loadingRow: { alignItems: "center", flexDirection: "row", gap: 10 },
-  notice: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  planCard: { backgroundColor: colors.pocketLilac, borderColor: colors.pocketLilac, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderBottomRightRadius: 22, borderBottomLeftRadius: 10, borderWidth: 1.5, gap: 14, padding: paperControl.cardPadding },
-  planHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, justifyContent: "space-between" },
-  planNameBlock: { flex: 1, minWidth: 0 },
-  planName: { color: colors.ink, fontSize: 18, fontWeight: "700" },
-  cadence: { color: colors.muted, fontSize: 13, marginTop: 3 },
-  price: { color: colors.link, fontSize: 19, fontWeight: "800", flexShrink: 1, textAlign: "right" },
-  planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  primary: { alignItems: "center", backgroundColor: colors.primary, borderRadius: 24, justifyContent: "center", minHeight: 48 },
-  primaryText: { ...figmaType.button, color: colors.onPrimary },
-  disabled: { opacity: 0.45 },
-  secondary: { alignItems: "center", backgroundColor: colors.paper, borderColor: colors.border, borderRadius: 24, borderWidth: 1, justifyContent: "center", minHeight: 48 },
-  secondaryText: { ...figmaType.button, color: colors.text },
-  linkButton: { alignItems: "center", justifyContent: "center" },
-  linkText: { color: colors.link, fontSize: 14, fontWeight: "700", textAlign: "center" },
-  footnote: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
-  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
-  success: { color: colors.income, fontSize: 14, fontWeight: "700", lineHeight: 20 },
+  notice: { ...figmaType.bodySmall, color: colors.muted },
+  footnote: { ...figmaType.captionStrong, color: colors.muted, textAlign: "center" },
+  error: { ...figmaType.bodySmall, color: colors.danger },
+  success: { ...figmaType.bodyStrong, color: colors.income },
 });

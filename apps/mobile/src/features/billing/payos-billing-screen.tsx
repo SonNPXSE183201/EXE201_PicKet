@@ -9,6 +9,7 @@ import {
   PAYMENT_ORDER_PHASE_LABELS,
   paymentOrderPhase,
   paymentSecondsLeft,
+  type Entitlements,
   type PaymentCustomer,
 } from "@picket/domain";
 import { picketApi } from "@/core/api/client";
@@ -16,6 +17,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { AuthField, AuthMessage } from "@/features/auth/auth-screen";
 import { PicketScreen, TopAppBar } from "@/core/ui/picket-ui";
 import { planScreenTitle } from "@/features/billing/billing-title";
+import { BillingSection, CadenceToggle, CurrentPlanHero, IncludedList, PlanTiles, ThankYouCard, type Cadence, type PlanTileModel } from "@/features/billing/billing-ui";
 import { Chip, FigmaButton, ReceiptDivider, Skeleton, figmaShadow } from "@/core/ui/figma-ui";
 import { figmaType } from "@picket/design-tokens";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
@@ -44,6 +46,9 @@ function PayosBillingContent({ token }: { token: string }) {
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [tier, setTier] = useState<string | null>(null);
+  const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null);
+  const [cadence, setCadence] = useState<Cadence>("monthly");
+  const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [confirmSku, setConfirmSku] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
@@ -72,6 +77,7 @@ function PayosBillingContent({ token }: { token: string }) {
       ) {
         setData(next);
         setTier(entitlement?.tier ?? "free");
+        setQuota(quotaOf(entitlement));
       }
     } catch {
       if (active.current && tokenRef.current === scope)
@@ -102,6 +108,7 @@ function PayosBillingContent({ token }: { token: string }) {
           ) {
             setData(next);
             setTier(entitlement?.tier ?? "free");
+        setQuota(quotaOf(entitlement));
           }
         })
         .catch(() => {
@@ -153,93 +160,100 @@ function PayosBillingContent({ token }: { token: string }) {
     });
   }
   const { colors } = useMobileStyles(createStyles);
-  const tones = [colors.pocketBlue, colors.pocketLilac];
-  const paperCard = [{ backgroundColor: colors.paper, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 6 }, figmaShadow("paper")];
+  const paid = tier !== null && tier !== "free";
+  const tierName = (value: string) => (value === "pro" ? "Pro" : value === "plus" ? "Plus" : t("Miễn phí"));
+  const hasYearly = Boolean(data?.catalog.some((plan) => plan.months === 12));
+  const plans = (data?.catalog ?? []).filter((plan) => !hasYearly || plan.months === (cadence === "yearly" ? 12 : 1));
+  const selected = plans.find((plan) => plan.sku === selectedSku) ?? plans[0];
+  const tiles: PlanTileModel[] = plans.map((plan) => ({
+    id: plan.sku,
+    tier: plan.tier,
+    name: tierName(plan.tier),
+    quota: t("{{count}} lượt / 24 giờ", { count: plan.tier === "pro" ? 100 : 30 }),
+    price: `${formatVnd(plan.amount)}${plan.months === 12 ? t(" / năm") : t(" / tháng")}`,
+    badge: plan.promotion ? `-${plan.promotion.percent}%` : null,
+    note: plan.promotion && plan.list_amount
+      ? [
+          t("Giảm {{percent}}% từ {{price}}", { percent: plan.promotion.percent, price: formatVnd(plan.list_amount) }),
+          plan.promotion.name,
+          plan.promotion.slotsLeft !== null ? t("Còn {{count}} suất", { count: plan.promotion.slotsLeft }) : "",
+          plan.promotion.endsAt ? t("Đến {{date}}", { date: new Date(plan.promotion.endsAt).toLocaleDateString() }) : "",
+        ].filter(Boolean).join(" · ")
+      : null,
+  }));
   return (
     <PicketScreen>
       <TopAppBar title={planScreenTitle} />
-      <Text style={[figmaType.bodySmall, { color: colors.muted, marginTop: 16 }]}>
-        {t("Thanh toán trước qua PayOS. Không tự động gia hạn.")}
-      </Text>
-      {message ? <View style={{ marginTop: 16 }}><AuthMessage>{t(message)}</AuthMessage></View> : null}
-      {tier && (
-        <View style={[paperCard, { marginTop: 16, paddingVertical: 14, gap: 6 }]}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{t("Gói hiện tại")}</Text>
-            <Chip tone={tier === "free" ? "outline" : "success"} label={tier.toUpperCase()} />
-          </View>
-          {tier !== "free" && (
-            <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
-              {t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}
-            </Text>
-          )}
-        </View>
-      )}
-      {!data && <View style={{ marginTop: 20, gap: 12 }}><Skeleton height={156} radius={22} /><Skeleton height={156} radius={22} /></View>}
-      {data && !data.catalog.length && <Text style={[figmaType.bodySmall, { color: colors.muted, marginTop: 20 }]}>{t("Các gói PayOS chưa mở bán.")}</Text>}
-      {!!data?.catalog.length && tier === "free" && (
-        <View style={{ marginTop: 20 }}>
-          <AuthField
-            value={promoCode}
-            onChangeText={setPromoCode}
-            placeholder={t("Mã ưu đãi (nếu có)")}
-            autoCapitalize="characters"
-            maxLength={32}
+      <View style={{ marginTop: 16, gap: 16 }}>
+        {message ? <AuthMessage>{t(message)}</AuthMessage> : null}
+        {tier ? (
+          <CurrentPlanHero
+            label={t("Gói hiện tại · {{tier}}", { tier: paid ? tier.toUpperCase() : tierName(tier) })}
+            headline={quota ? t("{{remaining}}/{{limit}} lượt", { remaining: quota.remaining, limit: quota.limit }) : tierName(tier)}
+            meter={quota ? quota.remaining / Math.max(1, quota.limit) : null}
+            caption={paid ? t("Thanh toán trước qua PayOS. Không tự động gia hạn.") : t("Lượt quét cloud hôm nay")}
           />
-        </View>
-      )}
-      <View style={{ marginTop: 20, gap: 14 }}>
-        {data?.catalog.map((plan, index) => (
-          <View key={plan.sku} style={[{ backgroundColor: tones[index % tones.length], borderRadius: 22, borderBottomLeftRadius: 10, padding: 16, gap: 10 }, figmaShadow("paper")]}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-              <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{plan.tier === "pro" ? "Pro" : "Plus"}</Text>
-              {plan.promotion && <Chip tone="success" label={`-${plan.promotion.percent}%`} />}
-            </View>
-            <Text style={[figmaType.bodySmall, { color: colors.text }]}>
-              {t(plan.months === 12 ? "1 năm" : "1 tháng")} · {formatVnd(plan.amount)}
-              {plan.promotion && plan.list_amount
-                ? ` (${t("Giảm {{percent}}% từ {{price}}", { percent: plan.promotion.percent, price: formatVnd(plan.list_amount) })})`
-                : ""}
-            </Text>
-            {plan.promotion && (
-              <Text style={[figmaType.captionStrong, { color: colors.muted }]}>
-                {plan.promotion.name}
-                {plan.promotion.slotsLeft !== null
-                  ? ` · ${t("Còn {{count}} suất", { count: plan.promotion.slotsLeft })}`
-                  : ""}
-                {plan.promotion.endsAt
-                  ? ` · ${t("Đến {{date}}", { date: new Date(plan.promotion.endsAt).toLocaleDateString() })}`
-                  : ""}
-              </Text>
+        ) : (
+          <Skeleton height={150} radius={28} />
+        )}
+        {paid && (
+          <ThankYouCard
+            title={t("Cảm ơn bạn đã ủng hộ Picket!")}
+            body={t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}
+          />
+        )}
+        {!data && <Skeleton height={168} radius={18} />}
+        {data && !data.catalog.length && <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Các gói PayOS chưa mở bán.")}</Text>}
+        {!paid && !!tiles.length && (
+          <>
+            {hasYearly && (
+              <CadenceToggle
+                value={cadence}
+                disabled={busy}
+                onChange={(value) => { setCadence(value); setSelectedSku(null); }}
+                monthlyLabel={t("Theo tháng")}
+                yearlyLabel={t("Theo năm")}
+              />
             )}
-            <FigmaButton
-              fullWidth
-              label="Tạo thanh toán"
-              disabled={busy || tier === null || tier !== "free"}
-              onPress={() => (open ? setConfirmSku(plan.sku) : checkout(plan.sku))}
+            <PlanTiles plans={tiles} selectedId={selected?.sku ?? null} onSelect={setSelectedSku} disabled={busy} currentLabel={t("Gói hiện tại")} />
+            <AuthField
+              value={promoCode}
+              onChangeText={setPromoCode}
+              placeholder={t("Mã ưu đãi (nếu có)")}
+              autoCapitalize="characters"
+              maxLength={32}
             />
+          </>
+        )}
+        <IncludedList
+          title={t("Gói nào cũng có")}
+          items={[t("Quét hoá đơn trên máy, không trừ lượt"), t("Thu chi, ví, túi ngân sách không giới hạn"), t("Đồng bộ và sao lưu dữ liệu")]}
+        />
+        {!paid && selected && (
+          <FigmaButton
+            fullWidth
+            label={t("Nâng cấp lên {{name}}", { name: tierName(selected.tier) })}
+            disabled={busy || tier === null}
+            onPress={() => (open ? setConfirmSku(selected.sku) : checkout(selected.sku))}
+          />
+        )}
+        {confirmSku && open && (
+          <View style={[{ backgroundColor: colors.paper, borderRadius: 18, padding: 16, gap: 10 }, figmaShadow("paper")]}>
+            <Text style={[figmaType.bodySmall, { color: colors.text }]}>
+              {t("Link thanh toán đang mở sẽ bị hủy. Mỗi lần mua dùng một link mới có hạn 15 phút.")}
+            </Text>
+            <FigmaButton fullWidth label="Hủy link cũ và tạo link mới" disabled={busy} onPress={() => checkout(confirmSku)} />
+            <FigmaButton fullWidth variant="text" size="medium" label="Giữ link hiện tại" onPress={() => setConfirmSku(null)} />
           </View>
-        ))}
-      </View>
-      {confirmSku && open && (
-        <View style={[paperCard, { marginTop: 16, paddingVertical: 14, gap: 10 }]}>
-          <Text style={[figmaType.bodySmall, { color: colors.text }]}>
-            {t("Link thanh toán đang mở sẽ bị hủy. Mỗi lần mua dùng một link mới có hạn 15 phút.")}
-          </Text>
-          <FigmaButton fullWidth label="Hủy link cũ và tạo link mới" disabled={busy} onPress={() => checkout(confirmSku)} />
-          <FigmaButton fullWidth variant="text" size="medium" label="Giữ link hiện tại" onPress={() => setConfirmSku(null)} />
-        </View>
-      )}
-      <View style={{ marginTop: 24, gap: 8 }}>
-        <Text accessibilityRole="header" style={[figmaType.overline, { color: colors.muted }]}>{t("Lịch sử thanh toán").toUpperCase()}</Text>
-        {data?.orders.length ? (
-          <View style={paperCard}>
+        )}
+        {!!data?.orders.length && (
+          <BillingSection title={t("Lịch sử thanh toán")}>
             {data.orders.map((order, index) => {
               const phase = paymentOrderPhase(order, now);
               return (
                 <View key={order.id}>
                   {index > 0 && <ReceiptDivider />}
-                  <View style={{ paddingVertical: 12, gap: 8 }}>
+                  <View style={{ paddingVertical: 8, gap: 8 }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                       <Text style={[figmaType.bodyStrong, { color: colors.text, flex: 1 }]}>#{order.order_code} · {formatVnd(order.amount)}</Text>
                       <Chip tone={phaseTone(phase)} label={t(PAYMENT_ORDER_PHASE_LABELS[phase])} />
@@ -267,14 +281,20 @@ function PayosBillingContent({ token }: { token: string }) {
                 </View>
               );
             })}
-          </View>
-        ) : null}
-      </View>
-      <View style={{ marginTop: 16, alignItems: "center" }}>
-        <FigmaButton variant="text" size="medium" label="Tải lại" onPress={() => void run(() => picketApi!.paymentCustomer(token))} />
+          </BillingSection>
+        )}
+        <View style={{ alignItems: "center" }}>
+          <FigmaButton variant="text" size="medium" label="Tải lại" onPress={() => void run(() => picketApi!.paymentCustomer(token))} />
+        </View>
       </View>
     </PicketScreen>
   );
+}
+
+function quotaOf(entitlement: Partial<Entitlements> | null | undefined) {
+  return typeof entitlement?.ocrFallbackRemaining === "number" && typeof entitlement.ocrFallbackDailyLimit === "number"
+    ? { remaining: entitlement.ocrFallbackRemaining, limit: entitlement.ocrFallbackDailyLimit }
+    : null;
 }
 
 const createStyles = (_colors: MobileThemeColors) => StyleSheet.create({});

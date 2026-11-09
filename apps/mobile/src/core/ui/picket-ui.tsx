@@ -116,7 +116,7 @@ export function EmptyState({ title, description, action, onAction, symbol = "✦
       <Text style={styles.emptyDescription}>{description}</Text>
       {action && onAction ? (
         <Pressable accessibilityRole="button" onPress={onAction} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>{action}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.primaryButtonText}>{action}</Text>
         </Pressable>
       ) : null}
     </Surface>
@@ -153,7 +153,7 @@ export function PrimaryAction({ busy = false, disabled = false, label, onPress }
 
 export function DangerAction({ disabled = false, label, onPress }: { disabled?: boolean; label: string; onPress(): void }) {
   const { styles } = useMobileStyles(createStyles);
-  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={styles.dangerButton}><Text style={styles.dangerButtonText}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress} style={styles.dangerButton}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.dangerButtonText}>{label}</Text></Pressable>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
@@ -183,7 +183,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   choiceChipText: { color: colors.ink, fontSize: 13, fontWeight: "700" },
   choiceChipTextSelected: { color: colors.selectedText },
   dangerButton: { alignItems: "center", borderColor: colors.danger, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", marginTop: 10, minHeight: paperControl.height },
-  dangerButtonText: { color: colors.danger, fontSize: 15, fontWeight: "700" },
+  dangerButtonText: { color: colors.danger, fontSize: 15, lineHeight: 20, fontWeight: "700" },
   choiceTarget: { justifyContent: "center", minHeight: paperControl.height },
   iconButton: { alignItems: "center", justifyContent: "center", borderRadius: 16 },
   iconButtonSurface: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

@@ -16,7 +16,7 @@ test("planning controls and interpolated spending change language without transl
 });
 
 test("planning keeps incomplete spending hidden and preserves month-close checks while localizing errors", () => {
-  const source = readFileSync("src/app/planning.tsx", "utf8");
+  const source = readFileSync("src/app/(tabs)/planning.tsx", "utf8");
   assert.match(source, /useTranslation\("planning"\)/);
   assert.match(source, /parsePaymentAmount\(amount\)/);
   assert.match(source, /\{t\(message\)\}/);

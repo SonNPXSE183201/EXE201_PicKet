@@ -1,4 +1,3 @@
-import { paperControl , paperShape } from "@/core/theme/paper-foundations";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import { useAppTheme } from "@/features/settings/appearance-provider";
@@ -7,9 +6,10 @@ import { localeFor } from "@/core/i18n/formatters";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, AppState, StyleSheet, View } from "react-native";
-import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
-import { SectionTitle, Surface } from "@/core/ui/picket-ui";
+import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
+import { figmaType } from "@picket/design-tokens";
+import { GroupLabel } from "@/features/settings/settings-figma";
 import { androidAppUpdates, getInstalledAppInfo } from "./android-app-updates";
 import { createAppUpdateController, type UpdateSnapshot } from "./app-update-controller";
 import { installedVersionLabel } from "./app-update-policy";
@@ -38,8 +38,8 @@ export function AppUpdateSection() {
     { text: t("later"), style: "cancel" }, { text: t("settings"), onPress: () => void controller.openSettings() },
   ]);
   return <>
-    <SectionTitle title={t("section")} />
-    <Surface>
+    <View style={styles.group}><GroupLabel>{t("section")}</GroupLabel></View>
+    <View style={[styles.card, figmaShadow("paper")]}>
       <View style={styles.heading}><AppIcon name="cellphone-arrow-down" /><Text accessibilityRole="header" style={styles.title}>{t("title")}</Text></View>
       <Text accessibilityLiveRegion="polite" style={styles.description}>{description}</Text>
       {busy && <ActivityIndicator color={colors.link} accessibilityLabel={t(state.phase === "checking" ? "checkingLabel" : state.phase === "opening-installer" ? "installerLabel" : "downloadingLabel")} />}
@@ -51,17 +51,16 @@ export function AppUpdateSection() {
       {["ready", "installer-opened"].includes(state.phase) && <Action label={t(state.phase === "ready" ? "install" : "reopen")} onPress={() => void controller.install()} />}
       {state.phase === "play-store" && <Action label={t("store")} onPress={() => void controller.openStore()} />}
       {showUpdateCheck(state.phase) && <Action label={t(state.phase === "idle" ? "check" : "recheck")} secondary onPress={() => void controller.check()} />}
-    </Surface>
+    </View>
   </>;
 }
 function Action({ label, onPress, secondary = false, disabled = false }: { label: string; onPress(): void; secondary?: boolean; disabled?: boolean }) {
-  const { styles } = useMobileStyles(createStyles);
-  return <Pressable disabled={disabled} onPress={onPress} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]}><Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text></Pressable>;
+  return <FigmaButton fullWidth variant={secondary ? "outline" : "primary"} size="medium" disabled={disabled} label={label} onPress={onPress} style={{ marginTop: 8 }} />;
 }
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
-  heading: { flexDirection: "row", alignItems: "center", gap: 10 }, title: { flex: 1, color: colors.ink, fontSize: 17, fontWeight: "700" },
-  description: { color: colors.muted, fontSize: 14, lineHeight: 22, marginVertical: 12 }, percent: { textAlign: "center", color: colors.link, fontSize: 14, marginBottom: 8 },
-  button: { backgroundColor: colors.mauve, borderRadius: paperShape.button, paddingHorizontal: 18, paddingVertical: 10, minHeight: paperControl.height, alignItems: "center", justifyContent: "center", marginTop: 8 },
-  buttonText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700", textAlign: "center" }, secondary: { backgroundColor: colors.cream }, secondaryText: { color: colors.link }, disabled: { opacity: 0.5 },
-  footer: { color: colors.muted, fontSize: 13, textAlign: "center", paddingVertical: 20, paddingHorizontal: 16 },
+  group: { marginTop: 24, marginBottom: 8 },
+  card: { backgroundColor: colors.paper, borderRadius: 18, padding: 16 },
+  heading: { flexDirection: "row", alignItems: "center", gap: 10 }, title: { ...figmaType.bodyStrong, flex: 1, color: colors.ink },
+  description: { ...figmaType.bodySmall, color: colors.muted, marginVertical: 12 }, percent: { ...figmaType.captionStrong, textAlign: "center", color: colors.link, marginBottom: 8 },
+  footer: { ...figmaType.captionStrong, color: colors.muted, textAlign: "center", paddingVertical: 20, paddingHorizontal: 16 },
 });

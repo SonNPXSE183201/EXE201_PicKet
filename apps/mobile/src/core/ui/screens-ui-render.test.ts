@@ -24,7 +24,7 @@ test("HomeScreen recent list uses category stroke icons on tinted tiles (Figma R
 });
 
 test("TransactionsScreen renders Figma day papers with category tiles in transaction rows", () => {
-  const txSource = readFileSync(new URL("../../app/transactions/index.tsx", import.meta.url), "utf8");
+  const txSource = readFileSync(new URL("../../app/(tabs)/transactions.tsx", import.meta.url), "utf8");
   const listSource = readFileSync(new URL("../../features/transactions/spending-list.tsx", import.meta.url), "utf8");
   assert.match(txSource, /DayPaper/);
   assert.match(listSource, /categoryTile/);

@@ -43,7 +43,7 @@ export default function CategoriesScreen() {
     {list.map((category, index) => {
       const tile = categoryTile(category.icon, category.name, kind === "income", colors);
       const used = usage.get(category.id);
-      const meta = used ? `${used.count} ${m.items} · ${formatMoney(used.sum, language, "VND")}` : category.custom ? m.mine : m.defaultCat;
+      const meta = used ? `${used.count} ${used.count === 1 ? m.item : m.items} · ${formatMoney(used.sum, language, "VND")}` : category.custom ? m.mine : m.defaultCat;
       return <View key={category.id}>
         {index > 0 && <ReceiptDivider />}
         <ChevronRow disabled={!category.custom} onPress={() => router.push(routes.category(category.id))} tile={<AppIcon name={tile.name} size={18} color={colors.text} />} tileColor={tile.color} title={category.name} meta={meta} />

@@ -5,6 +5,7 @@ import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { formatVnd, type ReceiptRecord, type Transaction } from "@picket/domain";
 import { Redirect, router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
 import { figmaType } from "@picket/design-tokens";
 import { routes } from "@/core/navigation/routes";
@@ -32,6 +33,7 @@ function Paper({ children }: { children: ReactNode }) {
 // Remount per owner; never retain a previous account's receipts on screen.
 function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry: () => void }) {
   const { colors, styles } = useMobileStyles(createStyles);
+  const { t } = useTranslation("common");
   const copy = useFigmaCopy();
   const [rows, setRows] = useState<ReceiptRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,15 +60,15 @@ function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry
   if (!loading && !failed && rows.length === 0) return null;
   return <View style={{ gap: 12 }}>
     <Text accessibilityRole="header" style={[figmaType.titleSection, { color: colors.text }]}>{copy("receiptsToCheck")}</Text>
-    {loading ? <Text accessibilityLiveRegion="polite" style={styles.muted}>Đang tải danh sách hóa đơn…</Text> : failed ?
-      <Pressable accessibilityRole="button" accessibilityLabel="Thử tải lại hóa đơn cần kiểm tra" onPress={onRetry}><Text style={[figmaType.bodySmall, { color: colors.expense }]}>Chưa tải được trạng thái hóa đơn. Kết nối mạng rồi chạm để thử lại.</Text></Pressable> :
+    {loading ? <Text accessibilityLiveRegion="polite" style={styles.muted}>{t("Đang tải danh sách hóa đơn…")}</Text> : failed ?
+      <Pressable accessibilityRole="button" accessibilityLabel={t("Thử tải lại hóa đơn cần kiểm tra")} onPress={onRetry}><Text style={[figmaType.bodySmall, { color: colors.expense }]}>{t("Chưa tải được trạng thái hóa đơn. Kết nối mạng rồi chạm để thử lại.")}</Text></Pressable> :
       rows.map((item) => {
-        const title = item.merchant?.trim() || "Hóa đơn chưa rõ cửa hàng";
-        const amount = item.detectedTotal === null ? "Chưa có tổng tiền" : formatVnd(item.detectedTotal);
-        return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={`${title}, hóa đơn cần kiểm tra, ${amount}`} onPress={() => router.push(routes.receipt(item.id))}>
+        const title = item.merchant?.trim() || t("Hóa đơn chưa rõ cửa hàng");
+        const amount = item.detectedTotal === null ? t("Chưa có tổng tiền") : formatVnd(item.detectedTotal);
+        return <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={t("{{title}}, hóa đơn cần kiểm tra, {{amount}}", { title, amount })} onPress={() => router.push(routes.receipt(item.id))}>
           <Paper><View style={styles.row}>
             <View style={[styles.tile, { backgroundColor: colors.pocketLilac }]}><AppIcon name="receipt-text-outline" size={18} color={colors.text} /></View>
-            <View style={{ flex: 1, minWidth: 1 }}><Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{title}</Text><Text style={styles.muted}>Kiểm tra kết quả nhận diện hóa đơn</Text></View>
+            <View style={{ flex: 1, minWidth: 1 }}><Text numberOfLines={1} style={[figmaType.bodyStrong, { color: colors.text }]}>{title}</Text><Text style={styles.muted}>{t("Kiểm tra kết quả nhận diện hóa đơn")}</Text></View>
             <Text style={[figmaType.amountRow, { color: colors.text }]}>{amount}</Text>
           </View></Paper></Pressable>;
       })}
@@ -75,6 +77,7 @@ function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry
 
 export default function ReviewInboxScreen() {
   const { colors, styles } = useMobileStyles(createStyles);
+  const { t } = useTranslation("common");
   const copy = useFigmaCopy();
   const pullRefresh = usePullRefresh();
   const { session, localMode } = useAuth();
@@ -114,9 +117,9 @@ export default function ReviewInboxScreen() {
   return <FigmaScreen onRefresh={pullRefresh}>
     <ChildBar title={copy("reviewTitle")} />
     {session && <ReceiptReviews key={`${session.user.id}:${receiptAttempt}`} accessToken={session.access_token} onRetry={() => setReceiptAttempt((n) => n + 1)} />}
-    {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><ErrorLine>{error} Chạm để thử lại.</ErrorLine></Pressable>}
-    {problem && <ErrorLine>Không cập nhật được. Dữ liệu có thể đã đổi trên thiết bị khác.</ErrorLine>}
-    {loading && <Text style={styles.muted}>Đang đối chiếu toàn bộ lịch sử giao dịch…</Text>}
+    {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><ErrorLine>{t("{{error}} Chạm để thử lại.", { error })}</ErrorLine></Pressable>}
+    {problem && <ErrorLine>{t("Không cập nhật được. Dữ liệu có thể đã đổi trên thiết bị khác.")}</ErrorLine>}
+    {loading && <Text style={styles.muted}>{t("Đang đối chiếu toàn bộ lịch sử giao dịch…")}</Text>}
     {!loading && !error && (visible.length === 0 ? (
       <View style={{ alignItems: "center" }}><SpendingEmpty art title={copy("reviewEmptyTitle")} body={copy("reviewEmptyBody")} action={{ label: copy("backToSpending"), onPress: () => router.replace(routes.transactions) }} /></View>
     ) : <>
@@ -147,7 +150,7 @@ export default function ReviewInboxScreen() {
                 <Chip tone="outline" label={copy("mergeOne")} onPress={() => void merge(item)} />
               </> : <>
                 {suggestions.map((c) => <Chip key={c.id} tone="outline" label={c.name} onPress={() => void assign(item, c.id)} />)}
-                <Chip tone="outline" label="Khác…" onPress={() => setPicking(item)} />
+                <Chip tone="outline" label={t("Khác…")} onPress={() => setPicking(item)} />
               </>}
             </View>
           </Paper>

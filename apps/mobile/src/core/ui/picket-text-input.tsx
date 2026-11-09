@@ -1,3 +1,4 @@
+import { paperControl } from "@/core/theme/paper-foundations";
 import { isLoaded } from "expo-font";
 import { paperTextStyle } from "@/core/theme/paper-text-style";
 
@@ -110,7 +111,7 @@ const createStyles = (colors: MobileThemeColors) =>
       borderWidth: 1,
       borderColor: colors.border,
       backgroundColor: colors.paper,
-      minHeight: 52,
+      minHeight: paperControl.height,
       paddingHorizontal: 16,
       paddingVertical: 10,
       color: colors.text,

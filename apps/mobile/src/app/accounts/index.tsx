@@ -111,7 +111,8 @@ const createStyles = (colors: MobileThemeColors) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.canvas },
     block: { marginBottom: 20 },
-    wallets: { flexDirection: "row", flexWrap: "wrap", columnGap: 24, rowGap: 28, paddingTop: 22 },
+    // space-between instead of a fixed columnGap: 2 x 46.5% + 24dp overflows 320dp-wide content (360dp phones).
+    wallets: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 28, paddingTop: 22 },
     hint: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 20 },
     hintText: { flex: 1, color: colors.muted },
     actions: { flexDirection: "row", gap: 12, marginTop: 24, marginBottom: 24 },

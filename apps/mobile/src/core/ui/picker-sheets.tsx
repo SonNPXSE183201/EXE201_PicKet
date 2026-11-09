@@ -1,7 +1,7 @@
 import { useMemo, useState, type PropsWithChildren } from "react";
 import { Modal, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { figmaType } from "@picket/design-tokens";
+import { figmaColors, figmaType } from "@picket/design-tokens";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -96,7 +96,7 @@ export function WalletPickerSheet({ title, closeLabel, options, selectedId, onSe
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.text, opacity: 0.5 },
+  backdrop: { ...StyleSheet.absoluteFill, backgroundColor: figmaColors.text, opacity: 0.5 },
   sheet: { backgroundColor: colors.paper, borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: "85%" },
   handle: { alignSelf: "center", backgroundColor: colors.border, borderRadius: 2, height: 4, marginTop: 10, width: 40 },
   header: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 16 },

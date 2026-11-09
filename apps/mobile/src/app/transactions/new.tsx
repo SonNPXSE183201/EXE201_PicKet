@@ -6,7 +6,7 @@ import { MAX_MONEY, type TransactionKind } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Alert, Image, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { completeDuplicateCapture } from "@/core/receipts/duplicate-capture-completion";
@@ -44,6 +44,7 @@ import { fromByteArray } from "base64-js";
 import { finishReceiptFlow } from "@/core/ui/receipt-flow-policy";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 import { captureJournal } from "@/core/ocr/capture-storage";
+import { DuplicateReceiptSheet, type DuplicateChoice } from "@/features/capture/duplicate-receipt-sheet";
 import { canAttachReceipt } from "@/core/ocr/receipt-eligibility";
 
 type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
@@ -75,6 +76,7 @@ export default function NewTransactionScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<TransactionNotice | null>(null);
   const [receiptDraft, setReceiptDraft] = useState<PendingReceiptDraft | null>(null);
+  const [duplicatePrompt, setDuplicatePrompt] = useState<{ exact: boolean; id: string; resolve(choice: DuplicateChoice): void } | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [pickWallet, setPickWallet] = useState(false);
   const [loadingDraft, setLoadingDraft] = useState(Boolean(params.receiptDraftId));
@@ -244,48 +246,33 @@ export default function NewTransactionScreen() {
       });
       if (duplicateResult.duplicates.length > 0) {
         const duplicate = duplicateResult.duplicates[0];
-        const shouldContinue = await new Promise<boolean>((resolve) => {
-          const exact = duplicate.matchType === "exact_hash";
-          Alert.alert(
-            exact ? tx("Hóa đơn này đã được lưu") : tx("Có thể trùng hóa đơn"),
-            exact
-              ? tx("Ảnh giống hệt một hóa đơn đã có. Bạn có thể mở bản đã lưu.")
-              : tx("Có hóa đơn cùng cửa hàng, ngày và tổng tiền. Hãy kiểm tra trước khi lưu thêm."),
-            [
-              { text: tx("Hủy"), style: "cancel", onPress: () => resolve(false) },
-              {
-                text: tx("Xem hóa đơn"),
-                onPress: () => {
-                  void (async () => {
-                    try {
-                      await completeDuplicateCapture(
-                        {
-                          exact,
-                          owner: session.user.id,
-                          receiptOwner: receiptDraft.userId,
-                          captureId: params.captureDraftId,
-                        },
-                        {
-                          complete: (owner, id) => captureJournal.complete(owner, id),
-                          remove: () => removePendingReceiptDraft(receiptDraft),
-                        },
-                      );
-                      router.dismissTo(routes.home);
-                      router.push(routes.receipt(duplicate.id));
-                    } catch {
-                      setMessage("Chưa dọn được bản nháp. Hóa đơn đã lưu vẫn an toàn; hãy thử mở lại.");
-                    } finally {
-                      resolve(false);
-                    }
-                  })();
-                },
-              },
-              ...(!exact ? [{ text: tx("Vẫn lưu"), onPress: () => resolve(true) }] : []),
-            ],
-            { cancelable: false },
-          );
+        const exact = duplicate.matchType === "exact_hash";
+        const choice = await new Promise<DuplicateChoice>((resolve) => {
+          setDuplicatePrompt({ exact, id: duplicate.id, resolve });
         });
-        if (!shouldContinue) return;
+        setDuplicatePrompt(null);
+        if (choice === "view") {
+          try {
+            await completeDuplicateCapture(
+              {
+                exact,
+                owner: session.user.id,
+                receiptOwner: receiptDraft.userId,
+                captureId: params.captureDraftId,
+              },
+              {
+                complete: (owner, id) => captureJournal.complete(owner, id),
+                remove: () => removePendingReceiptDraft(receiptDraft),
+              },
+            );
+            router.dismissTo(routes.home);
+            router.push(routes.receipt(duplicate.id));
+          } catch {
+            setMessage("Chưa dọn được bản nháp. Hóa đơn đã lưu vẫn an toàn; hãy thử mở lại.");
+          }
+          return;
+        }
+        if (choice !== "save") return;
       }
 
       let draft: PendingReceiptDraft = await pinPendingReceiptRequest(receiptDraft, request);
@@ -479,6 +466,15 @@ export default function NewTransactionScreen() {
         ) : null}
         {receiptDraft ? <FormRow icon="camera-outline" label={tx("Ảnh hóa đơn đính kèm")} value={tx("Có đính kèm hóa đơn")} last /> : null}
       </PaperCard>
+      <DuplicateReceiptSheet
+        visible={duplicatePrompt !== null}
+        exact={duplicatePrompt?.exact ?? false}
+        savedId={duplicatePrompt?.id ?? null}
+        owner={session?.user.id ?? null}
+        token={session?.access_token ?? null}
+        fresh={{ merchant: receiptDraft?.merchant ?? null, total: receiptDraft?.amount ?? null, purchasedAt: receiptDraft?.purchasedAt ?? null, imageUri: receiptDraft?.imageUri ?? null }}
+        onChoose={(choice) => duplicatePrompt?.resolve(choice)}
+      />
     </FigmaScreen>
   );
 }
