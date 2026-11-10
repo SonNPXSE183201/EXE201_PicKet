@@ -87,7 +87,9 @@ test('APKPure is the working store download wherever the Google Play badge appea
     for (const link of links) assert.match(link, /href="https:\/\/apkpure\.com\/picket\/com\.picket\.mobile"/);
   }
   const index = await readFile(new URL('site/index.html', root), 'utf8');
-  assert.equal((index.match(/data-apkpure-link/g) ?? []).length, 4);
+  const header = index.match(/<header\b[\s\S]*?<\/header>/)?.[0] ?? '';
+  assert.doesNotMatch(header, /data-apkpure-link|data-play-link/);
+  assert.equal((index.match(/data-apkpure-link/g) ?? []).length, 3);
 });
 
 test('every asset referenced by the landing and policy pages exists', async () => {
