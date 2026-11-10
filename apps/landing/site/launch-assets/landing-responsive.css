@@ -5,11 +5,18 @@ html, body { overflow-x: clip; }
 main, footer { overflow-x: clip; }
 img { max-width: 100%; }
 .top nav a, .chips span, .actions span { white-space: nowrap; }
+.top .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.top .brand { justify-self: start; }
+.top nav { display: flex; align-items: center; justify-self: center; gap: 32px; }
+.top nav a, .top-login { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 999px; transition: color .15s ease, background-color .15s ease, transform .15s ease; }
+.top nav a:hover, .top nav a:focus-visible, .top-login:hover, .top-login:focus-visible { color: var(--primary); background: rgb(255 180 162 / 32%); transform: translateY(-1px); }
+.top-login { justify-self: end; white-space: nowrap; }
+.top nav a:focus-visible, .top-login:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* Small laptops and tablets in landscape: 1024-1279px. */
 @media (max-width: 1279px) and (min-width: 721px) {
   .wrap { width: min(1200px, calc(100% - 64px)); }
-  nav { gap: clamp(16px, 2.4vw, 32px); }
+  .top nav { gap: clamp(12px, 1.8vw, 24px); }
   h1 { font-size: clamp(52px, 5.6vw, 72px); letter-spacing: -2px; }
   .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 500px); gap: 24px; }
   .pocket { height: 500px; }
@@ -35,7 +42,8 @@ img { max-width: 100%; }
 /* Tablets in portrait, Galaxy Z Fold open, Surface Duo spanned: 721-1023px. */
 @media (max-width: 1023px) and (min-width: 721px) {
   .top { height: 72px; }
-  nav { gap: 18px; font-size: 13px; }
+  .top nav { gap: 8px; font-size: 13px; }
+  .top nav a, .top-login { padding: 0 8px; }
   .badge.small img { width: 120px; }
   .hero { padding: 56px 0 70px; }
   .hero-grid { grid-template-columns: 1fr; gap: 48px; }
@@ -154,7 +162,6 @@ img { max-width: 100%; }
   .actions .badge img { width: 140px; }
 }
 @media (max-width: 360px) { .actions .badge img { width: 122px; } }
-.top .wrap { gap: 16px; }
 @media (max-width: 1023px) { .top .play-badge { display: none; } }
 
 /* Footer, kept minimal (Wix-style): brand + intro + social icons, two short
@@ -162,6 +169,8 @@ img { max-width: 100%; }
 footer { padding: 64px 0 32px; }
 .footer-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
 .footer-grid > nav { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+.footer-grid > nav a { transition: color .15s ease; }
+.footer-grid > nav a:hover, .footer-grid > nav a:focus-visible { color: var(--primary); }
 .footer-grid > div { min-width: 0; }
 .footer-grid a { overflow-wrap: anywhere; }
 .footer-brand p { max-width: 340px; margin-bottom: 4px; }

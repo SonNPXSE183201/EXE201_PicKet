@@ -46,18 +46,11 @@ const enableStickers = () => {
   }));
 };
 
-const enableTicket = () => {
-  const ticket = document.querySelector('[data-tear-ticket]');
-  const trigger = document.querySelector('[data-tear-download]');
-  if (!ticket || !trigger) return;
-  trigger.addEventListener('click', event => {
-    if (PLAY_STORE_URL === '#') event.preventDefault();
-    if (!reducedMotion.matches) ticket.classList.add('is-torn');
-    if (PLAY_STORE_URL !== '#') {
-      event.preventDefault();
-      setTimeout(() => location.assign(PLAY_STORE_URL), reducedMotion.matches ? 0 : 420);
-    }
-  });
+const enablePlayStoreLinks = () => {
+  document.querySelectorAll('[data-play-link]').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault();
+    if (PLAY_STORE_URL !== '#') location.assign(PLAY_STORE_URL);
+  }));
 };
 
 const enablePhoneDemo = () => {
@@ -84,6 +77,6 @@ setPlayStoreLinks();
 enableParallax();
 enableSteps();
 enableStickers();
-enableTicket();
+enablePlayStoreLinks();
 enablePhoneDemo();
 requestAnimationFrame(() => root.classList.add('is-ready'));

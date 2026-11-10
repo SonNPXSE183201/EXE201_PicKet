@@ -2,8 +2,10 @@ import { DateField } from "../ui/date-field";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
+import { AdminDialog } from "../components/admin-dialog";
 import { accountAction, mutateAdmin } from "../actions";
 import { AdminIcon } from "../ui/admin-icon";
+import { AdminPager } from "../ui/admin-pager";
 import { Button, Card, Chip, Drawer, Field, Person, Table, Timeline, formatDate, formatDateTime, formatNumber, relativeTime, toneFor, type ChipTone, type Column } from "../ui/paper";
 import { can, label, num, rows, sectionHref, str, type Row, type ViewProps } from "./shared";
 import "./views.css";
@@ -16,13 +18,12 @@ export function UsersView(p: ViewProps) {
   const { data, query, page } = p;
   const users = rows(data.rows);
   const total = num(data.total) ?? users.length;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const base = "/admin/users";
   const extraCount = ["createdFrom", "createdTo", "version"].filter((k) => query[k]).length;
   const selected = query.userId ? users.find((u) => str(u.id) === query.userId) : undefined;
 
   const columns: Column<Row>[] = [
-    { key: "email", label: "Email", render: (u) => <Person name={identity(u)} sub={`ID ${shortId(u.id)}`} tone={toneFor(identity(u))} href={sectionHref(base, query, { userId: str(u.id) })} /> },
+    { key: "email", label: "Email", render: (u) => <Person name={identity(u)} sub={<span className="av-user-id">ID {str(u.id) || "—"}</span>} tone={toneFor(identity(u))} href={sectionHref(base, query, { userId: str(u.id) })} /> },
     { key: "created_at", label: "Ngày đăng ký", render: (u) => formatDate(u.created_at) },
     { key: "email_confirmed_at", label: "Email", render: (u) => (u.email_confirmed_at ? <Chip tone="success">Đã xác minh</Chip> : <Chip tone="warning">Chưa xác minh</Chip>) },
     { key: "last_activity_at", label: "Hoạt động gần nhất", muted: true, render: (u) => relativeTime(u.last_activity_at ?? u.last_sign_in_at) },
@@ -62,13 +63,7 @@ export function UsersView(p: ViewProps) {
       <Card receipt eyebrow={`${formatNumber(total)} tài khoản`} title="Danh sách người dùng"
         actions={can(p, "exports") ? <Button href="/admin/exports" variant="secondary" icon="download">Xuất CSV</Button> : undefined}>
         <Table columns={columns} rows={users} caption="Danh sách người dùng" selected={(u) => str(u.id) === query.userId} />
-        <nav className="ap-pagination" aria-label="Phân trang">
-          <span>{formatNumber(total)} bản ghi · Trang {page + 1} / {formatNumber(pages)}</span>
-          <span className="ap-row">
-            {page > 0 ? <Button href={sectionHref(base, query, { page: String(page - 1), userId: undefined })} variant="secondary">Trang trước</Button> : <span className="ap-btn is-secondary" aria-disabled="true">Trang trước</span>}
-            {page + 1 < pages ? <Button href={sectionHref(base, query, { page: String(page + 1), userId: undefined })} variant="coral">Trang sau</Button> : <span className="ap-btn is-coral" aria-disabled="true">Trang sau</span>}
-          </span>
-        </nav>
+        <AdminPager base={base} query={query} page={page} total={total} pageSize={PAGE_SIZE} clear={["userId"]} />
       </Card>
 
       {query.userId && <UserDrawer p={p} user={selected} closeHref={sectionHref(base, query, { userId: undefined })} />}
@@ -81,6 +76,7 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
   const userId = p.query.userId ?? "";
   const name = user ? identity(user) : userId;
   const timeline = rows(data.timeline);
+  const recentTimeline = timeline.slice(0, 8);
   const tickets = rows(data.tickets);
   const quota = rows(data.quota);
   const canGrant = ["owner", "operations"].includes(role ?? "");
@@ -90,7 +86,7 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
         <span className={`ap-avatar ap-tone-${toneFor(name)}`}>{name.slice(0, 1).toUpperCase()}</span>
         <div>
           <b>{name}</b>
-          <small>User ID {shortId(userId, 10)}{user?.created_at ? ` · đăng ký ${formatDate(user.created_at)}` : ""}</small>
+          <small className="av-user-id">User ID {userId || "—"}{user?.created_at ? ` · đăng ký ${formatDate(user.created_at)}` : ""}</small>
           {user && (
             <span className="ap-row" style={{ gap: 6, marginTop: 6 }}>
               {user.email_confirmed_at ? <Chip tone="success">Đã xác minh</Chip> : <Chip tone="warning">Chưa xác minh</Chip>}
@@ -106,7 +102,7 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
 
       <Card receipt eyebrow="Lịch sử tài khoản" compact>
         {timeline.length
-          ? <Timeline items={timeline.map((t, i) => ({ title: str(t.reason) || label(t.action), meta: formatDateTime(t.created_at), color: i === 0 ? "var(--ap-mauve)" : i === 1 ? "var(--ap-success)" : "var(--ap-muted)" }))} />
+          ? <><Timeline items={recentTimeline.map((t, i) => ({ title: str(t.reason) || label(t.action), meta: formatDateTime(t.created_at), color: i === 0 ? "var(--ap-mauve)" : i === 1 ? "var(--ap-success)" : "var(--ap-muted)" }))} />{timeline.length > recentTimeline.length && <p className="ap-card-note">Đang hiển thị {recentTimeline.length} sự kiện gần nhất. <Link href="/admin/audit">Mở Nhật ký hoạt động</Link> để xem lịch sử đầy đủ.</p>}</>
           : <p className="ap-card-note">Chưa có sự kiện quản trị. Phiên bản/hoạt động có thể thiếu nếu người dùng chưa đồng ý đo lường.</p>}
         {tickets.length > 0 && (
           <>
@@ -122,21 +118,23 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
 
       <Card eyebrow="Thao tác quản trị" compact flat>
         {canGrant && (
-          <form className="ap-form" action={mutateAdmin}>
-            <input type="hidden" name="action" value="grant" />
-            <input type="hidden" name="userId" value={userId} />
-            <input type="hidden" name="requestId" value={randomUUID()} />
-            <fieldset disabled={!mfaVerified}>
-              <div className="av-inline">
-                <Field label="Cấp gói hỗ trợ" grow>
-                  <select name="tier" defaultValue="plus"><option value="plus">Plus · 30 ngày</option><option value="pro">Pro · 30 ngày</option><option value="free">Thu hồi gói hỗ trợ</option></select>
-                </Field>
-                <SubmitButton className="ap-btn is-coral">Cấp gói</SubmitButton>
-              </div>
-              <Field label="Lý do (bắt buộc, được ghi vào nhật ký)"><input name="reason" required minLength={5} maxLength={500} placeholder="Ví dụ: hỗ trợ khách bị trừ tiền 2 lần" /></Field>
-              <Field label="Nhập SAVE để xác nhận"><input name="confirmation" pattern="SAVE" required autoComplete="off" /></Field>
-            </fieldset>
-          </form>
+          <AdminDialog title="Cấp gói hỗ trợ" trigger="Cấp gói hỗ trợ" triggerClassName="ap-btn is-secondary">
+            <form className="ap-form" action={mutateAdmin}>
+              <input type="hidden" name="action" value="grant" />
+              <input type="hidden" name="userId" value={userId} />
+              <input type="hidden" name="requestId" value={randomUUID()} />
+              <fieldset disabled={!mfaVerified}>
+                <div className="av-inline">
+                  <Field label="Gói hỗ trợ" grow>
+                    <select name="tier" defaultValue="plus"><option value="plus">Plus · 30 ngày</option><option value="pro">Pro · 30 ngày</option><option value="free">Thu hồi gói hỗ trợ</option></select>
+                  </Field>
+                  <SubmitButton className="ap-btn is-coral">Cấp gói</SubmitButton>
+                </div>
+                <Field label="Lý do (bắt buộc, được ghi vào nhật ký)"><input name="reason" required minLength={5} maxLength={500} placeholder="Ví dụ: hỗ trợ khách bị trừ tiền 2 lần" /></Field>
+                <Field label="Nhập SAVE để xác nhận"><input name="confirmation" pattern="SAVE" required autoComplete="off" /></Field>
+              </fieldset>
+            </form>
+          </AdminDialog>
         )}
         {canGrant && <hr className="ap-divider" />}
         <details className="av-danger">
@@ -180,7 +178,6 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
 }
 
 const identity = (u: Row) => str(u.email) || str(u.phone) || str(u.id);
-const shortId = (id: unknown, keep = 4) => { const s = str(id).replace(/-/g, ""); return s.length > keep * 2 ? `${s.slice(0, keep)}…${s.slice(-3)}` : s || "—"; };
 const isSuspended = (u: Row) => Boolean(u.banned_until) && Date.parse(str(u.banned_until)) > Date.now();
 function tierChip(u: Row) {
   const tier = str(u.play_tier) || str(u.payos_tier) || str(u.grant) || "free";

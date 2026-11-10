@@ -1,6 +1,7 @@
 import { AdminIcon } from "../ui/admin-icon";
-import { Banner, Button, Card, Chip, Kpi, Progress, Table, Tile, formatDate, formatDateTime, formatNumber, relativeTime, type ChipTone, type Column } from "../ui/paper";
-import { componentInfo, componentName, label, num, object, rows, sectionHref, statusTone, str, type Row, type ViewProps } from "./shared";
+import { AdminPager } from "../ui/admin-pager";
+import { Banner, Card, Chip, Kpi, Progress, Table, Tile, formatDate, formatDateTime, formatNumber, relativeTime, type ChipTone, type Column } from "../ui/paper";
+import { componentInfo, componentName, label, num, object, rows, statusTone, str, type Row, type ViewProps } from "./shared";
 import "./views.css";
 import "./growth-customers.css";
 
@@ -29,16 +30,7 @@ function Footnote({ p, children }: { p: ViewProps; children?: React.ReactNode })
 }
 
 function Pager({ p, total, base }: { p: ViewProps; total: number; base: string }) {
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  return (
-    <nav className="ap-pagination" aria-label="Phân trang">
-      <span>{formatNumber(total)} bản ghi · Trang {p.page + 1} / {formatNumber(pages)}</span>
-      <span className="ap-row">
-        {p.page > 0 ? <Button href={sectionHref(base, p.query, { page: String(p.page - 1) })} variant="secondary">Trang trước</Button> : <span className="ap-btn is-secondary" aria-disabled="true">Trang trước</span>}
-        {p.page + 1 < pages ? <Button href={sectionHref(base, p.query, { page: String(p.page + 1) })} variant="coral">Trang sau</Button> : <span className="ap-btn is-coral" aria-disabled="true">Trang sau</span>}
-      </span>
-    </nav>
-  );
+  return <AdminPager base={base} query={p.query} page={p.page} total={total} pageSize={PAGE_SIZE} />;
 }
 
 /** Totals only exist once measurement has started (data.firstObservedAt). */

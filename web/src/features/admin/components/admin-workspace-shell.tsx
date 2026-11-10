@@ -7,13 +7,14 @@ import { adminLabel } from "../admin-labels";
 import { signOut } from "@/app/dashboard/actions";
 import { AdminIcon } from "../ui/admin-icon";
 import { AdminRealtime } from "./admin-realtime";
+import { AdminNotificationMenu, type AdminNotice } from "./admin-notification-menu";
 import "../ui/admin-paper.css";
 
 /* Navigation groups follow Figma › Admin Web; modules that exist only in the
    backend (revenue, payments, announcements, promotions, permissions) sit in
    the group they belong to. */
 const groups: { title: string; sections: AdminSection[] }[] = [
-  { title: "Khách hàng", sections: ["users", "tickets", "billing", "revenue", "payments"] },
+  { title: "Khách hàng", sections: ["billing", "revenue", "payments", "users", "tickets"] },
   { title: "Tăng trưởng", sections: ["acquisition", "engagement", "ocr"] },
   { title: "Vận hành", sections: ["health", "incidents", "releases", "announcements"] },
   { title: "Nội dung", sections: ["content", "partners", "promotions"] },
@@ -25,10 +26,11 @@ export const sectionIcons: Record<AdminSection, string> = {
   announcements: "bell", content: "note", partners: "heart", promotions: "sparkle", integrations: "bolt", audit: "list",
   staff: "lock", permissions: "shield", settings: "filter", exports: "download", security: "shield",
 };
+const navigationTitles: Partial<Record<AdminSection, string>> = { billing: "Doanh số theo ngày", acquisition: "Truy cập và lượt tải" };
 const ranges = ["7", "30", "90"] as const;
 
-export function AdminWorkspaceShell({ children, role, permissions, email, mfaVerified }: {
-  children: ReactNode; role: string | null; permissions: readonly string[]; email?: string | null; mfaVerified?: boolean;
+export function AdminWorkspaceShell({ children, role, permissions, email, avatarUrl, notices = [], mfaVerified }: {
+  children: ReactNode; role: string | null; permissions: readonly string[]; email?: string | null; avatarUrl?: string | null; notices?: AdminNotice[]; mfaVerified?: boolean;
 }) {
   const path = usePathname();
   const params = useSearchParams();
@@ -115,7 +117,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
                 <div>
                   {sections.map((s) => (
                     <NavLink key={s} href={adminSections[s].href} current={current === s}>
-                      <AdminIcon name={sectionIcons[s]} />{adminSections[s].title}<NavPending />
+                      <AdminIcon name={sectionIcons[s]} />{navigationTitles[s] ?? adminSections[s].title}<NavPending />
                     </NavLink>
                   ))}
                 </div>
@@ -152,18 +154,17 @@ export function AdminWorkspaceShell({ children, role, permissions, email, mfaVer
           <nav className="ap-range" aria-label="Khoảng thời gian">
             {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
           </nav>
-          <AdminRealtime current={current} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
+          <AdminRealtime current={current} freezeCurrent={current === "users" && Boolean(params.get("userId"))} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
           {visible("incidents") && (
-            <Link className="ap-icon-btn" href="/admin/incidents" aria-label="Sự cố và cảnh báo"><AdminIcon name="bell" size={22} /></Link>
+            <AdminNotificationMenu notices={notices} storageKey={`picket-admin-notices:${email ?? "staff"}`} />
           )}
           <details ref={account} className="ap-account">
             <summary aria-label="Mở menu tài khoản">
-              <span className="ap-avatar">{name.slice(0, 1)}</span>
-              <span className="ap-account-who"><b>{name}</b><small>{roleLabel || "Quản trị"}</small></span>
+              {avatarUrl ? <img src={avatarUrl} alt="" referrerPolicy="no-referrer" /> : <span className="ap-avatar">{name.slice(0, 1)}</span>}
               <AdminIcon name="chevron-down" size={14} />
             </summary>
             <div className="ap-account-panel">
-              <p>Tài khoản quản trị<small>{email ?? roleLabel}</small></p>
+              <p>{name}<small>{email ?? "Tài khoản quản trị"}</small><small>{roleLabel || "Quản trị"}</small></p>
               <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
               <a href="https://picketfinance.com/"><AdminIcon name="arrow-up-right" size={16} />Trang giới thiệu</a>
               <form action={signOut}><button type="submit"><AdminIcon name="logout" size={16} />Đăng xuất</button></form>

@@ -34,6 +34,7 @@ const accountLinks = [
 export { Icon } from "./workspace-icon";
 import { Icon } from "./workspace-icon";
 import { AdminWorkspaceShell } from "@/features/admin/components/admin-workspace-shell";
+import type { AdminNotice } from "@/features/admin/components/admin-notification-menu";
 function NavigationHint() {
   const { pending } = useLinkStatus();
   return <span className="navigation-hint" role="status">{pending ? "Đang mở…" : ""}</span>;
@@ -83,6 +84,6 @@ function StandardWorkspaceShell({ children }: { children: ReactNode }) {
   </div>;
 }
 
-export function WorkspaceShell(props: {children:ReactNode;admin?:boolean;adminRole?:string|null;adminPermissions?:string[];adminEmail?:string|null;adminMfaVerified?:boolean}) {
- return props.admin ? <AdminWorkspaceShell role={props.adminRole??null} permissions={props.adminPermissions??[]} email={props.adminEmail} mfaVerified={props.adminMfaVerified}>{props.children}</AdminWorkspaceShell> : <StandardWorkspaceShell>{props.children}</StandardWorkspaceShell>;
+export function WorkspaceShell(props: {children:ReactNode;admin?:boolean;adminRole?:string|null;adminPermissions?:string[];adminEmail?:string|null;adminAvatar?:string|null;adminNotices?:AdminNotice[];adminMfaVerified?:boolean}) {
+ return props.admin ? <AdminWorkspaceShell role={props.adminRole??null} permissions={props.adminPermissions??[]} email={props.adminEmail} avatarUrl={props.adminAvatar} notices={props.adminNotices??[]} mfaVerified={props.adminMfaVerified}>{props.children}</AdminWorkspaceShell> : <StandardWorkspaceShell>{props.children}</StandardWorkspaceShell>;
 }
