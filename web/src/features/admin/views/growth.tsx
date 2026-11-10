@@ -29,8 +29,10 @@ function Footnote({ p, children }: { p: ViewProps; children?: React.ReactNode })
   );
 }
 
-function Pager({ p, total, base }: { p: ViewProps; total: number; base: string }) {
-  return <AdminPager base={base} query={p.query} page={p.page} total={total} pageSize={PAGE_SIZE} />;
+function queryPage(value: string | undefined, total: number) {
+  const requested = /^\d{1,5}$/.test(value ?? "") ? Number(value) : 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  return Math.min(requested, pages - 1);
 }
 
 /** Totals only exist once measurement has started (data.firstObservedAt). */
@@ -44,7 +46,10 @@ function totalsOf(data: Row) {
 }
 
 /* ---------- Events (shared by acquisition and engagement) ---------- */
-function EventsCard({ events, eyebrow }: { events: Row[]; eyebrow: string }) {
+function EventsCard({ events, eyebrow, p }: { events: Row[]; eyebrow: string; p: ViewProps }) {
+  const page = queryPage(p.query.eventPage, events.length);
+  const pageRows = events.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const base = p.section === "engagement" ? "/admin/engagement" : "/admin/acquisition";
   const kinds = [...new Set(events.map((r) => str(r.event)))];
   const summary = kinds.map((k) => {
     const list = events.filter((r) => str(r.event) === k);
@@ -70,7 +75,8 @@ function EventsCard({ events, eyebrow }: { events: Row[]; eyebrow: string }) {
       {events.length > 0 && (
         <details className="ag-details">
           <summary>Chi tiết theo ngày</summary>
-          <Table columns={dayColumns} rows={events} caption="Sự kiện theo ngày" rowKey={(r, i) => `${str(r.day)}-${str(r.event)}-${str(r.channel)}-${i}`} />
+          <Table columns={dayColumns} rows={pageRows} caption="Sự kiện theo ngày" rowKey={(r, i) => `${str(r.day)}-${str(r.event)}-${str(r.channel)}-${page * PAGE_SIZE + i}`} />
+          <AdminPager base={base} query={p.query} page={page} total={events.length} pageSize={PAGE_SIZE} pageParam="eventPage" />
         </details>
       )}
       <p className="ap-card-note">Giờ Việt Nam. Traffic quản trị được loại khi xác định được; chỉ đo trên phiên đồng ý analytics.</p>
@@ -119,6 +125,10 @@ export function AcquisitionView(p: ViewProps) {
   ];
   const sync = latest(t.metrics, "observed_at");
   const integrations = rows(data.integrations);
+  const metricsPage = queryPage(p.query.metricsPage, t.metrics.length);
+  const metricsRows = t.metrics.slice(metricsPage * PAGE_SIZE, (metricsPage + 1) * PAGE_SIZE);
+  const integrationsPage = queryPage(p.query.integrationsPage, integrations.length);
+  const integrationsRows = integrations.slice(integrationsPage * PAGE_SIZE, (integrationsPage + 1) * PAGE_SIZE);
 
   return (
     <>
@@ -165,14 +175,16 @@ export function AcquisitionView(p: ViewProps) {
 
       <Card eyebrow="Báo cáo từ nguồn ngoài" title="Số liệu nhập về"
         actions={sync ? <Chip tone="coral">Đồng bộ {relativeTime(new Date(sync).toISOString())}</Chip> : undefined}>
-        <Table columns={sourceColumns} rows={t.metrics} caption="Số liệu từ nguồn ngoài" rowKey={(r, i) => `${str(r.source)}-${str(r.metric)}-${str(r.day)}-${i}`} />
+        <Table columns={sourceColumns} rows={metricsRows} caption="Số liệu từ nguồn ngoài" rowKey={(r, i) => `${str(r.source)}-${str(r.metric)}-${str(r.day)}-${metricsPage * PAGE_SIZE + i}`} />
+        <AdminPager base="/admin/acquisition" query={p.query} page={metricsPage} total={t.metrics.length} pageSize={PAGE_SIZE} pageParam="metricsPage" />
         <p className="ap-card-note">Giữ ngày và timezone của nguồn. Báo cáo Play có thể trễ 3–7 ngày và được điều chỉnh lại.</p>
       </Card>
 
-      <EventsCard events={t.events} eyebrow={`${days} ngày qua`} />
+      <EventsCard events={t.events} eyebrow={`${days} ngày qua`} p={p} />
 
       <Card eyebrow="Đồng bộ" title="Tình trạng đồng bộ nguồn">
-        <Table columns={syncColumns} rows={integrations} caption="Đồng bộ nguồn" rowKey={(r, i) => `${str(r.source)}-${i}`} />
+        <Table columns={syncColumns} rows={integrationsRows} caption="Đồng bộ nguồn" rowKey={(r, i) => `${str(r.source)}-${integrationsPage * PAGE_SIZE + i}`} />
+        <AdminPager base="/admin/acquisition" query={p.query} page={integrationsPage} total={integrations.length} pageSize={PAGE_SIZE} pageParam="integrationsPage" />
       </Card>
       <Footnote p={p}>Không thu thập được lịch sử trước khi bật đo lường.</Footnote>
     </>
@@ -246,7 +258,7 @@ export function EngagementView(p: ViewProps) {
         </div>
       </div>
 
-      <EventsCard events={t.events} eyebrow={`${days} ngày qua`} />
+      <EventsCard events={t.events} eyebrow={`${days} ngày qua`} p={p} />
       <Footnote p={p}>“—” nghĩa là chưa có nguồn đo; không thu thập được lịch sử trước khi bật đo lường.</Footnote>
     </>
   );
@@ -260,9 +272,10 @@ const diagnosticName: Record<string, string> = {
 };
 
 export function OcrView(p: ViewProps) {
-  const { data } = p;
+  const { data, query } = p;
   const days = rows(data.rows);
-  const total = num(data.total) ?? days.length;
+  const resultsPage = queryPage(query.resultsPage, days.length);
+  const visibleDays = days.slice(resultsPage * PAGE_SIZE, (resultsPage + 1) * PAGE_SIZE);
   const scans = sum(days, "scans"), ok = sum(days, "successful");
   const avg = scans ? days.reduce((s, r) => s + (num(r.average_ms) ?? 0) * (num(r.scans) ?? 0), 0) / scans : undefined;
   const p95 = days.length ? Math.max(...days.map((r) => num(r.p95_ms) ?? 0)) : undefined;
@@ -301,11 +314,11 @@ export function OcrView(p: ViewProps) {
 
       <div className="ag-split">
         <Card receipt eyebrow={scope} title="Kết quả theo ngày">
-          <Table columns={columns} rows={days} caption="Kết quả nhận diện hoá đơn theo ngày" rowKey={(r, i) => `${str(r.day)}-${i}`} />
-          {typeof data.total === "number" && <Pager p={p} total={total} base="/admin/ocr" />}
+          <Table columns={columns} rows={visibleDays} caption="Kết quả nhận diện hoá đơn theo ngày" rowKey={(r, i) => `${str(r.day)}-${resultsPage * PAGE_SIZE + i}`} />
+          <AdminPager base="/admin/ocr" query={query} page={resultsPage} total={days.length} pageSize={PAGE_SIZE} pageParam="resultsPage" />
         </Card>
         <Card receipt eyebrow="Vận hành" title="Hạn mức và lỗi">
-          <Table columns={diagColumns} rows={diagnostics} caption="Sự kiện backend" empty="Chưa có sự kiện lỗi được ghi nhận." rowKey={(r, i) => `${str(r.metric)}-${i}`} />
+          <Table columns={diagColumns} rows={diagnostics} caption="Sự kiện backend" empty="Chưa có sự kiện lỗi được ghi nhận." rowKey={(r, i) => `${str(r.metric)}-${str(r.day)}-${i}`} />
           <p className="ap-card-note">Bắt đầu ghi nhận khi backend mới được triển khai; không suy dữ liệu lịch sử từ số lượt quét thành công.</p>
         </Card>
       </div>

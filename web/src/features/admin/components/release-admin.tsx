@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { saveReleaseAction } from "../payment-actions";
+import { AdminPager } from "../ui/admin-pager";
 import { Banner, Card, Chip, Field, Table, formatDateTime, relativeTime, type ChipTone, type Column } from "../ui/paper";
 import "./modules.css";
 
@@ -58,6 +59,7 @@ const VERIFIED_LABELS: Record<string, string> = {
   manual: "Nhập tay",
 };
 const CARD_TONES = ["is-lilac", "is-mint", "is-blue", "is-peach", "is-coral", "is-cream"];
+const PAGE_SIZE = 25;
 const time = (iso: string | null) => (iso ? formatDateTime(iso) : "—");
 const editable = (channel: string) => !channel.startsWith("play_");
 
@@ -69,6 +71,10 @@ export async function ReleaseAdmin({ query }: { query: Query }) {
     releases: Release[];
     warnings: string[];
   }>(accessToken);
+  const page = /^\d{1,5}$/.test(query.page ?? "") ? Number(query.page) : 0;
+  const pageCount = Math.max(1, Math.ceil(data.releases.length / PAGE_SIZE));
+  const releasePage = Math.min(page, pageCount - 1);
+  const visibleReleases = data.releases.slice(releasePage * PAGE_SIZE, (releasePage + 1) * PAGE_SIZE);
   const form = query.edit ? data.releases.find((r) => r.id === query.edit) : undefined;
 
   const columns: Column<Release>[] = [
@@ -78,7 +84,7 @@ export async function ReleaseAdmin({ query }: { query: Query }) {
     { key: "rollout", label: "Rollout", align: "right", render: (r) => (r.rollout_percent === null ? "—" : `${r.rollout_percent}%`) },
     { key: "min", label: "Bắt buộc từ", align: "right", render: (r) => r.min_supported_code ?? "—" },
     { key: "verified", label: "Xác minh", muted: true, render: (r) => `${r.verified_by ? VERIFIED_LABELS[r.verified_by] ?? r.verified_by : "Chưa"} · ${relativeTime(r.verified_at)}` },
-    { key: "edit", label: <span className="ap-sr">Thao tác</span>, render: (r) => <Link className="am-link" href={`/admin/releases?edit=${r.id}`}>{editable(r.channel) ? "Sửa" : "Ghi chú"}</Link> },
+    { key: "edit", label: <span className="ap-sr">Thao tác</span>, render: (r) => <Link className="am-link" href={`/admin/releases?${new URLSearchParams({ ...(releasePage ? { page: String(releasePage) } : {}), edit: r.id })}`}>{editable(r.channel) ? "Sửa" : "Ghi chú"}</Link> },
   ];
 
   return (
@@ -111,7 +117,8 @@ export async function ReleaseAdmin({ query }: { query: Query }) {
 
       <div className="ap-split am-split">
         <Card receipt eyebrow="Tất cả bản" title="Lịch sử phát hành">
-          <Table columns={columns} rows={data.releases} caption="Lịch sử phát hành" selected={(r) => r.id === form?.id} empty="Chưa có bản phát hành nào." />
+          <Table columns={columns} rows={visibleReleases} caption="Lịch sử phát hành" selected={(r) => r.id === form?.id} empty="Chưa có bản phát hành nào." />
+          <AdminPager base="/admin/releases" query={query} page={releasePage} total={data.releases.length} pageSize={PAGE_SIZE} clear={["edit"]} />
         </Card>
 
         <Card eyebrow={form ? "Biên tập" : "Ghi nhận mới"} title={form ? `${RELEASE_CHANNEL_LABELS[form.channel]} ${form.version_name}` : "Phiên bản APKPure / landing"}>

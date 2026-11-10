@@ -5,7 +5,8 @@ import { requireApiSession } from "@/core/auth/require-api-session";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { adjustRevenue } from "../payment-actions";
 import { AdminIcon } from "../ui/admin-icon";
-import { Banner, Button, Card, Chip, Drawer, Field, Kpi, Table, formatDateTime, type ChipTone, type Column } from "../ui/paper";
+import { AdminPager } from "../ui/admin-pager";
+import { Banner, Card, Chip, Drawer, Field, Kpi, Table, formatDateTime, formatNumber, type ChipTone, type Column } from "../ui/paper";
 import "./modules.css";
 
 type Query = Record<string, string | undefined>;
@@ -44,6 +45,14 @@ type Entry = {
   note: string | null;
   evidence: Record<string, unknown>;
 };
+type EntryList = {
+  entries: Entry[];
+  history: { id: number; changed_at: string; previous: Entry }[];
+  total?: number;
+  totalCount?: number;
+  total_count?: number;
+  hasMore?: boolean;
+};
 
 export const REVENUE_SOURCE_LABELS: Record<string, string> = {
   payos: "PayOS",
@@ -62,6 +71,7 @@ export const REVENUE_KIND_LABELS: Record<string, string> = {
   adjustment: "Điều chỉnh",
 };
 const FILTER_KEYS = ["source", "status", "kind", "ref", "from", "to"] as const;
+const PAGE_SIZE = 25;
 const STATUS_TONES: Record<string, ChipTone> = { confirmed: "success", estimated: "warning", review: "danger", reversed: "outline" };
 const SOURCE_COLORS: Record<string, string> = { google_play: "var(--ap-mint)", payos: "var(--ap-mauve)" };
 const time = (value: string) => formatDateTime(value);
@@ -83,19 +93,22 @@ export async function RevenueAdmin({ query }: { query: Query }) {
     const value = query[key];
     if (value) filters[key] = key === "from" || key === "to" ? toIso(value) : value;
   }
+  const page = /^\d{1,5}$/.test(query.page ?? "") ? Math.min(Number(query.page), 10000) : 0;
   const [summary, list] = await Promise.all([
     api.adminRevenue<Summary>(accessToken, {
       ...(filters.from ? { from: filters.from } : {}),
       ...(filters.to ? { to: filters.to } : {}),
       bucket: query.bucket ?? "day",
     }),
-    api.adminRevenue<{ entries: Entry[]; history: { id: number; changed_at: string; previous: Entry }[] }>(
+    api.adminRevenue<EntryList>(
       accessToken,
-      { view: "entries", ...filters, ...(query.id ? { id: query.id } : {}) },
+      { view: "entries", ...filters, page: String(page), ...(query.id ? { id: query.id } : {}) },
     ),
   ]);
+  const listTotal = [list.total, list.totalCount, list.total_count].find((value) => typeof value === "number" && Number.isFinite(value) && value >= 0);
   const exportQuery = new URLSearchParams(filters).toString();
-  const closeHref = `/admin/revenue${exportQuery ? `?${exportQuery}` : ""}`;
+  const closeParams = new URLSearchParams({ ...filters, ...(page ? { page: String(page) } : {}) });
+  const closeHref = `/admin/revenue${closeParams.size ? `?${closeParams}` : ""}`;
   const selected = query.id ? list.entries.find((e) => String(e.id) === query.id) : undefined;
   const bySource = (source: string) => summary.bySource.find((s) => s.source === source);
 
@@ -112,7 +125,7 @@ export async function RevenueAdmin({ query }: { query: Query }) {
   const maxTotal = Math.max(1, ...stacks.map((c) => c.total));
 
   const columns: Column<Entry>[] = [
-    { key: "id", label: "#", render: (e) => <Link className="am-link" href={`/admin/revenue?${new URLSearchParams({ ...filters, id: String(e.id) })}`}>{e.id}</Link> },
+    { key: "id", label: "#", render: (e) => <Link className="am-link" href={`/admin/revenue?${new URLSearchParams({ ...filters, ...(page ? { page: String(page) } : {}), id: String(e.id) })}`}>{e.id}</Link> },
     { key: "occurred_at", label: "Thời điểm", render: (e) => time(e.occurred_at) },
     { key: "source", label: "Nguồn", render: (e) => <Chip tone={e.source === "payos" ? "lilac" : "coral"}>{REVENUE_SOURCE_LABELS[e.source] ?? e.source}</Chip> },
     { key: "kind", label: "Loại", render: (e) => REVENUE_KIND_LABELS[e.kind] ?? e.kind },
@@ -204,14 +217,9 @@ export async function RevenueAdmin({ query }: { query: Query }) {
         </Card>
       </div>
 
-      <Card receipt eyebrow={`${list.entries.length} khoản trong bộ lọc`} title="Sổ doanh thu">
+      <Card receipt eyebrow={`${listTotal === undefined ? "Chưa rõ tổng" : formatNumber(listTotal)} khoản trong bộ lọc`} title="Sổ doanh thu">
         <Table columns={columns} rows={list.entries} caption="Sổ doanh thu" selected={(e) => String(e.id) === query.id} empty="Chưa có khoản nào trong bộ lọc." />
-        {list.entries.length === 50 && (
-          <nav className="ap-pagination" aria-label="Phân trang">
-            <span />
-            <Button href={`/admin/revenue?${new URLSearchParams({ ...filters, beforeId: String(list.entries.at(-1)!.id) })}`} variant="coral">Trang tiếp</Button>
-          </nav>
-        )}
+        <AdminPager base="/admin/revenue" query={query} page={page} total={listTotal} pageSize={PAGE_SIZE} hasMore={list.hasMore ?? list.entries.length >= PAGE_SIZE} clear={["id", "beforeId"]} />
       </Card>
 
       {selected && (

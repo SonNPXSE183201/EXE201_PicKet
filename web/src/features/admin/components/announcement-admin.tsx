@@ -3,10 +3,12 @@ import Link from "next/link";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { saveAnnouncementAction } from "../payment-actions";
+import { AdminPager } from "../ui/admin-pager";
 import { Banner, Button, Card, Chip, Field, Table, formatDateTime, type ChipTone, type Column } from "../ui/paper";
 import "./modules.css";
 
 type Query = Record<string, string | undefined>;
+const PAGE_SIZE = 25;
 type Item = {
   id: string;
   kind: string;
@@ -76,6 +78,11 @@ export async function AnnouncementAdmin({ query }: { query: Query }) {
     incidents: { id: string; title: string; status: string }[];
   }>(accessToken);
   const form = query.edit ? data.announcements.find((a) => a.id === query.edit) : undefined;
+  const total = data.announcements.length;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const requestedPage = /^\d{1,5}$/.test(query.page ?? "") ? Number(query.page) : 0;
+  const page = Math.min(requestedPage, pageCount - 1);
+  const visibleAnnouncements = data.announcements.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const columns: Column<Item>[] = [
     { key: "title", label: "Tiêu đề", render: (a) => <span className="am-title"><b>{a.title_vi}</b><small>{a.pinned ? "Ghim · " : ""}{time(a.starts_at)} → {a.ends_at ? time(a.ends_at) : "không hạn"}</small></span> },
@@ -106,9 +113,10 @@ export async function AnnouncementAdmin({ query }: { query: Query }) {
           text="Kiểm tra MFA, lý do, liên kết (chỉ trang trong app hoặc picketfinance.com) và xem có người vừa sửa không." />
       )}
 
-      <Card receipt eyebrow={`${data.announcements.length} thông báo`} title="Tất cả thông báo"
+      <Card receipt eyebrow={`${total} thông báo`} title="Tất cả thông báo"
         actions={<Button href="/admin/announcements" icon="plus" size="sm">Tạo thông báo</Button>}>
-        <Table columns={columns} rows={data.announcements} caption="Danh sách thông báo hệ thống" selected={(a) => a.id === form?.id} empty="Chưa có thông báo." />
+        <Table columns={columns} rows={visibleAnnouncements} caption="Danh sách thông báo hệ thống" selected={(a) => a.id === form?.id} empty="Chưa có thông báo." />
+        <AdminPager base="/admin/announcements" query={query} page={page} total={total} pageSize={PAGE_SIZE} clear={[]} />
       </Card>
 
       <div className="ap-split-wide am-ann-layout">

@@ -32,11 +32,16 @@
 .am-details-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; }
 .am-details-summary b { display: block; font-size: 14px; font-weight: 800; }
 .am-details-summary small { display: block; font-size: 11px; font-weight: 700; color: var(--ap-muted); }
-.ap-dialog-body .am-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; max-height: 280px; overflow-y: auto; scrollbar-width: none; }
+.ap-dialog-body .am-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; max-height: min(42dvh, 440px); padding: 3px 3px 10px; box-sizing: border-box; overflow-y: auto; scrollbar-width: none; }
 .ap-dialog-body .am-checks::-webkit-scrollbar { display: none; }
+.ap-dialog-body .am-checks .ap-check { min-width: 0; min-height: 22px; overflow-wrap: anywhere; }
 .am-split { align-items: start; }
 .am-sticky { position: sticky; top: 16px; }
 .am-text-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--ap-mauve); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+@media (max-width: 560px) {
+  .ap-dialog-body .am-checks { grid-template-columns: minmax(0, 1fr); max-height: 38dvh; }
+}
 
 /* Phiên bản: channel cards */
 .am-chan-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }

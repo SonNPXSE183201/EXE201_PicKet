@@ -13,6 +13,7 @@ const _filters = [
   'ref',
   'userId',
   'beforeId',
+  'page',
   'id',
   'limit',
 ];

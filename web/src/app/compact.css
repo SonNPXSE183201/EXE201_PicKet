@@ -42,7 +42,11 @@
   .workspace select:not([multiple]), .workspace select:not([multiple])::picker(select) { appearance: base-select; }
   .workspace select:not([multiple]) { background-image: none; padding-right: 12px; align-items: center; }
   .workspace select::picker-icon { color: var(--mauve); }
-  .workspace select::picker(select) { border: 1px solid var(--border-control); border-radius: 12px; padding: 5px; background: var(--surface); box-shadow: 0 8px 24px rgba(48, 33, 50, 0.08); max-height: 280px; }
+  .workspace select::picker(select) {
+    border: 1px solid var(--border-control); border-radius: 12px; padding: 5px; background: var(--surface); box-shadow: 0 8px 24px rgba(48, 33, 50, 0.08); max-height: 280px;
+    /* Keep the picker below its select; avoid the UA largest-space flip. */
+    position-area: block-end span-inline-end; position-try-order: normal; position-try-fallbacks: none;
+  }
   .workspace select option { padding: 9px 12px; border-radius: 7px; font-size: 14px; }
   .workspace select option:hover, .workspace select option:focus { background: var(--cream); }
   .workspace select option:checked { background: var(--peach); color: var(--ink); }
