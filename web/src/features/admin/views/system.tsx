@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { mutateAdmin } from "../actions";
 import { AdminIcon } from "../ui/admin-icon";
+import { AdminPager } from "../ui/admin-pager";
 import { Button, Card, Chip, Field, Person, Table, Tile, display, formatDateTime, formatNumber, relativeTime, toneFor, type ChipTone, type Column } from "../ui/paper";
 import { can, componentInfo, label, num, object, rows, str, statusTone, type Row, type ViewProps } from "./shared";
 import { AsOf, Pager } from "./operations";
@@ -14,11 +15,16 @@ const SOURCE_ICONS: Record<string, { icon: string; tone: "coral" | "mint" | "blu
 };
 const sourceName = (k: unknown) => SOURCE_NAMES[str(k)] ?? componentInfo[str(k)]?.name ?? label(k);
 const sourceIcon = (k: unknown) => SOURCE_ICONS[str(k)] ?? { icon: componentInfo[str(k)]?.icon ?? "grid", tone: componentInfo[str(k)]?.tone ?? "cream" };
+const INTEGRATION_PAGE_SIZE = 5;
 
 /* Figma › Admin Web › 19 · Nguồn dữ liệu (153:7841). */
 export function IntegrationsView(p: ViewProps) {
-  const { data, query, page } = p;
+  const { data, query } = p;
   const sources = rows(data.rows);
+  const requestedPage = /^\d{1,5}$/.test(query.integrationPage ?? "") ? Number(query.integrationPage) : 0;
+  const pageCount = Math.max(1, Math.ceil(sources.length / INTEGRATION_PAGE_SIZE));
+  const page = Math.min(requestedPage, pageCount - 1);
+  const visibleSources = sources.slice(page * INTEGRATION_PAGE_SIZE, (page + 1) * INTEGRATION_PAGE_SIZE);
   const columns: Column<Row>[] = [
     { key: "source", label: "Nguồn", render: (r) => { const i = sourceIcon(r.source); return <span className="ap-row" style={{ flexWrap: "nowrap" }}><Tile icon={i.icon} tone={i.tone} /><b>{sourceName(r.source)}</b></span>; } },
     { key: "status", label: "Trạng thái", render: (r) => <Chip tone={statusTone(r.status)}>{label(r.status)}</Chip> },
@@ -43,8 +49,8 @@ export function IntegrationsView(p: ViewProps) {
       </section>
       <Card receipt eyebrow="Lịch sử đồng bộ" title="Tình trạng đồng bộ"
         note="Giữ ngày và timezone của nguồn. Báo cáo Play có thể trễ 3–7 ngày và được điều chỉnh lại.">
-        <Table columns={columns} rows={sources} caption="Đồng bộ nguồn" rowKey={(r, i) => `${str(r.source)}-${i}`} />
-        <Pager base="/admin/integrations" query={query} page={page} total={data.total} />
+        <Table columns={columns} rows={visibleSources} caption="Đồng bộ nguồn" rowKey={(r, i) => `${str(r.source)}-${page * INTEGRATION_PAGE_SIZE + i}`} />
+        <AdminPager base="/admin/integrations" query={query} page={page} total={sources.length} pageSize={INTEGRATION_PAGE_SIZE} pageParam="integrationPage" />
       </Card>
       <AsOf data={data} />
     </>

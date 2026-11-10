@@ -29,14 +29,30 @@ function mockPayments(filters: Record<string, string> = {}) {
     order_code: 240100 + i * 7, amount, status,
     created_at: mockAgo(h), expires_at: new Date(Date.parse(mockAgo(h)) + 15 * 60_000).toISOString(),
   }));
-  const orders = filters.status ? all.filter((o) => o.status === filters.status) : all;
+  let orders = filters.status ? all.filter((o) => o.status === filters.status) : all;
+  if (filters.id) orders = orders.filter((o) => o.id.toLowerCase() === filters.id!.toLowerCase());
+  if (filters.search) {
+    const search = filters.search.trim().toLowerCase();
+    orders = orders.filter((o) => `${o.order_code} ${o.user_id ?? ""} ${o.id}`.toLowerCase().includes(search));
+  }
+  if (filters.from) {
+    const from = Date.parse(`${filters.from}T00:00:00+07:00`);
+    if (!Number.isNaN(from)) orders = orders.filter((o) => Date.parse(o.created_at) >= from);
+  }
+  if (filters.to) {
+    const to = Date.parse(`${filters.to}T23:59:59.999+07:00`);
+    if (!Number.isNaN(to)) orders = orders.filter((o) => Date.parse(o.created_at) <= to);
+  }
+  const total = orders.length;
+  const page = /^\d{1,5}$/.test(filters.page ?? "") ? Number(filters.page) : 0;
+  const pageSize = /^\d{1,3}$/.test(filters.pageSize ?? "") ? Math.min(Number(filters.pageSize), 100) : 50;
   const events = filters.id ? [
     { id: 3, event_type: "payment.paid", created_at: mockAgo(1.9), details: { amount: 39000 } },
     { id: 2, event_type: "link.created", created_at: mockAgo(2), details: {} },
     { id: 1, event_type: "order.created", created_at: mockAgo(2.01), details: { amount: 39000 } },
   ] : [];
   if (filters.view === "revenue") return { total: 1_240_000, reviewTotal: 39000, coverage: "payos", series: [{ period: `${mockDay(1)}T00:00`, amount: 520000, transactions: 6 }, { period: `${mockDay(0)}T00:00`, amount: 720000, transactions: 9 }] };
-  return { total: orders.length, series: [], orders, events };
+  return { total, series: [], orders: orders.slice(page * pageSize, (page + 1) * pageSize), events };
 }
 function mockRevenue(filters: Record<string, string> = {}) {
   const all = [
@@ -53,7 +69,11 @@ function mockRevenue(filters: Record<string, string> = {}) {
   }));
   for (const k of ["source", "status", "kind"]) if (filters[k]) entries = entries.filter((e) => String((e as Record<string, unknown>)[k]) === filters[k]);
   if (filters.view === "entries") {
-    return { entries, history: filters.id && entries[0] ? [{ id: 1, changed_at: mockAgo(4), previous: { ...entries[0], status: "estimated" } }] : [] };
+    const total = entries.length;
+    const page = /^\d{1,5}$/.test(filters.page ?? "") ? Number(filters.page) : 0;
+    const pagedEntries = filters.page === undefined ? entries : entries.slice(page * 25, (page + 1) * 25);
+    const selected = filters.id ? entries.find((entry) => String(entry.id) === filters.id) : undefined;
+    return { entries: pagedEntries, total, history: selected ? [{ id: 1, changed_at: mockAgo(4), previous: { ...selected, status: "estimated" } }] : [] };
   }
   const series: { period: string; source: string; amount: number; entries: number }[] = [];
   for (let d = 13; d >= 0; d--) {

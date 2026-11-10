@@ -15,6 +15,11 @@ export function Pager({ base, query, page, total }: { base: string; query: Query
   return <AdminPager base={base} query={query} page={page} total={count} pageSize={PAGE_SIZE} clear={["incidentId", "contentId", "partnerId"]} />;
 }
 
+function queryPage(query: Query, key: string, total: number) {
+  const requested = /^\d{1,5}$/.test(query[key] ?? "") ? Number(query[key]) : 0;
+  return Math.min(requested, Math.max(0, Math.ceil(total / PAGE_SIZE) - 1));
+}
+
 /** Source / timezone / query-time footnote kept from the previous admin pages. */
 export function AsOf({ data }: { data: Record<string, unknown> }) {
   return (
@@ -35,12 +40,14 @@ const SEGMENTS = 24;
 
 /* Figma › Admin Web › 14 · Sức khoẻ hệ thống (152:7069). */
 export function HealthView(p: ViewProps) {
-  const { data, query, page } = p;
+  const { data, query } = p;
   const asOf = Date.parse(str(data.asOf));
   const staleMs = (num(data.staleMinutes) ?? 15) * 60000;
   const components = rows(data.rows).map((r) => (asOf - Date.parse(str(r.checked_at)) > staleMs ? { ...r, status: "stale" } : r));
   const probes = new Map(rows(data.probeSuccess).map((r) => [str(r.component), r]));
   const queue = rows(data.queue), vitals = rows(data.vitals), diagnostics = rows(data.diagnostics), probeRows = rows(data.probeSuccess);
+  const probePage = queryPage(query, "probePage", probeRows.length);
+  const visibleProbeRows = probeRows.slice(probePage * PAGE_SIZE, (probePage + 1) * PAGE_SIZE);
 
   const queueColumns: Column<Row>[] = [
     { key: "queue", label: "Hàng đợi", render: (r) => { const q = QUEUE_ICONS[str(r.queue)]; return <span className="ap-row" style={{ flexWrap: "nowrap" }}><Tile icon={q?.icon ?? "list"} tone={q?.tone ?? "cream"} /><b>{q?.name ?? label(r.queue)}</b></span>; } },
@@ -110,7 +117,8 @@ export function HealthView(p: ViewProps) {
 
       <div className="ap-split-wide">
         <Card eyebrow="24 giờ" title="Kết quả probe" note="Đây là số mẫu kiểm tra, không khẳng định uptime liên tục giữa hai lần probe.">
-          <Table columns={probeColumns} rows={probeRows} caption="Thống kê probe" rowKey={(r) => str(r.component)} />
+          <Table columns={probeColumns} rows={visibleProbeRows} caption="Thống kê probe" rowKey={(r, i) => `${str(r.component)}-${probePage * PAGE_SIZE + i}`} />
+          <AdminPager base="/admin/health" query={query} page={probePage} total={probeRows.length} pageSize={PAGE_SIZE} pageParam="probePage" />
         </Card>
         <Card eyebrow="Backend" title="Hạn mức và lỗi vận hành">
           <Table columns={diagColumns} rows={diagnostics} caption="Sự kiện backend" rowKey={(r, i) => `${str(r.metric)}-${str(r.day)}-${i}`} />
@@ -118,7 +126,6 @@ export function HealthView(p: ViewProps) {
         </Card>
       </div>
 
-      <Pager base="/admin/health" query={query} page={page} total={data.total} />
       <AsOf data={data} />
     </>
   );

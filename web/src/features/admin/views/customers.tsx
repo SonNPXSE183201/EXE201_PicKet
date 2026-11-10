@@ -22,8 +22,13 @@ function Footnote({ p, children }: { p: ViewProps; children?: React.ReactNode })
   );
 }
 
-function Pager({ p, total, base }: { p: ViewProps; total: number; base: string }) {
-  return <AdminPager base={base} query={p.query} page={p.page} total={total} pageSize={PAGE_SIZE} clear={["ticketId"]} />;
+function Pager({ p, total, base, pageParam }: { p: ViewProps; total: number; base: string; pageParam?: string }) {
+  return <AdminPager base={base} query={p.query} page={p.page} total={total} pageSize={PAGE_SIZE} pageParam={pageParam} clear={["ticketId"]} />;
+}
+
+function queryPage(value: string | undefined, total: number) {
+  const requested = /^\d{1,5}$/.test(value ?? "") ? Number(value) : 0;
+  return Math.min(requested, Math.max(0, Math.ceil(total / PAGE_SIZE) - 1));
 }
 
 /* ---------- Tickets · Figma 11 (150:6644) ---------- */
@@ -164,6 +169,8 @@ export function BillingView(p: ViewProps) {
   const total = num(data.total) ?? entitlements.length;
   const grants = rows(data.grants);
   const sales = rows(data.sales);
+  const salesPage = queryPage(p.query.salesPage, sales.length);
+  const salesRows = sales.slice(salesPage * PAGE_SIZE, (salesPage + 1) * PAGE_SIZE);
   const canGrant = ["owner", "operations"].includes(role ?? "");
   const base = "/admin/billing";
   const pageNote = "Trong trang đang xem";
@@ -277,7 +284,8 @@ export function BillingView(p: ViewProps) {
 
       {data.financialAccess === true && (
         <Card eyebrow="Chỉ owner" title="Doanh số theo ngày và tiền tệ">
-          <Table columns={salesColumns} rows={sales} caption="Doanh số ước tính theo tiền tệ" rowKey={(r, i) => `${str(r.day)}-${str(r.metric)}-${str(r.currency)}-${i}`} />
+          <Table columns={salesColumns} rows={salesRows} caption="Doanh số ước tính theo tiền tệ" rowKey={(r, i) => `${str(r.day)}-${str(r.metric)}-${str(r.currency)}-${salesPage * PAGE_SIZE + i}`} />
+          <AdminPager base={base} query={p.query} page={salesPage} total={sales.length} pageSize={PAGE_SIZE} pageParam="salesPage" />
         </Card>
       )}
       <Footnote p={p}>Số liệu chỉ gồm quyền Play còn hiệu lực trong 24 giờ; không dùng làm doanh thu.</Footnote>

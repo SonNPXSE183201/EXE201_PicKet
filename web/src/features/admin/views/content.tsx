@@ -4,6 +4,7 @@ import { SubmitButton } from "@/core/ui/submit-button";
 import { mutateAdmin } from "../actions";
 import { AdminIcon } from "../ui/admin-icon";
 import { AdminRecordForm } from "../components/admin-record-form";
+import { AdminPager } from "../ui/admin-pager";
 import { Button, Card, Chip, Field, Table, formatDate, formatNumber, relativeTime, type Column } from "../ui/paper";
 import { label, num, rows, sectionHref, statusTone, str, type Row, type ViewProps } from "./shared";
 import { AsOf, Pager } from "./operations";
@@ -12,6 +13,7 @@ import "./ops-content-system.css";
 const LESSON_ART = ["receipt-v2", "plan-envelope-v2", "save-jar-v1", "receipt-saved-scene-v1"];
 const LESSON_TONES = ["mint", "blue", "lilac", "coral"];
 const PARTNER_ART = ["category-food-v2", "category-cafe-v2", "category-transport-v2", "category-gift-v2"];
+const LESSON_PAGE_SIZE = 25;
 
 /* Figma › Admin Web › 17 · Nội dung (153:7414). */
 export function ContentView(p: ViewProps) {
@@ -21,6 +23,11 @@ export function ContentView(p: ViewProps) {
   const creating = query.contentId === "new";
   const selected = creating ? undefined : items.find((r) => str(r.id) === query.contentId) ?? items[0];
   const total = num(data.total) ?? items.length;
+  const lessons = rows(data.lessons);
+  const lessonPages = Math.max(1, Math.ceil(lessons.length / LESSON_PAGE_SIZE));
+  const requestedLessonPage = /^\d{1,5}$/.test(query.lessonsPage ?? "") ? Number(query.lessonsPage) : 0;
+  const lessonsPage = Math.min(requestedLessonPage, lessonPages - 1);
+  const lessonRows = lessons.slice(lessonsPage * LESSON_PAGE_SIZE, (lessonsPage + 1) * LESSON_PAGE_SIZE);
   const hrefFor = (id: string) => `${sectionHref(base, query, { contentId: id })}#content-editor`;
 
   const lessonColumns: Column<Row>[] = [
@@ -79,9 +86,9 @@ export function ContentView(p: ViewProps) {
           ) : <p className="ap-card-note">Chưa có nội dung phù hợp trong kỳ này.</p>}
 
           <Card receipt eyebrow="Cloud" title="Phiên bản bài học đã đăng ký" note="Chỉ bài học đã công bố và được duyệt mới cho phép chấm bài cloud.">
-            <Table columns={lessonColumns} rows={rows(data.lessons)} caption="Bài học cloud" rowKey={(r, i) => `${str(r.lesson_id)}-${i}`} />
+            <Table columns={lessonColumns} rows={lessonRows} caption="Bài học cloud" rowKey={(r, i) => `${str(r.lesson_id)}-${lessonsPage * LESSON_PAGE_SIZE + i}`} />
+            <AdminPager base={base} query={query} page={lessonsPage} total={lessons.length} pageSize={LESSON_PAGE_SIZE} pageParam="lessonsPage" clear={[]} />
           </Card>
-          <Pager base={base} query={query} page={page} total={data.total} />
         </div>
 
         <aside id="content-editor" className="ap-stack ao-editor" aria-label="Biên tập nội dung">

@@ -237,7 +237,11 @@
 .ap-form fieldset { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .ap-form legend { padding: 0; margin-bottom: 4px; }
 .ap-check { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--ap-ink); }
-.ap-check input { width: 18px; height: 18px; accent-color: var(--ap-mauve); }
+.ap-check input[type="checkbox"] { display: grid; flex: 0 0 18px; place-content: center; box-sizing: border-box; width: 18px; height: 18px; margin: 0; appearance: none; -webkit-appearance: none; border: 1.5px solid var(--ap-muted); border-radius: 0; background: var(--ap-card); color: #fff; opacity: 1; }
+.ap-check input[type="checkbox"]::before { content: ""; width: 5px; height: 9px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0); }
+.ap-check input[type="checkbox"]:checked { border-color: var(--ap-mauve); background: var(--ap-mauve); }
+.ap-check input[type="checkbox"]:checked::before { transform: rotate(45deg) scale(1); }
+.ap-check input[type="checkbox"]:disabled { opacity: 1; }
 .ap-switch { position: relative; display: inline-flex; width: 36px; height: 20px; flex: none; }
 .ap-switch input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .ap-switch span { width: 100%; border-radius: 999px; background: var(--ap-line); transition: background-color .15s; }
@@ -282,11 +286,12 @@
 .ap-drawer-head h2 { margin: 0; font-size: 16px; font-weight: 800; }
 
 /* Focus-trapped editing dialogs keep long forms from expanding dashboard cards. */
-.ap-dialog-layer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: rgb(48 33 50 / 34%); }
-.ap-dialog { display: flex; flex-direction: column; width: min(620px, 100%); max-height: min(780px, calc(100dvh - 40px)); overflow: hidden; border: 1px solid var(--ap-line); border-radius: 24px; background: var(--ap-canvas); box-shadow: 0 24px 60px rgb(48 33 50 / 22%); }
+.ap-dialog-layer { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); background: rgb(48 33 50 / 42%); overscroll-behavior: contain; }
+.ap-dialog { display: flex; flex-direction: column; width: min(680px, 100%); max-height: min(900px, calc(100dvh - 40px)); overflow: hidden; border: 1px solid var(--ap-line); border-radius: 24px; background: var(--ap-canvas); box-shadow: 0 24px 60px rgb(48 33 50 / 28%); }
+.ap-dialog.is-wide { width: min(880px, 100%); }
 .ap-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px dashed var(--ap-line); }
 .ap-dialog-head h2 { margin: 0; font-size: 16px; font-weight: 800; }
-.ap-dialog-body { min-height: 0; padding: 20px; overflow-y: auto; scrollbar-width: none; }
+.ap-dialog-body { min-height: 0; padding: 24px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
 .ap-dialog-body::-webkit-scrollbar { display: none; }
 .ap-dialog-body > .ap-form { width: 100%; }
 .av-user-id { display: block; overflow-wrap: anywhere; word-break: break-word; }
@@ -356,6 +361,13 @@
   .ap-pagination { align-items: flex-start; }
   .ap-notification-panel { right: -52px; }
 }
+@media (max-width: 720px) {
+  .ap-dialog-layer { place-items: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .ap-dialog, .ap-dialog.is-wide { width: 100%; max-height: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom))); border-radius: 20px; }
+  .ap-dialog-head { padding: 14px 16px; }
+  .ap-dialog-head h2 { font-size: 15px; }
+  .ap-dialog-body { padding: 16px; }
+}
 /* Galaxy Z Fold cover screen and other very narrow phones. */
 @media (max-width: 360px) {
   .ap-shell { padding: 6px 8px 0; }
@@ -399,6 +411,8 @@
   .ap-root select:not([multiple])::picker(select), .pa-root select:not([multiple])::picker(select) {
     appearance: base-select; margin-top: 6px; padding: 6px; max-height: 320px; border: 1px solid var(--ap-line, #eaddd5); border-radius: 14px;
     background: #fff; box-shadow: 0 12px 32px rgb(48 33 50 / 14%); font-family: ApNunito, PaNunito, "Segoe UI", sans-serif;
+    /* Keep the picker below its select; avoid the UA largest-space flip. */
+    position-area: block-end span-inline-end; position-try-order: normal; position-try-fallbacks: none;
   }
   .ap-root select option, .pa-root select option { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; color: var(--ap-ink, #302132); cursor: pointer; }
   .ap-root select option:hover, .ap-root select option:focus-visible, .pa-root select option:hover { background: var(--ap-cream, #fbebdd); outline: 0; }
@@ -444,6 +458,75 @@
 .ap-live-update { position: fixed; left: 50%; bottom: 20px; z-index: 55; transform: translateX(-50%); min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--ap-mauve); color: #fff; font: inherit; font-size: 13px; font-weight: 800; box-shadow: var(--ap-shadow-strong); cursor: pointer; }
 @media (max-width: 720px) { .ap-live { order: 4; height: 28px; padding: 0 10px; } }
 @media (prefers-reduced-motion: reduce) { .ap-live.is-live i { animation: none; } }
+
+/* Keep the admin controls in one compact cluster so the title never gets
+   pushed out of the top bar on phones and foldable cover screens. */
+.ap-topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
+.ap-main, .ap-stack, .ap-topbar, .ap-card, .ap-grid, .ap-row { min-width: 0; }
+.ap-shell { min-height: 100dvh; }
+
+@media (max-width: 720px) {
+  .ap-topbar {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "menu context actions"
+      "search search search"
+      "range range range";
+    align-items: center;
+    gap: 10px 8px;
+  }
+  .ap-menu-toggle { grid-area: menu; width: 40px; height: 40px; }
+  .ap-context { grid-area: context; }
+  .ap-context h1 { overflow-wrap: anywhere; }
+  .ap-topbar-actions { grid-area: actions; gap: 6px; margin: 0; }
+  .ap-search { grid-area: search; order: initial; width: 100%; }
+  .ap-range { grid-area: range; order: initial; justify-self: start; }
+  .ap-live { order: initial; }
+  .ap-account-panel { width: min(280px, calc(100vw - 24px)); min-width: 0; }
+  .ap-notification-panel { position: fixed; top: max(68px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); width: auto; max-width: none; max-height: calc(100dvh - 84px); }
+  .ap-card-head { flex-wrap: wrap; }
+  .ap-card-head > * { min-width: 0; max-width: 100%; }
+  .ap-filter { display: flex; flex-wrap: wrap; }
+  .ap-filter .ap-field { min-width: min(100%, 140px); }
+}
+
+@media (max-width: 480px) {
+  .ap-shell { padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+  .ap-main { gap: 16px; padding-top: 4px; padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .ap-stack { gap: 16px; }
+  .ap-topbar { gap: 8px 6px; }
+  .ap-topbar-actions { gap: 5px; }
+  .ap-live { width: 32px; height: 32px; justify-content: center; padding: 0; font-size: 0; }
+  .ap-live i { width: 8px; height: 8px; }
+  .ap-icon-btn, .ap-account > summary { width: 38px; height: 38px; }
+  .ap-context span { font-size: 10px; line-height: 15px; }
+  .ap-context h1 { margin-top: 0; font-size: 18px; line-height: 24px; }
+  .ap-range a { padding: 6px 10px; }
+  .ap-card-head { align-items: stretch; }
+  .ap-card-head > .ap-row { width: 100%; }
+  .ap-form input:not([type="checkbox"]), .ap-form select, .ap-form textarea { max-width: 100%; min-width: 0; }
+  .ap-table.is-stack td { min-width: 0; overflow-wrap: anywhere; }
+  .ap-table.is-stack td > a, .ap-table.is-stack td > button { max-width: 55%; white-space: normal; }
+  .ap-page-jump { flex-wrap: wrap; }
+  .ap-drawer { left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom)); max-height: 88dvh; }
+  .ap-dialog-layer { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
+  .ap-dialog, .ap-dialog.is-wide { max-height: calc(100dvh - max(16px, env(safe-area-inset-top) + env(safe-area-inset-bottom))); border-radius: 16px; }
+  .ap-dialog-body { padding: 12px; }
+  .ap-live-update { bottom: max(20px, calc(env(safe-area-inset-bottom) + 10px)); max-width: calc(100vw - 24px); }
+}
+
+@media (max-width: 360px) {
+  .ap-shell { padding-top: max(6px, env(safe-area-inset-top)); }
+  .ap-topbar { grid-template-columns: 36px minmax(0, 1fr) auto; }
+  .ap-menu-toggle, .ap-icon-btn, .ap-account > summary { width: 36px; height: 36px; }
+  .ap-context h1 { font-size: 16px; line-height: 21px; }
+  .ap-topbar-actions { gap: 4px; }
+  .ap-range a { padding: 6px 8px; font-size: 10px; }
+  .ap-card-head { gap: 8px; }
+  .ap-btn { max-width: 100%; white-space: normal; text-align: center; }
+  .ap-notification-panel { left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right)); }
+}
 /* Sidebar/range navigations also drive the top progress bar (pure CSS via :has). */
 .ap-shell:has(.ap-nav-pending.is-pending) .ap-route-progress { opacity: 1; animation: ap-route 1.6s ease-out forwards; }
 .ap-shell:has(.ap-nav-pending.is-pending) #workspace-content { opacity: .72; transition: opacity .15s; }

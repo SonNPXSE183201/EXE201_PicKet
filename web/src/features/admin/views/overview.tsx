@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { AdminIcon } from "../ui/admin-icon";
+import { AdminPager } from "../ui/admin-pager";
 import { Bars, Card, Chip, Kpi, Table, Tile, formatNumber, relativeTime, type Column } from "../ui/paper";
 import { can, componentInfo, componentName, label, num, rows, statusTone, type Row, type ViewProps } from "./shared";
 import "./views.css";
 
 /* Figma › Admin Web › 02 · Tổng quan (146:5767). */
+const HEALTH_PAGE_SIZE = 5;
+
 export function OverviewView(p: ViewProps) {
   const { data, days } = p;
   const health = rows(data.health);
+  const requestedHealthPage = /^\d{1,5}$/.test(p.query.healthPage ?? "") ? Number(p.query.healthPage) : 0;
+  const healthPages = Math.max(1, Math.ceil(health.length / HEALTH_PAGE_SIZE));
+  const healthPage = Math.min(requestedHealthPage, healthPages - 1);
+  const visibleHealth = health.slice(healthPage * HEALTH_PAGE_SIZE, (healthPage + 1) * HEALTH_PAGE_SIZE);
   const degraded = health.filter((h) => !["ok", "healthy"].includes(String(h.status)));
   const daily = rows(data.dailyUsers);
   const values = daily.map((d) => num(d.value) ?? 0);
@@ -71,7 +78,8 @@ export function OverviewView(p: ViewProps) {
       <div className="ap-split">
         <Card receipt eyebrow="Probe gần nhất" title="Tình trạng dịch vụ"
           actions={can(p, "health") ? <Link className="ap-link" href="/admin/health">Xem sức khoẻ hệ thống</Link> : undefined}>
-          <Table columns={columns} rows={health} caption="Probe gần nhất của từng thành phần" rowKey={(r) => String(r.component)} />
+          <Table columns={columns} rows={visibleHealth} caption="Probe gần nhất của từng thành phần" rowKey={(r, i) => `${String(r.component)}-${healthPage * HEALTH_PAGE_SIZE + i}`} />
+          <AdminPager base="/admin" query={p.query} page={healthPage} total={health.length} pageSize={HEALTH_PAGE_SIZE} pageParam="healthPage" />
           <p className="ap-footnote"><AdminIcon name="sparkle" size={14} />Chưa có snapshot lịch sử cho KPI quyền và ticket; không suy ra tỷ lệ tăng trưởng từ số hiện tại.</p>
         </Card>
         {shortcuts.length > 0 && (

@@ -154,22 +154,24 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
           <nav className="ap-range" aria-label="Khoảng thời gian">
             {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
           </nav>
-          <AdminRealtime current={current} freezeCurrent={current === "users" && Boolean(params.get("userId"))} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
-          {visible("incidents") && (
-            <AdminNotificationMenu notices={notices} storageKey={`picket-admin-notices:${email ?? "staff"}`} />
-          )}
-          <details ref={account} className="ap-account">
-            <summary aria-label="Mở menu tài khoản">
-              {avatarUrl ? <img src={avatarUrl} alt="" referrerPolicy="no-referrer" /> : <span className="ap-avatar">{name.slice(0, 1)}</span>}
-              <AdminIcon name="chevron-down" size={14} />
-            </summary>
-            <div className="ap-account-panel">
-              <p>{name}<small>{email ?? "Tài khoản quản trị"}</small><small>{roleLabel || "Quản trị"}</small></p>
-              <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
-              <a href="https://picketfinance.com/"><AdminIcon name="arrow-up-right" size={16} />Trang giới thiệu</a>
-              <form action={signOut}><button type="submit"><AdminIcon name="logout" size={16} />Đăng xuất</button></form>
-            </div>
-          </details>
+          <div className="ap-topbar-actions">
+            <AdminRealtime current={current} freezeCurrent={current === "users" && Boolean(params.get("userId"))} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
+            {visible("incidents") && (
+              <AdminNotificationMenu notices={notices} storageKey={`picket-admin-notices:${email ?? "staff"}`} />
+            )}
+            <details ref={account} className="ap-account">
+              <summary aria-label="Mở menu tài khoản">
+                {avatarUrl ? <img src={avatarUrl} alt="" referrerPolicy="no-referrer" /> : <span className="ap-avatar">{name.slice(0, 1)}</span>}
+                <AdminIcon name="chevron-down" size={14} />
+              </summary>
+              <div className="ap-account-panel">
+                <p>{name}<small>{email ?? "Tài khoản quản trị"}</small><small>{roleLabel || "Quản trị"}</small></p>
+                <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
+                <a href="https://picketfinance.com/"><AdminIcon name="arrow-up-right" size={16} />Trang giới thiệu</a>
+                <form action={signOut}><button type="submit"><AdminIcon name="logout" size={16} />Đăng xuất</button></form>
+              </div>
+            </details>
+          </div>
         </header>
         <div id="workspace-content" className="ap-stack" tabIndex={-1} aria-busy={navigating}>{children}</div>
       </div>

@@ -204,3 +204,99 @@ footer { padding: 64px 0 32px; }
   .footer-grid { grid-template-columns: 1fr; }
   .footer-bottom .badge img { width: 112px; }
 }
+
+/* Mobile navigation is a compact disclosure menu. The desktop navigation and
+   login stay centred around the same brand layout above 720px. */
+.top { position: relative; z-index: 30; }
+.top .wrap { position: relative; }
+.top .mobile-nav { display: none; }
+.mobile-nav > summary { list-style: none; }
+.mobile-nav > summary::-webkit-details-marker { display: none; }
+.mobile-nav-icon { display: grid; gap: 4px; width: 20px; }
+.mobile-nav-icon i { display: block; height: 2px; border-radius: 2px; background: currentColor; transition: transform .15s ease, opacity .15s ease; }
+.mobile-nav[open] .mobile-nav-icon i:first-child { transform: translateY(6px) rotate(45deg); }
+.mobile-nav[open] .mobile-nav-icon i:nth-child(2) { opacity: 0; }
+.mobile-nav[open] .mobile-nav-icon i:last-child { transform: translateY(-6px) rotate(-45deg); }
+
+@media (max-width: 720px) {
+  .top { height: 64px; }
+  .top .wrap { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 12px; }
+  .top .desktop-nav, .top .top-login { display: none; }
+  .top .mobile-nav { display: block; justify-self: end; position: relative; }
+  .mobile-nav > summary { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--text); cursor: pointer; transition: color .15s ease, background-color .15s ease; }
+  .mobile-nav > summary:hover, .mobile-nav > summary:focus-visible, .mobile-nav[open] > summary { color: var(--primary); background: rgb(255 180 162 / 32%); }
+  .mobile-nav > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .top .mobile-site-nav { position: absolute; top: calc(100% + 8px); right: 0; z-index: 45; display: none; width: min(320px, calc(100vw - 24px)); max-height: calc(100dvh - 84px); overflow-y: auto; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); box-shadow: 0 16px 36px rgb(48 33 50 / 16%); }
+  .mobile-nav[open] .mobile-site-nav { display: grid; }
+  .top .mobile-site-nav a { display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 12px; font-size: 14px; font-weight: 800; white-space: normal; }
+  .top .mobile-site-nav a:hover, .top .mobile-site-nav a:focus-visible { color: var(--primary); background: rgb(255 180 162 / 32%); outline: 0; }
+  .top .mobile-site-nav .mobile-login { justify-content: center; margin-top: 4px; background: var(--primary); color: #fff; }
+  .top .mobile-site-nav .mobile-login:hover, .top .mobile-site-nav .mobile-login:focus-visible { background: #632654; color: #fff; }
+}
+
+/* Keep the hero paper and floating receipts inside narrow phone viewports. */
+@media (max-width: 520px) {
+  .hero { padding: 34px 0 48px; }
+  h1 { font-size: clamp(34px, 9vw, 42px); line-height: 1.02; letter-spacing: -1.2px; }
+  h2, .features h2 { font-size: clamp(28px, 7.5vw, 34px); letter-spacing: -.8px; }
+  .hero-grid { gap: 28px; }
+  .hero-grid > div:first-child { padding-right: 0; }
+  .hero p:not(.stamp-label) { font-size: 15px; }
+  .actions { align-items: flex-start; gap: 10px; }
+  .actions .badge { max-width: 100%; }
+  .actions .badge img { width: clamp(122px, 38vw, 145px); }
+  .actions > span { flex-basis: 100%; }
+  .chips { margin-top: 22px; gap: 8px; }
+  .chips span { white-space: normal; }
+  .pocket { height: 390px; overflow: hidden; border-radius: 32px 32px 32px 18px; }
+  .ticket.income, .ticket.expense { left: 8px; right: 8px; width: auto; max-width: 260px; margin-inline: auto; padding: 10px 12px; font-size: 11px; }
+  .ticket.income { top: auto; bottom: 82px; transform: rotate(3deg); }
+  .ticket.expense { bottom: 14px; transform: rotate(-3deg); }
+  .ticket b { overflow-wrap: anywhere; }
+  .hero-category { width: 44px; height: 44px; padding: 5px; border-radius: 13px; }
+  .hero-category.food { right: 8px; top: 20px; }
+  .hero-category.ride { right: 8px; top: 128px; }
+  .hero-category.cafe { left: 8px; bottom: 18px; }
+  .bloom { width: 76px; right: 0; bottom: -16px; }
+  .feature-scene { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; row-gap: 60px; }
+  .receipt { padding: 20px 16px; }
+  .receipt li { padding: 11px 0; }
+  .receipt li span { float: none; display: inline-block; margin-left: 8px; }
+  .receipt li small { margin-left: 0; }
+  .seal { width: 82px; height: 82px; right: 0; bottom: -42px; font-size: 7px; }
+  .seal b { font-size: 14px; }
+  .side-phone { width: clamp(112px, 38vw, 155px); height: auto; aspect-ratio: 1 / 2; }
+  .feature-category { display: none; }
+  .step-cards { gap: 20px; margin-top: 32px; }
+  .step-cards button { max-width: 100%; }
+  .download-ticket > div:first-child { min-width: 0; }
+  .download-ticket h2 { font-size: clamp(28px, 8vw, 34px); line-height: 1.08; }
+  .ticket-stub { min-width: 0; padding: 34px 20px; }
+  .ticket-stub img { width: min(120px, 42vw); }
+  .footer-grid { gap: 28px 16px; }
+  .footer-bottom { gap: 20px; }
+}
+
+@media (max-width: 360px) {
+  .wrap { width: calc(100% - 24px); }
+  .hero { padding-top: 28px; }
+  .hero p:not(.stamp-label) { font-size: 14px; }
+  .actions .badge img { width: 122px; }
+  .pocket { height: 360px; }
+  .phone { width: min(176px, 58vw); height: auto; aspect-ratio: 176 / 344; left: 50%; top: -18px; transform: translateX(-50%) rotate(-5deg); }
+  .phone-overlay { top: 78px; left: 12px; max-width: calc(100% - 24px); padding: 7px 10px; font-size: 10px; }
+  .ticket.income { bottom: 78px; }
+  .ticket.expense { bottom: 12px; }
+  .side-phone { width: min(128px, calc((100vw - 52px) / 2)); }
+  .stickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: min(100%, 220px); height: auto; margin: 20px auto 0; }
+  .stickers button { position: relative; left: auto; top: auto; width: 100%; height: auto; aspect-ratio: 1; transform: none; }
+  .stickers button:nth-child(n) { left: auto; top: auto; }
+  .extras section { padding: 20px 16px; }
+  .footer-grid { grid-template-columns: minmax(0, 1fr); }
+  .footer-bottom .store-badges { flex-wrap: wrap; width: 100%; }
+  .footer-bottom .badge img { width: 112px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-icon i { transition: none; }
+}
