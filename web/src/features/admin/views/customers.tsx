@@ -3,8 +3,10 @@ import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { mutateAdmin } from "../actions";
 import { AdminRecordForm } from "../components/admin-record-form";
+import { AdminDialog } from "../components/admin-dialog";
 import { AdminIcon } from "../ui/admin-icon";
-import { Bars, Button, Card, Chip, Field, Kpi, Table, formatDate, formatDateTime, formatNumber, relativeTime, type ChipTone, type Column } from "../ui/paper";
+import { AdminPager } from "../ui/admin-pager";
+import { Bars, Card, Chip, Field, Kpi, Table, formatDate, formatDateTime, formatNumber, relativeTime, type ChipTone, type Column } from "../ui/paper";
 import { can, label, num, rows, sectionHref, statusTone, str, type Row, type ViewProps } from "./shared";
 import "./views.css";
 import "./growth-customers.css";
@@ -21,17 +23,7 @@ function Footnote({ p, children }: { p: ViewProps; children?: React.ReactNode })
 }
 
 function Pager({ p, total, base }: { p: ViewProps; total: number; base: string }) {
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const keep = { ticketId: undefined as string | undefined };
-  return (
-    <nav className="ap-pagination" aria-label="Phân trang">
-      <span>{formatNumber(total)} bản ghi · Trang {p.page + 1} / {formatNumber(pages)}</span>
-      <span className="ap-row">
-        {p.page > 0 ? <Button href={sectionHref(base, p.query, { page: String(p.page - 1), ...keep })} variant="secondary">Trang trước</Button> : <span className="ap-btn is-secondary" aria-disabled="true">Trang trước</span>}
-        {p.page + 1 < pages ? <Button href={sectionHref(base, p.query, { page: String(p.page + 1), ...keep })} variant="coral">Trang sau</Button> : <span className="ap-btn is-coral" aria-disabled="true">Trang sau</span>}
-      </span>
-    </nav>
-  );
+  return <AdminPager base={base} query={p.query} page={p.page} total={total} pageSize={PAGE_SIZE} clear={["ticketId"]} />;
 }
 
 /* ---------- Tickets · Figma 11 (150:6644) ---------- */
@@ -258,8 +250,7 @@ export function BillingView(p: ViewProps) {
           ) : <p className="ap-card-note">Chưa có gói hỗ trợ nào đang hiệu lực.</p>}
           <p className="ap-card-note">Gói hỗ trợ không phải thuê bao Google và không được tính doanh thu. Không sửa trạng thái Google Play bằng tay.</p>
           {canGrant && (
-            <details className="ag-details">
-              <summary>Cấp gói cho người dùng</summary>
+            <AdminDialog title="Cấp gói hỗ trợ thủ công" trigger="Cấp gói cho người dùng" triggerClassName="ap-btn is-secondary">
               <form className="ap-form" action={mutateAdmin}>
                 <input type="hidden" name="action" value="grant" />
                 <input type="hidden" name="requestId" value={randomUUID()} />
@@ -274,7 +265,7 @@ export function BillingView(p: ViewProps) {
                   <SubmitButton className="ap-btn">Lưu quyền hỗ trợ</SubmitButton>
                 </fieldset>
               </form>
-            </details>
+            </AdminDialog>
           )}
         </Card>
       </div>

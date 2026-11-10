@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdminIcon } from "../ui/admin-icon";
+import { AdminPager } from "../ui/admin-pager";
 import { AdminRecordForm } from "../components/admin-record-form";
 import { Banner, Button, Card, Chip, Field, Table, Tile, Timeline, display, formatDateTime, formatNumber, relativeTime, type Column } from "../ui/paper";
 import { componentInfo, componentName, label, num, object, rows, sectionHref, statusTone, str, type Query, type Row, type ViewProps } from "./shared";
@@ -11,17 +12,7 @@ export const PAGE_SIZE = 25;
 export function Pager({ base, query, page, total }: { base: string; query: Query; page: number; total: unknown }) {
   const count = num(total);
   if (count === undefined) return null;
-  const pages = Math.max(1, Math.ceil(count / PAGE_SIZE));
-  const extra: Record<string, string | undefined> = { incidentId: undefined, contentId: undefined, partnerId: undefined };
-  return (
-    <nav className="ap-pagination" aria-label="Phân trang">
-      <span>{formatNumber(count)} bản ghi · Trang {page + 1} / {formatNumber(pages)}</span>
-      <span className="ap-row">
-        {page > 0 ? <Button href={sectionHref(base, query, { ...extra, page: String(page - 1) })} variant="secondary">Trang trước</Button> : <span className="ap-btn is-secondary" aria-disabled="true">Trang trước</span>}
-        {page + 1 < pages ? <Button href={sectionHref(base, query, { ...extra, page: String(page + 1) })} variant="coral">Trang sau</Button> : <span className="ap-btn is-coral" aria-disabled="true">Trang sau</span>}
-      </span>
-    </nav>
-  );
+  return <AdminPager base={base} query={query} page={page} total={count} pageSize={PAGE_SIZE} clear={["incidentId", "contentId", "partnerId"]} />;
 }
 
 /** Source / timezone / query-time footnote kept from the previous admin pages. */

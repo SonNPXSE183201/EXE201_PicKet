@@ -26,10 +26,18 @@ const stories = {
   },
 } as const;
 
-export function PaperAuthShell({ variant = "user", children }: { variant?: keyof typeof stories; children: ReactNode }) {
+export function PaperAuthShell({
+  variant = "user",
+  fixedViewport = false,
+  children,
+}: {
+  variant?: keyof typeof stories;
+  fixedViewport?: boolean;
+  children: ReactNode;
+}) {
   const story = stories[variant];
   return (
-    <div className="pa-root">
+    <div className={`pa-root${fixedViewport ? " is-fixed" : ""}`}>
       <a className="pa-skip" href="#auth-content">Đến biểu mẫu</a>
       <aside className="pa-pouch">
         <Link className="pa-brand" href={variant === "admin" ? "/login?next=/admin" : "/"} aria-label="Picket, trang chủ">

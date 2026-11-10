@@ -9,7 +9,7 @@ export default async function RegisterPage() {
   const { data } = await supabase.auth.getClaims();
   if (data?.claims) redirect("/dashboard");
   return (
-    <PaperAuthShell>
+    <PaperAuthShell fixedViewport>
       <RegisterForm />
     </PaperAuthShell>
   );

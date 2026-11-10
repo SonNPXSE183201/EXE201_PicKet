@@ -93,7 +93,7 @@ export function RegisterForm({ phoneEnabled = true }: { phoneEnabled?: boolean }
   }
 
   return (
-    <div className="auth-card">
+    <div className="auth-card auth-card-register">
       <header className="pa-head">
         <p className="pa-eyebrow">Tạo tài khoản Picket</p>
         <h1 className="pa-title">Tạo tài khoản</h1>

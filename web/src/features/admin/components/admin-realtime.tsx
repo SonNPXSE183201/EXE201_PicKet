@@ -23,13 +23,13 @@ const fallbackMs = 60_000;
 const warmBatch = 3;
 const warmGapMs = 350;
 
-export function AdminRealtime({ current, screens }: { current: AdminSection; screens: { section: AdminSection; href: string }[] }) {
+export function AdminRealtime({ current, screens, freezeCurrent = false }: { current: AdminSection; screens: { section: AdminSection; href: string }[]; freezeCurrent?: boolean }) {
   const router = useRouter();
   const [state, setState] = useState<State>("connecting");
   const [waiting, setWaiting] = useState(false);
   const currentRef = useRef(current);
   const stale = useRef(new Set<AdminSection>());
-  const refreshCurrent = useRef<() => void>(() => undefined);
+  const refreshCurrent = useRef<(force?: boolean) => void>(() => undefined);
   const screensKey = screens.map((s) => s.href).join("|");
 
   // Opening a screen that changed while it was hidden: show cache, then refresh.
@@ -63,8 +63,12 @@ export function AdminRealtime({ current, screens }: { current: AdminSection; scr
     let disposed = false;
     let deferred = false;
 
-    const refresh = () => {
+    const refresh = (force = false) => {
       if (disposed) return;
+      if (freezeCurrent && !force) {
+        setWaiting(true);
+        return;
+      }
       if (isEditing(document.activeElement as HTMLInputElement | null) || document.querySelector(".ap-date-pop")) {
         deferred = true;
         setWaiting(true);
@@ -112,7 +116,7 @@ export function AdminRealtime({ current, screens }: { current: AdminSection; scr
       document.removeEventListener("visibilitychange", onVisible);
       void supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [router, freezeCurrent]);
 
   return (
     <>
@@ -121,7 +125,7 @@ export function AdminRealtime({ current, screens }: { current: AdminSection; scr
         <i aria-hidden="true" />{state === "live" ? "Trực tiếp" : state === "offline" ? "Ngoại tuyến" : "Đang kết nối"}
       </span>
       {waiting && (
-        <button type="button" className="ap-live-update" onClick={() => { setWaiting(false); router.refresh(); }}>
+        <button type="button" className="ap-live-update" onClick={() => { setWaiting(false); refreshCurrent.current(true); }}>
           Có dữ liệu mới · Cập nhật
         </button>
       )}

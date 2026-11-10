@@ -10,6 +10,7 @@ import {
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { saveUserPermission, savePermissionGroup } from "../payment-actions";
+import { AdminDialog } from "./admin-dialog";
 import { AdminIcon } from "../ui/admin-icon";
 import { Banner, Card, Chip, Field, Kpi, Table, Timeline, formatDateTime, type ChipTone, type Column } from "../ui/paper";
 import "./modules.css";
@@ -94,17 +95,31 @@ export async function PaymentAdmin({
   }
   if (section === "payments") {
     const filters: Record<string, string> = {};
-    for (const k of ["id", "status", "before", "beforeId"])
+    for (const k of ["status", "before", "beforeId"])
       if (query[k]) filters[k] = query[k]!;
+    const search = query.search?.trim() ?? "";
+    const isUuid = (value: string) => /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
+    const exactUuid = isUuid(search) ? search : "";
+    const selectedId = isUuid(query.id ?? "") ? query.id! : exactUuid;
+    if (selectedId) filters.id = selectedId;
     const data = await api.adminPayments<{
       orders: Order[];
       events: OrderEvent[];
     }>(accessToken, filters);
+    const from = query.from ? Date.parse(`${query.from}T00:00:00+07:00`) : Number.NEGATIVE_INFINITY;
+    const to = query.to ? Date.parse(`${query.to}T23:59:59.999+07:00`) : Number.POSITIVE_INFINITY;
+    const orders = data.orders.filter((order) => {
+      const created = Date.parse(order.created_at);
+      const matchesDate = created >= from && created <= to;
+      const matchesId = !selectedId || order.id.toLowerCase() === selectedId.toLowerCase();
+      const matchesSearch = !search || (exactUuid ? order.id.toLowerCase() === exactUuid.toLowerCase() : `${order.order_code} ${order.user_id ?? ""} ${order.id}`.toLowerCase().includes(search.toLowerCase()));
+      return matchesDate && matchesId && matchesSearch;
+    });
     // Pending only lasts 15 minutes; past that it shows as "Đang xác minh"
     // until the worker re-reads PayOS and records the final state.
     const now = requestTime();
     const phase = (o: Order) => paymentOrderPhase(o, now);
-    const count = (...p: PaymentOrderPhase[]) => data.orders.filter((o) => p.includes(phase(o))).length;
+    const count = (...p: PaymentOrderPhase[]) => orders.filter((o) => p.includes(phase(o))).length;
     const columns: Column<Order>[] = [
       { key: "order_code", label: "Mã đơn", render: (o) => <Link className="am-link" href={`/admin/payments?id=${o.id}`}>#{o.order_code}</Link> },
       { key: "amount", label: "Số tiền", align: "right", render: (o) => <b>{formatVnd(o.amount)}</b> },
@@ -113,6 +128,12 @@ export async function PaymentAdmin({
       { key: "created_at", label: "Thời gian", muted: true, render: (o) => formatDateTime(o.created_at) },
     ];
     const last = data.orders.at(-1);
+    const nextParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) if (value && !["id", "before", "beforeId"].includes(key)) nextParams.set(key, value);
+    if (last) {
+      nextParams.set("before", last.created_at);
+      nextParams.set("beforeId", last.id);
+    }
     return (
       <>
         <section className="am-kpis is-four" aria-label="Tóm tắt đơn trong danh sách">
@@ -123,6 +144,11 @@ export async function PaymentAdmin({
         </section>
 
         <form className="ap-filter" method="get" aria-label="Lọc đơn thanh toán">
+          <Field label="Tìm mã đơn, UUID hoặc người dùng" grow>
+            <input name="search" type="search" maxLength={160} defaultValue={query.search} placeholder="Mã đơn, UUID hoặc User ID" />
+          </Field>
+          <Field label="Từ ngày" width={160}><DateField name="from" type="date" defaultValue={query.from} /></Field>
+          <Field label="Đến ngày" width={160}><DateField name="to" type="date" defaultValue={query.to} /></Field>
           <Field label="Trạng thái" width={200}>
             <select name="status" defaultValue={query.status ?? ""}>
               <option value="">Tất cả</option>
@@ -132,13 +158,15 @@ export async function PaymentAdmin({
           <button className="ap-btn" type="submit">Lọc</button>
         </form>
 
+        <p className="ap-card-note">Tìm theo UUID sẽ dò trực tiếp; từ khóa thường và khoảng ngày lọc lô 50 giao dịch đang xem. Dùng “Trang tiếp” để duyệt các lô cũ hơn.</p>
+
         <div className={data.events.length ? "ap-split-wide" : undefined}>
           <Card receipt eyebrow="PayOS" title="Giao dịch thanh toán">
-            <Table columns={columns} rows={data.orders} caption="Giao dịch thanh toán PayOS" selected={(o) => o.id === query.id} empty="Chưa có giao dịch." />
+            <Table columns={columns} rows={orders} caption="Giao dịch thanh toán PayOS" selected={(o) => o.id === query.id} empty="Chưa có giao dịch phù hợp." />
             {data.orders.length === 50 && last && (
               <nav className="ap-pagination" aria-label="Phân trang">
                 <span />
-                <Link className="ap-btn is-coral" href={`/admin/payments?before=${encodeURIComponent(last.created_at)}&beforeId=${last.id}`}>Trang tiếp</Link>
+                <Link className="ap-btn is-coral" href={`/admin/payments?${nextParams}`}>Trang tiếp</Link>
               </nav>
             )}
           </Card>
@@ -229,14 +257,16 @@ export async function PaymentAdmin({
         <div className="ap-grid ap-grid-2 am-groups">
           {groups.map((group) => (
             <Card key={group.id || "new"} compact className={group.id ? undefined : "am-new"}>
-              <details className="am-details" open={!group.id && data.groups.length === 0}>
-                <summary>
+              <AdminDialog title={group.id ? `Chỉnh sửa nhóm quyền · ${group.name}` : "Tạo nhóm quyền mới"}
+                triggerClassName="am-details-trigger" trigger={(
+                  <span className="am-details-summary">
                   <span>
                     <b>{group.name || "Tạo nhóm mới"}</b>
                     <small>{group.id ? `${group.permissions.length} quyền${userId && group.member ? " · user là thành viên" : ""}` : "Đặt tên và chọn quyền"}</small>
                   </span>
                   {group.id ? <Chip tone="lilac">{group.permissions.length}/{data.catalog.length}</Chip> : <Chip tone="coral" icon="plus">Mới</Chip>}
-                </summary>
+                  </span>
+                )}>
                 <form className="ap-form" action={savePermissionGroup}>
                   <fieldset disabled={!mfaVerified}>
                     <input type="hidden" name="action" value="save" />
@@ -271,7 +301,7 @@ export async function PaymentAdmin({
                     </fieldset>
                   </form>
                 )}
-              </details>
+              </AdminDialog>
             </Card>
           ))}
         </div>

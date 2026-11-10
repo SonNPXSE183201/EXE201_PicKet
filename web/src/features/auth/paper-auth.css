@@ -8,12 +8,16 @@
   --pa-canvas: #fff8ed; --pa-card: #fff; --pa-cream: #fbebdd; --pa-ink: #302132; --pa-muted: #72636e;
   --pa-mauve: #793268; --pa-mauve-hover: #632654; --pa-line: #eaddd5; --pa-coral: #ffb4a2; --pa-mint: #bce0b4;
   --pa-success: #166534; --pa-success-bg: #e8f5ef; --pa-danger: #9f2545;
-  min-height: 100vh; display: grid; grid-template-columns: minmax(0, 660px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 24px; padding: 16px;
+  box-sizing: border-box; min-height: 100vh; display: grid; grid-template-columns: minmax(0, 660px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 24px; padding: 16px;
   background: var(--pa-canvas); color: var(--pa-ink); font-family: PaNunito, "Segoe UI", system-ui, sans-serif; font-synthesis: none; -webkit-font-smoothing: antialiased;
 }
 .pa-root *, .pa-root *::before, .pa-root *::after { box-sizing: border-box; }
 .pa-root a { color: inherit; }
 .pa-root :focus-visible { outline: 2px solid var(--pa-mauve); outline-offset: 2px; }
+.pa-root .pa-row-text input:focus, .pa-root .pa-row-text input:focus-visible { border: 0; outline: 0; outline-offset: 0; box-shadow: none; }
+.pa-root.is-fixed { position: fixed; inset: 0; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; grid-template-rows: minmax(0, 1fr) auto; }
+.pa-root.is-fixed .pa-pouch { min-height: 0; }
+.pa-root.is-fixed .pa-main { min-height: 0; overflow: hidden; }
 .pa-skip { position: absolute; left: 16px; top: -48px; z-index: 10; padding: 10px 16px; border-radius: 999px; background: var(--pa-mauve); color: #fff; font-weight: 800; }
 .pa-skip:focus { top: 16px; }
 
@@ -105,6 +109,17 @@
 
 /* Legacy auth markup (forgot/reset password) inside the Paper shell */
 .pa-root .auth-card { width: min(420px, 100%); display: grid; gap: 14px; padding: 0; border: 0; background: none; box-shadow: none; }
+.pa-root .auth-card-register { gap: 18px; }
+.pa-root .auth-card-register .pa-head { gap: 10px; }
+.pa-root .auth-card-register .pa-tabs button { min-height: 42px; }
+.pa-root .auth-card-register .pa-form-wrap { gap: 20px; }
+.pa-root .auth-card-register .pa-fields { padding: 26px; }
+.pa-root .auth-card-register .pa-row { min-height: 68px; padding: 10px; }
+.pa-root .auth-card-register .pa-row + .pa-row { margin-top: 10px; padding-top: 16px; }
+.pa-root .auth-card-register .pa-rules { gap: 8px; }
+.pa-root .auth-card-register .pa-rules li { font-size: 13px; line-height: 20px; }
+.pa-root .auth-card-register .pa-btn { min-height: 54px; }
+.pa-root .auth-card-register .pa-meta { font-size: 13px; line-height: 20px; }
 .pa-root .auth-title { margin: 0; font-size: 22px; line-height: 29px; font-weight: 800; color: var(--pa-ink); }
 .pa-root .auth-copy, .pa-root .auth-card > p { margin: 0; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); }
 .pa-root .auth-form { display: grid; gap: 14px; padding: 22px; border-radius: 24px; background: var(--pa-card); box-shadow: 0 3px 10px rgb(48 33 51 / 7%); }
@@ -132,6 +147,10 @@
   .pa-cards { display: none; }
   .pa-art { width: 140px; right: 12px; bottom: -14px; }
   .pa-main { padding: 32px 12px 24px; place-items: start center; }
+  .pa-root.is-fixed { grid-template-rows: minmax(0, 1fr) auto; }
+  .pa-root.is-fixed .pa-pouch { display: none; }
+  .pa-root.is-fixed .pa-main { grid-row: 1; padding: 12px; place-items: center; }
+  .pa-root.is-fixed .pa-footer { grid-row: 2; }
 }
 /* Phones, Surface Duo single screen, Galaxy Z Fold */
 @media (max-width: 720px) {
@@ -143,10 +162,34 @@
   .pa-story p { display: none; }
   .pa-art { width: 104px; right: 4px; bottom: -10px; }
   .pa-main { padding: 24px 4px 16px; }
+  .pa-root.is-fixed .pa-main { padding: 8px 4px; }
   .pa-fields, .pa-otp-card { padding: 14px; border-radius: 20px; }
   .pa-otp { gap: 6px; }
   .pa-otp input { width: 40px; height: 48px; }
   .pa-footer { padding: 0 4px 4px; }
+}
+@media (max-height: 900px) {
+  .pa-root.is-fixed .pa-main { padding-block: clamp(8px, 2vh, 18px); }
+  .pa-root.is-fixed .auth-card-register { gap: 14px; }
+  .pa-root.is-fixed .auth-card-register .pa-head { gap: 8px; }
+  .pa-root.is-fixed .auth-card-register .pa-tabs button { min-height: 38px; }
+  .pa-root.is-fixed .auth-card-register .pa-fields { padding: 22px; }
+  .pa-root.is-fixed .auth-card-register .pa-row { min-height: 62px; padding: 8px; }
+  .pa-root.is-fixed .auth-card-register .pa-row + .pa-row { margin-top: 6px; padding-top: 12px; }
+  .pa-root.is-fixed .auth-card-register .pa-rules { gap: 6px; }
+  .pa-root.is-fixed .auth-card-register .pa-btn { min-height: 50px; }
+}
+@media (max-height: 780px) {
+  .pa-root.is-fixed .pa-main { padding-block: 6px; }
+  .pa-root.is-fixed .auth-card-register { gap: 10px; }
+  .pa-root.is-fixed .auth-card-register .pa-head { gap: 6px; }
+  .pa-root.is-fixed .auth-card-register .pa-tabs button { min-height: 34px; }
+  .pa-root.is-fixed .auth-card-register .pa-fields { padding: 16px; }
+  .pa-root.is-fixed .auth-card-register .pa-row { min-height: 52px; padding: 6px; }
+  .pa-root.is-fixed .auth-card-register .pa-row + .pa-row { margin-top: 4px; padding-top: 8px; }
+  .pa-root.is-fixed .auth-card-register .pa-rules { gap: 4px; }
+  .pa-root.is-fixed .auth-card-register .pa-btn { min-height: 44px; }
+  .pa-root.is-fixed .pa-footer { font-size: 10px; }
 }
 @media (max-width: 360px) {
   .pa-story { padding-right: 0; }
