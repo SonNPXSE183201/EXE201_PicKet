@@ -5,9 +5,11 @@ import type { WebReminder } from "@/core/finance/reminders";
 export function NotificationFeed({
   rows,
   owner,
+  selectedId,
 }: {
   rows: WebReminder[];
   owner: string;
+  selectedId?: string | null;
 }) {
   const [read, setRead] = useState<string[]>([]),
     [unreadOnly, setUnreadOnly] = useState(false),
@@ -24,6 +26,15 @@ export function NotificationFeed({
       }
     });
   }, [key]);
+  useEffect(() => {
+    if (!selectedId) return;
+    const selected = document.getElementById(
+      `notification-${encodeURIComponent(selectedId)}`,
+    );
+    if (!selected) return;
+    selected.scrollIntoView({ behavior: "smooth", block: "center" });
+    selected.focus({ preventScroll: true });
+  }, [selectedId]);
   function mark(id: string) {
     const next = [...new Set([...read, id])];
     setRead(next);
@@ -50,7 +61,12 @@ export function NotificationFeed({
         </label>
       </div>
       {visible.map((r) => (
-        <article className="notification-row" key={r.id}>
+        <article
+          className={`notification-row${selectedId === r.id ? " is-selected" : ""}`}
+          id={`notification-${encodeURIComponent(r.id)}`}
+          key={r.id}
+          tabIndex={-1}
+        >
           <div>
             <p className="eyebrow">
               {r.kind === "partner"

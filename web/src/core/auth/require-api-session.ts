@@ -1,8 +1,11 @@
 import { ApiError, PicketApiClient } from "@picket/api-client";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { cache } from "react";
 
 import { createClient } from "@/core/supabase/server";
+import { createFinanceFetch } from "@/core/finance/finance-fetch";
+import { invalidateFinanceCache } from "@/core/finance/finance-cache";
 import { workspaceRedirect } from "./workspace-policy";
 import { mockAdminPermissions, mockAdminPortal } from "./mock-admin-data";
 
@@ -295,7 +298,12 @@ export const requireApiSession = cache(async function requireApiSession(
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) redirect(loginPath);
 
-  const api = new PicketApiClient(apiBaseUrl);
+  const api = new PicketApiClient(apiBaseUrl, workspace === "user" ? {
+    fetch: createFinanceFetch(apiBaseUrl, accessToken, () => invalidateFinanceCache(accessToken), {
+      // A mutation must read current versions, never a cached pre-write value.
+      cacheReads: !(await headers()).has("next-action"),
+    }),
+  } : undefined);
   let access: Awaited<ReturnType<PicketApiClient["accountAccess"]>>;
   try {
     access = await api.accountAccess(accessToken);
