@@ -22,6 +22,10 @@ Trong Supabase Dashboard → Authentication → URL Configuration, thêm redirec
 
 ```text
 http://localhost:3000/auth/callback
+http://localhost:3000/auth/callback?next=/dashboard
+http://localhost:3000/auth/callback?next=/session
+http://localhost:3000/auth/callback?next=/reset-password
+http://localhost:3000/auth/reset-password
 ```
 
 Khi deploy, thêm callback của domain production, ví dụ:

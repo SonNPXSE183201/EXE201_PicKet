@@ -4,12 +4,12 @@ import { test } from 'node:test';
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 test('primary navigation excludes account utilities and prefetches routes', () => {
   const shell = read('src/core/ui/workspace-shell.tsx');
-  const primary = shell.split('const userLinks = [')[1].split('] as const')[0];
-  assert.doesNotMatch(primary, /\/profile|\/data|\/notifications|\/billing/);
-  assert.match(shell, /prefetch=\{true\}/);
-  assert.doesNotMatch(shell, /Không gian cá nhân/);
+  const primary = shell.split('const userGroups:')[1].split('const accountLinks')[0];
+  assert.doesNotMatch(primary, /\/data|\/notifications|\/billing/);
+  assert.match(primary, /\/profile/);
+  assert.match(shell, /prefetch=\{intent \? true : null\}/);
   assert.match(shell, /Mở menu tài khoản/);
-  assert.match(shell, /name="bell"/);
+  assert.match(shell, /<UserNotificationMenu/);
 });
 test('login uses a compact variant and short introductory copy', () => {
   const login = read('src/app/login/login-form.tsx');

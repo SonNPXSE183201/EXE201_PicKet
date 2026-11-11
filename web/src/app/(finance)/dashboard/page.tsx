@@ -9,16 +9,20 @@ import {
   walletBalances,
   vietnamDate,
 } from "@/core/finance/overview";
-import { WorkspaceShell, Icon } from "@/core/ui/workspace-shell";
+import { Icon } from "@/core/ui/workspace-shell";
 import { ReceiptCalendar } from "@/core/ui/receipt-calendar";
-import { FinanceRealtime } from "../(finance)/finance-realtime";
+import {
+  BalanceAmount,
+  BalancePrivacyProvider,
+  BalanceVisibilityToggle,
+} from "../balance-privacy";
 
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
-  const { api, accessToken, claims } = await requireApiSession();
+  const { api, accessToken } = await requireApiSession();
   const [{ profile }, { accounts }, transactions, query, { receipts }] =
     await Promise.all([
       api.currentProfile(accessToken),
@@ -39,15 +43,22 @@ export default async function DashboardPage({
   );
   const balances = walletBalances(accounts, transactions),
     summary = monthSummary(currencyTransactions, month);
+  const monthTransactionCount = currencyTransactions.filter(
+    (transaction) =>
+      !transaction.deletedAt &&
+      vietnamDate(transaction.occurredAt).slice(0, 7) === month,
+  ).length;
+  const monthlyNet = summary.income - summary.expense;
   const money = (amount: number) =>
-    profile.hideBalance
-      ? "••••••"
-      : profile.currencyCode === "VND"
-        ? formatVnd(amount)
-        : new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: profile.currencyCode,
-          }).format(amount);
+    profile.currencyCode === "VND"
+      ? formatVnd(amount)
+      : new Intl.NumberFormat("vi-VN", {
+          style: "currency",
+          currency: profile.currencyCode,
+        }).format(amount);
+  const totalBalance = currencyAccounts
+    .filter((account) => !account.archived && !account.deletedAt)
+    .reduce((sum, account) => sum + (balances[account.id] ?? 0), 0);
   const shift = (delta: number) => {
     const d = new Date(month + "-15T12:00:00Z");
     d.setUTCMonth(d.getUTCMonth() + delta);
@@ -55,22 +66,20 @@ export default async function DashboardPage({
   };
   const recent = transactions.filter((t) => !t.deletedAt).slice(0, 6);
   return (
-    <WorkspaceShell>
-      <main>
-        <FinanceRealtime userId={String(claims.sub)} />
+      <BalancePrivacyProvider initialHidden={profile.hideBalance}>
+        <div>
         <header className="overview-intro">
           <p>Chào {profile.displayName}</p>
           <h1>Tài chính của bạn</h1>
         </header>
         <section className="overview-balance" aria-label="Tổng số dư">
           <div className="overview-balance-content">
-            <p className="overview-balance-label">Tổng số dư · {profile.currencyCode}</p>
-            <strong>
-              {money(
-                currencyAccounts
-                  .filter((a) => !a.archived && !a.deletedAt)
-                  .reduce((sum, a) => sum + (balances[a.id] ?? 0), 0),
-              )}
+            <div className="overview-balance-heading">
+              <p className="overview-balance-label">Tổng số dư · {profile.currencyCode}</p>
+              <BalanceVisibilityToggle />
+            </div>
+            <strong id="overview-balance-value">
+              <BalanceAmount value={money(totalBalance)} />
             </strong>
             <Link href="/accounts" className="overview-balance-wallets">
               <Icon name="wallet" />
@@ -104,15 +113,30 @@ export default async function DashboardPage({
           </Link>
         </nav>
         <section className="overview-summary" aria-label="Thu chi tháng">
-          <article>
+          <article className="metric-income">
             <Icon name="transfer" />
             <p>Thu nhập</p>
-            <strong className="income">{money(summary.income)}</strong>
+            <strong className="income"><BalanceAmount value={money(summary.income)} /></strong>
           </article>
-          <article>
+          <article className="metric-expense">
             <Icon name="chart" />
             <p>Chi tiêu</p>
-            <strong className="expense">{money(summary.expense)}</strong>
+            <strong className="expense"><BalanceAmount value={money(summary.expense)} /></strong>
+          </article>
+          <article className="metric-transactions">
+            <Icon name="receipt" />
+            <p>Giao dịch</p>
+            <strong>{new Intl.NumberFormat("vi-VN").format(monthTransactionCount)}</strong>
+            <span>Khoản trong tháng</span>
+          </article>
+          <article className="metric-net">
+            <Icon name="wallet" />
+            <p>Chênh lệch</p>
+            <strong className={monthlyNet >= 0 ? "income" : "expense"}>
+              {monthlyNet > 0 ? "+" : monthlyNet < 0 ? "−" : ""}
+              <BalanceAmount value={money(Math.abs(monthlyNet))} />
+            </strong>
+            <span>Thu nhập trừ chi tiêu</span>
           </article>
         </section>
         <nav className="overview-actions" aria-label="Thao tác nhanh">
@@ -175,14 +199,14 @@ export default async function DashboardPage({
                     : row.kind === "expense"
                       ? "−"
                       : "↔ "}
-                  {profile.hideBalance
-                    ? "••••••"
-                    : new Intl.NumberFormat("vi-VN", {
+                  <BalanceAmount
+                    value={new Intl.NumberFormat("vi-VN", {
                         style: "currency",
                         currency:
                           accounts.find((a) => a.id === row.accountId)
                             ?.currencyCode ?? profile.currencyCode,
                       }).format(row.amount)}
+                  />
                 </strong>
               </div>
             ))
@@ -194,7 +218,7 @@ export default async function DashboardPage({
           )}
           initialMonth={month}
         />
-      </main>
-    </WorkspaceShell>
+        </div>
+      </BalancePrivacyProvider>
   );
 }

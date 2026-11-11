@@ -19,7 +19,7 @@ Dart API hoặc Git.
 | Supabase → Authentication → URL Configuration → Redirect URLs | `https://picket.51-79-207-154.sslip.io/auth/callback` | Next.js callback PKCE. |
 | Supabase → Redirect URLs | `com.picket.mobile://auth/callback` | Expo Android callback. |
 | Supabase → Redirect URLs | `com.picket.mobile://auth/reset-password` | Recovery trên Expo. |
-| Supabase → Redirect URLs (chỉ khi test Next local) | `http://localhost:3000/auth/callback` | Không dùng wildcard production. |
+| Supabase → Redirect URLs (chỉ khi test Next local) | `http://localhost:3000/auth/callback` và các callback `?next=/dashboard`, `?next=/session`, `?next=/reset-password` | Thêm đúng URL local đang được app gửi; không dùng wildcard production. |
 | `web/.env.local` | Các giá trị trong `web/.env.example`, `APP_BASE_URL=http://localhost:3000` | Chỉ có Supabase **publishable** key. |
 | `apps/mobile/.env.local` | Các giá trị trong `apps/mobile/.env.example` | Chỉ có Supabase **publishable** key. |
 | `deploy/.env.production` | `PICKET_WEB_DOMAIN`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | Compose tự đặt `APP_BASE_URL=https://${PICKET_WEB_DOMAIN}`. |
