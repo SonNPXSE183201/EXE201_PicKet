@@ -49,6 +49,8 @@ function harness() {
     react: { useState: state, useRef: (value: any) => { const index = cursor++; return slots[index] ??= { current: value }; }, useEffect: effect },
     "react/jsx-runtime": { jsx: (type: any, props: any) => ({ type, props }), jsxs: (type: any, props: any) => ({ type, props }) },
     "react-native": { View: "View", StyleSheet: { create: (s: any) => s }, AppState: { addEventListener: (_event: string, callback: typeof foreground) => { foreground = callback; return { remove() {} }; } }, Linking: { openURL: async (url: string) => { calls.push({ url }); } } },
+    "expo-web-browser": { openAuthSessionAsync: async (url: string) => { calls.push({ url }); return { type: "dismiss" }; }, openBrowserAsync: async (url: string) => { calls.push({ url }); } },
+    "expo-linking": { createURL: (path: string) => `com.picket.mobile://${path}` },
     "expo-router": { Redirect: "Redirect" }, "expo-crypto": { randomUUID: () => `request-${++uuid}` },
     "@picket/domain": { ...domain, formatVnd: (amount: number) => String(amount) },
     "@/core/api/client": { picketApi: api },

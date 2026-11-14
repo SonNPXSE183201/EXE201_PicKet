@@ -3,13 +3,13 @@
     "name": "Picket",
     "slug": "picket",
     "scheme": "com.picket.mobile",
-    "version": "1.0.17",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/picket-logo.png",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.picket.mobile",
-      "versionCode": 31,
+      "versionCode": 33,
       "adaptiveIcon": {
         "backgroundColor": "#FFF8ED",
         "foregroundImage": "./assets/picket-logo.png"
@@ -22,6 +22,7 @@
       "./plugins/with-safe-launcher-icon",
       "./plugins/with-network-pool-guard",
       "./plugins/with-current-activity-intent",
+      "./plugins/with-release-shrinking",
       [
         "expo-font",
         {
@@ -94,7 +95,8 @@
       ],
       "expo-sharing",
       "expo-iap",
-      "expo-localization"
+      "expo-localization",
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true

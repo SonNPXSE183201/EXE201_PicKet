@@ -67,3 +67,21 @@ test("does not finish a transaction when verification fails", async () => {
 
   assert.equal(finished, false);
 });
+
+import { defaultPlanId, planAction, productTier } from "./billing-policy";
+
+test("plans screen never preselects the plan the user already has", () => {
+  const ids = ["picket_plus_monthly", "picket_pro_monthly"];
+  assert.equal(defaultPlanId(ids, "plus", null), "picket_pro_monthly");
+  assert.equal(defaultPlanId(ids, "free", null), "picket_plus_monthly");
+  assert.equal(defaultPlanId(ids, "plus", "picket_plus_monthly"), "picket_plus_monthly");
+  assert.equal(defaultPlanId([], "free", null), null);
+  assert.equal(productTier("picket_pro_yearly"), "pro");
+});
+
+test("call to action follows the tier change", () => {
+  assert.equal(planAction("picket_plus_monthly", "plus"), "current");
+  assert.equal(planAction("picket_pro_monthly", "plus"), "upgrade");
+  assert.equal(planAction("picket_plus_yearly", "pro"), "switch");
+  assert.equal(planAction("picket_plus_monthly", "free"), "upgrade");
+});

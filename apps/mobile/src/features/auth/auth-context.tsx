@@ -22,6 +22,7 @@ import { secureAuthStorage } from "@/core/storage/secure-auth-storage";
 import { AuthCallbackError, parseAuthCallbackUrl } from "@/features/auth/auth-callback";
 import { recoverDeviceSession } from "@/features/auth/session-recovery";
 import { createAuthMutationQueue, signOutDeviceSession } from "@/features/auth/device-sign-out";
+import { nativeGoogleOutcome, shouldUseNativeGoogle } from "@/features/auth/google-sign-in-policy";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -55,6 +56,44 @@ const localModeStorageKey = "picket_local_mode_v1";
 
 let callbackExchange: Promise<boolean> | null = null;
 const mutateAuth = createAuthMutationQueue();
+
+let configuredGoogleClientId: string | undefined;
+
+async function loadGoogleSignin() {
+  try {
+    return (await import("@react-native-google-signin/google-signin")).GoogleSignin;
+  } catch {
+    // Expo Go and older binaries do not include the native module.
+    return null;
+  }
+}
+
+async function nativeGoogleIdToken(webClientId: string): Promise<string | null> {
+  const GoogleSignin = await loadGoogleSignin();
+  if (!GoogleSignin) return null;
+  let result;
+  try {
+    if (configuredGoogleClientId !== webClientId) {
+      GoogleSignin.configure({ webClientId });
+      configuredGoogleClientId = webClientId;
+    }
+    await GoogleSignin.hasPlayServices();
+    await GoogleSignin.signOut();
+    result = await GoogleSignin.signIn();
+  } catch (error) {
+    const outcome = nativeGoogleOutcome(error);
+    if (outcome === "fallback") return null;
+    if (outcome === "cancelled") {
+      throw new AuthCallbackError("Đăng nhập Google đã bị hủy hoặc không hoàn tất.");
+    }
+    throw error;
+  }
+  const outcome = nativeGoogleOutcome(result);
+  if (outcome === "cancelled") {
+    throw new AuthCallbackError("Đăng nhập Google đã bị hủy hoặc không hoàn tất.");
+  }
+  return outcome === "token" && result.type === "success" ? result.data.idToken : null;
+}
 
 async function exchangeCallbackUrl(url: string): Promise<boolean> {
   const client = supabase;
@@ -258,6 +297,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setRecovery(false);
       },
       async signInWithGoogle() {
+        const clientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim();
+        if (clientId && shouldUseNativeGoogle({ platform: Platform.OS, clientId })) {
+          const idToken = await nativeGoogleIdToken(clientId);
+          if (idToken) {
+            const { error } = await mutateAuth(() => requireClient().auth.signInWithIdToken({
+              provider: "google",
+              token: idToken,
+            }));
+            if (error) throw error;
+            return;
+          }
+        }
         const redirectTo = authCallbackUrl;
         const { data, error } = await mutateAuth(() => requireClient().auth.signInWithOAuth({
           provider: "google",
@@ -301,6 +352,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
           storageKey,
           storage: secureAuthStorage,
         }));
+        if (Platform.OS === "android") {
+          try {
+            const GoogleSignin = await loadGoogleSignin();
+            await GoogleSignin?.signOut();
+          } catch {
+            // Google cleanup must not prevent local sign-out.
+          }
+        }
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tokenVersion re-publishes the refreshed token

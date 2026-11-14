@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as domain from '@picket/domain';
+import * as googleSignInPolicy from './google-sign-in-policy';
 
 const phoneCalls:unknown[]=[];
 function provider(signInWithPassword:(credentials:domain.PasswordLoginCredentials)=>Promise<{error:Error|null}>){
@@ -19,6 +20,7 @@ function provider(signInWithPassword:(credentials:domain.PasswordLoginCredential
   '@/features/auth/phone-sign-in':{phoneSignInTokens:async(api:{phoneLogin:(p:string,w:string)=>Promise<{access_token:string;refresh_token:string}>},phone:string,password:string)=>{const s=await api.phoneLogin(phone,password);return {access_token:s.access_token,refresh_token:s.refresh_token};}},
   '@/core/storage/secure-auth-storage':{},'@/features/auth/auth-callback':{},'@/features/auth/session-recovery':{},
   '@/features/auth/device-sign-out':{createAuthMutationQueue:()=> (action:()=>unknown)=>action()},
+  '@/features/auth/google-sign-in-policy':googleSignInPolicy,
  };
  const exports={} as {AuthProvider:(props:unknown)=>{props:{value:{signIn:(identifier:string,password:string)=>Promise<void>}}}};
  const compiled=ts.transpileModule(readFileSync('src/features/auth/auth-context.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;

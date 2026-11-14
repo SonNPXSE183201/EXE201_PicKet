@@ -31,13 +31,13 @@ export default function VerifyEmailScreen() {
   }
 
   function verify() {
-    if (!/^\d{6,8}$/.test(token.trim())) return setMessage("Mã OTP cần từ 6 đến 8 chữ số.");
+    if (!/^\d{6}$/.test(token.trim())) return setMessage("Mã OTP gồm đúng 6 chữ số.");
     void run(() => verifySignup(email, token));
   }
 
   return (
     <AuthScreen title="Xác thực email" subtitle={t("verificationDestination",{email:email||t("email của bạn")})}>
-      <AuthField editable={!busy} keyboardType="number-pad" maxLength={8} onChangeText={setToken} onSubmitEditing={verify} placeholder="Mã OTP" value={token} />
+      <AuthField editable={!busy} keyboardType="number-pad" maxLength={6} onChangeText={(value) => setToken(value.replace(/\D/g, "").slice(0, 6))} onSubmitEditing={verify} placeholder="Mã OTP" value={token} />
       {message && <AuthMessage>{message}</AuthMessage>}
       <PrimaryButton busy={busy} label="Xác thực" onPress={verify} />
       <TextLink label="Gửi lại mã" onPress={() => void run(() => resendSignup(email), "Mã mới đã được gửi.")} />
