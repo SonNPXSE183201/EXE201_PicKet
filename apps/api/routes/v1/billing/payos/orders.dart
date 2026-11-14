@@ -15,7 +15,8 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
       final code = input is Map ? input['code'] : null;
       if (input is! Map ||
           input['sku'] is! String ||
-          input.keys.any((k) => k != 'sku' && k != 'code') ||
+          input.keys.any((k) => k != 'sku' && k != 'code' && k != 'client') ||
+          (input['client'] != null && input['client'] != 'app') ||
           (code != null &&
               (code is! String ||
                   !RegExp(r'^[A-Za-z0-9_-]{3,32}$').hasMatch(code)))) {
@@ -39,7 +40,7 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
           // new reservation is closed instead of opening a second link.
           await service.abandon(order['id'] as String);
         } else {
-          await service.create(order);
+          await service.create(order, app: input['client'] == 'app');
         }
       } on PayosException {
         return apiError(
