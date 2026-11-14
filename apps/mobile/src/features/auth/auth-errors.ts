@@ -1,8 +1,7 @@
 import { AuthError } from "@supabase/supabase-js";
 
 import { AuthCallbackError } from "@/features/auth/auth-callback";
-
-const passwordSymbols = "!@#$%^&*()_+-=[]{};':\"\\|,.<>/?`~";
+import { passwordRuleChecks } from "@/features/auth/password-rules";
 
 export function authErrorMessage(error: unknown): string {
   if (error instanceof AuthCallbackError) return error.message;
@@ -32,14 +31,11 @@ export function validateEmail(email: string): string | null {
     : "Email chưa hợp lệ.";
 }
 
+/** Full API rule: 12+ characters with lowercase, uppercase, digit and symbol. */
 export function validatePassword(password: string): string | null {
-  if (password.length < 12) return "Mật khẩu cần ít nhất 12 ký tự.";
-  if (
-    !/[a-z]/.test(password) ||
-    !/[A-Z]/.test(password) ||
-    !/\d/.test(password) ||
-    !Array.from(password).some((character) => passwordSymbols.includes(character))
-  ) {
+  const checks = passwordRuleChecks(password);
+  if (!checks.length) return "Mật khẩu cần ít nhất 12 ký tự.";
+  if (!checks.mixedCase || !checks.digit || !checks.symbol) {
     return "Mật khẩu cần chữ hoa, chữ thường, chữ số và ký tự đặc biệt.";
   }
   return null;

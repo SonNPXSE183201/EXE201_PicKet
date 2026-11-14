@@ -25,3 +25,7 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
+
+# React Native Firebase (SMS sign-up through Firebase Phone Auth).
+-keep class io.invertase.firebase.** { *; }
+-dontwarn io.invertase.firebase.**

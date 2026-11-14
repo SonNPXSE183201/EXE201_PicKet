@@ -8,6 +8,7 @@ import { PicketText } from "@/core/ui/picket-text";
 import { AccessiblePressable } from "@/core/ui/accessible-pressable";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { useAuth } from "./auth-context";
+import { isPasswordSetupRequiredError } from "./password-setup-gate";
 import {
   mobileAccessAllowed,
   cachedMobileAccessAllowed,
@@ -18,7 +19,7 @@ export const ACCESS_RECHECK_MS = 10 * 60 * 1000;
 
 /** Must wrap all owner data providers, including Billing and background sync. */
 export function MobileAccessBoundary({ children }: PropsWithChildren) {
-  const { session, signOut } = useAuth();
+  const { session, signOut, markPasswordSetupRequired } = useAuth();
   const { t } = useTranslation("auth");
   const { colors } = useAppTheme();
   const [verifiedToken, setVerifiedToken] = useState<string | null>(null);
@@ -28,9 +29,11 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const signOutRef = useRef(signOut);
+  const markSetupRef = useRef(markPasswordSetupRequired);
   useEffect(() => {
     signOutRef.current = signOut;
-  }, [signOut]);
+    markSetupRef.current = markPasswordSetupRequired;
+  }, [signOut, markPasswordSetupRequired]);
   const token = session?.access_token;
   const owner = session?.user.id;
   // Last successful verification (owner + time). Short trips to the home screen,
@@ -105,6 +108,12 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
         }
       } catch (error) {
         if (!active) return;
+        // No password yet (server-side check): the root gate shows create-password
+        // instead of signing out or blocking the account.
+        if (isPasswordSetupRequiredError(error)) {
+          markSetupRef.current?.();
+          return;
+        }
         if (
           error instanceof ApiError &&
           (error.status === 0 || error.status >= 500)

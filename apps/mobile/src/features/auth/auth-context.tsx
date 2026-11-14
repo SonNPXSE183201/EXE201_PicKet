@@ -23,6 +23,7 @@ import { AuthCallbackError, parseAuthCallbackUrl } from "@/features/auth/auth-ca
 import { recoverDeviceSession } from "@/features/auth/session-recovery";
 import { createAuthMutationQueue, signOutDeviceSession } from "@/features/auth/device-sign-out";
 import { nativeGoogleOutcome, shouldUseNativeGoogle } from "@/features/auth/google-sign-in-policy";
+import { passwordSetupMetadataKey, requiresPasswordSetup } from "@/features/auth/password-setup-gate";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -39,12 +40,20 @@ interface AuthContextValue {
   recovery: boolean;
   session: Session | null;
   localMode: boolean;
+  /** Email OTP account that has not chosen a password yet. */
+  passwordSetupRequired: boolean;
   enterLocalMode(): Promise<void>;
   leaveLocalMode(): Promise<void>;
   signIn(identifier: string, password: string): Promise<void>;
-  signUp(email: string, password: string, phone?: string): Promise<boolean>;
-  verifySignup(email: string, token: string): Promise<void>;
-  resendSignup(email: string): Promise<void>;
+  /** Sends (or resends) the 6-digit sign-up code; the account is flagged until a password is set. */
+  sendEmailCode(email: string): Promise<void>;
+  verifyEmailCode(email: string, token: string): Promise<void>;
+  /** The API reported "Password setup required": show create-password for this owner. */
+  markPasswordSetupRequired(): void;
+  /** Final step of email OTP sign-up: sets the password and clears the setup flag. */
+  completePasswordSetup(password: string): Promise<void>;
+  /** Applies Supabase tokens issued by the Picket API (SMS sign-up). */
+  applySessionTokens(tokens: { access_token: string; refresh_token: string }): Promise<void>;
   requestPasswordReset(email: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
   signInWithGoogle(): Promise<void>;
@@ -160,6 +169,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [localMode, setLocalMode] = useState(false);
   const [localModeLoading, setLocalModeLoading] = useState(true);
   const [recovery, setRecovery] = useState(false);
+  // Owner the API refused with "Password setup required" (metadata flag missing or edited).
+  const [serverSetupOwner, setServerSetupOwner] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -238,6 +249,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       recovery,
       session,
       localMode: localMode && !session,
+      passwordSetupRequired: requiresPasswordSetup(session, serverSetupOwner),
+      markPasswordSetupRequired() {
+        const owner = session?.user.id;
+        if (owner) setServerSetupOwner(owner);
+      },
       async enterLocalMode() {
         if (session) throw new Error("Sign out before switching to local mode.");
         await SecureStore.setItemAsync(localModeStorageKey, "true");
@@ -259,29 +275,35 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const { error } = await mutateAuth(() => requireClient().auth.signInWithPassword(credentials));
         if (error) throw error;
       },
-      async signUp(email, password, phone) {
-        const { data, error } = await mutateAuth(() => requireClient().auth.signUp({
+      async sendEmailCode(email) {
+        const { error } = await mutateAuth(() => requireClient().auth.signInWithOtp({
           email: email.trim().toLowerCase(),
-          password,
-          options: { emailRedirectTo: authCallbackUrl, ...(phone ? { data: { pending_phone: phone } } : {}) },
+          options: {
+            shouldCreateUser: true,
+            emailRedirectTo: authCallbackUrl,
+            data: { [passwordSetupMetadataKey]: true },
+          },
         }));
         if (error) throw error;
-        return data.session === null;
       },
-      async verifySignup(email, token) {
+      async verifyEmailCode(email, token) {
         const { error } = await mutateAuth(() => requireClient().auth.verifyOtp({
           email: email.trim().toLowerCase(),
           token: token.trim(),
-          type: "signup",
+          type: "email",
         }));
         if (error) throw error;
       },
-      async resendSignup(email) {
-        const { error } = await requireClient().auth.resend({
-          type: "signup",
-          email: email.trim().toLowerCase(),
-          options: { emailRedirectTo: authCallbackUrl },
-        });
+      async completePasswordSetup(password) {
+        const { error } = await mutateAuth(() => requireClient().auth.updateUser({
+          password,
+          data: { [passwordSetupMetadataKey]: false },
+        }));
+        if (error) throw error;
+        setServerSetupOwner(null);
+      },
+      async applySessionTokens(tokens) {
+        const { error } = await mutateAuth(() => requireClient().auth.setSession(tokens));
         if (error) throw error;
       },
       async requestPasswordReset(email) {
@@ -352,6 +374,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           storageKey,
           storage: secureAuthStorage,
         }));
+        setServerSetupOwner(null);
         if (Platform.OS === "android") {
           try {
             const GoogleSignin = await loadGoogleSignin();
@@ -363,7 +386,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tokenVersion re-publishes the refreshed token
-    [loading, localMode, localModeLoading, recovery, requireClient, session, tokenVersion],
+    [loading, localMode, localModeLoading, recovery, requireClient, serverSetupOwner, session, tokenVersion],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import * as policy from "./google-sign-in-policy";
+import * as passwordSetupGate from "./password-setup-gate";
 
 function provider({ platform = "android", clientId = "web-client", unavailable = false,
   result = { type: "success", data: { idToken: "id-token" } } as unknown,
@@ -36,6 +37,7 @@ function provider({ platform = "android", clientId = "web-client", unavailable =
     "@/core/storage/secure-auth-storage": {}, "@/features/auth/session-recovery": {},
     "@/features/auth/auth-callback": { AuthCallbackError },
     "@/features/auth/google-sign-in-policy": policy,
+    "@/features/auth/password-setup-gate": passwordSetupGate,
     "@/features/auth/device-sign-out": {
       createAuthMutationQueue: () => async (action: () => unknown) => {
         inMutation = true;

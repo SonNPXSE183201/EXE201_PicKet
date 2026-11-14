@@ -7,7 +7,7 @@ import { authEn, authVi } from "../../core/i18n/auth-resources";
 import { createAppI18n } from "../../core/i18n/instance";
 
 test("auth screens and mapped validation errors have complete vi/en copy",()=>{
-  const paths=["features/billing/payos-billing-screen.tsx","app/(auth)/login.tsx","app/(auth)/register.tsx","app/(auth)/forgot-password.tsx","app/(auth)/verify-email.tsx","app/auth/reset-password.tsx","app/auth/callback.tsx","features/auth/auth-errors.ts","features/auth/auth-context.tsx"];
+  const paths=["features/billing/payos-billing-screen.tsx","app/(auth)/login.tsx","app/(auth)/register.tsx","app/(auth)/forgot-password.tsx","app/(auth)/verify-email.tsx","app/(auth)/verify-code.tsx","features/auth/create-password-screen.tsx","features/auth/auth-figma.tsx","features/auth/password-rules.ts","features/auth/signup-errors.ts","features/auth/phone-input.ts","app/auth/reset-password.tsx","app/auth/callback.tsx","features/auth/auth-errors.ts","features/auth/auth-context.tsx"];
   const missing=new Set<string>();
   for(const path of paths){
     const source=ts.createSourceFile(path,readFileSync(resolve("src",path),"utf8"),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
