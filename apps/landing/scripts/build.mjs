@@ -26,7 +26,7 @@ const versionAssets = async (html) => {
 };
 const html = renderRelease(await readFile(path.join(root,'site','index.html'),'utf8'), release);
 await writeFile(path.join(output, 'index.html'), await versionAssets(html));
-for (const page of ['privacy.html', 'account-deletion.html']) {
+for (const page of ['privacy.html', 'account-deletion.html', 'terms.html']) {
   // Policy pages share the landing header/footer, including the APK link token.
   await writeFile(path.join(output, page), await versionAssets(renderRelease(await readFile(path.join(root, 'site', page), 'utf8'), release)));
 }

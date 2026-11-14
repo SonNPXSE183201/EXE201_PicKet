@@ -1,2 +1,24 @@
-.analytics-choice{position:fixed;left:20px;bottom:20px;z-index:5;width:min(460px,calc(100% - 40px));padding:20px;border:1px solid #94818d;border-radius:18px;background:#fffcf5;color:#302132;font:14px/1.6 Nunito,sans-serif;box-shadow:0 8px 30px #30213212}
-.analytics-choice p{margin:0 0 14px}.analytics-choice a{text-decoration:underline}.analytics-choice>div{display:flex;flex-wrap:wrap;gap:8px}.analytics-choice button{min-height:44px;padding:10px 16px;border:1px solid #793268;border-radius:22px;font:inherit;font-weight:700;background:#793268;color:white}.analytics-choice button[data-decline]{background:transparent;color:#793268}.analytics-settings{font:inherit;min-height:44px;padding:8px 0;border:0;background:transparent;color:inherit;text-decoration:underline;cursor:pointer}
+.analytics-backdrop{position:fixed;inset:0;z-index:50;background:rgb(48 33 50 / 42%);backdrop-filter:blur(3px)}
+.analytics-locked,.analytics-locked body{overflow:hidden}
+.analytics-choice{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:51;width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;padding:30px 30px 26px;border-radius:28px;background:var(--surface,#fffcf5);color:var(--text,#302132);font:600 15px/1.55 Nunito,sans-serif;box-shadow:0 20px 45px rgb(48 33 50 / 22%);animation:analytics-in .28s cubic-bezier(.2,.8,.2,1)}
+.analytics-choice:before{content:'';position:absolute;inset:9px;border:1.5px dashed rgb(121 50 104 / 32%);border-radius:21px;pointer-events:none}
+.analytics-choice .analytics-stamp{display:inline-block;margin:0 0 14px;padding:5px 12px;border:1.5px dashed var(--primary,#793268);border-radius:8px;color:var(--primary,#793268);font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;transform:rotate(-1.5deg)}
+.analytics-choice h2{margin:0 0 10px;font-size:26px;line-height:1.15;letter-spacing:-.6px;font-weight:800;color:var(--text,#302132)}
+.analytics-choice h2 em{position:relative;color:var(--primary,#793268);font-style:normal}
+.analytics-choice h2 em:after{content:'';position:absolute;left:0;right:0;bottom:-6px;height:6px;border-top:3px solid var(--coral,#ffb4a2);border-radius:50%}
+.analytics-choice p{margin:0 0 14px;color:var(--muted,#72636e)}
+.analytics-choice ul{display:grid;gap:10px;margin:0 0 16px;padding:0;list-style:none}
+.analytics-choice li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:var(--elevated,#fbebdd);color:var(--text,#302132);font-size:14px;line-height:1.45}
+.analytics-choice li i{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--surface,#fffcf5);color:var(--primary,#793268);font-style:normal;font-weight:800;font-size:14px}
+.analytics-choice .analytics-link{display:inline-block;margin-bottom:18px;color:var(--primary,#793268);font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.analytics-choice .analytics-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.analytics-choice button{min-height:50px;padding:12px 18px;border:2px solid var(--primary,#793268);border-radius:999px;font:800 15px Nunito,sans-serif;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.analytics-choice button[data-decline]{background:var(--surface,#fffcf5);color:var(--primary,#793268)}
+.analytics-choice button[data-accept]{background:var(--primary,#793268);color:var(--on-camera,#fff)}
+.analytics-choice button:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgb(121 50 104 / 18%)}
+.analytics-choice button:focus-visible{outline:3px solid var(--coral,#ffb4a2);outline-offset:3px}
+.analytics-choice .analytics-note{margin:14px 0 0;font-size:13px;text-align:center}
+.analytics-settings{font:inherit;min-height:44px;padding:8px 0;border:0;background:transparent;color:inherit;text-decoration:underline;cursor:pointer}
+@keyframes analytics-in{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
+@media (max-width:520px){.analytics-choice{padding:24px 20px 20px}.analytics-choice h2{font-size:22px}.analytics-choice .analytics-actions{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.analytics-choice{animation:none}.analytics-choice button{transition:none}}

@@ -18,7 +18,7 @@ try {
   $archivePath = Join-Path (Resolve-Path -LiteralPath $ArtifactDirectory).Path 'landing.tar.gz'
   $release = Get-Content -Raw apps/landing/dist/release.json | ConvertFrom-Json
   # Package explicit public files only, keeping previous APKs out of this archive.
-  tar -czf $archivePath -C apps/landing/dist index.html privacy.html account-deletion.html release.json launch-assets "downloads/$($release.filename)" "downloads/$($release.filename).sha256"
+  tar -czf $archivePath -C apps/landing/dist index.html privacy.html account-deletion.html terms.html release.json launch-assets "downloads/$($release.filename)" "downloads/$($release.filename).sha256"
   if ($LASTEXITCODE) { throw 'Packaging failed' }
   $remoteId = [guid]::NewGuid().ToString('N')
   $remoteArchive = "/tmp/picket-landing-$remoteId.tar.gz"

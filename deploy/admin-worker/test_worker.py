@@ -97,6 +97,20 @@ class ReleaseReadbackTests(unittest.TestCase):
             rpc.assert_called_once()
             self.assertEqual(rpc.call_args.args[1]['p_source'], 'landing_probe')
 
+    def test_landing_probe_sends_full_manifest_so_a_new_build_is_recorded(self):
+        from unittest.mock import MagicMock
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = (
+            b'{"version":"1.0.18","versionCode":32,"sha256":"' + b'a' * 64 + b'","bytes":5,'
+            b'"filename":"picket-1.0.18-32-x.apk","abi":"arm64-v8a","minSdk":24,"downloadUrl":"/d"}')
+        with patch.dict(worker.os.environ, {'PLAY_TRACK_READBACK': 'false'}),                 patch.object(worker.urllib.request, 'urlopen', return_value=response),                 patch.object(worker, 'call_rpc') as rpc:
+            worker.release_readback()
+        row = rpc.call_args.args[1]['p_rows'][0]
+        self.assertEqual(row['version'], '1.0.18')
+        self.assertEqual(row['filename'], 'picket-1.0.18-32-x.apk')
+        self.assertEqual(row['minSdk'], 24)
+        self.assertNotIn('downloadUrl', row)
+
     def test_readback_failure_never_breaks_the_cycle_and_sends_a_user_agent(self):
         with patch.object(worker, 'release_readback', side_effect=OSError('403')):
             worker.safe_release_readback()

@@ -280,8 +280,10 @@ def release_readback():
     request = urllib.request.Request('https://picketfinance.com/release.json', headers={'Accept': 'application/json', 'Cache-Control': 'no-cache', 'User-Agent': WORKER_UA})
     with urllib.request.urlopen(request, timeout=15) as response:
         manifest = json.loads(response.read(65536))
+    # The full manifest lets the registry record a newly deployed (newer) landing build.
+    fields = ('version', 'versionCode', 'sha256', 'bytes', 'filename', 'abi', 'minSdk', 'packageName', 'publishedAt', 'minSupportedVersionCode')
     call_rpc('release_readback', {'p_source': 'landing_probe', 'p_rows': [{
-        'versionCode': manifest.get('versionCode'), 'sha256': manifest.get('sha256'), 'bytes': manifest.get('bytes')}]})
+        key: manifest.get(key) for key in fields if manifest.get(key) is not None}]})
     if os.getenv('PLAY_TRACK_READBACK') != 'true':
         return
     import google.auth
