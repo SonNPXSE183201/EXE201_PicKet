@@ -198,6 +198,14 @@ function createMockApiClient(): PicketApiClient {
       ] };
     },
     async adminRevenueAdjust() {return {};},
+    async adminPlanLimits() {
+      return { limits: [
+        { plan: "free", ocrFallbackDailyLimit: 3, revision: 1, updatedAt: mockAgo(72) },
+        { plan: "plus", ocrFallbackDailyLimit: 30, revision: 1, updatedAt: mockAgo(72) },
+        { plan: "pro", ocrFallbackDailyLimit: 100, revision: 1, updatedAt: mockAgo(72) },
+      ], history: [] };
+    },
+    async savePlanLimit() {return {};},
     async adminPromotions() {
       const base = { description: null, channels: ["payos"], per_user_limit: 1, priority: 0, play_offer_id: null, revision: 1, audit: [{ id: 1, reason: "Tạo chiến dịch", created_at: mockAgo(72) }] };
       return { catalog: MOCK_CATALOG, promotions: [

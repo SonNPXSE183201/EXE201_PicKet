@@ -1,7 +1,10 @@
+import { RevenueBars, dailyColumns } from "../components/revenue-bars";
+import { REVENUE_SOURCE_LABELS } from "../components/revenue-labels";
 import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { mutateAdmin } from "../actions";
+import { savePlanLimitAction } from "../payment-actions";
 import { AdminRecordForm } from "../components/admin-record-form";
 import { AdminDialog } from "../components/admin-dialog";
 import { AdminIcon } from "../ui/admin-icon";
@@ -165,6 +168,9 @@ const tierTone: Record<string, ChipTone> = { pro: "coral", plus: "lilac", free: 
 
 export function BillingView(p: ViewProps) {
   const { data, mfaVerified, role } = p;
+  const plans = p.billingFinance?.plans;
+  const ledger = p.billingFinance?.revenue;
+  const ledgerDaily = ledger ? dailyColumns(ledger.series, p.days, p.billingFinance!.today) : null;
   const entitlements = rows(data.rows);
   const total = num(data.total) ?? entitlements.length;
   const grants = rows(data.grants);
@@ -214,11 +220,53 @@ export function BillingView(p: ViewProps) {
   return (
     <>
       <div className="ap-grid ap-grid-4">
-        <Kpi icon="wallet" tone="lilac" label="Pro đang hiệu lực" value={formatNumber(count((r) => r.tier === "pro" && r.active === true))} note={`${pageNote} · đã xác minh với Google`} />
-        <Kpi icon="wallet" tone="blue" label="Plus đang hiệu lực" value={formatNumber(count((r) => r.tier === "plus" && r.active === true))} note={`${pageNote} · theo quyền Play`} />
+        <Kpi icon="wallet" tone="lilac" label="Pro đang hiệu lực" value={formatNumber(plans ? plans.pro : count((r) => r.tier === "pro" && r.active === true))} note={plans ? "Mọi nguồn: Google Play, PayOS, hỗ trợ" : `${pageNote} · chỉ Google Play`} />
+        <Kpi icon="wallet" tone="blue" label="Plus đang hiệu lực" value={formatNumber(plans ? plans.plus : count((r) => r.tier === "plus" && r.active === true))} note={plans ? "Mọi nguồn: Google Play, PayOS, hỗ trợ" : `${pageNote} · chỉ Google Play`} />
         <Kpi icon="heart" tone="mint" label="Gói hỗ trợ thủ công" value={formatNumber(grants.length)} note="Cấp bởi nhân sự, có hạn" />
         <Kpi icon="alert" tone="coral" label="Chưa xác định" value={formatNumber(count((r) => r.is_test === null || r.is_test === undefined))} note={`${pageNote} · chưa rõ license test`} />
       </div>
+
+      {ledger && ledgerDaily && (
+        <Card receipt eyebrow={`${p.days} ngày gần nhất`} title="Doanh thu theo ngày" actions={<Chip tone="success">PayOS + Google Play</Chip>}>
+          {ledgerDaily.columns.some((c) => c.total > 0) ? (
+            <RevenueBars columns={ledgerDaily.columns} sources={ledgerDaily.sources} />
+          ) : <p className="ap-card-note">Chưa có khoản thu đã xác nhận trong kỳ.</p>}
+          <div className="ag-stat-row">
+            <div><p className="ag-money">{money(ledger.confirmedVnd, "VND")}</p><span className="ap-card-note">Doanh thu ròng · VND</span></div>
+            {ledger.bySource.map((s) => <div key={s.source}><p className="ag-money">{money(s.confirmed, "VND")}</p><span className="ap-card-note">{REVENUE_SOURCE_LABELS[s.source] ?? s.source} · {s.charges} khoản thu</span></div>)}
+            {ledger.unconverted.map((u) => <div key={u.currency}><p className="ag-money">{money(u.amount, u.currency)}</p><span className="ap-card-note">{u.currency} · chưa quy đổi VND</span></div>)}
+          </div>
+        </Card>
+      )}
+
+      {p.planLimits && (
+        <Card receipt eyebrow="Cấu hình" title="Hạn mức lượt quét OCR cloud theo gói" actions={<Chip tone="outline">24 giờ gần nhất</Chip>}>
+          <p className="ap-card-note">Số lượt OCR cloud mỗi tài khoản được dùng trong 24 giờ. Thay đổi có hiệu lực ngay cho cả kiểm tra hạn mức lẫn số lượt hiển thị trên app. Cần quyền <b>Quản lý hạn mức theo gói</b> và xác thực MFA.</p>
+          {p.query.limitSaved && <p className="am-message" role="status">Đã lưu hạn mức.</p>}
+          {p.query.limitError && <p className="am-error" role="alert">Chưa lưu được. Kiểm tra quyền, MFA, số lượt (0–10000) và lý do (ít nhất 5 ký tự).</p>}
+          <div className="plan-limit-grid">
+            {p.planLimits.limits.map((row) => (
+              <form key={row.plan} action={savePlanLimitAction} className="plan-limit-form">
+                <fieldset disabled={!mfaVerified || !p.planLimits!.canManage}>
+                  <input type="hidden" name="plan" value={row.plan} />
+                  <input type="hidden" name="revision" value={row.revision} />
+                  <b>{label(row.plan)}</b>
+                  <Field label="Lượt / 24 giờ"><input name="limit" type="number" min={0} max={10000} step={1} required defaultValue={row.ocrFallbackDailyLimit} /></Field>
+                  <Field label="Lý do thay đổi"><input name="reason" minLength={5} maxLength={500} required placeholder="Ví dụ: tăng hạn mức khuyến mãi" /></Field>
+                  <SubmitButton className="ap-btn">Lưu</SubmitButton>
+                </fieldset>
+              </form>
+            ))}
+          </div>
+          {!!p.planLimits.history.length && (
+            <ol className="am-log">
+              {p.planLimits.history.slice(0, 5).map((h, i) => (
+                <li key={i}><b>{label(h.plan)}: {h.before ?? "—"} → {h.after}</b><small>{formatDateTime(h.createdAt)} · {h.reason}</small></li>
+              ))}
+            </ol>
+          )}
+        </Card>
+      )}
 
       <div className="ag-split">
         {data.financialAccess === true ? (

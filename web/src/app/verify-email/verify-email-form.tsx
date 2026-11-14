@@ -6,15 +6,17 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { PicketApiClient } from "@picket/api-client";
 
 import { createClient } from "@/core/supabase/client";
+import { useTurnstileGate } from "@/core/security/turnstile-widget";
 import { AdminIcon } from "@/features/admin/ui/admin-icon";
 import { OtpInput } from "@/features/auth/components/paper-fields";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 /* Figma › User Web › W2 Nhập mã xác thực. */
-export function VerifyEmailForm({ email }: { email: string }) {
+export function VerifyEmailForm({ email, siteKey }: { email: string; siteKey?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const gate = useTurnstileGate(siteKey);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; info?: boolean } | null>(null);
   const [cooldown, setCooldown] = useState(45);
@@ -48,6 +50,12 @@ export function VerifyEmailForm({ email }: { email: string }) {
     if (!/^\d{6}$/.test(token)) return setMessage({ text: "Nhập đủ 6 chữ số trong email." });
     setBusy(true);
     setMessage(null);
+    const blocked = await gate.check();
+    if (blocked) {
+      setMessage({ text: blocked });
+      setBusy(false);
+      return;
+    }
     try {
       const { error } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
       if (error) {
@@ -68,6 +76,12 @@ export function VerifyEmailForm({ email }: { email: string }) {
     if (busy || cooldown) return;
     setBusy(true);
     setMessage(null);
+    const blocked = await gate.check();
+    if (blocked) {
+      setMessage({ text: blocked });
+      setBusy(false);
+      return;
+    }
     try {
       const { error } = await supabase.auth.resend({
         type: "signup",
@@ -102,6 +116,7 @@ export function VerifyEmailForm({ email }: { email: string }) {
           </p>
         </div>
         {message && <p className={`pa-message${message.info ? " is-info" : ""}`} role={message.info ? "status" : "alert"}>{message.text}</p>}
+        {gate.widget}
         <button className="pa-btn" disabled={busy} type="submit">{busy ? "Đang xác nhận..." : "Xác nhận"}</button>
         <Link className="pa-link" href="/register">Đổi email</Link>
       </form>

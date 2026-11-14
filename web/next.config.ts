@@ -1,7 +1,22 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+import { buildCsp } from "./src/core/security/csp";
 
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{
+      source: "/:path*",
+      headers: [
+        { key: "Content-Security-Policy", value: buildCsp({
+          apiUrl: process.env.NEXT_PUBLIC_API_URL,
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          dev: process.env.NODE_ENV !== "production",
+        }) },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+        // Caddy owns X-Content-Type-Options, Referrer-Policy and X-Frame-Options.
+      ],
+    }];
+  },
   output: "standalone",
   outputFileTracingRoot: path.resolve(process.cwd(), ".."),
   turbopack: {

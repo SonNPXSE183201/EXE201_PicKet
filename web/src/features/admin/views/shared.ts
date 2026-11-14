@@ -16,6 +16,23 @@ export type ViewProps = {
   mfaVerified: boolean;
   days: number;
   page: number;
+  /** Revenue ledger + active plans across Google Play, PayOS and manual grants (billing screen). */
+  billingFinance?: {
+    today: string;
+    revenue?: {
+      confirmedVnd: number;
+      unconverted: { currency: string; amount: number }[];
+      bySource: { source: string; confirmed: number; charges: number }[];
+      series: { period: string; source: string; amount: number; entries: number }[];
+    };
+    plans?: { plus: number; pro: number; bySource: { source: string; tier: string; users: number }[] };
+  };
+  /** Daily cloud-OCR limit per plan, editable with the plans.manage permission. */
+  planLimits?: {
+    limits: { plan: string; ocrFallbackDailyLimit: number; revision: number; updatedAt: string }[];
+    history: { plan: string; before: number | null; after: number; reason: string; createdAt: string }[];
+    canManage: boolean;
+  };
   /** First name for greetings, derived from the staff email. */
   greetingName?: string;
 };
@@ -78,4 +95,14 @@ export const componentName = (key: unknown) => componentInfo[str(key)]?.name ?? 
 export function firstName(email: unknown) {
   const local = str(email).split("@")[0].split(/[._-]+/)[0];
   return local ? local[0].toUpperCase() + local.slice(1) : undefined;
+}
+
+/** Range and today's date (Vietnam) for the billing revenue card; kept out of render functions. */
+export function billingWindow(days: number) {
+  const now = Date.now();
+  return {
+    from: new Date(now - days * 86_400_000).toISOString(),
+    to: new Date(now + 86_400_000).toISOString(),
+    today: new Date(now + 7 * 3600_000).toISOString().slice(0, 10),
+  };
 }

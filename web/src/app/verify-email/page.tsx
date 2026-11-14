@@ -1,3 +1,4 @@
+import { turnstileSiteKey } from "@/core/security/turnstile";
 import { redirect } from "next/navigation";
 
 import { PaperAuthShell } from "@/features/auth/components/paper-auth-shell";
@@ -12,7 +13,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirect("/register");
   return (
     <PaperAuthShell>
-      <VerifyEmailForm email={email} />
+      <VerifyEmailForm siteKey={turnstileSiteKey()} email={email} />
     </PaperAuthShell>
   );
 }

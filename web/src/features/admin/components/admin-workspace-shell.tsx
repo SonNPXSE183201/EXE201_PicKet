@@ -14,20 +14,23 @@ import "../ui/admin-paper.css";
    backend (revenue, payments, announcements, promotions, permissions) sit in
    the group they belong to. */
 const groups: { title: string; sections: AdminSection[] }[] = [
-  { title: "Khách hàng", sections: ["billing", "revenue", "payments", "users", "tickets"] },
+  { title: "Tài chính", sections: ["finance", "revenue", "payments", "billing"] },
+  { title: "Khách hàng", sections: ["users", "tickets"] },
   { title: "Tăng trưởng", sections: ["acquisition", "engagement", "ocr"] },
   { title: "Vận hành", sections: ["health", "incidents", "releases", "announcements"] },
   { title: "Nội dung", sections: ["content", "partners", "promotions"] },
   { title: "Hệ thống", sections: ["integrations", "audit", "staff", "permissions", "settings", "exports"] },
 ];
 export const sectionIcons: Record<AdminSection, string> = {
-  overview: "home", users: "users", tickets: "mail", billing: "wallet", revenue: "chart", payments: "receipt",
+  overview: "home", finance: "chart", users: "users", tickets: "mail", billing: "wallet", revenue: "chart", payments: "receipt",
   acquisition: "chart", engagement: "calendar", ocr: "receipt", health: "shield", incidents: "alert", releases: "grid",
   announcements: "bell", content: "note", partners: "heart", promotions: "sparkle", integrations: "bolt", audit: "list",
   staff: "lock", permissions: "shield", settings: "filter", exports: "download", security: "shield",
 };
 const navigationTitles: Partial<Record<AdminSection, string>> = { billing: "Doanh số theo ngày", acquisition: "Truy cập và lượt tải" };
 const ranges = ["7", "30", "90"] as const;
+/* The 7/30/90 day switch only applies to dashboards that read `days`. */
+const daysSections = new Set<AdminSection>(["overview", "acquisition", "engagement", "billing", "ocr", "health", "incidents"]);
 
 export function AdminWorkspaceShell({ children, role, permissions, email, avatarUrl, notices = [], mfaVerified }: {
   children: ReactNode; role: string | null; permissions: readonly string[]; email?: string | null; avatarUrl?: string | null; notices?: AdminNotice[]; mfaVerified?: boolean;
@@ -126,7 +129,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
           })}
         </nav>
         <div className={`ap-security${mfaVerified === false ? " is-unverified" : ""}`}>
-          <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
+          {visible("security") && <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>}
           <p><span className="ap-dot" />{mfaVerified === false ? "MFA chưa xác minh" : "MFA đã xác minh"}{roleLabel ? ` · ${roleLabel}` : ""}</p>
         </div>
       </aside>
@@ -151,9 +154,9 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
               <kbd className="ap-kbd" aria-hidden="true">/</kbd>
             </form>
           )}
-          <nav className="ap-range" aria-label="Khoảng thời gian">
+          {daysSections.has(current) && <nav className="ap-range" aria-label="Khoảng thời gian">
             {ranges.map((r) => <Link key={r} href={rangeHref(r)} aria-current={days === r ? "true" : undefined}>{r} ngày<NavPending /></Link>)}
-          </nav>
+          </nav>}
           <div className="ap-topbar-actions">
             <AdminRealtime current={current} freezeCurrent={current === "users" && Boolean(params.get("userId"))} screens={(Object.keys(adminSections) as AdminSection[]).filter(visible).map((section) => ({ section, href: adminSections[section].href }))} />
             {visible("incidents") && (
@@ -166,7 +169,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
               </summary>
               <div className="ap-account-panel">
                 <p>{name}<small>{email ?? "Tài khoản quản trị"}</small><small>{roleLabel || "Quản trị"}</small></p>
-                <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>
+                {visible("security") && <Link href="/admin/security"><AdminIcon name="shield" size={16} />Bảo mật &amp; MFA</Link>}
                 <a href="https://picketfinance.com/"><AdminIcon name="arrow-up-right" size={16} />Trang giới thiệu</a>
                 <form action={signOut}><button type="submit"><AdminIcon name="logout" size={16} />Đăng xuất</button></form>
               </div>

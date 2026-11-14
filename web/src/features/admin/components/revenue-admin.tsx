@@ -7,6 +7,8 @@ import { adjustRevenue } from "../payment-actions";
 import { AdminIcon } from "../ui/admin-icon";
 import { AdminPager } from "../ui/admin-pager";
 import { Banner, Card, Chip, Drawer, Field, Kpi, Table, formatDateTime, formatNumber, type ChipTone, type Column } from "../ui/paper";
+import { RevenueBars } from "./revenue-bars";
+import { bucketKey, bucketKeys, bucketLabel, bucketTitle } from "../finance-period";
 import "./modules.css";
 
 type Query = Record<string, string | undefined>;
@@ -25,6 +27,8 @@ type Summary = {
     refunded: number;
   }[];
   series: { period: string; source: string; amount: number; entries: number }[];
+  from: string;
+  to: string;
 };
 type Entry = {
   id: number;
@@ -54,10 +58,8 @@ type EntryList = {
   hasMore?: boolean;
 };
 
-export const REVENUE_SOURCE_LABELS: Record<string, string> = {
-  payos: "PayOS",
-  google_play: "Google Play",
-};
+import { REVENUE_SOURCE_LABELS } from "./revenue-labels";
+export { REVENUE_SOURCE_LABELS };
 export const REVENUE_STATUS_LABELS: Record<string, string> = {
   confirmed: "Đã xác nhận",
   estimated: "Tạm tính",
@@ -112,17 +114,20 @@ export async function RevenueAdmin({ query }: { query: Query }) {
   const selected = query.id ? list.entries.find((e) => String(e.id) === query.id) : undefined;
   const bySource = (source: string) => summary.bySource.find((s) => s.source === source);
 
-  // Stacked columns: one per period, one segment per source.
-  const periods = [...new Set(summary.series.map((r) => r.period))].sort();
+  // One point per day of the filtered range (months when the range is long), even without revenue.
+  const vnDay = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+  const rangeStart = vnDay(summary.from);
+  const rangeEnd = vnDay(new Date(new Date(summary.to).getTime() - 1).toISOString());
+  const spanDays = (Date.parse(`${rangeEnd}T00:00:00Z`) - Date.parse(`${rangeStart}T00:00:00Z`)) / 86_400_000 + 1;
+  const bucket = spanDays > 120 ? "month" : "day";
   const sources = [...new Set(summary.series.map((r) => r.source))];
-  const stacks = periods.map((period) => {
+  const stacks = bucketKeys(bucket, rangeStart, rangeEnd).map((key) => {
     const parts = sources.map((source) => ({
       source,
-      amount: summary.series.filter((r) => r.period === period && r.source === source).reduce((t, r) => t + r.amount, 0),
+      amount: summary.series.filter((r) => r.source === source && bucketKey(bucket, r.period.slice(0, 10)) === key).reduce((t, r) => t + r.amount, 0),
     }));
-    return { period, parts, total: parts.reduce((t, p) => t + p.amount, 0) };
+    return { key, parts, total: parts.reduce((t, p) => t + p.amount, 0), label: bucketLabel(bucket, key), title: bucketTitle(bucket, key) };
   });
-  const maxTotal = Math.max(1, ...stacks.map((c) => c.total));
 
   const columns: Column<Entry>[] = [
     { key: "id", label: "#", render: (e) => <Link className="am-link" href={`/admin/revenue?${new URLSearchParams({ ...filters, ...(page ? { page: String(page) } : {}), id: String(e.id) })}`}>{e.id}</Link> },
@@ -182,22 +187,8 @@ export async function RevenueAdmin({ query }: { query: Query }) {
 
       <div className="ap-split-wide">
         <Card receipt eyebrow="Theo thời gian" title="Doanh thu theo nguồn">
-          {stacks.length ? (
-            <>
-              <div className="am-stack-chart" role="img" aria-label={`Biểu đồ cột chồng theo nguồn, ${stacks.length} kỳ, cao nhất ${formatVnd(maxTotal)}`}>
-                {stacks.map((c) => (
-                  <div key={c.period} className="am-stack-col" title={`${periodLabel(c.period)}: ${formatVnd(c.total)}`}>
-                    <div className="am-stack-bar" style={{ height: `${Math.max(4, (c.total / maxTotal) * 100)}%` }}>
-                      {c.parts.map((p) => <span key={p.source} style={{ flexGrow: p.amount, background: SOURCE_COLORS[p.source] ?? "var(--ap-blue)" }} />)}
-                    </div>
-                    <small>{periodLabel(c.period)}</small>
-                  </div>
-                ))}
-              </div>
-              <ul className="am-legend">
-                {sources.map((s) => <li key={s}><i style={{ background: SOURCE_COLORS[s] ?? "var(--ap-blue)" }} />{REVENUE_SOURCE_LABELS[s] ?? s}</li>)}
-              </ul>
-            </>
+          {stacks.some((c) => c.total > 0) ? (
+            <RevenueBars columns={stacks} sources={sources} />
           ) : <p className="ap-card-note">Chưa có khoản thu trong kỳ.</p>}
         </Card>
         <Card receipt eyebrow="Tổng hợp" title="Theo nguồn">

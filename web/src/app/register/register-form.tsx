@@ -6,6 +6,8 @@ import { FormEvent, useMemo, useState } from "react";
 import { normalizePhoneNumber } from "@picket/domain";
 
 import { createClient } from "@/core/supabase/client";
+import { GoogleIdButton } from "@/features/auth/components/google-id-button";
+import { useTurnstileGate } from "@/core/security/turnstile-widget";
 import { passwordValidationMessage } from "@/core/auth/password";
 import { FieldGroup, FieldRow, PasswordRow } from "@/features/auth/components/paper-fields";
 
@@ -20,10 +22,12 @@ const rules = [
 /* Figma › User Web › W1 Đăng ký bằng email, plus the phone option the backend
    supports (same flow as mobile: the code goes to email, the phone is attached
    after verification). */
-export function RegisterForm({ phoneEnabled = true }: { phoneEnabled?: boolean }) {
+export function RegisterForm({ phoneEnabled = true, siteKey, googleClientId }: { phoneEnabled?: boolean; siteKey?: string; googleClientId?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const gate = useTurnstileGate(siteKey);
   const [busy, setBusy] = useState(false);
+  const [googleUnavailable, setGoogleUnavailable] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<"email" | "phone">("email");
   const [password, setPassword] = useState("");
@@ -49,6 +53,12 @@ export function RegisterForm({ phoneEnabled = true }: { phoneEnabled?: boolean }
 
     setBusy(true);
     setMessage(null);
+    const blocked = await gate.check();
+    if (blocked) {
+      setMessage(blocked);
+      setBusy(false);
+      return;
+    }
     const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard`;
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -120,11 +130,20 @@ export function RegisterForm({ phoneEnabled = true }: { phoneEnabled?: boolean }
           {rules.map((r) => <li key={r.text} className={r.ok(password) ? "is-ok" : undefined}>{r.text}</li>)}
         </ul>
         {message && <p className="pa-message" id="register-message" role="alert">{message}</p>}
+        {gate.widget}
         <button className="pa-btn" disabled={busy} type="submit">{busy ? "Đang tạo..." : "Tạo tài khoản"}</button>
       </form>
 
       <div className="pa-divider">hoặc</div>
-      <button className="pa-btn is-secondary" disabled={busy} onClick={signUpWithGoogle} type="button">Đăng ký nhanh bằng Google</button>
+      {googleClientId && !googleUnavailable ? (
+        <GoogleIdButton googleClientId={googleClientId} disabled={busy}
+          onSuccess={() => { router.replace("/dashboard"); router.refresh(); }}
+          onError={() => {
+            setMessage("Không mở được đăng ký Google. Vui lòng thử lại.");
+            setGoogleUnavailable(true);
+          }}
+          onUnavailable={() => setGoogleUnavailable(true)} />
+      ) : <button className="pa-btn is-secondary" disabled={busy} onClick={signUpWithGoogle} type="button">Đăng ký nhanh bằng Google</button>}
       <p className="pa-meta">Tìm hiểu cách Picket xử lý dữ liệu trong <a href="https://picketfinance.com/privacy.html">Chính sách quyền riêng tư</a>.</p>
       <p className="pa-meta">Đã có tài khoản? <Link href="/login">Đăng nhập</Link></p>
     </div>

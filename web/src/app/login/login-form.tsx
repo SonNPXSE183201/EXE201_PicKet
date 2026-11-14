@@ -7,10 +7,14 @@ import { PicketApiClient } from "@picket/api-client";
 import { passwordLoginCredentials } from "@picket/domain";
 
 import { createClient } from "@/core/supabase/client";
+import { GoogleIdButton } from "@/features/auth/components/google-id-button";
+import { useTurnstileGate } from "@/core/security/turnstile-widget";
 import { AdminIcon } from "@/features/admin/ui/admin-icon";
 import { FieldGroup, FieldRow, OtpInput, PasswordRow } from "@/features/auth/components/paper-fields";
 
 interface LoginFormProps {
+  googleClientId?: string;
+  siteKey?: string;
   initialError?: string;
   /** Staff portal variant (Figma › Admin Web › Đăng nhập). */
   admin?: boolean;
@@ -22,10 +26,12 @@ interface LoginFormProps {
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export function LoginForm({ initialError, admin = false, next = "/session", pinAvailable = false }: LoginFormProps) {
+export function LoginForm({ googleClientId, siteKey, initialError, admin = false, next = "/session", pinAvailable = false }: LoginFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const gate = useTurnstileGate(siteKey);
   const [busy, setBusy] = useState(false);
+  const [googleUnavailable, setGoogleUnavailable] = useState(false);
   const [message, setMessage] = useState<string | null>(initialError ?? null);
   const [factorId, setFactorId] = useState<string | null>(null);
   const destination = next.startsWith("/") && !next.startsWith("//") ? next : "/session";
@@ -65,6 +71,12 @@ export function LoginForm({ initialError, admin = false, next = "/session", pinA
     }
     setBusy(true);
     setMessage(null);
+    const blocked = await gate.check();
+    if (blocked) {
+      setMessage(blocked);
+      setBusy(false);
+      return;
+    }
 
     try {
       if (credentials.phone) {
@@ -185,6 +197,7 @@ export function LoginForm({ initialError, admin = false, next = "/session", pinA
           <PasswordRow />
         </FieldGroup>
         {notice}
+        {gate.widget}
         <button className="pa-btn" disabled={busy} type="submit">{busy ? "Đang xử lý..." : admin ? "Tiếp tục" : "Đăng nhập"}</button>
         <Link className="pa-link" href="/forgot-password">Quên mật khẩu?</Link>
       </form>
@@ -194,7 +207,18 @@ export function LoginForm({ initialError, admin = false, next = "/session", pinA
       ) : (
         <>
           <div className="pa-divider">hoặc</div>
-          <button className="pa-btn is-secondary" disabled={busy} onClick={signInWithGoogle} type="button">
+          {googleClientId && !googleUnavailable ? (
+            <GoogleIdButton googleClientId={googleClientId} disabled={busy}
+              onSuccess={async () => {
+                setMessage(null);
+                if (!(await needsMfa())) finish();
+              }}
+              onError={() => {
+                setMessage("Không mở được đăng nhập Google. Vui lòng thử lại.");
+                setGoogleUnavailable(true);
+              }}
+              onUnavailable={() => setGoogleUnavailable(true)} />
+          ) : <button className="pa-btn is-secondary" disabled={busy} onClick={signInWithGoogle} type="button">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.2 3-7.4Z" />
               <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 .9-3.4.9-2.6 0-4.8-1.7-5.6-4H3.1v2.6A10 10 0 0 0 12 22Z" />
@@ -202,7 +226,7 @@ export function LoginForm({ initialError, admin = false, next = "/session", pinA
               <path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.9 5.4L6.4 10c.8-2.3 3-4 5.6-4Z" />
             </svg>
             Tiếp tục với Google
-          </button>
+          </button>}
           <p className="pa-meta">Chưa có tài khoản? <Link href="/register">Đăng ký</Link></p>
         </>
       )}
