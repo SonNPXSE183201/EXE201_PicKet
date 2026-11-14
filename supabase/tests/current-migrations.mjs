@@ -13,6 +13,7 @@ const suites = [
   "app-announcements",
   "app-releases",
   "contact-methods-otp",
+  "auth-verification-settings",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",
