@@ -446,6 +446,8 @@ class SupabaseGateway {
       'billing_plan_summary',
       'plan_limits_list',
       'plan_limits_save',
+      'auth_verification_settings_get',
+      'auth_verification_settings_save',
       'revenue_entries',
       'revenue_adjust',
       'promotion_list',
