@@ -858,8 +858,8 @@ export class PicketApiClient {
   paymentCustomer(accessToken:string,id?:string):Promise<import('@picket/domain').PaymentCustomer> {
     return this.request(`/v1/billing/payos/${id?`order?id=${encodeURIComponent(id)}`:'orders'}`,{headers:this.authHeaders(accessToken)});
   }
-  paymentCheckout(accessToken:string,sku:string,key:string,code?:string):Promise<import('@picket/domain').PaymentCustomer> {
-    return this.request('/v1/billing/payos/orders',{method:'POST',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},body:JSON.stringify(code?{sku,code}:{sku})});
+  paymentCheckout(accessToken:string,sku:string,key:string,code?:string,client?:'app'):Promise<import('@picket/domain').PaymentCustomer> {
+    return this.request('/v1/billing/payos/orders',{method:'POST',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},body:JSON.stringify({sku,...(code?{code}:{}),...(client?{client}:{})})});
   }
   paymentAction(accessToken:string,id:string,action:'refresh'|'cancel'):Promise<import('@picket/domain').PaymentCustomer> {
     return this.request(`/v1/billing/payos/order?id=${encodeURIComponent(id)}`,{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({action})});
@@ -898,6 +898,12 @@ export class PicketApiClient {
   }
   saveRelease(accessToken:string,release:Record<string,unknown>,reason:string):Promise<Record<string,unknown>> {
     return this.request('/v1/admin/releases',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify({release,reason})});
+  }
+  adminPlanLimits<T=Record<string,unknown>>(accessToken:string):Promise<T> {
+    return this.request('/v1/admin/plan-limits',{headers:this.authHeaders(accessToken)});
+  }
+  savePlanLimit(accessToken:string,body:{plan:'free'|'plus'|'pro';limit:number;revision:number;reason:string}):Promise<Record<string,unknown>> {
+    return this.request('/v1/admin/plan-limits',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
   }
   adminPromotions<T=Record<string,unknown>>(accessToken:string):Promise<T> {
     return this.request('/v1/admin/promotions',{headers:this.authHeaders(accessToken)});

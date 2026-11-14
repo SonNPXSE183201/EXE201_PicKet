@@ -198,3 +198,49 @@
 /* Money values in a 5-up KPI row: scale with the card so they never clip. */
 .am-kpis .ap-kpi { min-width: 0; container-type: inline-size; }
 .am-kpis .ap-kpi-value { font-size: clamp(20px, 12cqi, 34px); line-height: 1.2; overflow-wrap: anywhere; }
+
+/* Finance report (Tài chính) */
+.fin-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.fin-tabs { position: relative; display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--ap-cream); }
+.fin-tabs a { position: relative; z-index: 1; padding: 8px 16px; border-radius: 999px; font-size: 13px; line-height: 18px; font-weight: 600; color: var(--ap-muted); text-decoration: none; white-space: nowrap; transition: color .25s ease; }
+.fin-tabs a[aria-current="true"] { color: var(--ap-mauve); font-weight: 700; }
+.fin-tabs-pill { position: absolute; top: 3px; left: 0; bottom: 3px; width: 0; opacity: 0; border-radius: 999px; background: var(--ap-card); box-shadow: 0 1px 3px rgba(40, 30, 50, .12); transition: transform .38s cubic-bezier(.3, .9, .3, 1), width .38s cubic-bezier(.3, .9, .3, 1), opacity .2s; }
+.fin-slide.is-next { animation: fin-slide-next .42s cubic-bezier(.2, .8, .2, 1); }
+.fin-slide.is-prev { animation: fin-slide-prev .42s cubic-bezier(.2, .8, .2, 1); }
+.fin-slide { display: grid; gap: inherit; }
+@keyframes fin-slide-next { from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: none; } }
+@keyframes fin-slide-prev { from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .fin-tabs-pill, .fin-slide { transition: none; animation: none !important; } }
+.fin-nav { display: inline-flex; align-items: center; gap: 10px; }
+.fin-nav strong { min-width: 150px; text-align: center; font-size: 14px; }
+.fin-nav a[aria-label="Kỳ trước"] svg { transform: rotate(180deg); }
+.fin-nav .is-disabled { opacity: 0.35; pointer-events: none; }
+.fin-jump { display: inline-flex; gap: 8px; align-items: center; }
+.fin-chart { display: flex; align-items: flex-end; gap: 4px; height: 260px; padding-top: 8px; width: 100%; }
+.fin-chart .am-stack-col { opacity: 0.55; }
+.fin-chart .am-stack-col.is-selected { opacity: 1; }
+.fin-legend-note { margin-left: auto; color: var(--ap-muted); font-weight: 600; }
+.fin-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+@media (max-width: 720px) { .fin-chart { height: 200px; gap: 2px; } .fin-nav strong { min-width: 0; } }
+
+/* Line chart */
+.rlc { position: relative; width: 100%; user-select: none; touch-action: pan-y; }
+.rlc svg { display: block; overflow: visible; }
+.rlc-grid { stroke: var(--ap-line, #e5e0d8); stroke-width: 1; stroke-dasharray: 3 5; }
+.rlc-axis { font-size: 11px; font-weight: 700; fill: var(--ap-muted); }
+.rlc-band { fill: var(--ap-mauve); opacity: .07; }
+.rlc-line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.rlc-dot { fill: var(--ap-card, #fff); stroke-width: 2.5; transition: r .12s ease; }
+.rlc-cross { stroke: var(--ap-muted); stroke-width: 1; stroke-dasharray: 2 4; opacity: .7; }
+.rlc-tip { position: absolute; transform: none; display: grid; gap: 6px; min-width: 170px; padding: 10px 12px; border: 1px solid var(--ap-line); border-radius: 14px; background: var(--ap-card, #fff); box-shadow: 0 8px 24px rgba(40, 30, 50, .14); font-size: 12px; pointer-events: none; z-index: 2; }
+.rlc-tip strong { font-size: 12px; color: var(--ap-muted); }
+.rlc-tip span { display: flex; align-items: center; gap: 6px; }
+.rlc-tip span b { margin-left: auto; padding-left: 12px; }
+.rlc-tip i { width: 8px; height: 8px; border-radius: 50%; }
+.rlc-tip .rlc-total { padding-top: 6px; border-top: 1px solid var(--ap-line); font-weight: 700; }
+.rlc-tip.is-left { transform: translateX(-100%); }
+
+/* Plan limits */
+.plan-limit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.plan-limit-form fieldset { display: grid; gap: 10px; margin: 0; padding: 14px; border: 1px solid var(--ap-line); border-radius: 16px; }
+.plan-limit-form fieldset:disabled { opacity: .6; }

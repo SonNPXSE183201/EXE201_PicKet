@@ -177,3 +177,23 @@ export async function saveReleaseAction(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect("/admin/releases?saved=1");
 }
+
+export async function savePlanLimitAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  const plan = String(form.get("plan") ?? "");
+  try {
+    if (!["free", "plus", "pro"].includes(plan)) throw new Error("plan");
+    const limit = Number(form.get("limit"));
+    if (!Number.isInteger(limit) || limit < 0 || limit > 10000) throw new Error("limit");
+    await api.savePlanLimit(accessToken, {
+      plan: plan as "free" | "plus" | "pro",
+      limit,
+      revision: Number(form.get("revision")),
+      reason: String(form.get("reason") ?? ""),
+    });
+  } catch {
+    redirect("/admin/billing?limitError=1");
+  }
+  revalidatePath("/admin", "layout");
+  redirect("/admin/billing?limitSaved=1");
+}

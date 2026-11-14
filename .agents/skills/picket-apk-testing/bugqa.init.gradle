@@ -1,0 +1,14 @@
+// QA-only override: install next to production without touching com.picket.mobile.
+// versionCode is raised so `adb install -r` can update an older QA build; signing uses the
+// local release key when present (same key as earlier QA builds), otherwise the debug key.
+allprojects { project ->
+    project.afterEvaluate {
+        if (project.path == ':app') {
+            def android = project.android
+            android.defaultConfig.applicationId = 'com.picket.mobile.bugqa'
+            android.defaultConfig.versionCode = (project.findProperty('qaVersionCode') ?: '9000') as int
+            def release = android.signingConfigs.findByName('release')
+            if (release != null) android.buildTypes.debug.signingConfig = release
+        }
+    }
+}

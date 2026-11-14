@@ -38,5 +38,7 @@ Use local `.env` files; never commit secrets, signing keys, APK/AAB backups, or 
 
 - There is no mandatory multi-agent workflow or required `PLAN.md` / `REPORT.md` / `REVIEW.md` sequence. Follow the task's scope and run focused checks appropriate to the change.
 - Use [`.agents/skills/picket-ocr-testing/SKILL.md`](.agents/skills/picket-ocr-testing/SKILL.md) when evaluating receipt images, the `/Bill/` corpus, or OCR changes.
+- Use [`.agents/skills/picket-versioning/SKILL.md`](.agents/skills/picket-versioning/SKILL.md) whenever choosing a version, versionCode, artifact name or image tag.
+- Use [`.agents/skills/picket-play-release/SKILL.md`](.agents/skills/picket-play-release/SKILL.md) when building the Play AAB and updating Internal/Closed testing.
 - Use [`.agents/skills/picket-apk-testing/SKILL.md`](.agents/skills/picket-apk-testing/SKILL.md) when building APKs for Android QA or bug-fix testing; verify the QA package, retain only necessary backups, and clean generated outputs after testing.
 - For real-device Android QA, use only `com.picket.mobile.bugqa`; do not install over, clear, or remove the production package `com.picket.mobile` during QA.

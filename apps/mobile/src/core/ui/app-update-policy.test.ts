@@ -9,7 +9,7 @@ test("a higher build code offers a pinned same-origin APK", async () => {
   const policy = await load();
   const result = policy.resolveAppUpdate(release, installed);
   assert.equal(result.kind, "available");
-  assert.equal(result.release.downloadUrl, "https://picket.51-79-207-154.sslip.io/downloads/" + release.filename);
+  assert.equal(result.release.downloadUrl, "https://picketfinance.com/downloads/" + release.filename);
 });
 test("equal and older build codes never offer a downgrade", async () => {
   const policy = await load();

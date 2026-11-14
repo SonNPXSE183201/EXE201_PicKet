@@ -1,3 +1,5 @@
+import { turnstileSiteKey } from "@/core/security/turnstile";
+import { googleWebClientId } from "@/core/auth/google";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/core/supabase/server";
@@ -25,7 +27,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <PaperAuthShell variant={admin ? "admin" : "user"} fixedViewport>
-      <LoginForm initialError={initialError} admin={admin} next={next} pinAvailable={!admin && (await hasPinDevice())} />
+      <LoginForm googleClientId={googleWebClientId()} siteKey={turnstileSiteKey()} initialError={initialError} admin={admin} next={next} pinAvailable={!admin && (await hasPinDevice())} />
     </PaperAuthShell>
   );
 }

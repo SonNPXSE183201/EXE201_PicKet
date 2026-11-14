@@ -1,11 +1,11 @@
 {
-  "version": "1.0.14",
-  "versionCode": 28,
-  "publishedAt": "2026-11-01",
-  "filename": "picket-1.0.14-28-20261101-1713c3df.apk",
+  "version": "1.0.18",
+  "versionCode": 32,
+  "publishedAt": "2026-11-14",
+  "filename": "picket-1.0.18-32-20261114-37e32f92.apk",
   "abi": "arm64-v8a",
   "minSdk": 24,
   "packageName": "com.picket.mobile",
-  "bytes": 161644903,
-  "sha256": "1713c3dfbbe220720e5a355442d0de8b4d5cc27b7c89840c1b1f0a2a0120b17b"
+  "bytes": 62138151,
+  "sha256": "37e32f92fc832994edc65453d3cd430ae71b6b3b38d1d28d5cd52b1f2a5274b3"
 }

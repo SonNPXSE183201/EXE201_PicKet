@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { AppState, Linking, StyleSheet, View } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as ExpoLinking from "expo-linking";
+import { AppState, StyleSheet, View } from "react-native";
 import { Redirect } from "expo-router";
 import * as Crypto from "expo-crypto";
 import {
@@ -66,10 +68,9 @@ function PayosBillingContent({ token }: { token: string }) {
     setBusy(true);
     setMessage("");
     try {
-      const [next, entitlement] = await Promise.all([
-        action(),
-        picketApi.currentEntitlements(token),
-      ]);
+      // Read entitlements only after the action: a refresh may be what grants the plan.
+      const next = await action();
+      const entitlement = await picketApi.currentEntitlements(token);
       if (
         active.current &&
         tokenRef.current === scope &&
@@ -146,6 +147,26 @@ function PayosBillingContent({ token }: { token: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, now]);
   const open = data ? openPaymentOrder(data.orders, now) : undefined;
+  /** Pull to refresh: re-reads a pending order at PayOS (money may have just arrived), then the plan. */
+  function pullToRefresh() {
+    const pending = open?.status === "pending" ? open : undefined;
+    return run(() => (pending ? picketApi!.paymentAction(token, pending.id, "refresh") : picketApi!.paymentCustomer(token)));
+  }
+  /** PayOS opens in an in-app browser tab; when it returns to the app the order is re-read at PayOS
+      and the plan is refreshed, so the screen never keeps showing the old tier. */
+  async function openCheckout(orderId: string, url: string) {
+    try {
+      await WebBrowser.openAuthSessionAsync(url, ExpoLinking.createURL("billing"));
+    } catch {
+      try {
+        await WebBrowser.openBrowserAsync(url);
+      } catch {
+        setMessage("Không mở được trang thanh toán.");
+        return;
+      }
+    }
+    await run(() => picketApi!.paymentAction(token, orderId, "refresh"));
+  }
   function checkout(sku: string) {
     setConfirmSku(null);
     const code = promoCode.trim().toUpperCase() || undefined;
@@ -154,7 +175,7 @@ function PayosBillingContent({ token }: { token: string }) {
     void run(async () => {
       const requestKey = key.current.get(scope) ?? Crypto.randomUUID();
       key.current.set(scope, requestKey);
-      const result = await picketApi!.paymentCheckout(token, sku, requestKey, code);
+      const result = await picketApi!.paymentCheckout(token, sku, requestKey, code, "app");
       key.current.delete(scope);
       return result;
     });
@@ -182,7 +203,7 @@ function PayosBillingContent({ token }: { token: string }) {
       : null,
   }));
   return (
-    <PicketScreen>
+    <PicketScreen onRefresh={pullToRefresh}>
       <TopAppBar title={planScreenTitle} />
       <View style={{ marginTop: 16, gap: 16 }}>
         {message ? <AuthMessage>{t(message)}</AuthMessage> : null}
@@ -269,7 +290,7 @@ function PayosBillingContent({ token }: { token: string }) {
                               size="medium"
                               label="Mở thanh toán"
                               disabled={busy}
-                              onPress={() => void Linking.openURL(order.checkout_url!).catch(() => setMessage("Không mở được trình duyệt."))}
+                              onPress={() => void openCheckout(order.id, order.checkout_url!)}
                             />
                           )}
                           <FigmaButton variant="outline" size="medium" label="Kiểm tra thanh toán" disabled={busy} onPress={() => void run(() => picketApi!.paymentAction(token, order.id, "refresh"))} />
@@ -283,9 +304,6 @@ function PayosBillingContent({ token }: { token: string }) {
             })}
           </BillingSection>
         )}
-        <View style={{ alignItems: "center" }}>
-          <FigmaButton variant="text" size="medium" label="Tải lại" onPress={() => void run(() => picketApi!.paymentCustomer(token))} />
-        </View>
       </View>
     </PicketScreen>
   );

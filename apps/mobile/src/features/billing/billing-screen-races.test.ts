@@ -1,4 +1,5 @@
 import { paperShape, paperSpace } from "../../core/theme/paper-foundations";
+import * as billingPolicy from "./billing-policy";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
@@ -35,7 +36,7 @@ function harness(){
   "expo-crypto":{CryptoDigestAlgorithm:{SHA256:"SHA256"},digestStringAsync:async()=>"synthetic-account-hash"},
   "@/features/billing/play-billing-provider":{usePlayBilling:()=>({connected:true,subscriptions:productIds.map(id=>({id,platform:"android",productStatusAndroid,subscriptionOffers:[{offerTokenAndroid:"synthetic-offer",displayPrice}]})),fetchProducts,finishTransaction:async()=>{},requestPurchase:async()=>{purchaseRequests++;},revision:0})},
   "expo-iap":{getAvailablePurchases:()=>{reads++;return pending;},deepLinkToSubscriptions:async()=>{}},
-  "@/features/billing/billing-policy":{canStartPlayPurchase:()=>true,isPicketSubscriptionId:()=>true,verifyAndFinishPurchase:async(purchase:unknown,verify:(p:unknown)=>unknown)=>verify(purchase)},
+  "@/features/billing/billing-policy":{canStartPlayPurchase:()=>true,isPicketSubscriptionId:()=>true,verifyAndFinishPurchase:async(purchase:unknown,verify:(p:unknown)=>unknown)=>verify(purchase),defaultPlanId:billingPolicy.defaultPlanId,planAction:billingPolicy.planAction},
   "@/features/billing/restore-results":{verifyRestoredPurchases:async(purchases:unknown[],verify:(p:unknown)=>Promise<boolean>)=>{let count=0;for(const purchase of purchases)if(await verify(purchase))count++;return {verified:count,failed:purchases.length-count};}},
  };
  const exports:{Content?:(props:{accessToken:string;userId:string})=>unknown}={};

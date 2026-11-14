@@ -34,6 +34,8 @@ import {
   isPicketSubscriptionId,
   canStartPlayPurchase,
   verifyAndFinishPurchase,
+  defaultPlanId,
+  planAction,
 } from "@/features/billing/billing-policy";
 
 const planKeys: Record<
@@ -181,6 +183,12 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     };
   }, [accessToken,revision]);
 
+  /** Pull to refresh: reload Play prices and re-read the plan granted by the server. */
+  async function pullToRefresh() {
+    if (!catalogueBusy.current) setCatalogueAttempt((value) => value + 1);
+    const scope = operationScope.current;
+    await refreshEntitlements(() => scope.active && operationScope.current === scope && scope.token === accessToken).catch(() => undefined);
+  }
   async function refreshEntitlements(current:()=>boolean) {
     if (!picketApi) return;
     const request=++entitlementRead.current;
@@ -341,7 +349,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   );
 
   const tier = entitlements?.tier ?? "free";
-  const selectedProduct = orderedProducts.find((product) => product.id === selectedId) ?? orderedProducts[0];
+  const preselectedId = defaultPlanId(orderedProducts.map((product) => product.id), tier, selectedId);
+  const selectedProduct = orderedProducts.find((product) => product.id === preselectedId) ?? orderedProducts[0];
+  const selectedAction = selectedProduct ? planAction(selectedProduct.id, tier) : "upgrade";
   const tiles: PlanTileModel[] = orderedProducts.filter((product) => isPicketSubscriptionId(product.id)).map((product) => {
     const keys = planKeys[product.id as PicketSubscriptionId];
     const isPro = product.id.startsWith("picket_pro_");
@@ -356,10 +366,10 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     };
   });
   const selectedKeys = selectedProduct && isPicketSubscriptionId(selectedProduct.id) ? planKeys[selectedProduct.id] : null;
-  const purchaseDisabled = !selectedProduct || catalogueLoading || !purchaseOffer(selectedProduct) || !storeReady || !connected || busyProduct !== null || restoring;
+  const purchaseDisabled = selectedAction === "current" || !selectedProduct || catalogueLoading || !purchaseOffer(selectedProduct) || !storeReady || !connected || busyProduct !== null || restoring;
 
   return (
-    <PicketScreen>
+    <PicketScreen onRefresh={pullToRefresh}>
       <TopAppBar title={planScreenTitle} />
       <View style={styles.content}>
         {!storeReady && <Text accessibilityLiveRegion="polite" style={styles.notice}>{t(checkingStore ? "checking" : "notReady")}</Text>}
@@ -401,7 +411,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                   fullWidth
                   busy={busyProduct !== null && busyProduct === selectedProduct?.id}
                   disabled={purchaseDisabled}
-                  label={t("upgrade", { name: selectedKeys?.name ?? "" })}
+                  label={selectedAction === "current" ? t("currentPlanButton") : t(selectedAction, { name: selectedKeys?.name ?? "" })}
                   onPress={() => { if (selectedProduct) void purchase(selectedProduct); }}
                 />
               </>

@@ -146,7 +146,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   tiles: { flexDirection: "row", gap: 12 },
   tile: { flex: 1, minHeight: 168, borderRadius: 18, padding: 14, gap: 4, justifyContent: "flex-end", borderWidth: 2, borderColor: "transparent" },
   tileSelected: { borderColor: figmaColors.primary },
-  tileArt: { position: "absolute", top: -14, right: 6, width: 72, height: 72 },
+  tileArt: { alignSelf: "flex-end", width: 64, height: 64, marginTop: -6, marginRight: -4, marginBottom: 2 },
   check: { position: "absolute", top: 10, left: 10, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
   badge: { alignSelf: "flex-start" },
   paper: { backgroundColor: colors.paper, borderRadius: 18, padding: 16, gap: 10 },

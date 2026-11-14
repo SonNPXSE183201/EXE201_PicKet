@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 const load = () => import("../../features/updates/app-update-controller" + ".ts");
-const release = { version: "1.0.3", versionCode: 4, bytes: 100, sha256: "a".repeat(64), filename: "app.apk", downloadUrl: "https://picket.51-79-207-154.sslip.io/downloads/app.apk", abi: "arm64-v8a", minSdk: 24, packageName: "com.picket.mobile", publishedAt: "2026-10-21" };
+const release = { version: "1.0.3", versionCode: 4, bytes: 100, sha256: "a".repeat(64), filename: "app.apk", downloadUrl: "https://picketfinance.com/downloads/app.apk", abi: "arm64-v8a", minSdk: 24, packageName: "com.picket.mobile", publishedAt: "2026-10-21" };
 const deferred = <T>() => { let resolve!: (value: T) => void; let reject!: (reason: Error) => void; const promise = new Promise<T>((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
 async function setup() {
   const { createAppUpdateController } = await load();

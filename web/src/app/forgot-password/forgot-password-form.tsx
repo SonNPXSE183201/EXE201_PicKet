@@ -4,9 +4,11 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/core/supabase/client";
+import { useTurnstileGate } from "@/core/security/turnstile-widget";
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ siteKey }: { siteKey?: string }) {
   const supabase = useMemo(() => createClient(), []);
+  const gate = useTurnstileGate(siteKey);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -26,6 +28,12 @@ export function ForgotPasswordForm() {
       .toLowerCase();
     setBusy(true);
     setMessage(null);
+    const blocked = await gate.check();
+    if (blocked) {
+      setMessage(blocked);
+      setBusy(false);
+      return;
+    }
     const redirectTo = `${window.location.origin}/auth/callback?next=/reset-password`;
     setSent(false);
     try {
@@ -79,6 +87,7 @@ export function ForgotPasswordForm() {
             {message}
           </p>
         )}
+        {gate.widget}
         <button
           className="button primary"
           disabled={busy || cooldown > 0}

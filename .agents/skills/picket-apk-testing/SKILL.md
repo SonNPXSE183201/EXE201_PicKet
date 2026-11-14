@@ -66,3 +66,49 @@ Use `../picket-ocr-testing/SKILL.md` additionally when testing receipt images, t
 - Do not wipe global Gradle/Maven/npm caches after every build: this forces downloads/transforms to regenerate. At task completion measure their growth; if storage pressure requires pruning, inspect the version/task ownership, stop only idle Gradle daemons through the matching Gradle CLI, and remove reviewed cache targets. Leave IDE-locked files in place. Preserve wrapper distributions, JDKs, SDK/NDK, AVDs, signing keys, application profiles and Windows system files.
 - Resolve every delete target to an absolute path within its named allowed root. Refuse tracked source files and linked trees. Never stop unrelated IDE/application processes to force cleanup.
 - Report the canonical QA APK path/hash/package/ABI, focused checks, cleanup result, remaining retained outputs and any busy files. Compare final Git status with the initial state; do not stage/commit generated artifacts.
+
+## Lỗi build đã gặp trên Windows và cách tránh (cập nhật 13/11/2026)
+
+Ghi từ các lần build `assembleDebug` arm64 cho Redmi 7. Đọc phần này **trước khi** build để khỏi mất ~18 phút cho một lần thất bại.
+
+### 1. `ninja: error: Stat(...rngesturehandler_codegen...)` — đường dẫn quá 260 ký tự
+- Triệu chứng: `Execution failed for task ':app:buildCMakeDebug[arm64-v8a]'`, ninja báo lỗi `Stat(...)` với đường dẫn rất dài trong `app/.cxx/...` và `node_modules/react-native-gesture-handler/...`.
+- Nguyên nhân: giới hạn MAX_PATH của Windows khi biên dịch C++ (CMake codegen). Không phải lỗi code.
+- Cách tránh: build từ một ổ ngắn trỏ vào **thư mục gốc dự án** (xem mục "Chạy build qua ổ ngắn"). Không bật LongPaths trong registry (đó là thay đổi cài đặt hệ thống, cần người dùng cho phép).
+
+### 2. `A problem occurred evaluating settings 'android'. Process 'command 'cmd'' finished with non-zero exit value 1`
+- Nguyên nhân: đã `subst` ổ ngắn trỏ vào `apps/mobile`. Khi đó gradle không còn thấy `node_modules` ở gốc monorepo nên bước phân giải module (autolinking) chạy `node` thất bại.
+- Cách tránh: **luôn `subst` thư mục gốc `D:\EXE201\Project`**, rồi build từ `<ổ>:\apps\mobile\android`. Không `subst` riêng `apps/mobile`.
+
+### 3. Gói QA
+- `applicationId` mặc định là `com.picket.mobile`. Dùng file `bugqa.init.gradle` cùng thư mục skill này (`-I <đường-dẫn>\bugqa.init.gradle`) để đổi thành `com.picket.mobile.bugqa`. Không dùng `-P` vì build script không đọc.
+- `scheme` deep link vẫn là `com.picket.mobile` ở cả hai gói; máy có cả hai gói có thể hiện hộp chọn ứng dụng khi quay về từ trình duyệt.
+
+### Chạy build qua ổ ngắn (lệnh đã dùng)
+```powershell
+$used=(Get-PSDrive -PSProvider FileSystem).Name
+$letter=('R','S','T','U','V','W','X','Y','Z' | Where-Object {$_ -notin $used})[0]
+subst "${letter}:" D:\EXE201\Project            # ánh xạ GỐC dự án
+cd "${letter}:\apps\mobile\android"
+.\gradlew.bat :app:assembleDebug '-PreactNativeArchitectures=arm64-v8a' `
+  -I ..\scripts\windows-release.init.gradle `
+  -I D:\EXE201\Project\.agents\skills\picket-apk-testing\bugqa.init.gradle `
+  --no-daemon --max-workers=2 '-Pkotlin.compiler.execution.strategy=in-process' --console=plain *> D:\EXE201\Project\.artifacts\apk-qa-<task>\build.log
+"EXIT=$LASTEXITCODE" | Add-Content D:\EXE201\Project\.artifacts\apk-qa-<task>\build.log
+subst "${letter}:" /D                            # gỡ ổ sau khi build xong
+```
+- APK debug nằm ở `apps/mobile/android/app/build/outputs/apk/debug/`. Lần đầu build mất ~18 phút; lần sau nhanh hơn nhiều nhờ cache.
+
+### Việc không được làm khi đang build
+- Không chạy `git stash`, `git checkout`, đổi nhánh hay sửa file dưới `apps/mobile/android`, `apps/mobile/modules` trong lúc Gradle chạy nền: file nguồn bị thay đổi giữa chừng có thể làm hỏng build hoặc cache.
+- Không chạy thêm bản build thứ hai song song; mỗi `--no-daemon` tự fork JVM rất tốn RAM.
+- Lỗi ở lệnh nền chỉ hiện khi tác vụ kết thúc; xem `build.log` (và giữ lại `build-failed-*.log` đến khi lỗi được xử lý).
+
+### Dev client: xem UI không cần build lại
+Sau khi cài bản debug QA một lần: `adb reverse tcp:8081 tcp:8081`, chạy `npm run start` trong `apps/mobile`, mở app trên máy. Chỉ build lại khi thêm thư viện có phần native.
+
+### Đã xác nhận chạy được (13/11/2026)
+- `subst` **thư mục gốc** + `bugqa.init.gradle`: `assembleDebug` arm64 thành công (lần đầu ~5,5 phút sau khi cache; build lại ~1,5 phút).
+- `INSTALL_FAILED_VERSION_DOWNGRADE`: gói QA cũ trên máy có versionCode cao (62). `bugqa.init.gradle` đặt versionCode 9000 (đổi bằng `-PqaVersionCode=<số>`).
+- `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (chữ ký khác): bản QA cũ ký bằng khóa release cục bộ, nên override ký bản debug bằng khóa release khi có `key.properties`. Cài `adb install -r` thành công, không phải gỡ gói hay xóa dữ liệu.
+- Mở dev client: `adb reverse tcp:8081 tcp:8081`, `npx expo start --dev-client --port 8081`, rồi `adb shell am start -a android.intent.action.VIEW -d "com.picket.mobile://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081" com.picket.mobile.bugqa` (ghi rõ gói để tránh hộp chọn app).

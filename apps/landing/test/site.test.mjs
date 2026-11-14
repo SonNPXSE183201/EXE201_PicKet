@@ -21,14 +21,14 @@ test('Caddy serves only landing paths statically and preserves existing Next rou
   const caddy = await readFile(new URL('../../../deploy/Caddyfile',import.meta.url),'utf8');
   assert.match(caddy, /@landing path \/ \/launch-assets\/\* \/downloads\/\* \/release\.json/);
   assert.match(caddy, /root \* \/srv\/picket-landing/);
-  assert.match(caddy, /handle \{\s*reverse_proxy web:3000\s*\}/);
+  assert.match(caddy, /handle \{\s*reverse_proxy web:3000(?:\s*\{\s*header_up X-Forwarded-For \{client_ip\}\s*\})?\s*\}/);
   assert.match(caddy, /application\/vnd\.android\.package-archive/);
   assert.match(caddy, /@revalidated not path \/downloads\/\*\.apk/);
   assert.match(caddy, /header @revalidated Cache-Control "no-cache"/);
 });
 
 test('landing and policy pages open the web login page in header and footer without downloading or opening another tab', async () => {
-  for (const page of ['index.html', 'privacy.html', 'account-deletion.html']) {
+  for (const page of ['index.html', 'privacy.html', 'account-deletion.html', 'terms.html']) {
     const html = await readFile(new URL('site/' + page, root), 'utf8');
     assert.doesNotMatch(html, /href="\/login"/, `${page} must not rely on the /login redirect`);
     for (const [name, pattern] of [
@@ -46,7 +46,7 @@ test('landing and policy pages open the web login page in header and footer with
 test('policy pages reuse the landing v2 header, footer and styles', async () => {
   const index = await readFile(new URL('site/index.html', root), 'utf8');
   const footerLinks = (html) => [...(html.match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? '').matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/^\/#/, '#'));
-  for (const page of ['privacy.html', 'account-deletion.html']) {
+  for (const page of ['privacy.html', 'account-deletion.html', 'terms.html']) {
     const html = await readFile(new URL('site/' + page, root), 'utf8');
     assert.match(html, /<header class="top">/);
     assert.match(html, /paper-motion-v1\.css[\s\S]*legal-v2\.css/);
@@ -73,18 +73,22 @@ test('landing v2 keeps store rollout configurable and avoids scroll-driven motio
 
 test('landing publishes only verified support and policy details', async () => {
   const html = await readFile(new URL('site/index.html', root), 'utf8');
-  assert.doesNotMatch(html, /support@picket\.vn|\/terms\.html|Không quảng cáo/);
+  assert.doesNotMatch(html, /support@picket\.vn|Không quảng cáo/);
+  assert.match(html, /href="\/terms\.html"/);
   assert.match(html, /0369 076 214/);
   assert.match(html, /picketfinance@gmail\.com/);
   assert.match(html, /\/account-deletion\.html/);
 });
 
 test('APKPure is the working store download wherever the Google Play badge appears', async () => {
-  for (const page of ['index.html', 'privacy.html', 'account-deletion.html']) {
+  for (const page of ['index.html', 'privacy.html', 'account-deletion.html', 'terms.html']) {
     const html = await readFile(new URL('site/' + page, root), 'utf8');
     const links = [...html.matchAll(/<a\b[^>]*data-apkpure-link[^>]*>/g)].map((m) => m[0]);
-    assert.ok(links.length >= 2, `${page} needs APKPure in header and footer`);
+    const footer = html.match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? '';
+    assert.match(footer, /data-apkpure-link/, `${page} needs APKPure in the footer`);
     for (const link of links) assert.match(link, /href="https:\/\/apkpure\.com\/picket\/com\.picket\.mobile"/);
+    const pageHeader = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] ?? '';
+    assert.doesNotMatch(pageHeader, /data-apkpure-link|data-play-link/, `${page} header has no store badge`);
   }
   const index = await readFile(new URL('site/index.html', root), 'utf8');
   const header = index.match(/<header\b[\s\S]*?<\/header>/)?.[0] ?? '';
@@ -94,14 +98,14 @@ test('APKPure is the working store download wherever the Google Play badge appea
 
 test('every asset referenced by the landing and policy pages exists', async () => {
   const { access } = await import('node:fs/promises');
-  for (const page of ['index.html', 'privacy.html', 'account-deletion.html']) {
+  for (const page of ['index.html', 'privacy.html', 'account-deletion.html', 'terms.html']) {
     const html = await readFile(new URL('site/' + page, root), 'utf8');
     for (const [, file] of html.matchAll(/(?:src|href)="\/(launch-assets\/[^"?#]+)"/g)) await access(new URL('site/' + file, root));
   }
 });
 
 test('footer shows stores and social networks as logos only', async () => {
-  for (const page of ['index.html', 'privacy.html', 'account-deletion.html']) {
+  for (const page of ['index.html', 'privacy.html', 'account-deletion.html', 'terms.html']) {
     const footer = (await readFile(new URL('site/' + page, root), 'utf8')).match(/<footer\b[\s\S]*?<\/footer>/)?.[0] ?? '';
     assert.doesNotMatch(footer, />\s*(Tải trên APKPure|Facebook|YouTube)\s*<\/a>/);
     assert.match(footer, /class="social facebook"[^>]*aria-label="[^"]+"><svg/);

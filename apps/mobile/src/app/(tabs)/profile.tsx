@@ -21,7 +21,7 @@ import { Chip, FigmaButton, ReceiptEdge, figmaShadow } from "@/core/ui/figma-ui"
 import { FieldRow, GroupLabel, PaperGroup } from "@/features/settings/settings-figma";
 import { profileHubCopy, profileThemeMeta } from "@/features/profile/profile-hub-copy";
 import { useAuth } from "@/features/auth/auth-context";
-import { AnalyticsConsentControl } from "@/features/settings/analytics-consent";
+import { useAnalyticsConsent } from "@/features/settings/analytics-consent";
 import { useProfile } from "@/features/profile/profile-context";
 import { useDeviceLock } from "@/features/security/device-lock";
 import { AppUpdateSection, InstalledVersion } from "@/features/updates/app-update-section";
@@ -76,6 +76,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const { colors, styles } = useMobileStyles(createStyles);
   const { language, themeMode, update: updateThemeSettings } = useAppTheme();
   const { session, localMode, leaveLocalMode, signOut } = useAuth();
+  const consent = useAnalyticsConsent();
   const { updatePreferences, updateProfile } = useProfile();
   const deviceLock = useDeviceLock();
   const [displayName, setDisplayName] = useState(profile.displayName);
@@ -269,6 +270,14 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
           <PaperGroup>
             <FieldRow icon="palette-outline" meta={themeMeta} title={hub.appearance} onPress={() => router.push(routes.appearance)} />
             <FieldRow icon="translate" meta={language === "vi" ? hub.vietnamese : "English"} title={hub.language} onPress={() => setShowLanguagePicker(true)} />
+            {session && (
+              <FieldRow
+                icon="shield-account-outline"
+                meta={consent.enabled ? hub.sharingOn : hub.sharingOff}
+                title={hub.privacyStats}
+                onPress={consent.openChoice}
+              />
+            )}
             <FieldRow
               icon="eye-off-outline"
               meta={hub.hideBalanceMeta}
@@ -342,7 +351,6 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
           </View>
         </View>
         <AppUpdateSection />
-        <AnalyticsConsentControl />
         <InstalledVersion />
       </ScrollView>
 

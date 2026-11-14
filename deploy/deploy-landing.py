@@ -40,7 +40,7 @@ def main():
     apk = stage / 'downloads' / filename
     if apk.stat().st_size != manifest['bytes'] or digest(apk) != manifest['sha256']:
         raise ValueError('APK verification failed')
-    for name in ['index.html', 'privacy.html', 'account-deletion.html', 'release.json']:
+    for name in ['index.html', 'privacy.html', 'account-deletion.html', 'terms.html', 'release.json']:
         if not (stage / name).is_file() or '{{' in (stage / name).read_text():
             raise ValueError('Incomplete landing build: ' + name)
     if (stage / 'downloads' / (filename + '.sha256')).read_text().split()[0] != manifest['sha256']:
@@ -49,7 +49,7 @@ def main():
     current_apk = target / 'downloads' / filename
     if current_apk.exists() and digest(current_apk) != manifest['sha256']:
         raise ValueError('Refusing to overwrite an immutable APK URL')
-    names = ['index.html', 'privacy.html', 'account-deletion.html', 'release.json', 'launch-assets']
+    names = ['index.html', 'privacy.html', 'account-deletion.html', 'terms.html', 'release.json', 'launch-assets']
     for name in names:
         source = target / name
         if source.is_dir():

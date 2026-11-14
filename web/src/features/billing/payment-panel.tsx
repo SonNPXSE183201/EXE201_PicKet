@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PicketApiClient } from "@picket/api-client";
 import {
   formatPaymentCountdown,
@@ -16,10 +17,14 @@ import './payment-panel.css';
 export function PaymentPanel({
   initial,
   paid,
+  autoVerifyId,
 }: {
   initial: PaymentCustomer;
   paid: boolean;
+  /** Order the customer just came back from: it is re-read at PayOS on load. */
+  autoVerifyId?: string;
 }) {
+  const router = useRouter();
   const [data, setData] = useState(initial),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -46,14 +51,15 @@ export function PaymentPanel({
         data: { session },
       } = await createClient().auth.getSession();
       if (!session) throw new Error("Vui lòng đăng nhập lại.");
-      setData(
-        await action(
-          new PicketApiClient(
-            process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080",
-          ),
-          session.access_token,
+      const next = await action(
+        new PicketApiClient(
+          process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080",
         ),
+        session.access_token,
       );
+      setData(next);
+      // Plan and quota are rendered by the server page: re-read them after every payment change.
+      router.refresh();
     } catch {
       setError(
         "Không thể cập nhật thanh toán. Vui lòng thử lại; không tạo đơn mới nếu đang có đơn chờ.",
@@ -63,6 +69,12 @@ export function PaymentPanel({
       setBusy(false);
     }
   }
+  useEffect(() => {
+    if (!autoVerifyId || verified.current.has(autoVerifyId)) return;
+    verified.current.add(autoVerifyId);
+    void run((api, token) => api.paymentAction(token, autoVerifyId, "refresh"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoVerifyId]);
   // A link that runs out is re-read at PayOS by the server before it is
   // treated as expired, so last-second payments are not lost.
   useEffect(() => {

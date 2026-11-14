@@ -45,7 +45,7 @@ class PayosService {
     );
   }
 
-  Uri _returnUrl(String id) {
+  Uri _returnUrl(String id, {bool app = false}) {
     final base = Uri.tryParse(env['PAYOS_RETURN_URL'] ?? '');
     if (base == null ||
         base.scheme != 'https' ||
@@ -57,10 +57,14 @@ class PayosService {
         'Payment return URL is not configured.',
       );
     }
-    return base.replace(queryParameters: {'orderId': id});
+    return base.replace(
+      queryParameters: {'orderId': id, if (app) 'app': '1'},
+    );
   }
 
-  Future<void> create(Map<String, dynamic> order) async {
+  /// [app] marks a checkout started in the mobile app: the web return page
+  /// then hands the customer back to the app instead of the web workspace.
+  Future<void> create(Map<String, dynamic> order, {bool app = false}) async {
     if (order['payment_link_id'] != null) return;
     if (!enabled) {
       throw const GatewayException(503, 'PayOS checkout is disabled.');
@@ -89,8 +93,8 @@ class PayosService {
           'orderCode': order['order_code'],
           'amount': order['amount'],
           'description': 'PK${code.substring(code.length - 7)}',
-          'returnUrl': _returnUrl(order['id'] as String).toString(),
-          'cancelUrl': _returnUrl(order['id'] as String).toString(),
+          'returnUrl': _returnUrl(order['id'] as String, app: app).toString(),
+          'cancelUrl': _returnUrl(order['id'] as String, app: app).toString(),
           'expiredAt': expiresAt.millisecondsSinceEpoch ~/ 1000,
         });
       } on PayosException {

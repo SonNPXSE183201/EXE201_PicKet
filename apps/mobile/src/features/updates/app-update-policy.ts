@@ -1,4 +1,4 @@
-export const APP_RELEASE_ORIGIN = "https://picket.51-79-207-154.sslip.io";
+export const APP_RELEASE_ORIGIN = "https://picketfinance.com";
 export const APP_RELEASE_URL = `${APP_RELEASE_ORIGIN}/release.json`;
 export type InstalledApp = { version: string; versionCode: number; packageName: string; sdk: number; abis: string[]; playStore: boolean };
 export type AppRelease = { version: string; versionCode: number; publishedAt: string; filename: string; abi: string; minSdk: number; packageName: string; bytes: number; sha256: string; downloadUrl: string; required?: boolean };

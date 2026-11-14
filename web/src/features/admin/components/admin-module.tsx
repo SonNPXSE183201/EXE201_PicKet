@@ -3,12 +3,13 @@ import { requireApiSession } from "@/core/auth/require-api-session";
 import { adminSections, canViewAdminSection, type AdminSection } from "../admin-permissions";
 import { MfaPanel } from "./mfa-panel";
 import { PaymentAdmin } from "./payment-admin";
+import { FinanceAdmin } from "./finance-admin";
 import { RevenueAdmin } from "./revenue-admin";
 import { PromotionAdmin } from "./promotion-admin";
 import { AnnouncementAdmin } from "./announcement-admin";
 import { ReleaseAdmin } from "./release-admin";
 import { Banner, Button, EmptyState } from "../ui/paper";
-import { firstName, type Document, type Query, type ViewProps } from "../views/shared";
+import { billingWindow, firstName, type Document, type Query, type ViewProps } from "../views/shared";
 import { renderSection } from "../views";
 
 /* Loads one admin section and renders it in the Paper design (Figma › Admin Web).
@@ -22,6 +23,7 @@ export async function AdminModule({ section, searchParams }: { section: AdminSec
 
   const notices = <Notices query={query} mfaVerified={mfaVerified} />;
   if (section === "security") return <>{notices}<MfaPanel /></>;
+  if (section === "finance") return <>{notices}<FinanceAdmin query={query} /></>;
   if (section === "revenue") return <>{notices}<RevenueAdmin query={query} /></>;
   if (section === "promotions") return <>{notices}<PromotionAdmin query={query} /></>;
   if (section === "announcements") return <>{notices}<AnnouncementAdmin query={query} /></>;
@@ -45,7 +47,30 @@ export async function AdminModule({ section, searchParams }: { section: AdminSec
     return <LoadErrorState href={adminSections[section].href} canSeeIncidents={canViewAdminSection(role, "incidents", permissions)} />;
   }
 
-  const props: ViewProps = { section, data, query, role, permissions, mfaVerified, days, page, greetingName: firstName(claims.email) };
+  let billingFinance: ViewProps["billingFinance"];
+  if (section === "billing" && (permissions?.includes("revenue.read") ?? role === "owner")) {
+    const { from, to, today } = billingWindow(days);
+    const [revenue, plans] = await Promise.allSettled([
+      api.adminRevenue<NonNullable<ViewProps["billingFinance"]>["revenue"]>(accessToken, { from, to, bucket: "day" }),
+      api.adminRevenue<NonNullable<ViewProps["billingFinance"]>["plans"]>(accessToken, { view: "plans" }),
+    ]);
+    billingFinance = {
+      today,
+      revenue: revenue.status === "fulfilled" ? revenue.value : undefined,
+      plans: plans.status === "fulfilled" && typeof plans.value?.plus === "number" ? plans.value : undefined,
+    };
+  }
+  let planLimits: ViewProps["planLimits"];
+  if (section === "billing") {
+    const canManage = permissions?.includes("plans.manage") ?? role === "owner";
+    try {
+      const limits = await api.adminPlanLimits<{ limits: NonNullable<ViewProps["planLimits"]>["limits"]; history: NonNullable<ViewProps["planLimits"]>["history"] }>(accessToken);
+      if (Array.isArray(limits?.limits)) planLimits = { limits: limits.limits, history: limits.history ?? [], canManage };
+    } catch {
+      planLimits = undefined; // Older API/database: the card is simply not shown.
+    }
+  }
+  const props: ViewProps = { section, data, query, billingFinance, planLimits, role, permissions, mfaVerified, days, page, greetingName: firstName(claims.email) };
   return <>{notices}{renderSection(props)}</>;
 }
 

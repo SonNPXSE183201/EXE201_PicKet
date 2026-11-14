@@ -4,10 +4,39 @@
 > Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
 
 
-Ứng dụng dùng **Supabase Auth làm trung gian**. Google trả người dùng về
+Luồng OAuth dự phòng dùng **Supabase Auth làm trung gian**. Google trả người dùng về
 Supabase; Supabase mới chuyển về Next.js hoặc Expo. Google Client Secret chỉ
 được lưu trong Supabase Dashboard, không đặt trong `.env` của web, Expo,
 Dart API hoặc Git.
+
+## Đăng nhập bằng ID token (từ 1.1.0)
+
+Web dùng nút Google Identity Services, Android ưu tiên đăng nhập Google gốc rồi
+gửi ID token tới Supabase. Người dùng không thấy tên miền Supabase trong luồng
+này. Luồng OAuth chuyển hướng hiện có vẫn được giữ làm phương án dự phòng khi
+chưa có biến môi trường, không tải được thư viện web, thiếu mô-đun gốc, thiếu
+Google Play Services, sai cấu hình Android (mã 10) hoặc không nhận được ID token.
+Hủy đăng nhập hoặc thao tác đang chạy trên Android không kích hoạt dự phòng.
+
+Trong Google Cloud, trên ứng dụng OAuth loại Web, thêm hai nguồn JavaScript được
+ủy quyền (Authorized JavaScript origins): `https://app.picketfinance.com` và
+`http://localhost:3000`. Dùng mã ứng dụng Web công khai
+`18042168468-kpse8gg1dhg6eisu1tjd63iaucourku1.apps.googleusercontent.com` cho cả
+web và Android. Supabase đã chấp nhận mã này làm đối tượng nhận ID token, không
+cần đổi cấu hình Supabase. Giữ URI chuyển hướng cũ để OAuth dự phòng tiếp tục chạy.
+
+Tạo các ứng dụng OAuth loại Android tương ứng:
+
+| Tên gói | SHA-1 chứng thư ký | Mục đích |
+| --- | --- | --- |
+| `com.picket.mobile` | `89:3F:04:4D:B6:38:0B:51:8F:ED:0D:F3:DC:A1:BF:C4:75:FF:B7:9D` | Chữ ký ứng dụng từ Google Play |
+| `com.picket.mobile` | `A2:94:A6:6C:05:F1:59:32:AC:25:14:F8:BD:4E:01:77:8C:5B:D9:71` | Khóa tải lên / APK cài trực tiếp |
+| `com.picket.mobile.bugqa` | `A2:94:A6:6C:05:F1:59:32:AC:25:14:F8:BD:4E:01:77:8C:5B:D9:71` | Kiểm thử QA |
+
+Đặt `GOOGLE_WEB_CLIENT_ID` trong môi trường chạy máy chủ web (không dùng tiền tố
+`NEXT_PUBLIC_`) và `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` trong môi trường dựng bản
+mobile. Cả hai nhận cùng mã ứng dụng Web ở trên; đây là giá trị công khai, không
+phải bí mật ứng dụng. Các hướng dẫn chuyển hướng bên dưới áp dụng cho OAuth dự phòng.
 
 ## 1. Giá trị cần có
 
@@ -43,10 +72,9 @@ Android. Tài khoản Gmail dùng để **đăng nhập thử**, không phải C
 4. Kiểm tra Supabase URL Configuration theo bảng trên. Nếu app đang ở chế độ
    Testing, thêm đúng tài khoản thử vào OAuth consent screen trước khi E2E.
 
-Không cần tạo Android OAuth client riêng cho luồng hiện tại: Expo mở Supabase
-OAuth trong Chrome Custom Tab và trở về custom scheme. Nếu sau này chuyển sang
-Google Sign-In native/ID token thì đó là luồng khác, cần Android client ID,
-package name và SHA-1/SHA-256 của chứng thư ký.
+Luồng OAuth dự phòng không cần Android OAuth client riêng: Expo mở Supabase
+OAuth trong Chrome Custom Tab và trở về custom scheme. Luồng ID token cần các
+ứng dụng OAuth Android theo tên gói và SHA-1 trong mục trên.
 
 ## 3. Kiểm thử không ghi dữ liệu tài chính
 

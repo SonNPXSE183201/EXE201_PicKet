@@ -61,6 +61,11 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
           }),
           headers: {'cache-control': 'no-store'},
         );
+      case 'plans':
+        return Response.json(
+          body: await gateway.paymentRpc(token, 'billing_plan_summary', {}),
+          headers: {'cache-control': 'no-store'},
+        );
       case 'csv':
         final data = await gateway.paymentRpc(token, 'revenue_entries', {
           'p_filters': {...filters, 'limit': '1000'},

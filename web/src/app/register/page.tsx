@@ -1,3 +1,5 @@
+import { turnstileSiteKey } from "@/core/security/turnstile";
+import { googleWebClientId } from "@/core/auth/google";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/core/supabase/server";
@@ -10,7 +12,7 @@ export default async function RegisterPage() {
   if (data?.claims) redirect("/dashboard");
   return (
     <PaperAuthShell fixedViewport>
-      <RegisterForm />
+      <RegisterForm googleClientId={googleWebClientId()} siteKey={turnstileSiteKey()} />
     </PaperAuthShell>
   );
 }
