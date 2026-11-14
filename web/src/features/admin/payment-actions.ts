@@ -197,3 +197,29 @@ export async function savePlanLimitAction(form: FormData) {
   revalidatePath("/admin", "layout");
   redirect("/admin/billing?limitSaved=1");
 }
+
+/** Sign-up verification channels (Email OTP / SMS OTP via Firebase). */
+export async function saveVerificationSettingsAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  let outcome = "verificationSaved=1";
+  try {
+    const emailEnabled = form.get("emailEnabled") === "on";
+    const smsEnabled = form.get("smsEnabled") === "on";
+    if (!emailEnabled && !smsEnabled) throw new Error("channel");
+    const smsDailyLimit = Number(form.get("smsDailyLimit"));
+    if (!Number.isInteger(smsDailyLimit) || smsDailyLimit < 0 || smsDailyLimit > 100_000) throw new Error("limit");
+    const reason = String(form.get("reason") ?? "").trim();
+    if (reason.length < 5 || reason.length > 500) throw new Error("reason");
+    await api.saveVerificationSettings(accessToken, {
+      emailEnabled,
+      smsEnabled,
+      smsDailyLimit,
+      revision: Number(form.get("revision")),
+      reason,
+    });
+  } catch (error) {
+    outcome = (error as { status?: unknown })?.status === 409 ? "verificationError=stale" : "verificationError=1";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/settings?${outcome}`);
+}

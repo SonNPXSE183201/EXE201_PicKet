@@ -12,7 +12,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   const { email } = await searchParams;
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirect("/register");
   return (
-    <PaperAuthShell>
+    <PaperAuthShell story="verify">
       <VerifyEmailForm siteKey={turnstileSiteKey()} email={email} />
     </PaperAuthShell>
   );

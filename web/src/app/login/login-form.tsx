@@ -10,7 +10,7 @@ import { createClient } from "@/core/supabase/client";
 import { GoogleIdButton } from "@/features/auth/components/google-id-button";
 import { useTurnstileGate } from "@/core/security/turnstile-widget";
 import { AdminIcon } from "@/features/admin/ui/admin-icon";
-import { FieldGroup, FieldRow, OtpInput, PasswordRow } from "@/features/auth/components/paper-fields";
+import { FieldGroup, FieldRow, GoogleMark, OtpInput, PasswordRow } from "@/features/auth/components/paper-fields";
 
 interface LoginFormProps {
   googleClientId?: string;
@@ -155,7 +155,7 @@ export function LoginForm({ googleClientId, siteKey, initialError, admin = false
 
   if (factorId) {
     return (
-      <div className="auth-card auth-card-compact">
+      <div className="pa-panel">
         <header className="pa-head">
           <p className="pa-eyebrow">Bước 2 / 2</p>
           <h1 className="pa-title">Nhập mã xác thực</h1>
@@ -176,11 +176,11 @@ export function LoginForm({ googleClientId, siteKey, initialError, admin = false
   }
 
   return (
-    <div className="auth-card auth-card-compact">
-      <header className="pa-head">
+    <div className="pa-panel">
+      <header className="pa-head is-login">
         <p className="pa-eyebrow">{admin ? "Chỉ dành cho nhân sự Picket" : "Chào mừng trở lại"}</p>
         <h1 className="pa-title">{admin ? "Đăng nhập quản trị" : "Đăng nhập Picket"}</h1>
-        <p className="pa-copy">{admin ? "Dùng email công ty. Phiên quản trị cần MFA để thay đổi dữ liệu." : "Đăng nhập để đồng bộ dữ liệu tài chính giữa điện thoại và máy tính."}</p>
+        <p className="pa-copy">{admin ? "Dùng email công ty. Phiên quản trị cần MFA để thay đổi dữ liệu." : "Đăng nhập để xem và quản lý tài chính cá nhân."}</p>
       </header>
 
       {pinAvailable && (
@@ -193,7 +193,7 @@ export function LoginForm({ googleClientId, siteKey, initialError, admin = false
       {pinAvailable && <div className="pa-divider">hoặc đăng nhập bằng mật khẩu</div>}
       <form className="pa-form-wrap" onSubmit={signIn} aria-busy={busy} aria-describedby={message ? "login-message" : undefined}>
         <FieldGroup>
-          <FieldRow icon="mail" label={admin ? "Email công ty" : "Email hoặc số điện thoại"} name="identifier" type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder={admin ? "ten@picket.vn" : "ban@example.com hoặc 09xx xxx xxx"} />
+          <FieldRow icon="mail" label={admin ? "Email công ty" : "Email hoặc số điện thoại"} name="identifier" type="text" required autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder={admin ? "ten@picket.vn" : "Email hoặc số điện thoại của bạn"} />
           <PasswordRow />
         </FieldGroup>
         {notice}
@@ -218,15 +218,7 @@ export function LoginForm({ googleClientId, siteKey, initialError, admin = false
                 setGoogleUnavailable(true);
               }}
               onUnavailable={() => setGoogleUnavailable(true)} />
-          ) : <button className="pa-btn is-secondary" disabled={busy} onClick={signInWithGoogle} type="button">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.2 3-7.4Z" />
-              <path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 .9-3.4.9-2.6 0-4.8-1.7-5.6-4H3.1v2.6A10 10 0 0 0 12 22Z" />
-              <path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-4V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14Z" />
-              <path fill="#EA4335" d="M12 6c1.5 0 2.8.5 3.8 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.9 5.4L6.4 10c.8-2.3 3-4 5.6-4Z" />
-            </svg>
-            Tiếp tục với Google
-          </button>}
+          ) : <button className="pa-btn pa-google" disabled={busy} onClick={signInWithGoogle} type="button"><GoogleMark />Tiếp tục với Google</button>}
           <p className="pa-meta">Chưa có tài khoản? <Link href="/register">Đăng ký</Link></p>
         </>
       )}

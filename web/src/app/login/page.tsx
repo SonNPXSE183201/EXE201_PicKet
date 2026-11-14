@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const next = params.next && /^\/(?!\/)/.test(params.next) ? params.next : "/session";
 
   return (
-    <PaperAuthShell variant={admin ? "admin" : "user"} fixedViewport>
+    <PaperAuthShell story={admin ? "admin" : "login"} fixedViewport footer>
       <LoginForm googleClientId={googleWebClientId()} siteKey={turnstileSiteKey()} initialError={initialError} admin={admin} next={next} pinAvailable={!admin && (await hasPinDevice())} />
     </PaperAuthShell>
   );

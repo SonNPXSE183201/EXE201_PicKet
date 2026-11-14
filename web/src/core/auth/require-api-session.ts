@@ -7,6 +7,7 @@ import { createClient } from "@/core/supabase/server";
 import { createFinanceFetch } from "@/core/finance/finance-fetch";
 import { invalidateFinanceCache } from "@/core/finance/finance-cache";
 import { workspaceRedirect } from "./workspace-policy";
+import { accountAccessFailureRedirect } from "./password-setup";
 import { mockAdminPermissions, mockAdminPortal } from "./mock-admin-data";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -206,6 +207,13 @@ function createMockApiClient(): PicketApiClient {
       ], history: [] };
     },
     async savePlanLimit() {return {};},
+    async adminVerificationSettings() {
+      return {
+        settings: { emailEnabled: true, smsEnabled: false, smsProvider: "firebase", smsDailyLimit: 100, revision: 1, updatedAt: mockAgo(72) },
+        history: [{ before: { emailEnabled: true, smsEnabled: true, smsDailyLimit: 50 }, after: { emailEnabled: true, smsEnabled: false, smsDailyLimit: 100 }, reason: "Tạm tắt SMS để kiểm tra chi phí", createdAt: mockAgo(72) }],
+      };
+    },
+    async saveVerificationSettings() {return {};},
     async adminPromotions() {
       const base = { description: null, channels: ["payos"], per_user_limit: 1, priority: 0, play_offer_id: null, revision: 1, audit: [{ id: 1, reason: "Tạo chiến dịch", created_at: mockAgo(72) }] };
       return { catalog: MOCK_CATALOG, promotions: [
@@ -318,9 +326,9 @@ export const requireApiSession = cache(async function requireApiSession(
   } catch (error) {
     // Supabase rejected the token (expired/revoked/locked): sign in again
     // instead of crashing. Outages (5xx) still surface as an error page.
-    if (error instanceof ApiError && [400, 401, 403].includes(error.status)) {
-      redirect(`/auth/expired?next=${encodeURIComponent(workspace === "admin" ? "/admin" : "/dashboard")}`);
-    }
+    // An email/phone account without a password is sent to finish setup instead.
+    const target = error instanceof ApiError ? accountAccessFailureRedirect(error, workspace === "admin" ? "/admin" : "/dashboard") : null;
+    if (target) redirect(target);
     throw error;
   }
   const staff = access.staff;

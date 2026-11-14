@@ -13,7 +13,7 @@ test('primary navigation excludes account utilities and prefetches routes', () =
 });
 test('login uses a compact variant and short introductory copy', () => {
   const login = read('src/app/login/login-form.tsx');
-  assert.match(login, /auth-card auth-card-compact/);
+  assert.match(login, /className="pa-head is-login"/);
   assert.doesNotMatch(login, /Tài khoản\s+quản trị sẽ vào/);
 });
 test('metadata explicitly uses Picket tab and home-screen icons', () => {

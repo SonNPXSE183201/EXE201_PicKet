@@ -7,7 +7,7 @@ import { hasPinDevice } from "@/features/auth/pin-device";
 export default async function PinLoginPage() {
   const available = await hasPinDevice();
   return (
-    <PaperAuthShell>
+    <PaperAuthShell story="login">
       <div className="auth-card">
         <header className="pa-head">
           <p className="pa-eyebrow">Mở khoá nhanh</p>

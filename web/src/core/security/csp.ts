@@ -19,15 +19,19 @@ export function buildCsp({ apiUrl, supabaseUrl, dev }: {
     supabase ? supabase.replace(/^https?:/, "wss:") : undefined,
     dev ? "ws:" : undefined,
     "https://accounts.google.com",
+    // Firebase Phone Auth (SMS sign-up) and its reCAPTCHA.
+    "https://identitytoolkit.googleapis.com",
+    "https://securetoken.googleapis.com",
+    "https://www.google.com",
   ].filter(Boolean))].join(" ");
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com https://accounts.google.com`,
+    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com https://accounts.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com`,
     "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src ${connections}`,
-    "frame-src https://challenges.cloudflare.com https://accounts.google.com",
+    "frame-src https://challenges.cloudflare.com https://accounts.google.com https://www.google.com https://recaptcha.google.com https://*.firebaseapp.com",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
