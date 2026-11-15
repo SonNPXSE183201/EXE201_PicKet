@@ -57,7 +57,13 @@ do $$begin
  if public.hook_before_user_created('{"user":{"app_metadata":{"provider":"email","signup_via":"firebase_sms"}}}')<>'{}'::jsonb then raise exception 'SMS sign-up blocked';end if;
  if public.hook_before_user_created('{"user":{"app_metadata":{"provider":"google"}}}')<>'{}'::jsonb then raise exception 'google blocked';end if;
  update public.auth_verification_settings set email_enabled=true where id;
+ if public.hook_send_sms('{"user":{},"sms":{"otp":"123456"}}')->'error'->>'http_code'<>'403' then raise exception 'Supabase SMS not refused';end if;
 end$$;
+set local role authenticated;
+do $$begin
+ begin perform public.hook_send_sms('{}'); raise exception 'client called SMS hook'; exception when insufficient_privilege then null; end;
+end$$;
+reset role;
 
 -- Verified phone claims: unverified holders are released, verified owners win.
 insert into public.user_contact_methods(user_id,kind,value) values('ea000000-0000-4000-8000-000000000002','phone','+84912000111');
