@@ -258,7 +258,7 @@ function StandardWorkspaceShell({
       >
         <div className="workspace-sidebar-heading">
           <Link className="brand workspace-brand" href="/dashboard" onClick={closeDrawer}>
-            <Image src="/picket-logo.png" alt="" width={40} height={40} />
+            <Image src="/picket-logo-192.png" alt="" width={40} height={40} />
             <span>PicKet<small>KHÔNG GIAN CÁ NHÂN</small></span>
           </Link>
           <button className="workspace-drawer-close" type="button" aria-label="Đóng menu" onClick={closeDrawer}>

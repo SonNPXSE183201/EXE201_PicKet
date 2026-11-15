@@ -101,7 +101,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
       <div className="ap-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
       <aside className="ap-sidebar" id="admin-sidebar" aria-label="Điều hướng quản trị">
         <Link className="ap-brand" href="/admin">
-          <span className="ap-coin"><img src="/admin-paper/picket-mark-192.png" alt="" width={30} height={30} /></span>
+          <span className="ap-coin"><img src="/picket-logo-192.png" alt="" width={30} height={30} /></span>
           <span><strong>Picket</strong><small>Không gian quản trị</small></span>
         </Link>
         <p className="ap-nav-label">QUẢN LÝ ỨNG DỤNG</p>

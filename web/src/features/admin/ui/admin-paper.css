@@ -45,8 +45,8 @@
 .ap-sidebar { position: sticky; top: 16px; height: calc(100vh - 32px); display: flex; flex-direction: column; gap: 4px; padding: 20px 0 16px 8px; border-radius: 22px; background: var(--ap-mauve); color: #fff; }
 .ap-sidebar::before { content: ""; position: absolute; inset: 8px; border: 1.5px dashed rgb(255 255 255 / 35%); border-radius: 16px; pointer-events: none; }
 .ap-brand { display: flex; align-items: center; gap: 10px; padding: 0 0 14px 12px; position: relative; }
-.ap-coin { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 50%; background: var(--ap-coral); border: 2px solid rgb(255 255 255 / 25%); overflow: hidden; }
-.ap-coin img { width: 30px; height: 30px; object-fit: contain; }
+.ap-coin { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border-radius: 12px; background: #fff8ed; overflow: hidden; }
+.ap-coin img { width: 34px; height: 34px; object-fit: contain; }
 .ap-brand strong { display: block; font-size: 16px; line-height: 26px; font-weight: 800; }
 .ap-brand small { display: block; font-size: 10px; line-height: 15px; font-weight: 800; color: rgb(255 255 255 / 70%); }
 .ap-nav-label { margin: 0; padding: 0 0 4px 14px; font-size: 10px; line-height: 15px; font-weight: 800; letter-spacing: .03em; color: rgb(255 255 255 / 50%); }

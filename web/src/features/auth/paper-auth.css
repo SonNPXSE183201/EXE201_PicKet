@@ -23,25 +23,30 @@
 .pa-skip { position: absolute; left: 16px; top: -48px; z-index: 10; padding: 10px 16px; border-radius: 999px; background: var(--pa-mauve); color: #fff; font-weight: 800; }
 .pa-skip:focus { top: 16px; }
 
-/* Purple story panel (Figma: 650×868, r28, dashed 1px #c99ec4 inset 10 / r24) */
-.pa-pouch { grid-row: 1 / span 2; position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: calc(100vh - 32px); padding: 48px 52px; border-radius: 28px; background: var(--pa-mauve); color: #fff; }
-.pa-pouch::before { content: ""; position: absolute; inset: 10px; border: 1px dashed #c99ec4; border-radius: 24px; pointer-events: none; }
-.pa-brand { position: relative; display: flex; align-items: center; gap: 12px; align-self: flex-start; text-decoration: none; }
-.pa-coin { display: grid; place-items: center; width: 48px; height: 48px; flex: none; border-radius: 50%; background: var(--pa-coral); color: var(--pa-ink); }
-.pa-brand strong { display: block; font-size: 19px; line-height: 27px; font-weight: 800; }
-.pa-brand small { display: block; font-size: 11px; line-height: 15px; font-weight: 800; color: rgb(255 255 255 / 72%); }
-.pa-story { position: relative; margin: 95px 0 0 4px; max-width: 540px; }
-.pa-story.no-eyebrow { padding-top: 41px; }
-.pa-story .pa-story-eyebrow { margin: 0 0 24px; font-size: 12px; line-height: 17px; font-weight: 800; color: #fad4e8; text-transform: uppercase; }
-.pa-story .pa-story-title { margin: 0; font-size: 38px; line-height: 53px; font-weight: 800; color: #fff; white-space: pre-line; }
-.pa-story .pa-story-copy { margin: 32px 0 0; max-width: 520px; font-size: 15px; line-height: 21px; font-weight: 700; color: #f7e5f5; }
-.pa-story:not(.no-eyebrow) .pa-story-copy { font-size: 16px; line-height: 22px; }
-.pa-tiles { display: flex; gap: 18px; margin: 70px 0 0; padding: 0; list-style: none; }
-.pa-tiles li { display: flex; align-items: flex-start; gap: 12px; width: 254px; min-height: 72px; padding: 18px 20px; border-radius: 18px; background: #874078; }
-.pa-tiles svg { flex: none; margin-top: 1px; }
-.pa-tiles b { display: block; font-size: 13px; line-height: 18px; font-weight: 800; color: #fff; }
-.pa-tiles small { display: block; margin-top: 4px; font-size: 11px; line-height: 15px; font-weight: 600; color: #f2def0; }
-.pa-art { position: absolute; right: 52px; bottom: 74px; height: auto; pointer-events: none; }
+/* Purple story panel: original illustration (receipt tickets + money bloom), new full logo */
+.pa-pouch { grid-row: 1 / span 2; position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: calc(100vh - 32px); padding: 56px; border-radius: 40px 40px 40px 20px; background: var(--pa-mauve); color: #fff; }
+.pa-pouch::before { content: ""; position: absolute; inset: 10px; border: 1.5px dashed rgb(255 255 255 / 35%); border-radius: 32px 32px 32px 12px; pointer-events: none; }
+.pa-brand { position: relative; display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.pa-coin { display: grid; place-items: center; width: 48px; height: 48px; flex: none; border-radius: 14px; background: var(--pa-canvas); overflow: hidden; }
+.pa-coin img { width: 40px; height: 40px; object-fit: contain; }
+.pa-brand strong { display: block; font-size: 16px; line-height: 26px; font-weight: 800; }
+.pa-brand small { display: block; font-size: 10px; line-height: 15px; font-weight: 800; color: rgb(255 255 255 / 70%); }
+.pa-story { position: relative; margin-top: 44px; max-width: 540px; }
+.pa-story .pa-story-h { margin: 0; max-width: 520px; font-size: 52px; line-height: 60px; font-weight: 800; letter-spacing: -.6px; white-space: pre-line; }
+.pa-story .pa-story-p { margin: 20px 0 0; font-size: 14px; line-height: 21px; font-weight: 700; color: rgb(255 255 255 / 75%); }
+/* Figma W1 › Pouch: two Admin/KPI receipts, positioned on the 660×868 pouch */
+.pa-cards { position: relative; flex: none; height: 250px; margin: 28px 0 0 -56px; pointer-events: none; }
+.pa-ticket { position: absolute; width: 264px; filter: drop-shadow(0 3px 5px rgb(48 33 51 / 7%)); color: var(--pa-ink); }
+.pa-ticket-paper { display: flex; flex-direction: column; gap: 6px; padding: 18px 18px 14px; border-radius: 20px 20px 0 0; background: #fff; }
+.pa-ticket::after { content: ""; display: block; height: 8px; background: url("/admin-paper/receipt-edge-bottom.svg") 0 0 / 100% 8px no-repeat; }
+.pa-ticket-head { display: flex; align-items: center; gap: 10px; padding-bottom: 4px; font-size: 12px; line-height: 18px; font-weight: 700; color: var(--pa-muted); }
+.pa-ticket-head span:first-child { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 11px; background: var(--pa-coral); color: var(--pa-ink); }
+.pa-ticket b { display: block; font-size: 34px; line-height: 42px; font-weight: 800; letter-spacing: -.6px; white-space: nowrap; }
+.pa-ticket small { display: block; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--pa-muted); }
+.pa-ticket.is-a { left: 73px; top: 75px; transform: rotate(5deg); }
+.pa-ticket.is-b { left: 337px; top: 0; transform: rotate(-6deg); }
+.pa-ticket.is-b .pa-ticket-head span:first-child { background: var(--pa-mint); }
+.pa-art { position: absolute; right: -10px; bottom: 14px; width: 230px; height: 194px; object-fit: contain; pointer-events: none; }
 
 /* Form column (Figma: 500 wide at x = 838 on a 1440 canvas) */
 .pa-main { display: grid; place-items: center; padding: 32px clamp(24px, 6vw, 86px) 32px clamp(24px, 12vw, 172px); }
@@ -78,7 +83,7 @@
 .pa-stack > label { font-size: 12px; line-height: 17px; font-weight: 700; color: var(--pa-muted); }
 .pa-stack > small { font-size: 11px; line-height: 15px; font-weight: 600; color: var(--pa-muted); }
 .pa-stack-input { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 6px 0 12px; border-radius: 12px; background: var(--pa-surface); color: var(--pa-ink); transition: box-shadow .15s, background-color .15s; }
-.pa-stack-input:focus-within { box-shadow: inset 0 0 0 1px var(--pa-mauve); background: #fff; }
+.pa-stack-input:focus-within { box-shadow: none; background: #fff; }
 .pa-stack-input > svg { flex: none; }
 .pa-stack-input input { flex: 1; min-width: 0; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; font: inherit; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--pa-ink); }
 .pa-stack-input input::placeholder { color: #8a7a86; font-weight: 600; opacity: 1; }
@@ -159,7 +164,7 @@
 .pa-root .auth-form { display: grid; gap: 14px; padding: 24px; border-radius: 22px; background: var(--pa-card); box-shadow: 0 6px 10px rgb(71 48 59 / 8%); }
 .pa-root .auth-form label, .pa-root .paper-auth-field > label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--pa-muted); }
 .pa-root .auth-form input { width: 100%; min-height: 48px; padding: 0 14px; border: 0; border-radius: 12px; font: inherit; font-size: 14px; font-weight: 600; color: var(--pa-ink); background: var(--pa-surface); }
-.pa-root .auth-form input:focus { outline: 0; box-shadow: inset 0 0 0 1px var(--pa-mauve); background: #fff; }
+.pa-root .auth-form input:focus { outline: 0; box-shadow: none; background: #fff; }
 .pa-root .paper-auth-password { display: flex; gap: 8px; }
 .pa-root .paper-auth-password button { min-width: 64px; border: 1px solid var(--pa-line); border-radius: 12px; background: #fff; font: inherit; font-size: 12px; font-weight: 800; color: var(--pa-mauve); cursor: pointer; }
 .pa-root .paper-auth-hint { margin: 2px 0 0; font-size: 11px; color: var(--pa-muted); }
@@ -173,14 +178,12 @@
 /* Tablet: story panel becomes a compact header */
 @media (max-width: 1100px) {
   .pa-root { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: 0; padding: 16px; }
-  .pa-pouch { grid-row: auto; min-height: 0; padding: 28px 32px; }
+  .pa-pouch { grid-row: auto; min-height: 0; padding: 32px 32px 28px; }
   .pa-footer { grid-column: 1; padding: 0 4px 4px; }
-  .pa-story, .pa-story.no-eyebrow { margin-top: 24px; padding-top: 0; padding-right: 150px; }
-  .pa-story .pa-story-title { font-size: 30px; line-height: 40px; }
-  .pa-story .pa-story-copy { margin-top: 12px; }
-  .pa-story .pa-story-eyebrow { margin-bottom: 12px; }
-  .pa-tiles { display: none; }
-  .pa-art { right: 24px; bottom: 16px; max-width: 140px; }
+  .pa-story { margin-top: 28px; max-width: 620px; }
+  .pa-story .pa-story-h { font-size: 34px; line-height: 42px; }
+  .pa-cards { display: none; }
+  .pa-art { width: 140px; height: auto; right: 12px; bottom: -14px; }
   .pa-main { padding: 28px 0 24px; place-items: start center; }
   .pa-root.is-fixed .pa-pouch { display: none; }
   .pa-root.is-fixed .pa-main { grid-row: 1; padding: 16px 0; place-items: center; }
@@ -188,13 +191,14 @@
 }
 /* Phones, Surface Duo single screen, Galaxy Z Fold: 16px gutter, no horizontal scroll */
 @media (max-width: 720px) {
-  .pa-pouch { padding: 20px; border-radius: 22px; }
-  .pa-pouch::before { inset: 7px; border-radius: 17px; }
-  .pa-coin { width: 40px; height: 40px; }
-  .pa-story, .pa-story.no-eyebrow { margin-top: 16px; padding-right: 96px; }
-  .pa-story .pa-story-title { font-size: 24px; line-height: 32px; }
-  .pa-story .pa-story-copy, .pa-story .pa-story-eyebrow { display: none; }
-  .pa-art { right: 12px; bottom: 10px; max-width: 96px; }
+  .pa-pouch { padding: 22px 20px 20px; border-radius: 22px; }
+  .pa-pouch::before { inset: 7px; border-radius: 16px; }
+  .pa-coin { width: 42px; height: 42px; border-radius: 12px; }
+  .pa-coin img { width: 34px; height: 34px; }
+  .pa-story { margin-top: 18px; padding-right: 96px; }
+  .pa-story .pa-story-h { font-size: 26px; line-height: 32px; letter-spacing: -.3px; }
+  .pa-story .pa-story-p { display: none; }
+  .pa-art { width: 104px; height: auto; right: 4px; bottom: -10px; }
   .pa-main { padding: 20px 0 16px; }
   .pa-title { font-size: 22px; line-height: 30px; }
   .pa-fields, .pa-card, .pa-otp-card, .pa-code-card { padding: 18px; border-radius: 20px; }
@@ -207,8 +211,8 @@
 }
 @media (max-width: 360px) {
   .pa-root { padding: 12px; }
-  .pa-story, .pa-story.no-eyebrow { padding-right: 0; }
-  .pa-story .pa-story-title { font-size: 21px; line-height: 28px; }
+  .pa-story { padding-right: 0; }
+  .pa-story .pa-story-h { font-size: 22px; line-height: 28px; }
   .pa-art { display: none; }
   .pa-row { gap: 10px; }
   .pa-tile { width: 34px; height: 34px; }
@@ -216,11 +220,13 @@
 }
 /* Short desktop windows */
 @media (max-height: 820px) and (min-width: 1101px) {
-  .pa-story { margin-top: 56px; }
-  .pa-story.no-eyebrow { padding-top: 24px; }
-  .pa-tiles { margin-top: 40px; }
   .pa-panel > .pa-form-wrap { margin-top: 2px; gap: 14px; }
   .pa-card { gap: 16px; }
+  .pa-pouch { padding-block: 44px; }
+  .pa-story { margin-top: 28px; }
+  .pa-story .pa-story-h { font-size: 44px; line-height: 52px; }
+  .pa-cards { margin-top: 16px; }
+  .pa-art { width: 190px; height: 160px; }
 }
 @media (prefers-reduced-motion: reduce) { .pa-root * { transition: none !important; } }
 

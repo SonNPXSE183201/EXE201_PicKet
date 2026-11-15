@@ -17,7 +17,7 @@ test('login uses a compact variant and short introductory copy', () => {
   assert.doesNotMatch(login, /Tài khoản\s+quản trị sẽ vào/);
 });
 test('metadata explicitly uses Picket tab and home-screen icons', () => {
-  assert.match(read('src/app/layout.tsx'), /icons:[\s\S]*picket-logo.png/);
+  assert.match(read('src/app/layout.tsx'), /icons:[\s\S]*picket-logo-192.png/);
   const ico = readFileSync(new URL('../src/app/favicon.ico', import.meta.url));
   assert.equal(ico.readUInt16LE(2), 1);
   assert.equal(ico.readUInt16LE(4), 1);
