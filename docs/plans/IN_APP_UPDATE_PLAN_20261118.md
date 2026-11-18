@@ -155,7 +155,8 @@ Các agent làm song song trên worktree riêng. Phiên chính gộp lại, ch�
   - AAB 1.3.0 (35) lên kênh nội bộ: hoàn tất.
   - APK 1.3.0 (35) lên landing, `picket-1.3.0-35-20261118-97b0f390.apk`: đã kiểm tra SHA-256 trên `picketfinance.com` và địa chỉ sslip.io cũ.
   - APK QA đã cài trên Redmi 7, chạy không lỗi.
+- Supabase: chủ dự án đã đẩy 2 migration (`20261115090000`, `20261118090000`).
+- API và web: image `release-policy-20261118-4f0d6fdd`. Rollback về `picket-api:otp-20261115` và `picket-web:logo3-20261115`. Smoke production đạt. `/v1/releases/policy?channel=apk` trả 35.
 - Còn chờ:
-  - Đẩy 2 migration lên Supabase (`20261115090000`, `20261118090000`), sau đó deploy API và web.
   - Tải APK lên APKPure.
   - Thử bản nội bộ từ Play, rồi phát hành công khai.
