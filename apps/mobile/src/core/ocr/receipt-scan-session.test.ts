@@ -17,9 +17,9 @@ function harness(options:{strongAt?:number;slow?:boolean;throwPreview?:boolean}=
 crop:async()=>{events.push('crop');return {width:3000,height:600,lines:[]};},close:async()=>{events.push('close');}};
  return {native,events,now:()=>clock};
 }
-test('upright VAT reads direction thumbnail, full text and at most one detail crop',async()=>{
+test('upright VAT reads full text once (thumbnail only as an undecided tie-breaker) and at most one detail crop',async()=>{
  const app=harness();const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);
+ assert.equal(result.draft.amount,54000);assert.ok(app.events.indexOf('inspect')<app.events.indexOf('direction'));assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);
  assert.equal(result.stats.fullReads,1);assert.equal(app.events.filter(e=>e==='crop').length,1);assert.equal(app.events[0],'open');assert.equal(app.events.at(-1),'close');
 });
 
@@ -42,13 +42,18 @@ test('a reused native read is counted separately from the inspect bridge call',a
  assert.equal(result.draft.amount,54000);
  assert.equal(app.events.at(-1),'close');
 });
-test('upside-down VAT re-reads only the selected direction before trusting its text',async()=>{
- const app=harness({strongAt:180});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);assert.ok(app.events.includes('select:180'));assert.equal(result.stats.fullReads,1);
+test('upside-down VAT is read once more in the corrected direction before trusting its text',async()=>{
+ const app=harness();let reads=0;
+ app.native.inspect=async()=>{app.events.push('inspect');reads++;return {...vat(),lines:vat().lines.map(line=>({...line,angle:reads===1?180:0,confidence:0.95}))};};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,0,'a decided full read needs no thumbnail');
+ assert.deepEqual(app.events.slice(0,5),['open','select:0','inspect','select:180','inspect']);assert.equal(result.stats.fullReads,2);
+ assert.doesNotMatch(result.draft.reviewReason??'',/hướng ảnh/i);
 });
 test('no new native OCR or detail work starts after the processing budget expires',async()=>{
- const app=harness({slow:true});await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now),/OCR_TIMEOUT/);
- assert.deepEqual(app.events,['open','direction','close']);
+ const app=harness();let clock=0;const open=app.native.open;app.native.open=async(uri)=>{const opened=await open(uri);clock=25000;return opened;};
+ await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,()=>clock),/OCR_TIMEOUT/);
+ assert.deepEqual(app.events,['open','close']);
 });
 test('failed native OCR always closes the sole image session',async()=>{
  const app=harness({throwPreview:true});await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now));assert.equal(app.events.at(-1),'close');
@@ -59,10 +64,10 @@ test('native direction and the initial full-image reading do not trigger a dupli
  assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,1);
 });
 test('leaving the scan cancels subsequent OCR work and closes the session',async()=>{
- const app=harness(),controller=new AbortController();const original=app.native.direction;
- app.native.direction=async(...args)=>{const result=await original(...args);controller.abort();return result;};
+ const app=harness(),controller=new AbortController();const original=app.native.inspect;
+ app.native.inspect=async(...args)=>{const result=await original(...args);controller.abort();return result;};
  await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now,controller.signal),/OCR_CANCELLED/);
- assert.deepEqual(app.events,['open','direction','close']);
+ assert.deepEqual(app.events,['open','select:0','inspect','close']);
 });
 
 test('a full read exhausting the budget keeps its draft and starts no crop',async()=>{
@@ -70,7 +75,7 @@ test('a full read exhausting the budget keeps its draft and starts no crop',asyn
  app.native.inspect=async(...args)=>{const sample=await inspect(...args);clock=25000;return sample;};
  const result=await scanReceiptSession('file:///sample.jpg',app.native,()=>clock);
  assert.equal(result.draft.amount,54000);assert.equal(result.budgetExceeded,true);assert.equal(result.draft.needsReview,true);
- assert.deepEqual(app.events,['open','direction','select:0','inspect','close']);
+ assert.deepEqual(app.events,['open','select:0','inspect','close']);
 });
 
 test('an unreadable VAT total gets one bounded summary retry without repeating full-image OCR',async()=>{
@@ -108,15 +113,15 @@ test('unknown direction keeps partial OCR evidence and requires manual review in
  assert.equal(result.draft.amount,54000);
  assert.equal(result.draft.needsReview,true);
  assert.match(result.draft.reviewReason??'',/hướng ảnh/i);
- assert.deepEqual(app.events,['open','direction','select:0','inspect','close']);
+ assert.deepEqual(app.events,['open','select:0','inspect','direction','close']);
 });
 
-test('a wrong thumbnail rotation is corrected once from full-text direction before trusting values',async()=>{
- const app=harness({strongAt:180});let reads=0;
- app.native.inspect=async()=>{app.events.push('inspect');reads++;return {...vat(),lines:vat().lines.map(line=>({...line,angle:reads===1?180:0,confidence:0.95}))};};
+test('an undecided full read uses the thumbnail direction, then re-reads once before trusting values',async()=>{
+ const app=harness({strongAt:180});
  const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
  assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,2);
- assert.equal(app.events.filter(event=>event==='select:180').length,2);
+ assert.deepEqual(app.events.slice(0,5),['open','select:0','inspect','direction','select:180']);
+ assert.equal(app.events.filter(event=>event==='select:180').length,1);
  assert.equal(app.events.filter(event=>event==='inspect').length,2);
  assert.equal(app.events.at(-1),'close');
 });
