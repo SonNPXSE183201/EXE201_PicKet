@@ -412,15 +412,10 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
       >
         <Text style={styles.description}>{signOutPrompt ? t(signOutPrompt.copy) : ""}</Text>
         <View style={styles.confirmActions}>
+          {/* Stacked full-width buttons: long labels ("Thoát chế độ trên máy") never overflow. */}
           <Pressable
             disabled={busy}
-            onPress={() => setSignOutPrompt(null)}
-            style={[styles.cancelBtn, styles.confirmButton]}
-          >
-            <Text style={styles.cancelBtnText}>{t("Hủy")}</Text>
-          </Pressable>
-          <Pressable
-            disabled={busy}
+            accessibilityRole="button"
             accessibilityState={{ busy, disabled: busy }}
             onPress={() => void performSignOut()}
             style={[styles.confirmPrimaryBtn, styles.confirmButton]}
@@ -430,6 +425,14 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
             ) : (
               <Text style={styles.confirmPrimaryText}>{localMode ? t("Thoát chế độ trên máy") : t("Đăng xuất")}</Text>
             )}
+          </Pressable>
+          <Pressable
+            disabled={busy}
+            accessibilityRole="button"
+            onPress={() => setSignOutPrompt(null)}
+            style={[styles.cancelBtn, styles.confirmButton]}
+          >
+            <Text style={styles.cancelBtnText}>{t("Hủy")}</Text>
           </Pressable>
         </View>
       </ActionSheet>
@@ -800,13 +803,14 @@ const createStyles = (colors: MobileThemeColors) =>
       fontWeight: "700",
     },
     confirmActions: {
-      flexDirection: "row",
-      gap: 12,
+      gap: 10,
       marginTop: 16,
     },
     confirmButton: {
-      flex: 1,
-      minHeight: 46,
+      alignSelf: "stretch",
+      minHeight: 48,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
       borderRadius: paperShape.button,
       alignItems: "center",
       justifyContent: "center",
@@ -817,6 +821,7 @@ const createStyles = (colors: MobileThemeColors) =>
       backgroundColor: colors.surface,
     },
     cancelBtnText: {
+      textAlign: "center",
       color: colors.ink,
       fontSize: 15,
       fontWeight: "600",
@@ -825,6 +830,7 @@ const createStyles = (colors: MobileThemeColors) =>
       backgroundColor: colors.mauve,
     },
     confirmPrimaryText: {
+      textAlign: "center",
       color: colors.onPrimary,
       fontSize: 15,
       fontWeight: "700",
