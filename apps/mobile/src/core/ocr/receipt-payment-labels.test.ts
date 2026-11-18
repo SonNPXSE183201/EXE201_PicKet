@@ -35,3 +35,23 @@ test("a payable label beside a damaged amount still blocks a generic total",()=>
   const r=parseReceiptLines([c('PICKET STORE',300,0,300),c('Tổng',40,500),c('120000',700,500),c('Khách phải trả',40,600,250),c('12O000',700,600)]);
   assert.equal(r.amount,null);
 });
+
+test("card-terminal fields (TID, MID, Lô) are never products",()=>{
+  const r=parseReceiptLines([c('PICKET PAY',300,0,300),c('TID: 10002247',40,200,300),c('LÔ: 000182',40,260,250),c('TỔNG:',40,500),c('179,000',650,505)]);
+  assert.deepEqual(r.lineItems,[]);
+  assert.equal(r.amount,179000);
+});
+
+test("a counted item whose amount is not whole hundreds stays visible but is never confirmed",()=>{
+  const r=parseReceiptLines([c('PICKET CAFE',300,0,300),c('Nuoc ep dua',40,200,220),c('30.030',650,200),c('Tổng thanh toán',40,400,300),c('30.000',650,400)]);
+  assert.equal(r.lineItems[0]?.total,30030);
+  assert.ok(r.lineItems[0].confidence<0.5);
+  assert.equal(r.needsReview,true);
+  assert.match(r.reviewReason??"",/tròn trăm/);
+});
+
+test("a weighed item keeps its odd amount without the misread warning",()=>{
+  const r=parseReceiptLines([c('PICKET MART',300,0,300),c('Thit xay 0,224 x 127.000 | 28.448',40,200,520),c('Tổng thanh toán',40,400,300),c('28.448',650,400)]);
+  assert.equal(r.lineItems[0]?.total,28448);
+  assert.doesNotMatch(r.reviewReason??"",/tròn trăm/);
+});

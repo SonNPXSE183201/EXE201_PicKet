@@ -350,7 +350,11 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   const tableRowLines = receiptHasTableColumns(lines) ? lines.filter(line => /\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/.test(line.text)) : [];
   // Headers alone do not make a table: if no row could be assembled, read the lines as plain rows.
   const itemLines = tableRowLines.length > 0 ? tableRowLines : lines;
-  const {items:itemCandidates,hasArithmeticConflict}=receiptItemCandidates(itemLines),lineItems=itemCandidates.map(candidate=>candidate.item);
+  const {items:itemCandidates,hasArithmeticConflict}=receiptItemCandidates(itemLines);
+  // VND prices of counted (not weighed) goods are printed in whole hundreds. An odd tail ("30.030",
+  // "16,009") is usually a misread digit: keep the row as read, but never let it pass as confirmed.
+  const unusualAmount=(item:ReceiptDraftLine)=>Number.isInteger(item.quantity)&&item.total>=1000&&item.total%100!==0;
+  const lineItems=itemCandidates.map(candidate=>unusualAmount(candidate.item)?{...candidate.item,confidence:Math.min(candidate.item.confidence,0.45)}:candidate.item);
   const bodySources=new Set([...itemCandidates.map(candidate=>candidate.source),...lines.filter(line=>isReceiptSummary(line.text))]);
   const bodyTop=Math.min(Infinity,...[...bodySources].flatMap(line=>typeof line.top==='number'&&Number.isFinite(line.top)?[line.top]:[]));
   const bodyIndex=lines.findIndex(line=>bodySources.has(line));
@@ -392,6 +396,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
       ? "Một số ô tiền hàng hoặc thuế chưa khớp. Hãy kiểm tra tổng tiền."
     : hasArithmeticConflict || lines.some(line => line.reviewIssue === "inconsistent-item")
       ? "Một số dòng sản phẩm có số lượng, đơn giá và thành tiền không khớp nên chưa được đưa vào danh sách. Hãy đối chiếu và bổ sung dòng thiếu."
+    : lineItems.some(unusualAmount)
+      ? "Một số số tiền không tròn trăm đồng nên có thể bị đọc sai. Hãy đối chiếu các dòng được đánh dấu với hóa đơn."
     : lineItems.some(item => item.confidence < 0.7)
       ? "Một số số lượng hoặc đơn giá được suy ra, chưa được xác nhận từ ảnh. Hãy đối chiếu từng dòng với hóa đơn."
     : selectedTotal === null
