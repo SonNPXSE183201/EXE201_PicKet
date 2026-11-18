@@ -137,7 +137,11 @@ export function CreatePasswordScreen({ purpose = "signup" }: { purpose?: PhoneFl
           editable={busy === null}
           icon="lock-outline"
           label="Mật khẩu mới"
-          onChangeText={setPassword}
+          onChangeText={(value) => {
+            setPassword(value);
+            setMismatch(false);
+            setMessage(null);
+          }}
           secureTextEntry={!visible}
           textContentType="newPassword"
           trailing={<PasswordVisibilityToggle visible={visible} onToggle={() => setVisible(!visible)} />}
@@ -155,6 +159,7 @@ export function CreatePasswordScreen({ purpose = "signup" }: { purpose?: PhoneFl
           onChangeText={(value) => {
             setConfirmation(value);
             setMismatch(false);
+            setMessage(null);
           }}
           onSubmitEditing={() => void submit()}
           secureTextEntry={!confirmVisible}

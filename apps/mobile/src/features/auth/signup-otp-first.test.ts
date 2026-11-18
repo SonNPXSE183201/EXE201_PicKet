@@ -44,6 +44,9 @@ test("password rules follow the API policy, including every listed symbol", () =
   assert.equal(newPasswordIssue("Short1!", "Short1!"), "Mật khẩu cần ít nhất 12 ký tự.");
   assert.equal(newPasswordIssue("picketpassword1!", "picketpassword1!"), "Mật khẩu cần chữ hoa, chữ thường, chữ số và ký tự đặc biệt.");
   assert.equal(newPasswordIssue("PicketPassword1!", "PicketPassword1?"), "Mật khẩu xác nhận không khớp.");
+  assert.equal(newPasswordIssue(" PicketPassword1!", "PicketPassword1!"), "Mật khẩu không được có dấu cách ở đầu hoặc cuối.");
+  assert.equal(newPasswordIssue("PicketPassword1!", "PicketPassword1! "), "Mật khẩu không được có dấu cách ở đầu hoặc cuối.");
+  assert.equal(newPasswordIssue("Picket Password1!", "Picket Password1!"), null);
   assert.equal(newPasswordIssue("PicketPassword1!", "PicketPassword1!"), null);
 });
 
