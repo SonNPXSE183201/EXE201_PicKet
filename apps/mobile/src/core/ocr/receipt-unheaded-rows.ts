@@ -32,6 +32,7 @@ export function receiptUnheadedRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
     replacements.set(name,{...name,text:`${name.text} ${quantity} x ${unit} | ${total}`,right:amount.right,confidence:Math.min(name.confidence??.75,operand.confidence??.75,amount.confidence??.75)});
     used.add(operand);used.add(amount);
   }
+  const inline:{name:Box;amount:Box;quantity:Box|null}[]=[];
   for(const name of boxes){
     if(used.has(name)||replacements.has(name))continue;
     const explicitQuantity=/^\d+(?:[.,]\d+)?\s*[xX×]\s+/.test(name.text);
@@ -50,6 +51,20 @@ export function receiptUnheadedRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
       text=`${name.text} ${quantity} x ${unit} | ${total}`;confidence=Math.min(confidence,.55);used.add(quantities[0]);
     }
     replacements.set(name,{...name,text,right:amount.right,confidence});used.add(amount);
+    inline.push({name,amount,quantity:quantities.length===1?quantities[0]:null});
+  }
+  // A column drifting upward can make every amount overlap the next name down. An amount clearly
+  // above its name, with an unpriced product line just above that name, is ambiguous: undo it.
+  for(let changed=true;changed;){
+    changed=false;
+    for(const pair of inline){
+      const {name,amount}=pair,height=name.bottom-name.top;
+      if(!replacements.has(name)||cy(amount)>=cy(name)-height*.25)continue;
+      const unpricedAbove=boxes.some(other=>other!==name&&!used.has(other)&&!replacements.has(other)&&eligibleName(other)&&!numeric.test(other.text)&&
+        cy(other)<cy(name)&&cy(name)-cy(other)<=height*2&&Math.min(other.right,name.right)-Math.max(other.left,name.left)>0);
+      if(!unpricedAbove)continue;
+      replacements.delete(name);used.delete(amount);if(pair.quantity)used.delete(pair.quantity);changed=true;
+    }
   }
   return lines.filter(line=>!used.has(line)).map(line=>replacements.get(line)??line);
 }

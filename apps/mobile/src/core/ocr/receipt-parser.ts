@@ -1,7 +1,7 @@
 import { parseReceiptMoney, parseReceiptItemMoney, parseReceiptSummaryMoney } from "./receipt-money";
 import {receiptHasTableColumns,receiptTableRows} from "./receipt-table-layout";
 import { receiptVatSummaryRows } from "./receipt-vat-summary";
-import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,merchantDisplayName,receiptMerchantFromDocumentHeading,noisyReceiptSummaryRole} from "./receipt-semantics";
+import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,receiptNameHasWord,merchantDisplayName,receiptMerchantFromDocumentHeading,noisyReceiptSummaryRole} from "./receipt-semantics";
 import {receiptPosRows} from "./receipt-pos-rows";
 import {receiptTotalRole,looksLikeContactAmount} from "./receipt-total-role";
 import {receiptUnheadedRows} from "./receipt-unheaded-rows";
@@ -48,7 +48,7 @@ const bareSumLabel=/^cong\b(?!\s*tien\s*hang)/;
 const weakSumLabelConfidence=0.6;
 // Row text emitted by receiptTableRows: "name qty x unit | total".
 const assembledTableRow=/\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/;
-const totalWords = /^cong(?=\s*(?:[:|]\s*)?(?:\d|$))|^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
+const totalWords = /^cong(?=\s*(?:[:|]\s*)?(?:\d|$))|^t[06b]ng\b|^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|can\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
 const rejectedTotalWords = /hinh\s*thuc|phuong\s*thuc|payment\s*method|\b(?:dt|dien\s*thoai|phone|hotline|tel)\b|subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|total\s*item|\b(?:qty|0ty)\b|so\s*luong/i;
@@ -83,7 +83,9 @@ function receiptItemCandidates(
     if (isReceiptMetadata(text)||isReceiptDocumentLabel(text)||isReceiptSummary(text)) continue;
     if (header >= 0 && (typeof tableTop === "number" && typeof line.top === "number" ? line.top < tableTop : index <= header)) continue;
     if (summary >= 0 && (typeof recognizedLines[summary].top === "number" && typeof line.top === "number" ? line.top >= recognizedLines[summary].top! : index >= summary)) continue;
-    if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean) || /^(?:so|so hd|ma|no|dt|sdt)\s*[:.#-]/.test(clean)) continue;
+    // Leading OCR punctuation ("(VAT; 100") must not hide a rejected label.
+    // A payable label anywhere ("Khách phải trả") is a summary row, never a product.
+    if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean.replace(/^[^a-z0-9]+/, "")) || strongTotalWords.test(clean) || /^(?:so|so hd|ma|no|dt|sdt)\s*[:.#-]/.test(clean)) continue;
     const priceMatch = text.match(
       /(?:^|[\s|:~])(\d{1,3}(?:[.,][ \u00a0]*\d{3}|[ \u00a0]\d{3})+(?:[.,]\d{2})?|\d{3,}(?:[.,]\d{2})?|0(?:[.,]0{2})?)(?:\s*(?:vnd|đ|d|₫))?\s*$/i,
     );
@@ -126,7 +128,7 @@ function receiptItemCandidates(
         continue;
       }
     }
-    if ((total === 0 && !quantityMatch && !leadingQuantity) || name.length < 3 || name.length > 200 || name.replace(/[^A-Za-zÀ-ỹ]/g, "").length < 2 || isReceiptMetadata(name) || isReceiptSummary(name) || isReceiptDocumentLabel(name) || /^(?:\d+[\s\-_]*)?(?:cai|lon|chai|ly|hop|goi|dia|bat|to|phan|chiec|kg|g)$/i.test(normalized(name)) || (/^[\d.,\s\-_oOcCsSdDleI]+$/i.test(name) && /\d/.test(name)) || /(?:^|\s)(?:\d+[Oo]+|[Oo]+\d+)$/.test(name)) continue;
+    if ((total === 0 && !quantityMatch && !leadingQuantity) || name.length < 3 || !receiptNameHasWord(name) || name.length > 200 || name.replace(/[^A-Za-zÀ-ỹ]/g, "").length < 2 || isReceiptMetadata(name, { priced: true }) || isReceiptSummary(name) || isReceiptDocumentLabel(name) || /^(?:\d+[\s\-_]*)?(?:cai|lon|chai|ly|hop|goi|dia|bat|to|phan|chiec|kg|g)$/i.test(normalized(name)) || (/^[\d.,\s\-_oOcCsSdDleI]+$/i.test(name) && /\d/.test(name)) || /(?:^|\s)(?:\d+[Oo]+|[Oo]+\d+)$/.test(name)) continue;
     items.push({source:line,item:{
       name,
       quantity,
@@ -262,7 +264,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     const clean = normalized(line.text);
     const role=receiptTotalRole(line.text);
     if (isReceiptMetadata(line.text) || (!totalWords.test(clean)&&noisyReceiptSummaryRole(line.text)===null) || rejectedTotalWords.test(clean) || role===0) return;
-    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:").replace(/\([^)]*\)/g," ");
+    // A misread "Tổng" ("T6ng") is a label, not a damaged amount token.
+    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:").replace(/^t[06b]ng\b/i,"Tong").replace(/\([^)]*\)/g," ");
     // Do not truncate a damaged token (12O000 -> 12) into a valid amount.
     const ownNumbers = [...amountText.matchAll(/(?:^|[^\p{L}\d.,])(\d.*|[A-Za-z]\d.*)$/gu)].map(match=>[match[1].trim()]);
     const spatial=ownNumbers.length===0?spatialTotalCandidates(line,lines):[];

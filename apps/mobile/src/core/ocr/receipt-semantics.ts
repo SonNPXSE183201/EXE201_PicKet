@@ -67,6 +67,11 @@ export function noisyReceiptSummaryRole(text: string): 1 | 2 | null {
   return null;
 }
 
+/** A product name has at least one real word: letters only, or a brand/size such as "7UP", "200g", "C2". */
+export function receiptNameHasWord(text:string):boolean{
+  return text.split(/\s+/).some(word=>/^[(["'•*-]?(?:\p{L}{2,}|\d+\p{L}+|\p{L}+\d+)[.,:;)\]"'/-]*$/u.test(word));
+}
+
 export function merchantDisplayName(value:string):string {
   return value.replace(/^(?:đơn vị bán hàng|tên cửa hàng|seller|merchant)\s*:\s*/iu,'')
     .replace(/^((?:cà\s+phê|nhà\s+hàng|cửa\s+hàng|siêu\s+thị|nhà\s+thuốc))(?=\p{L})/iu,'$1 ').trim();
@@ -79,8 +84,25 @@ export function receiptMerchantFromDocumentHeading(text:string):string|null {
   return candidate&&/[\p{L}]{3}/u.test(candidate)?candidate:null;
 }
 
-export function isReceiptMetadata(text: string): boolean {
+// A printed line amount ("32.000", "| 32000", low-confidence "~ 32000") ends product rows,
+// never a street address.
+const pricedRow = /(?:\s\d{1,3}(?:[.,]\d{3})+(?:[.,]00)?|[|~]\s*\d+)\s*(?:vnd|d)?$/;
+
+/** Street-address shapes. Product names such as "Đường mía" or "Nước ... Ít Đường" are only
+ * excluded from this test when the row carries its own price (see isReceiptMetadata). */
+function looksLikeStreetAddress(text: string, value: string): boolean {
+  // Folding accents must not turn a restaurant's "Quán" into district "Quận".
+  if (/^quán\b/iu.test(text.trim().normalize("NFC"))) return false;
+  return /^(?:duong\b|dc\s*[:.]|q[.]|p[.]|tp[.]|tinh\b|huyen\b|quan\b|phuong\b|no[.]?\s*\d)/.test(value)
+    // House number immediately followed by a street name ("12 Nguyễn Huệ", "45A/2 Lê Lợi").
+    || /^\d+[a-z]?(?:[/-]\d+[a-z]?)*\s+(?:(?:duong|pho)\s+)?(?:nguyen|tran|le|pham|hoang|duong)\b/.test(value)
+    || /^\d+\s+[^|]*\b(?:street|road|avenue|kdc|phuong|quan)\b/.test(value);
+}
+
+/** `priced` marks a name whose own line amount was already read (the amount is not in `text`). */
+export function isReceiptMetadata(text: string, options: { priced?: boolean } = {}): boolean {
   const value = normalizeReceiptLabel(text);
+  const priced = options.priced === true || pricedRow.test(value);
   return /^(?:(?:ban|table)\s*[:#-]?\s*\d+\b|cashier\s*name\b|n\s*\/\s*v\s*:|kh\s*:|d\s*\/\s*c\s*:|so\s+order\b|ho(?:\s+va)?\s+ten\s+nguoi\s+mua(?:\s+hang)?\s*:)/.test(value)
     || /^(?:order|bill|inv(?:oice)?|receipt|ref(?:erence)?|trans(?:action)?|doc(?:ument)?|check|ticket|voucher|folio|pos|terminal|approval|auth(?:orization)?|trace|batch)\s*[:#]/.test(value)
     || /^thong tin ocr\s*:|^store\s*:|^thu\s+n?[cgp]?an\b/.test(value)
@@ -89,8 +111,7 @@ export function isReceiptMetadata(text: string): boolean {
     || /^(?:so|no|ngay|date|time)\s*[:.#-]/.test(value)
     || /\b\d{1,2}[/-]\d{1,2}[/-]/.test(value)
     || /\b\d{1,2}:\d{2}(?::\d{2})?\b/.test(value)
-    // Folding accents must not turn a restaurant's "Quán" into district "Quận".
-    || (!/^quán\b/iu.test(text.trim().normalize("NFC")) && /^(?:duong\b|dc\s*[:.]|q[.]|p[.]|tp[.]|tinh\b|huyen\b|quan\b|phuong\b|no[.]?\s*\d|\d+\s+[^|]*\b(?:duong|nguyen|tran|le|pham|hoang|street|road|avenue|kdc|phuong|quan)\b)/.test(value))
+    || (!priced && looksLikeStreetAddress(text, value))
     || /\b(?:q[.]\s*\d|p[.]\s*\d|tp[.]\s|kdc\b|jalan\b|district\b)/.test(value)
     || /[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(value)
     || /^(?:[:|]\s*)?[^\d]*\b0\d{8,10}\b/.test(value);
@@ -100,7 +121,8 @@ export function isReceiptSummary(text: string): boolean {
   if (/^(?:cong(?=\s*(?:[:|]\s*)?(?:\d|$))|da\s+thanh\s+toan\b|already\s+paid\b|amount\s+paid\b|paid\b|khach\s+dua\b|tra\s+lai\b)/.test(normalizeReceiptLabel(text))) return true;
   if(/^(?:phi\s+(?:van chuyen|giao hang)|shipping\s+(?:fee|charge)|delivery\s+(?:fee|charge)|can\s*tra)\b/.test(normalizeReceiptLabel(text)))return true;
   if(/^(?:subttl\b|sub\s*ttl\b|items?\s+\d|total\s*(?:item|qty)|tax\b|pb[ -]?1\b|service charge\b|edc\b)/.test(normalizeReceiptLabel(text)))return true;
-  return /^(?:tong\b|tng\b|teng cong\b|total\b|grand total\b|sub[ -]?total\b|tam tinh\b|thanh toan\b|so tien\b|tien\s*(?:hang|thue|khach|thua|thanh toan|ca\s*the|the|mat|chuyen\s*khoan|quet\s*the)\b|phai\s*(?:thanh\s*toan|tra)\b|can\s*(?:thanh\s*toan|tra)\b|vat\b|thue\b|tax\b|giam gia\b|discount\b|service\b|phi dich vu\b|cash\b|change\b|tendered\b|amount due\b|due\b)/.test(normalizeReceiptLabel(text)) || noisyReceiptSummaryRole(text) !== null;
+  // "t6ng"/"tbng"/"t0ng": OCR reads the hooked "ổ" of "Tổng" as a digit or "b"; no product starts so.
+  return /^(?:tong\b|tng\b|t[06b]ng\b|teng cong\b|total\b|grand total\b|sub[ -]?total\b|tam tinh\b|thanh toan\b|so tien\b|tien\s*(?:hang|thue|khach|thua|thanh toan|ca\s*the|the|mat|chuyen\s*khoan|quet\s*the)\b|phai\s*(?:thanh\s*toan|tra)\b|can\s*(?:thanh\s*toan|tra)\b|vat\b|thue\b|tax\b|giam gia\b|discount\b|service\b|phi dich vu\b|cash\b|change\b|tendered\b|amount due\b|due\b)/.test(normalizeReceiptLabel(text)) || noisyReceiptSummaryRole(text) !== null;
 }
 
 export function isReceiptDocumentLabel(text: string): boolean {
