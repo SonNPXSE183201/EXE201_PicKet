@@ -29,7 +29,13 @@ export function receiptDate(lines: ReceiptTextLine[]): { date: string; confidenc
     else {
       const local = text.match(/\b(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})\b/)
         ?? text.match(/\bngay\s*(\d{1,2})\s*thang\s*(\d{1,2})\s*nam\s*(\d{4})\b/);
-      if (local) date = calendarDate(Number(local[3]) + (local[3].length === 2 ? 2000 : 0), Number(local[2]), Number(local[1]));
+      if (local) {
+        const year = Number(local[3]) + (local[3].length === 2 ? 2000 : 0);
+        date = calendarDate(year, Number(local[2]), Number(local[1]));
+        // Imported POS systems print month/day ("11/18/26"). Use it only when day/month is impossible
+        // and the second number can only be a day, so an ambiguous 05/06 always stays day-first.
+        if (!date && Number(local[2]) > 12 && Number(local[1]) <= 12) date = calendarDate(year, Number(local[1]), Number(local[2]));
+      }
       else {
         // Anchor named-month dates after a date label or at the start of a date
         // line. A product model containing a month name is not date evidence.

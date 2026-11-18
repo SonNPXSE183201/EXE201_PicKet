@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {parseReceiptLines} from "./receipt-parser";
+import {parseReceiptLines,parseReceiptText} from "./receipt-parser";
+import {canAttachReceipt} from "./receipt-eligibility";
 
 const c=(text:string,left:number,top:number,width=160,height=40)=>({text,left,right:left+width,top,bottom:top+height,confidence:.9});
 
@@ -54,4 +55,12 @@ test("a weighed item keeps its odd amount without the misread warning",()=>{
   const r=parseReceiptLines([c('PICKET MART',300,0,300),c('Thit xay 0,224 x 127.000 | 28.448',40,200,520),c('Tổng thanh toán',40,400,300),c('28.448',650,400)]);
   assert.equal(r.lineItems[0]?.total,28448);
   assert.doesNotMatch(r.reviewReason??"",/tròn trăm/);
+});
+
+test("saved draft text keeps the card-slip total eligible after a payment title",()=>{
+  const lines=[c('PICKET BANK',300,0,300),c('PAYOO-PICKETSHOP',300,60,300),c('NGÀY GIỜ: 16/11/2026 20:17:34',40,120,600),c('THANH TOÁN',300,300,250),c('THẺ: 970400******0010',40,420,500),c('TÒNG:',40,800),c('179,000',650,805),c('BÁN HÀNG',40,900)];
+  const r=parseReceiptLines(lines);
+  assert.equal(r.amount,179000);
+  assert.equal(parseReceiptText(r.rawText).amount,179000);
+  assert.equal(canAttachReceipt(r),true);
 });

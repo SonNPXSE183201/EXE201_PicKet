@@ -51,6 +51,8 @@ export default function CaptureReceiptScreen() {
   const localOcrController = useRef<AbortController | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [title, setTitle] = useState("");
+  // Android scrolls an unfocused single-line input to its end; keep a long store name readable from its start.
+  const [titleFocused, setTitleFocused] = useState(false);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isRecognizing, setIsRecognizing] = useState(false);
@@ -539,6 +541,9 @@ export default function CaptureReceiptScreen() {
           editable={receiptEligible}
           value={title}
           onChangeText={setTitle}
+          onFocus={() => setTitleFocused(true)}
+          onBlur={() => setTitleFocused(false)}
+          selection={titleFocused ? undefined : { start: 0, end: 0 }}
           placeholder="Ví dụ: Cà phê sáng"
           placeholderTextColor={colors.muted}
           style={styles.storeInput}

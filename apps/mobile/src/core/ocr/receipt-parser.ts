@@ -1,7 +1,7 @@
 import { parseReceiptMoney, parseReceiptItemMoney, parseReceiptSummaryMoney } from "./receipt-money";
 import {receiptHasTableColumns,receiptTableRows} from "./receipt-table-layout";
 import { receiptVatSummaryRows } from "./receipt-vat-summary";
-import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,receiptNameHasWord,merchantDisplayName,receiptMerchantFromDocumentHeading,noisyReceiptSummaryRole} from "./receipt-semantics";
+import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,receiptNameHasWord,merchantDisplayName,receiptMerchantFromDocumentHeading,noisyReceiptSummaryRole,normalizeReceiptLabel} from "./receipt-semantics";
 import {receiptPosRows} from "./receipt-pos-rows";
 import {receiptTotalRole,looksLikeContactAmount} from "./receipt-total-role";
 import {receiptUnheadedRows} from "./receipt-unheaded-rows";
@@ -191,10 +191,15 @@ function withoutAmountMarks(text:string):string{
 /** True when a payable label carries an amount token of its own, on its row, or directly above/below it. */
 function payableAmountPrinted(label:ReceiptTextLine,index:number,lines:ReceiptTextLine[]):boolean{
   if(/\d/.test(label.text))return true;
-  if(typeof label.top!=="number"||typeof label.bottom!=="number"||![label.top,label.bottom].every(Number.isFinite)||label.bottom<=label.top)return true;
-  const top=label.top,bottom=label.bottom,height=bottom-top,left=typeof label.left==="number"&&Number.isFinite(label.left)?label.left:-Infinity;
   // A compact numeric cell, damaged or not ("140.000", "12O000", "VND 179,000"), unlike a sentence or card field.
   const amountCell=/^\s*(?:vnd|đ|d|₫)?\s*\S*\d\S*\d\S*\s*(?:vnd|đ|d|₫)?\s*$/i;
+  // Saved draft text has no frames. Only a bare title line or a confirmation sentence is clearly not a
+  // payable row; any other label ("Amount Due unreadable") may carry a damaged amount and still counts.
+  if(typeof label.top!=="number"||typeof label.bottom!=="number"||![label.top,label.bottom].every(Number.isFinite)||label.bottom<=label.top){
+    const text=normalizeReceiptLabel(label.text);
+    return !/^(?:thanh\s*toan|payment)$/.test(text)&&!/\bxac\s*nhan\b/.test(text)||[lines[index-1],lines[index+1]].some(line=>line!==undefined&&amountCell.test(line.text));
+  }
+  const top=label.top,bottom=label.bottom,height=bottom-top,left=typeof label.left==="number"&&Number.isFinite(label.left)?label.left:-Infinity;
   return lines.some((line,j)=>{
     if(j===index||typeof line.top!=="number"||typeof line.bottom!=="number"||![line.top,line.bottom].every(Number.isFinite)||line.bottom<=line.top||!/\d/.test(line.text))return false;
     if(typeof line.left==="number"&&Number.isFinite(line.left)&&typeof line.right==="number"&&line.right<left)return false;
@@ -382,7 +387,11 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
         (letter) => letter === letter.toUpperCase(),
       ).length;
       const uppercaseRatio = letters.length > 0 ? uppercaseCount / letters.length : 0;
-      return { value: merchantDisplayName(headingMerchant??line.text), score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
+      // A bare store-type heading ("NHÀ THUỐC") names the brand on the next line ("Pharmacity").
+      const brand=lines[index+1];
+      const storeType=headingMerchant===null&&/^(?:nha\s*thuoc|cua\s*hang|sieu\s*thi|nha\s*hang|ca\s*phe|quan|tiem)$/.test(normalizeReceiptLabel(merchantText).replace(/\s+/g," "))&&
+        brand!==undefined&&/\p{L}{3}/u.test(brand.text)&&!/\d/.test(brand.text)&&!isReceiptMetadata(brand.text)&&!isReceiptDocumentLabel(brand.text)&&!isReceiptSummary(brand.text);
+      return { value: storeType?merchantDisplayName(brand.text):merchantDisplayName(headingMerchant??line.text), score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
     })
     .filter((candidate): candidate is { value: string; score: number } => candidate !== null)
     .sort((left, right) => right.score - left.score);
