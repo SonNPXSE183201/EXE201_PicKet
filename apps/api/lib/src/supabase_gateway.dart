@@ -497,6 +497,24 @@ class SupabaseGateway {
     return value is Map<String, dynamic> ? value : null;
   }
 
+  /// Public update policy for the in-app updater (`play` or `apk`).
+  Future<Map<String, dynamic>?> releasePolicy(String channel) async {
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/public_release_policy'),
+          headers: {
+            'apikey': config.supabasePublishableKey,
+            HttpHeaders.acceptHeader: ContentType.json.mimeType,
+            HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+          },
+          body: jsonEncode({'p_channel': channel}),
+        )
+        .timeout(const Duration(seconds: 10));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    return value is Map<String, dynamic> ? value : null;
+  }
+
   /// Public announcement feed. A signed-in caller is targeted by plan; a
   /// guest, or a caller whose token is no longer valid, gets the guest feed.
   Future<Map<String, dynamic>> announcementsFeed(

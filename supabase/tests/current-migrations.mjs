@@ -12,6 +12,7 @@ const suites = [
   "billing-promotions",
   "app-announcements",
   "app-releases",
+  "release-policy",
   "contact-methods-otp",
   "auth-verification-settings",
   "admin-platform",
