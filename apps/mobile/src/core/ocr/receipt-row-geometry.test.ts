@@ -123,3 +123,15 @@ test("a person-name field is not a column header",()=>{
   const r=parseReceiptLines([...head,cell("Tên khách: An",20,2,0,160),cell("Ca phe da",20,3),cell("10.000",480,3,0,60)]);
   assert.deepEqual(r.lineItems.map(item=>item.name),["Ca phe da"]);
 });
+
+test("a trailing one-letter tax code and a leading dong sign do not hide an item amount",()=>{
+  const r=items([...head,cell("adidas TAEKWONDO LAC 2,400,000.00 C",20,3,0,520),cell("Total VND",20,5),cell("2,400,000.00",480,5,0,120)]);
+  assert.deepEqual(r,[{name:"adidas TAEKWONDO LAC",quantity:1,unitPrice:2400000,total:2400000}]);
+  const s=items([...head,cell("W AO KHOAC",20,3,0,140),cell("2000225186709",20,4,0,170),cell("1",250,4,0,10),cell("d784.000T",480,4,0,110),cell("TỔNG",20,6),cell("d784.000",480,6,0,110)]);
+  assert.deepEqual(s,[{name:"W AO KHOAC",quantity:1,unitPrice:784000,total:784000}]);
+});
+
+test("a tax-code strip never truncates a damaged amount",()=>{
+  const r=items([...head,cell("Ca phe da 12.00O",20,3,0,200),cell("Tổng",20,5),cell("12.000",480,5,0,60)]);
+  assert.deepEqual(r,[]);
+});

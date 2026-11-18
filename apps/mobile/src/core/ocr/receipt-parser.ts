@@ -176,6 +176,18 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
   return closer.length>0?closer:raw;
 }
 
+/**
+ * Marks printed around a grouped amount that are not part of it: a dong sign read as a leading
+ * "d"/"đ" ("d784.000") and a one-letter VAT class after it ("2,400,000.00 C", "784.000T").
+ * Letters that look like digits (O, I, S, B, G, Z, L) are never stripped, so a damaged amount stays damaged.
+ */
+function withoutAmountMarks(text:string):string{
+  const grouped=String.raw`\d{1,3}(?:[.,]\d{3})+(?:[.,]00)?`;
+  return text
+    .replace(new RegExp(String.raw`(^|\s)[dđ₫](?=${grouped}(?![\d.,]))`,"g"),"$1")
+    .replace(new RegExp(String.raw`(${grouped})\s?[ACEFHKNPTV]$`),"$1");
+}
+
 /** True when a payable label carries an amount token of its own, on its row, or directly above/below it. */
 function payableAmountPrinted(label:ReceiptTextLine,index:number,lines:ReceiptTextLine[]):boolean{
   if(/\d/.test(label.text))return true;
@@ -237,7 +249,7 @@ function adjacentTotalCandidate(label:ReceiptTextLine,candidate:ReceiptTextLine|
 /** Pure parser shared by the future native ML Kit adapter and review UI. */
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
   const structured = receiptVatSummaryRows(receiptPosRows(receiptTableRows(recognizedLines
-    .map((line) => ({ ...line, text: line.text.trim() }))
+    .map((line) => ({ ...line, text: withoutAmountMarks(line.text.trim()) }))
     // A bare "Cộng" is a weak label; a damaged read of it is not evidence of a summary row.
     .filter((line) => line.text.length > 0 && !(bareSumLabel.test(normalized(line.text)) && typeof line.confidence === "number" && line.confidence < weakSumLabelConfidence)))));
   const assembledTable=receiptHasTableColumns(structured)&&structured.some(line=>assembledTableRow.test(line.text));

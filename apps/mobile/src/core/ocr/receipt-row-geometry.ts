@@ -59,6 +59,7 @@ function tokensOf(text:string):Token[]|null{
   // VAT notes printed beside a unit price never carry the line amount.
   const clean=text.replace(/\s*\((?=[^)]*[A-Za-z])[^)]*\)?\s*$/,"").replace(/\s*(?:vnd|đ|₫)\s*$/i,"").trim();
   if(!clean||!/\d/.test(clean))return null;
+  if(/^\d{8,}$/.test(clean))return [];
   const whole=parseReceiptItemMoney(clean);
   if(whole!==null&&/^[\d.,\s]+$/.test(clean))return [{raw:clean,money:whole,quantity:/^\d{1,4}(?:[.,]\d{1,3})?$/.test(clean)?Number(clean.replace(",",".")):null}];
   let parts=clean.split(/\s+/);
@@ -71,6 +72,8 @@ function tokensOf(text:string):Token[]|null{
   const tokens:Token[]=[];
   for(const part of parts){
     const raw=part;
+    // An article barcode or SKU (8+ ungrouped digits) beside the values is never an amount or a quantity.
+    if(/^\d{8,}$/.test(raw))continue;
     if(/^-?\d[\d.,]*$/.test(raw)){
       const negative=raw.startsWith("-"),body=negative?raw.slice(1):raw;
       const money=parseReceiptItemMoney(body);
@@ -82,7 +85,8 @@ function tokensOf(text:string):Token[]|null{
     if(/\d/.test(part)&&letters(part)<=2&&part.length<=8||/^[oOcCGQD]{2,3}[.,]?$/.test(part)){tokens.push({raw:part,money:null,quantity:null});continue;}
     return null;
   }
-  return tokens.length?tokens:null;
+  // A cell that held only a barcode is still part of the value row; it just contributes nothing.
+  return tokens.length||parts.every(part=>/^\d{8,}$/.test(part))?tokens:null;
 }
 
 function classify(line:Box):{kind:Kind;tokens:Token[]}{
