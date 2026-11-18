@@ -10,9 +10,14 @@ const vector = (w, h, d) => `<vector xmlns:android="http://schemas.android.com/a
   <path android:fillColor="${BRAND}" android:pathData="${d}" />
 </vector>
 `;
+// Tapping inside typed text shows an insertion handle under the caret. Owners asked for the plain
+// "|" caret only, as on the first tap, so the insertion handle is fully transparent (selection handles stay).
+const invisible = `<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="2dp" android:height="2dp" android:viewportWidth="2" android:viewportHeight="2">
+  <path android:fillColor="#00000000" android:pathData="M0,0 L2,0 L2,2 L0,2 Z" />
+</vector>
+`;
 const HANDLES = {
-  // Teardrop under the caret, tip pointing up at the cursor.
-  picket_text_handle_middle: vector(16, 20, "M8,1 L12.5,8.1 A6,6 0 1,1 3.5,8.1 Z"),
+  picket_text_handle_middle: invisible,
   // Selection start: square-ish drop with its corner at the top-right.
   picket_text_handle_left: vector(14, 14, "M14,0 L14,7 A7,7 0 1,1 7,0 Z"),
   // Selection end: mirror image, corner at the top-left.

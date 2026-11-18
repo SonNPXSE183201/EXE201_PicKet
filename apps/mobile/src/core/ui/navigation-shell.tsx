@@ -19,7 +19,7 @@ const destinations: { path: "/" | "/transactions" | "/capture" | "/planning" | "
   { path: "/transactions", label: "Chi tiêu", english: "Spending", icon: "wallet-outline" },
   { path: "/capture", label: "Chụp", english: "Capture", icon: "camera-outline" },
   { path: "/planning", label: "Dự định", english: "Plans", icon: "bullseye-arrow" },
-  { path: "/profile", label: "Picket", english: "Picket", icon: "account-outline" },
+  { path: "/profile", label: "PicKet", english: "PicKet", icon: "account-outline" },
 ];
 
 const TAB_PATHS = ["/", "/transactions", "/planning", "/profile"] as const;

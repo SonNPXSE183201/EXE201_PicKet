@@ -81,9 +81,9 @@ export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, disabl
           <View style={[styles.cameraBadge, figmaShadow("camera")]}><AppIcon name="camera-outline" size={26} color={colors.onCamera} /></View>
         </View>
         <View style={styles.copy}>
-          <Text style={[figmaType.display, { color: colors.text }]}>Cho Picket dùng camera</Text>
+          <Text style={[figmaType.display, { color: colors.text }]}>Cho PicKet dùng camera</Text>
           <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
-            {error ?? "Chụp hoá đơn, Picket tự đọc tổng tiền và ngày. Bạn luôn xem lại trước khi lưu."}
+            {error ?? "Chụp hoá đơn, PicKet tự đọc tổng tiền và ngày. Bạn luôn xem lại trước khi lưu."}
           </Text>
         </View>
         <View style={[styles.promises, figmaShadow("paper")]}>

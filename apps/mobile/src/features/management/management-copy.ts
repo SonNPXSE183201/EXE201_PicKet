@@ -8,7 +8,7 @@ const vi = {
   billsTitle: "Hoá đơn", addBill: "Thêm hóa đơn", remaining: (month: number) => `Còn phải trả tháng ${month}`, paid: "Đã trả", upcoming: "Sắp đến hạn", paidSection: "Đã thanh toán",
   due: (date: string, days: number) => `Hạn ${date} · còn ${days} ngày`, late: (date: string) => `Quá hạn ${date}`, billHint: "Chạm để xem và ghi khi trả", paidOn: (date: string) => `Trả ngày ${date}`,
   subsTitle: "Chi phí định kỳ", addSub: "Thêm thuê bao", perMonth: "Mỗi tháng", perYear: (n: string) => `≈ ${n} triệu/năm`, running: "Đang chạy", paused: "Tạm dừng", pausedShort: "Tạm dừng",
-  everyMonth: (day: number) => `Ngày ${day} hằng tháng`, stoppedSince: (date: string) => `Dừng từ ${date}`, nextUp: (title: string, date: string) => `Khoản tiếp theo: ${title}, ngày ${date}. Picket tự ghi khi tới ngày.`,
+  everyMonth: (day: number) => `Ngày ${day} hằng tháng`, stoppedSince: (date: string) => `Dừng từ ${date}`, nextUp: (title: string, date: string) => `Khoản tiếp theo: ${title}, ngày ${date}. PicKet tự ghi khi tới ngày.`,
 };
 
 const en: typeof vi = {
@@ -18,7 +18,7 @@ const en: typeof vi = {
   billsTitle: "Bills", addBill: "Add bill", remaining: (month: number) => `Left to pay in month ${month}`, paid: "Paid", upcoming: "Due soon", paidSection: "Paid",
   due: (date: string, days: number) => `Due ${date} · ${days} days left`, late: (date: string) => `Overdue since ${date}`, billHint: "Tap to open and record when paid", paidOn: (date: string) => `Paid on ${date}`,
   subsTitle: "Recurring costs", addSub: "Add subscription", perMonth: "Per month", perYear: (n: string) => `≈ ${n}M/year`, running: "Active", paused: "Paused", pausedShort: "Paused",
-  everyMonth: (day: number) => `Day ${day} every month`, stoppedSince: (date: string) => `Paused since ${date}`, nextUp: (title: string, date: string) => `Next: ${title} on ${date}. Picket logs it automatically.`,
+  everyMonth: (day: number) => `Day ${day} every month`, stoppedSince: (date: string) => `Paused since ${date}`, nextUp: (title: string, date: string) => `Next: ${title} on ${date}. PicKet logs it automatically.`,
 };
 
 export function managementCopy(language: string) { return language === "en" ? en : vi; }

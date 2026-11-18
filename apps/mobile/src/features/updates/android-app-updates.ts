@@ -90,7 +90,7 @@ export const androidAppUpdates = {
   },
   /**
    * Installs a downloaded, verified APK through a PackageInstaller session (silent on Android 12+
-   * once Picket is the installer of record). Falls back to the system installer screen when the
+   * once PicKet is the installer of record). Falls back to the system installer screen when the
    * session API is missing or fails for a reason other than verification.
    */
   async install(file: string, release: AppRelease): Promise<ApkInstallOutcome> {

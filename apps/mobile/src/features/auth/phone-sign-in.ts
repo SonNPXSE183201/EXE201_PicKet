@@ -5,7 +5,7 @@ type PhoneLoginApi = {
 };
 
 /**
- * Phone + password sign-in goes through the Picket API (which resolves the
+ * Phone + password sign-in goes through the PicKet API (which resolves the
  * phone to the account and lets Supabase Auth check the password). API
  * failures are mapped onto Supabase AuthError codes so the existing error
  * messages stay the single source of wording.

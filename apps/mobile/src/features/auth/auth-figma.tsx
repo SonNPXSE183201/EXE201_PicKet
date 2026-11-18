@@ -50,7 +50,7 @@ export function AuthHero({ title, subtitle }: { title: [string, string]; subtitl
   return (
     <View style={styles.hero}>
       <View style={styles.heroCopy}>
-        <Text style={styles.overline}>PICKET</Text>
+        <Text style={styles.overline}>PicKet</Text>
         <Text accessibilityRole="header" style={styles.heroTitle}>{`${t(title[0])}\n${t(title[1])}`}</Text>
         <Text style={styles.heroSubtitle}>{t(subtitle)}</Text>
       </View>
@@ -90,6 +90,8 @@ export function AuthFieldRow({
   const { t } = useTranslation("auth");
   const { colors, styles } = useMobileStyles(createStyles);
   const input = useRef<NativeTextInput>(null);
+  // The hint shows (muted) only while the field is idle; focusing it clears the hint so typing starts clean.
+  const [focused, setFocused] = useState(false);
   return (
     <Pressable accessible={false} accessibilityRole="none" onPress={() => input.current?.focus()} style={[styles.fieldRow, invalid && styles.fieldRowInvalid]}>
       <View style={styles.fieldIcon}>
@@ -110,7 +112,9 @@ export function AuthFieldRow({
           placeholderTextColor={colors.muted}
           style={styles.fieldInput}
           {...inputProps}
-          placeholder={inputProps.placeholder ? t(inputProps.placeholder) : undefined}
+          onFocus={(event) => { setFocused(true); inputProps.onFocus?.(event); }}
+          onBlur={(event) => { setFocused(false); inputProps.onBlur?.(event); }}
+          placeholder={inputProps.placeholder && !focused ? t(inputProps.placeholder) : undefined}
         />
       </View>
       {trailing}

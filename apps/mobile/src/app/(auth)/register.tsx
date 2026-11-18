@@ -180,7 +180,7 @@ export default function RegisterScreen() {
         onOpenTerms={() => void WebBrowser.openBrowserAsync(termsUrl).catch(() => undefined)}
       />
       <AuthButton busy={busy} disabled={busy || !configured} label="Gửi mã xác thực" onPress={() => void submit()} />
-      <AuthNote>{activeMethod === "phone" ? "Picket sẽ gửi mã 6 số qua SMS." : "Picket sẽ gửi mã 6 số qua email."}</AuthNote>
+      <AuthNote>{activeMethod === "phone" ? "PicKet sẽ gửi mã 6 số qua SMS." : "PicKet sẽ gửi mã 6 số qua email."}</AuthNote>
     </AuthPage>
   );
 }

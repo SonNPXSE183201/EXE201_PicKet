@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { colors, radii, shadows, spacing, typography } from "@picket/design-tokens";
 
-test("Expo and Next share the complete legacy Picket visual language", () => {
+test("Expo and Next share the complete legacy PicKet visual language", () => {
   assert.deepEqual(colors, {
     cream: "#FFF8F0",
     peach: "#FFD6BA",

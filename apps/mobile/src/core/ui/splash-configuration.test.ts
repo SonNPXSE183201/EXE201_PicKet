@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-test("Android splash explicitly uses the Picket artwork at a bounded centered size",()=>{
+test("Android splash explicitly uses the PicKet artwork at a bounded centered size",()=>{
   const config=JSON.parse(readFileSync(new URL("../../../app.json",import.meta.url),"utf8"));
   const plugin=config.expo.plugins.find((entry:unknown)=>Array.isArray(entry)&&entry[0]==="expo-splash-screen");
   assert.ok(plugin);

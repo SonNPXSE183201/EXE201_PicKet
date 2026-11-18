@@ -5,7 +5,8 @@ const file = (path: string) => new URL(path, import.meta.url);
 test("profile no longer embeds the manual updater and ends with the installed version", () => {
   const profile = readFileSync(file("../../app/(tabs)/profile.tsx"), "utf8");
   assert.doesNotMatch(profile, /AppUpdateSection/);
-  assert.match(profile, /<InstalledVersion\s*\/>\s*<\/ScrollView>/);
+  // The version closes the footer block, which is the last element of the scroll view.
+  assert.match(profile, /<InstalledVersion style=\{styles\.version\} \/>\s*<\/View>\s*<\/ScrollView>/);
 });
 test("profile loading and unavailable-cache states retain the installed version", () => {
   const profile = readFileSync(file("../../app/(tabs)/profile.tsx"), "utf8");

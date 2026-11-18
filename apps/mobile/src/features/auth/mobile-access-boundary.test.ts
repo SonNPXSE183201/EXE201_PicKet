@@ -148,5 +148,5 @@ test("'Password setup required' shows create-password instead of signing out or 
   assert.equal(app.setupMarks(), 1);
   assert.equal(app.signOuts(), 0);
   const texts = nodes(app.render()).map((node) => node.props.children).flat().filter((value) => typeof value === "string");
-  assert.equal(texts.includes("Quản trị Picket trên web"), false);
+  assert.equal(texts.includes("Quản trị PicKet trên web"), false);
 });

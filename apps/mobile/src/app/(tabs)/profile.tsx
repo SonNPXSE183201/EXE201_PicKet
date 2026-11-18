@@ -195,7 +195,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     }
   }
 
-  const tierLabel = entitlements?.tier === "pro" ? "Picket PRO" : entitlements?.tier === "plus" ? "Picket PLUS" : "Picket Miễn phí";
+  const tierLabel = entitlements?.tier === "pro" ? "PicKet PRO" : entitlements?.tier === "plus" ? "PicKet PLUS" : "PicKet Miễn phí";
   const tierSummary = entitlements?.tier === "pro"
     ? "Hạn mức tối đa · 100 lượt OCR Cloud/ngày"
     : entitlements?.tier === "plus"
@@ -219,7 +219,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         >
           <View style={styles.avatar}><Text style={styles.avatarText}>{initial}</Text></View>
           <View style={styles.profileTextCol}>
-            <Text numberOfLines={1} style={styles.profileName}>{profile.displayName || t("Bạn của Picket")}</Text>
+            <Text numberOfLines={1} style={styles.profileName}>{profile.displayName || t("Bạn của PicKet")}</Text>
             <Text numberOfLines={1} style={styles.profileSub}>
               {localMode || !session?.user.email ? t("Lưu riêng an toàn trên máy") : session.user.email}
             </Text>
@@ -349,8 +349,8 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
               <Text style={styles.legalText}>{hub.support}</Text>
             </Pressable>
           </View>
+          <InstalledVersion style={styles.version} />
         </View>
-        <InstalledVersion />
       </ScrollView>
 
       {/* Edit Profile Sheet (G17) */}
@@ -682,7 +682,9 @@ const createStyles = (colors: MobileThemeColors) =>
     planLinkText: { color: colors.primary, fontSize: 12, fontWeight: "700", lineHeight: 18 },
     planArt: { height: 94, position: "absolute", right: -6, top: 24, width: 112 },
     planCard: { backgroundColor: colors.paper, borderRadius: 18, gap: 8, padding: 16 },
-    footer: { alignItems: "center", gap: 6 },
+    // The closing actions, legal links and version read as one compact block.
+    footer: { alignItems: "center", gap: 0, marginTop: -8 },
+    version: { paddingVertical: 4 },
     editAvatarRow: { alignItems: "center", flexDirection: "row", gap: 16, marginBottom: 16 },
     editAvatar: { alignItems: "center", backgroundColor: colors.pocketLilac, borderRadius: 30, height: 60, justifyContent: "center", width: 60 },
     editAvatarText: { color: colors.primary, fontSize: 22, fontWeight: "800" },
@@ -694,10 +696,9 @@ const createStyles = (colors: MobileThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      marginTop: 10,
     },
     legalLink: {
-      paddingVertical: 6,
+      paddingVertical: 4,
     },
     legalText: {
       color: colors.muted,

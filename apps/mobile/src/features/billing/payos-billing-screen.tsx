@@ -219,7 +219,7 @@ function PayosBillingContent({ token }: { token: string }) {
         )}
         {paid && (
           <ThankYouCard
-            title={t("Cảm ơn bạn đã ủng hộ Picket!")}
+            title={t("Cảm ơn bạn đã ủng hộ PicKet!")}
             body={t("Bạn đang có gói trả phí. Có thể mua gói mới khi gói hiện tại hết hạn.")}
           />
         )}

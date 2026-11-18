@@ -82,7 +82,7 @@ function SessionReadyTree() {
   const { t } = useTranslation("common");
   const { loading, passwordSetupRequired } = useAuth();
   if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }}>
-    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.link} />
+    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên PicKet")} color={colors.link} />
   </View>;
   // Email OTP sign-up is unfinished until a password exists: no route (tabs,
   // deep links, data providers) mounts before it; signing out stays possible.

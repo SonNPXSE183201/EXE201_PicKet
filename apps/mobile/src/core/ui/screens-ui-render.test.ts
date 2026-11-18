@@ -30,7 +30,7 @@ test("TransactionsScreen renders Figma day papers with category tiles in transac
   assert.match(listSource, /categoryTile/);
 });
 
-test("NavigationShell has canonical destination label Picket", () => {
+test("NavigationShell has canonical destination label PicKet", () => {
   const navSource = readFileSync(new URL("./navigation-shell.tsx", import.meta.url), "utf8");
-  assert.match(navSource, /path: "\/profile", label: "Picket"/);
+  assert.match(navSource, /path: "\/profile", label: "PicKet"/);
 });

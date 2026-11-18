@@ -6,7 +6,7 @@ const labels={
   "Trước đó":"Earlier",
   "Hôm qua":"Yesterday",
   "Tuần trước":"Last week",
-  "Nhắc hẹn định kỳ Picket":"Scheduled Picket reminder",
+  "Nhắc hẹn định kỳ PicKet":"Scheduled PicKet reminder",
   "Kiểm tra chi tiêu trong ngày của bạn":"Review your daily spending",
   "Đã ghi nhận trong kỳ":"Recorded for this period",
   "hóa đơn":"bill",
@@ -22,14 +22,14 @@ const labels={
  "Các hạn thanh toán, món đồ và ngân sách cần chú ý.":"Payment deadlines, keepsakes and budgets that need attention.",
  "Nhắc trên điện thoại":"Phone reminders","Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.":"Notifications do not show financial details on the lock screen.",
  "Cập nhật lịch nhắc":"Update reminders","Chưa có thông báo mới":"No new notifications",
- "Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý.":"Picket will remind you about payment deadlines and budgets that need attention.",
+ "PicKet sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý.":"PicKet will remind you about payment deadlines and budgets that need attention.",
  "đã đọc":"read","chưa đọc":"unread","Đã đọc":"Read","Chạm để đánh dấu đã đọc":"Tap to mark as read",
 } as const;
 export const notificationsVi:Record<string,string>={...Object.fromEntries(Object.keys(labels).map(key=>[key,key])),
  billLabel:"{{title}} · hạn {{date}}",subscriptionLabel:"{{title}} sắp đến kỳ thanh toán",returnLabel:"{{title}} sắp hết hạn đổi trả",warrantyLabel:"{{title}} sắp hết hạn bảo hành",budgetLabel:"{{title}} đã chạm ngưỡng cảnh báo",
- budgetTitle:"Picket · Ngân sách",budgetBody:"Một ngân sách đã chạm ngưỡng cảnh báo. Mở Picket để kiểm tra.",reminderTitle:"Picket · Nhắc việc",reminderBody:"Bạn có khoản thanh toán hoặc hạn món đồ cần xem. Mở Picket để kiểm tra.",channel:"Nhắc việc Picket",readLabel:"{{label}}, {{state}}",
+ budgetTitle:"PicKet · Ngân sách",budgetBody:"Một ngân sách đã chạm ngưỡng cảnh báo. Mở PicKet để kiểm tra.",reminderTitle:"PicKet · Nhắc việc",reminderBody:"Bạn có khoản thanh toán hoặc hạn món đồ cần xem. Mở PicKet để kiểm tra.",channel:"Nhắc việc PicKet",readLabel:"{{label}}, {{state}}",
 };
 export const notificationsEn:Record<string,string>={...labels,
  billLabel:"{{title}} · due {{date}}",subscriptionLabel:"{{title}} is due for payment soon",returnLabel:"{{title}} return period ends soon",warrantyLabel:"{{title}} warranty ends soon",budgetLabel:"{{title}} reached its warning threshold",
- budgetTitle:"Picket · Budget",budgetBody:"A budget has reached its warning threshold. Open Picket to review it.",reminderTitle:"Picket · Reminder",reminderBody:"A payment or keepsake deadline needs attention. Open Picket to review it.",channel:"Picket reminders",readLabel:"{{label}}, {{state}}",
+ budgetTitle:"PicKet · Budget",budgetBody:"A budget has reached its warning threshold. Open PicKet to review it.",reminderTitle:"PicKet · Reminder",reminderBody:"A payment or keepsake deadline needs attention. Open PicKet to review it.",channel:"PicKet reminders",readLabel:"{{label}}, {{state}}",
 };

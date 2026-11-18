@@ -9,7 +9,7 @@ import { AppIcon } from "@/core/ui/app-icon";
 import { Chip, figmaShadow } from "@/core/ui/figma-ui";
 import { PicketText as Text } from "@/core/ui/picket-text";
 
-/* Figma G11 "Gói Picket" building blocks, shared by the PayOS and Google Play
+/* Figma G11 "Gói PicKet" building blocks, shared by the PayOS and Google Play
    screens so both payment channels look and read the same. */
 
 const receiptArt = paperAssets.receipt;
@@ -106,7 +106,7 @@ export function IncludedList({ title, items }: { title: string; items: string[] 
   );
 }
 
-/** "Cảm ơn bạn đã ủng hộ Picket!" shown once a paid plan is active. */
+/** "Cảm ơn bạn đã ủng hộ PicKet!" shown once a paid plan is active. */
 export function ThankYouCard({ title, body }: { title: string; body: string }) {
   const { colors, styles } = useMobileStyles(createStyles);
   return (

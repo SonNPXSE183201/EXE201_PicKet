@@ -55,7 +55,7 @@ export default function NewAccountScreen() {
           <FieldOverline>{tx("Số dư ban đầu")}</FieldOverline>
           <TextInput money accessibilityLabel={tx("Số dư ban đầu")} keyboardType="number-pad" onChangeText={setOpeningBalance} placeholder="0" placeholderTextColor={colors.muted} style={styles.amount} value={openingBalance} />
           <ReceiptDivider />
-          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{tx("Số dư này là điểm bắt đầu để Picket tính tổng tiền hiện tại.")}</Text>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{tx("Số dư này là điểm bắt đầu để PicKet tính tổng tiền hiện tại.")}</Text>
         </View>
         <ReceiptEdge direction="bottom" />
       </View>

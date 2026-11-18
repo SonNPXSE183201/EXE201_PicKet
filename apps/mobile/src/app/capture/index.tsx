@@ -529,7 +529,7 @@ export default function CaptureReceiptScreen() {
         {receiptEligible && <>
         <View style={styles.intro}>
           {reviewCount > 0 && <Chip tone="warning" label={`${reviewCount} thông tin cần kiểm tra`} />}
-          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>Picket đã đọc xong. Xem lại một lượt trước khi lưu nhé.</Text>
+          <Text style={[figmaType.bodySmall, { color: colors.muted }]}>PicKet đã đọc xong. Xem lại một lượt trước khi lưu nhé.</Text>
         </View>
 
         <View style={styles.sheetWrap}>

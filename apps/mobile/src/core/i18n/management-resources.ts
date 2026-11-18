@@ -16,7 +16,7 @@ const labels={
  "Thêm tài khoản":"Add account","Gom tiền mặt, ngân hàng và ví điện tử vào cùng một nơi.":"Keep cash, bank accounts and e-wallets in one place.",
  "Tên tài khoản":"Account name","Ví dụ: Ví hàng ngày":"Example: Everyday wallet","Loại tài khoản":"Account type",
  "Tiền tệ":"Currency","Mã tiền tệ":"Currency code","Số dư ban đầu":"Opening balance",
- "Số dư này là điểm bắt đầu để Picket tính tổng tiền hiện tại.":"Picket uses this opening balance to calculate your current balance.",
+ "Số dư này là điểm bắt đầu để PicKet tính tổng tiền hiện tại.":"PicKet uses this opening balance to calculate your current balance.",
  "Đang tạo tài khoản":"Creating account","Tạo tài khoản":"Create account","Đang tải tài khoản":"Loading account",
  "Mã tiền tệ phải gồm 3 chữ cái, ví dụ VND.":"The currency code must contain 3 letters, such as VND.",
  "Không lưu được. Dữ liệu có thể đã thay đổi, hãy tải lại và thử lại.":"Could not save. The data may have changed; reload and try again.",

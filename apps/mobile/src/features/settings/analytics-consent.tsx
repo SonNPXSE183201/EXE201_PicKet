@@ -126,13 +126,13 @@ function AnalyticsConsentPrompt({ visible, mandatory, enabled, busy, onChoose, o
     ? [
         "Chỉ gửi: lượt mở ứng dụng, thao tác hoàn tất (ví dụ lưu giao dịch, quét hoá đơn), phiên bản ứng dụng và loại thiết bị.",
         "Không gửi: số tiền, nội dung hoá đơn, tên giao dịch, email, số điện thoại hay vị trí.",
-        "Mục đích: thống kê để sửa lỗi và cải thiện Picket. Không bán, không dùng cho quảng cáo.",
+        "Mục đích: thống kê để sửa lỗi và cải thiện PicKet. Không bán, không dùng cho quảng cáo.",
         "Không đồng ý vẫn dùng đầy đủ mọi tính năng. Bạn đổi lựa chọn bất cứ lúc nào tại Hồ sơ › Cài đặt › Quyền riêng tư & thống kê.",
       ]
     : [
         "Only sends: app opens, completed actions (such as saving a transaction or scanning a receipt), app version and device type.",
         "Never sends: amounts, receipt contents, transaction names, email, phone number or location.",
-        "Purpose: statistics to fix bugs and improve Picket. Never sold or used for advertising.",
+        "Purpose: statistics to fix bugs and improve PicKet. Never sold or used for advertising.",
         "Declining keeps every feature available. Change your choice anytime in Profile › Settings › Privacy & statistics.",
       ];
   return (
@@ -145,8 +145,8 @@ function AnalyticsConsentPrompt({ visible, mandatory, enabled, busy, onChoose, o
             </PicketText>
             <PicketText style={{ color: colors.muted }}>
               {vi
-                ? "Picket xin phép bạn thu thập một số thống kê ẩn danh về cách dùng ứng dụng. Bạn cần chọn một trong hai để tiếp tục."
-                : "Picket asks to collect a few anonymous statistics about how the app is used. Please choose one to continue."}
+                ? "PicKet xin phép bạn thu thập một số thống kê ẩn danh về cách dùng ứng dụng. Bạn cần chọn một trong hai để tiếp tục."
+                : "PicKet asks to collect a few anonymous statistics about how the app is used. Please choose one to continue."}
             </PicketText>
             {points.map((point) => (
               <View key={point} style={{ flexDirection: "row", gap: 10 }}>

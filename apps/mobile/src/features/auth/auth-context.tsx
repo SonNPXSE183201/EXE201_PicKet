@@ -52,7 +52,7 @@ interface AuthContextValue {
   markPasswordSetupRequired(): void;
   /** Final step of email OTP sign-up: sets the password and clears the setup flag. */
   completePasswordSetup(password: string): Promise<void>;
-  /** Applies Supabase tokens issued by the Picket API (SMS sign-up). */
+  /** Applies Supabase tokens issued by the PicKet API (SMS sign-up). */
   applySessionTokens(tokens: { access_token: string; refresh_token: string }): Promise<void>;
   requestPasswordReset(email: string): Promise<void>;
   updatePassword(password: string): Promise<void>;

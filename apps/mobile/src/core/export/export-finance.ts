@@ -19,7 +19,7 @@ export async function exportAndShareFinance(accessToken: string,userId:string) {
     throw new Error("Sharing is unavailable.");
   }
   await Sharing.shareAsync(uri, {
-    dialogTitle: "Lưu bản export Picket",
+    dialogTitle: "Lưu bản export PicKet",
     mimeType: "application/json",
     UTI: "public.json",
   });

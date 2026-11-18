@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, type StyleProp, type TextStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 import { figmaType } from "@picket/design-tokens";
 import { PicketText as Text } from "@/core/ui/picket-text";
@@ -23,13 +23,13 @@ export function updateStatusKey(state: UpdateState, required: boolean) {
 }
 
 /** Installed version line plus a short update status, shown at the bottom of Profile. */
-export function InstalledVersion() {
+export function InstalledVersion({ style }: { style?: StyleProp<TextStyle> } = {}) {
   const { language } = useAppTheme();
   const { t } = useTranslation("updates");
   const { styles } = useMobileStyles(createStyles);
   const { installed, state, required } = useAppUpdate();
   const status = installed ? t(updateStatusKey(state, required)) : "";
-  return <Text selectable style={styles.footer}>{installedVersionLabel(installed, language)}{status ? `\n${status}` : ""}</Text>;
+  return <Text selectable style={[styles.footer, style]}>{installedVersionLabel(installed, language)}{status ? `\n${status}` : ""}</Text>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({

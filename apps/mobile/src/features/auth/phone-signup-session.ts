@@ -1,7 +1,7 @@
 /**
  * SMS sign-up state shared by the register, OTP and create-password screens.
  * Firebase only proves phone ownership: its auth state never drives
- * navigation, and the temporary Firebase user is deleted after the Picket
+ * navigation, and the temporary Firebase user is deleted after the PicKet
  * account exists.
  */
 import { perfLog, perfStart, timed } from "./perf-log";

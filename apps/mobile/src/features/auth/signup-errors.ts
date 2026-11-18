@@ -39,7 +39,7 @@ export function firebasePhoneErrorMessage(error: unknown): string {
     case "app-not-authorized":
     case "invalid-app-credential":
     case "missing-app-credential":
-      return "Không xác minh được ứng dụng để gửi SMS. Hãy cập nhật Picket hoặc đăng ký bằng email.";
+      return "Không xác minh được ứng dụng để gửi SMS. Hãy cập nhật PicKet hoặc đăng ký bằng email.";
     case "network-request-failed":
       return networkMessage;
     case "instant-unavailable":
@@ -74,7 +74,7 @@ export function phoneSignupStartErrorMessage(error: unknown): string {
   if (status === 429) {
     const message = error instanceof Error ? error.message : "";
     return /limit reached/i.test(message)
-      ? "Hôm nay Picket đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc đăng ký bằng email."
+      ? "Hôm nay PicKet đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc đăng ký bằng email."
       : "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại.";
   }
   return networkMessage;
@@ -105,7 +105,7 @@ export function phoneResetStartErrorMessage(error: unknown): string {
   if (status === 429) {
     const message = error instanceof Error ? error.message : "";
     return /limit reached/i.test(message)
-      ? "Hôm nay Picket đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc dùng email."
+      ? "Hôm nay PicKet đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc dùng email."
       : "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại.";
   }
   return networkMessage;

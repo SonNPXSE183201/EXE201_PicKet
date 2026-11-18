@@ -45,7 +45,7 @@ test("only opted-in warning or critical notices notify, once per revision", () =
   assert.equal(announcementsToNotify(feed([w]), new Set([announcementKey(w)]), now).length, 0);
 });
 
-test("call-to-action targets are limited to app routes and Picket links", () => {
+test("call-to-action targets are limited to app routes and PicKet links", () => {
   assert.deepEqual(safeAnnouncementTarget(item({ cta_route: "/billing" })), { kind: "route", value: "/billing" });
   assert.deepEqual(safeAnnouncementTarget(item({ cta_url: "https://app.picketfinance.com/billing" })), { kind: "url", value: "https://app.picketfinance.com/billing" });
   assert.equal(safeAnnouncementTarget(item({ cta_url: "https://evil.example" })), null);

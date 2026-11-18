@@ -179,7 +179,7 @@ export function MobileAccessBoundary({ children }: PropsWithChildren) {
             style={{ fontSize: 24, fontWeight: "700", color: colors.text }}
           >
             {blocked
-              ? t("Quản trị Picket trên web")
+              ? t("Quản trị PicKet trên web")
               : failed
                 ? t("Chưa xác minh được quyền truy cập")
                 : t("Đang xác minh tài khoản")}

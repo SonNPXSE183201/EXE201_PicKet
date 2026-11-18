@@ -6,7 +6,7 @@ import {
   verifyAndFinishPurchase,
 } from "./billing-policy";
 
-test("accepts only known Picket subscriptions with a Google purchase token", () => {
+test("accepts only known PicKet subscriptions with a Google purchase token", () => {
   assert.deepEqual(
     normalizePurchaseForVerification({
       productId: "picket_plus_monthly",

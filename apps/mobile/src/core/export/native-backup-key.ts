@@ -7,5 +7,5 @@ const native = requireOptionalNativeModule<{ deriveBackupKey(password: string, s
 if (native && (Platform.OS !== "android" || Number(Platform.Version) >= 26)) {
   configureNativeBackupKey(async (password, salt) => toByteArray(await native.deriveBackupKey(fromByteArray(new TextEncoder().encode(password)), fromByteArray(salt))));
 } else if (!native && Platform.OS === "android") {
-  configureNativeBackupKey(async () => { throw new Error("Hãy cài APK Picket mới nhất để dùng sao lưu mã hóa."); });
+  configureNativeBackupKey(async () => { throw new Error("Hãy cài APK PicKet mới nhất để dùng sao lưu mã hóa."); });
 }

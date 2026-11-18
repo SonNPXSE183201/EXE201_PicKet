@@ -179,7 +179,7 @@ test("phone flow errors: 403 'Request a new code first.' restarts, recovery maps
   assert.equal(phoneResetErrorMessage(Object.assign(new Error("No account uses this phone."), { status: 404 })), "Không tìm thấy tài khoản dùng số này.");
   assert.equal(phoneResetErrorMessage(Object.assign(new Error("Invalid phone verification."), { status: 401 })), "Phiên xác thực số điện thoại đã hết hạn. Hãy gửi lại mã.");
   assert.equal(phoneResetErrorMessage(disabled), "Khôi phục bằng SMS đang tạm tắt. Hãy dùng email.");
-  assert.equal(phoneResetStartErrorMessage(Object.assign(new Error("SMS limit reached for today."), { status: 429 })), "Hôm nay Picket đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc dùng email.");
+  assert.equal(phoneResetStartErrorMessage(Object.assign(new Error("SMS limit reached for today."), { status: 429 })), "Hôm nay PicKet đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc dùng email.");
   assert.equal(phoneResetSendErrorMessage({ code: "auth/quota-exceeded" }), firebasePhoneErrorMessage({ code: "auth/quota-exceeded" }));
   assert.equal(phoneSendErrorMessage({ code: "instant-unavailable" }), "Chưa xác minh tự động được số này. Hãy gửi lại mã.");
   assert.equal(phoneFlowRestartsFromPhone(restart), true);

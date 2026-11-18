@@ -112,7 +112,7 @@ export function ReceiptCamera({
 
               <Text style={styles.dialogSubtitle}>
                 {error ?? (permission
-                  ? "Picket sử dụng máy ảnh để nhận diện hóa đơn tự động và bảo mật ngay trên điện thoại."
+                  ? "PicKet sử dụng máy ảnh để nhận diện hóa đơn tự động và bảo mật ngay trên điện thoại."
                   : "Đang chuẩn bị camera…")}
               </Text>
 

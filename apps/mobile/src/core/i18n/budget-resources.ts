@@ -15,7 +15,7 @@ export const budgetsVi = {
   archiveTitle: "Lưu trữ ngân sách?", archiveDescription: "Ngân sách sẽ không còn trong danh sách đang hoạt động.", cancel: "Hủy", confirmArchive: "Lưu trữ",
   editLimit: "Sửa hạn mức", editLimitLabel: "Sửa hạn mức {{name}}", saveLimit: "Lưu hạn mức", create: "Tạo ngân sách",
   collapse: "Thu gọn", addNew: "Thêm mới", category: "Danh mục chi tiêu", monthlyLimit: "Hạn mức tháng", monthlyLimitLabel: "Hạn mức ngân sách tháng",
-  limitPlaceholder: "1.000.000", reminderHelp: "Picket sẽ nhắc khi chi tiêu đạt 80% hạn mức.", creating: "Đang tạo ngân sách",
+  limitPlaceholder: "1.000.000", reminderHelp: "PicKet sẽ nhắc khi chi tiêu đạt 80% hạn mức.", creating: "Đang tạo ngân sách",
 };
 export const budgetsEn: Record<keyof typeof budgetsVi, string> = {
   title: "Budgets", subtitle: "Keep track of your spending, month by month.", closeCreate: "Close budget creation", add: "Add budget",
@@ -34,5 +34,5 @@ export const budgetsEn: Record<keyof typeof budgetsVi, string> = {
   archiveTitle: "Archive this budget?", archiveDescription: "The budget will be hidden from your active list.", cancel: "Cancel", confirmArchive: "Archive",
   editLimit: "Edit limit", editLimitLabel: "Edit limit for {{name}}", saveLimit: "Save limit", create: "Create budget",
   collapse: "Collapse", addNew: "Add new", category: "Expense category", monthlyLimit: "Monthly limit", monthlyLimitLabel: "Monthly budget limit",
-  limitPlaceholder: "1,000,000", reminderHelp: "Picket will remind you when spending reaches 80% of the limit.", creating: "Creating budget",
+  limitPlaceholder: "1,000,000", reminderHelp: "PicKet will remind you when spending reaches 80% of the limit.", creating: "Creating budget",
 };

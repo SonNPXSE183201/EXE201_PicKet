@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Picket",
+    "name": "PicKet",
     "slug": "picket",
     "scheme": "com.picket.mobile",
     "version": "1.3.0",
@@ -64,15 +64,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Cho phép Picket dùng camera để quét hóa đơn.",
+          "cameraPermission": "Cho phép PicKet dùng camera để quét hóa đơn.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Cho phép Picket dùng camera để chụp hóa đơn.",
-          "photosPermission": "Cho phép Picket truy cập ảnh để chọn hóa đơn.",
+          "cameraPermission": "Cho phép PicKet dùng camera để chụp hóa đơn.",
+          "photosPermission": "Cho phép PicKet truy cập ảnh để chọn hóa đơn.",
           "microphonePermission": false
         }
       ],
