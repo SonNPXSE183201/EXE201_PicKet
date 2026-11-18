@@ -181,11 +181,11 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
  * "d"/"đ" ("d784.000") and a one-letter VAT class after it ("2,400,000.00 C", "784.000T").
  * Letters that look like digits (O, I, S, B, G, Z, L) are never stripped, so a damaged amount stays damaged.
  */
+const groupedAmount=String.raw`\d{1,3}(?:[.,]\d{3})+(?:[.,]00)?`;
+const dongPrefix=new RegExp(String.raw`(^|\s)[dđ₫](?=${groupedAmount}(?![\d.,]))`,"g");
+const vatClassSuffix=new RegExp(String.raw`(${groupedAmount})\s?[ACEFHKNPTV]$`);
 function withoutAmountMarks(text:string):string{
-  const grouped=String.raw`\d{1,3}(?:[.,]\d{3})+(?:[.,]00)?`;
-  return text
-    .replace(new RegExp(String.raw`(^|\s)[dđ₫](?=${grouped}(?![\d.,]))`,"g"),"$1")
-    .replace(new RegExp(String.raw`(${grouped})\s?[ACEFHKNPTV]$`),"$1");
+  return text.replace(dongPrefix,"$1").replace(vatClassSuffix,"$1");
 }
 
 /** True when a payable label carries an amount token of its own, on its row, or directly above/below it. */

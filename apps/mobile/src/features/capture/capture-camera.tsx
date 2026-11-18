@@ -13,6 +13,7 @@ import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
 import { IconButton } from "@/core/ui/picket-ui";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { receiptArt } from "./capture-art";
+import { prepareReceiptOcr } from "@/core/ocr/mlkit-receipt-ocr";
 
 const promises: { icon: IconName; label: string }[] = [
   { icon: "camera-outline", label: "Chỉ bật khi bạn bấm chụp" },
@@ -38,6 +39,9 @@ export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, disabl
     setFocused(true);
     return () => { setFocused(false); setReady(false); };
   }, []));
+
+  // Load the recognition model while the user frames or picks a photo, so the scan does not pay for it.
+  useEffect(() => { prepareReceiptOcr(); }, []);
 
   useEffect(() => {
     const listener = AppState.addEventListener("change", (state) => {

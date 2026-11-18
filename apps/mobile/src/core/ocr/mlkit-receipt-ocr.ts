@@ -9,8 +9,15 @@ type NativeSession={
  select(id:string,angle:number):Promise<{width:number;height:number}>;
  crop(id:string,x:number,y:number,width:number,height:number,timeoutMs:number):Promise<OcrSample>;
  close(id:string):Promise<void>;
+ prepare?():Promise<void>;
 };
 let scanning=false;
+let prepared:Promise<void>|null=null;
+/** Loads the recognition model in the background (camera screen open), so the first scan skips it. */
+export function prepareReceiptOcr():void{
+ prepared??=import("expo").then(({requireNativeModule})=>requireNativeModule<NativeSession>("PicketReceiptOcr").prepare?.())
+  .then(()=>undefined,(error:unknown)=>{prepared=null;console.info("PICKET_OCR_STATUS",JSON.stringify({code:"OCR_PREPARE_FAILED",detail:String(error).slice(0,120)}));});
+}
 /** Native owns decoded pixels and the recognizer; no PNG files cross the bridge. */
 export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Promise<ReceiptOcrResult>{
  if(scanning)throw new Error("OCR_BUSY");

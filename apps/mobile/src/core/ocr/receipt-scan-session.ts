@@ -15,7 +15,7 @@ export type ReceiptOcrSession={
  crop(id:string,region:OcrRegion,timeoutMs:number):Promise<OcrSample>;
  close(id:string):Promise<void>;
 };
-export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{inspections:number;previews:number;fullReads:number;cropReads:number;summaryReads:number;nativeMs:number;nativeCacheHits:number}};
+export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{inspections:number;previews:number;fullReads:number;cropReads:number;summaryReads:number;nativeMs:number;nativeCacheHits:number;phases:Record<string,number>}};
 export const RECEIPT_SCAN_BUDGET_MS=20_000;
 function verifiedUpright(sample:OcrSample,draft:ReceiptDraft){
  if(!canAttachParsedReceipt(draft)||!receiptTableCrop(sample.lines))return false;
@@ -24,18 +24,28 @@ function verifiedUpright(sample:OcrSample,draft:ReceiptDraft){
 /** A small direction pass precedes one full-resolution reading and at most one detail crop. */
 export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now=()=>Date.now(),signal?:AbortSignal):Promise<ReceiptScanResult>{
  const ensureCurrent=()=>{if(signal?.aborted)throw new Error("OCR_CANCELLED");};ensureCurrent();
- const start=now(),deadline=start+RECEIPT_SCAN_BUDGET_MS,opened=await native.open(uri);
- const stats={inspections:0,previews:0,fullReads:0,cropReads:0,summaryReads:0,nativeMs:0,nativeCacheHits:0};
+ const start=now(),deadline=start+RECEIPT_SCAN_BUDGET_MS;
+ // Wall time per phase (bridge + native + JS), to see where a scan spends time beyond recognition.
+ const phases:Record<string,number>={};
+ const timed=async<T>(phase:string,work:()=>Promise<T>|T):Promise<T>=>{const t=now();try{return await work();}finally{phases[phase]=(phases[phase]??0)+now()-t;}};
+ const opened=await timed("open",()=>native.open(uri));
+ const stats={inspections:0,previews:0,fullReads:0,cropReads:0,summaryReads:0,nativeMs:0,nativeCacheHits:0,phases};
  const remaining=()=>Math.max(0,deadline-now());let budgetExceeded=false;
  const finish=(draft:ReceiptDraft):ReceiptScanResult=>({draft:budgetExceeded?{...draft,needsReview:true,reviewReason:"Đã hết thời gian đọc chi tiết. Hãy kiểm tra kết quả hoặc chụp lại ảnh rõ hơn."}:draft,durationMs:now()-start,budgetExceeded,stats});
  try {
   ensureCurrent();if(remaining()<=0)throw new Error("OCR_TIMEOUT");
-  stats.inspections++;const direction=await native.direction(opened.id,remaining());stats.nativeMs+=direction.durationMs??0;ensureCurrent();
+  stats.inspections++;const direction=await timed("direction",()=>native.direction(opened.id,remaining()));stats.nativeMs+=direction.durationMs??0;ensureCurrent();
   if(remaining()<=0)throw new Error("OCR_TIMEOUT");
   const angle=inferReceiptRotation(direction.lines);
-  let selectedDimensions=await native.select(opened.id,angle??0);ensureCurrent();
-  if(remaining()<=0)throw new Error("OCR_TIMEOUT");
-  stats.fullReads++;let sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
+  // Upright (angle 0) selection leaves the pixels untouched, so it need not finish before the full read:
+  // issuing both saves one JS round trip, which waits for a busy JS thread while the screen renders.
+  const selecting=timed("select",()=>native.select(opened.id,angle??0));
+  if(angle)await selecting;
+  ensureCurrent();
+  if(remaining()<=0){await selecting.catch(()=>undefined);throw new Error("OCR_TIMEOUT");}
+  stats.fullReads++;
+  const reading=timed("inspect",()=>native.inspect(opened.id,remaining()));
+  let [selectedDimensions,sample]=await Promise.all([selecting,reading]);stats.nativeMs+=sample.durationMs??0;ensureCurrent();
   if(sample.reused)stats.nativeCacheHits++;
   let fullDirection=inferReceiptRotation(sample.lines);
   if(fullDirection!==null&&fullDirection!==0){
@@ -50,9 +60,9 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
    }
   }
   let lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);
-  const rawDraft=parseReceiptLines(lines);
+  const rawDraft=await timed("parse",()=>parseReceiptLines(lines));
   if(!rawDraft.rawText)return finish(rawDraft);
-  let orientationNeedsReview=fullDirection!==null&&fullDirection!==0||angle===null&&fullDirection===null&&!verifiedUpright(sample,rawDraft);
+  let orientationNeedsReview=fullDirection!==null&&fullDirection!==0||angle===null&&fullDirection===null&&!await timed("verify",()=>verifiedUpright(sample,rawDraft));
   const orientationReviewReason="Không xác định chắc hướng ảnh. Hãy kiểm tra các trường trước khi tiếp tục.";
   let draft=orientationNeedsReview
    ?{...rawDraft,needsReview:true,reviewReason:orientationReviewReason}
@@ -74,7 +84,7 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
   const itemSum=draft.lineItems.reduce((sum,item)=>sum+item.total,0);
   const completeObservedTable=draft.amount!==null&&draft.lineItems.length>0&&!draft.needsReview&&
    draft.lineItems.every(item=>item.confidence>=0.7)&&Math.abs(itemSum-draft.amount)<=1;
-  const region=completeObservedTable?null:receiptTableCrop(lines);
+  const region=completeObservedTable?null:await timed("tableRegion",()=>receiptTableCrop(lines));
   if(!region)return finish(draft);
   ensureCurrent();const dimensions=selectedDimensions;ensureCurrent();
   if(remaining()<=0){budgetExceeded=true;return finish(draft);}

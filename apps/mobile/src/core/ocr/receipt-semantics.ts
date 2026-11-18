@@ -1,8 +1,20 @@
 import type {ReceiptTextLine} from "./receipt-parser";
 
+/** Small bounded memo for pure per-line string functions; one parse asks about the same line many times. */
+function memoized<T>(compute: (value: string) => T): (value: string) => T {
+  const cache = new Map<string, T>();
+  return (value) => {
+    if (cache.has(value)) return cache.get(value) as T;
+    if (cache.size >= 4096) cache.clear();
+    const result = compute(value);
+    cache.set(value, result);
+    return result;
+  };
+}
+
 /** Normalize labels only; never rewrite the displayed merchant/product name. */
-export const normalizeReceiptLabel = (value: string) => value.toLowerCase().normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ").trim();
+export const normalizeReceiptLabel = memoized((value: string) => value.toLowerCase().normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ").trim());
 
 const noisySummaryPhrases: { words: string[]; role: 1 | 2 }[] = [
   { words: ["tong", "thanh", "toan"], role: 2 },
@@ -47,7 +59,8 @@ function differsByAtMostOneCharacter(left: string, right: string): boolean {
 }
 
 /** Correct only small, per-token OCR noise in known summary phrases. */
-export function noisyReceiptSummaryRole(text: string): 1 | 2 | null {
+export const noisyReceiptSummaryRole = memoized(noisySummaryRoleOf);
+function noisySummaryRoleOf(text: string): 1 | 2 | null {
   const prefix = normalizeReceiptLabel(text).split(/\d/, 1)[0]
     .replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
   const words = prefix.split(" ").filter(Boolean);
