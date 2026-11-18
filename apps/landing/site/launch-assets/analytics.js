@@ -35,7 +35,7 @@ panel.setAttribute('aria-modal', 'true');
 panel.setAttribute('aria-labelledby', 'analytics-choice-title');
 panel.innerHTML = '<p class="analytics-stamp">Quyền riêng tư</p>'
   + '<h2 id="analytics-choice-title">Cho phép <em>thống kê</em> truy cập?</h2>'
-  + '<p>Picket muốn đếm lượt xem trang và lượt bấm tải để làm trang tốt hơn. Bạn cần chọn một trong hai để tiếp tục.</p>'
+  + '<p>PicKet muốn đếm lượt xem trang và lượt bấm tải để làm trang tốt hơn. Bạn cần chọn một trong hai để tiếp tục.</p>'
   + '<ul><li><i>✓</i><span>Chỉ đếm lượt xem trang và lượt bấm tải ứng dụng.</span></li>'
   + '<li><i>✕</i><span>Không thu thập nội dung tài chính, email, địa chỉ IP hay vị trí; không dùng cho quảng cáo.</span></li>'
   + '<li><i>↺</i><span>Chọn "Không đồng ý" vẫn xem trang và tải ứng dụng bình thường. Đổi lựa chọn ở cuối trang bất cứ lúc nào.</span></li></ul>'

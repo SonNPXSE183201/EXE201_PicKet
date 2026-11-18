@@ -6,7 +6,7 @@ import type { Auth, ConfirmationResult, RecaptchaVerifier, User } from "firebase
 import type { FirebaseWebConfig } from "@/core/firebase/config";
 
 /* Firebase Phone Auth is only used to prove the phone number: the ID token goes to the
-   Picket API (POST /v1/auth/phone-signup), which creates the Supabase account. The SDK is
+   PicKet API (POST /v1/auth/phone-signup), which creates the Supabase account. The SDK is
    loaded lazily so email-only visitors never download it. */
 const APP_NAME = "picket-phone-signup";
 
@@ -46,7 +46,7 @@ export async function confirmPhoneCode(confirmation: ConfirmationResult, code: s
   return { idToken: await user.getIdToken(true), user };
 }
 
-/** The Firebase user is only a proof; remove it once Picket has its own account. */
+/** The Firebase user is only a proof; remove it once PicKet has its own account. */
 export async function discardFirebaseUser(config: FirebaseWebConfig, user: User | undefined): Promise<void> {
   try {
     const { deleteUser, signOut } = await import("firebase/auth");

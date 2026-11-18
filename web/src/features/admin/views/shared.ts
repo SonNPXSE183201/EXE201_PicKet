@@ -87,7 +87,7 @@ export function statusTone(status: unknown): StatusTone {
 
 /** Display names/icons for health components and data sources (Figma wording). */
 export const componentInfo: Record<string, { name: string; icon: string; tone: "coral" | "mint" | "blue" | "lilac" | "cream" }> = {
-  api: { name: "API Picket", icon: "bolt", tone: "mint" },
+  api: { name: "API PicKet", icon: "bolt", tone: "mint" },
   database: { name: "Cơ sở dữ liệu", icon: "grid", tone: "blue" },
   ocr_cloud: { name: "OCR cloud", icon: "receipt", tone: "coral" },
   realtime: { name: "Đồng bộ realtime", icon: "calendar", tone: "lilac" },

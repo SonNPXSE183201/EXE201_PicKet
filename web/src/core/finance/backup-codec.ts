@@ -72,7 +72,7 @@ export async function openBackup<T = unknown>(
     )
   )
     throw Error(
-      "Đây không phải bản sao cloud Picket. Bản sao chế độ riêng cần khôi phục trong ứng dụng Android.",
+      "Đây không phải bản sao cloud PicKet. Bản sao chế độ riêng cần khôi phục trong ứng dụng Android.",
     );
   const salt = decodeBase64(e.salt),
     iv = decodeBase64(e.nonce),

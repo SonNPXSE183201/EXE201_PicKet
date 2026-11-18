@@ -91,7 +91,7 @@ export function RegisterForm({ emailEnabled = true, smsEnabled = false, firebase
     }
   }
 
-  /** Picket checks the number and daily limits first, then Firebase sends the SMS. */
+  /** PicKet checks the number and daily limits first, then Firebase sends the SMS. */
   async function sendSms(target: string): Promise<boolean> {
     try {
       await api.phoneSignupStart(target);
@@ -232,9 +232,9 @@ export function RegisterForm({ emailEnabled = true, smsEnabled = false, firebase
     return (
       <div className="pa-panel">
         <header className="pa-head">
-          <p className="pa-eyebrow">Tạo tài khoản Picket</p>
+          <p className="pa-eyebrow">Tạo tài khoản PicKet</p>
           <h1 className="pa-title">Đăng ký đang tạm dừng</h1>
-          <p className="pa-copy">Picket đang bảo trì kênh xác minh. Vui lòng thử lại sau ít phút.</p>
+          <p className="pa-copy">PicKet đang bảo trì kênh xác minh. Vui lòng thử lại sau ít phút.</p>
         </header>
         <p className="pa-meta">Đã có tài khoản?<Link href="/login">Đăng nhập</Link></p>
       </div>
@@ -245,7 +245,7 @@ export function RegisterForm({ emailEnabled = true, smsEnabled = false, firebase
   return (
     <div className="pa-panel">
       <header className="pa-head">
-        <p className="pa-eyebrow">Tạo tài khoản Picket</p>
+        <p className="pa-eyebrow">Tạo tài khoản PicKet</p>
         <h1 className="pa-title">{phoneMode ? "Đăng ký bằng số điện thoại" : "Tạo tài khoản"}</h1>
         <p className="pa-copy">{phoneMode ? "Mã 6 số sẽ được gửi qua SMS." : "Mã 6 số sẽ được gửi đến email của bạn."}</p>
       </header>

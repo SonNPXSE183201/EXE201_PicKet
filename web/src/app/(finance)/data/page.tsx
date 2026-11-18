@@ -19,7 +19,7 @@ export default async function DataPage({ searchParams }: PageProps) {
     <>
       <FinancePageHeader
         title="Dữ liệu của bạn"
-        description="Tải bản sao JSON có phiên bản để lưu trữ hoặc kiểm tra dữ liệu Picket của bạn."
+        description="Tải bản sao JSON có phiên bản để lưu trữ hoặc kiểm tra dữ liệu PicKet của bạn."
       />
       <EncryptedBackup owner={String(claims.sub)} />
       <p className="data-warning" role="note">
@@ -31,7 +31,7 @@ export default async function DataPage({ searchParams }: PageProps) {
       </p>
       <article className="operation-card">
         <div className="operation-summary">
-          <strong>Export Picket JSON</strong>
+          <strong>Export PicKet JSON</strong>
           <span>
             Bản export gồm hồ sơ tài chính, ví, giao dịch, phân bổ, ngân sách và
             các dữ liệu kế hoạch hiện có. File không bao gồm mật khẩu hoặc

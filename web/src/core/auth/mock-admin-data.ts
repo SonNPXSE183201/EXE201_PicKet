@@ -143,7 +143,7 @@ export function mockAdminPortal(section: string, filters: Record<string, string 
         { email: "quan.le@picket.vn", user_id: "1e7d0000-0000-4000-8000-0000000000b0", role: "analyst", mfa: false },
       ] };
     case "settings":
-      return { ...base, settings: { row_version: 14, maintenance: false, notice: "Picket bảo trì 23:00–23:30 tối nay, dữ liệu vẫn an toàn.", analytics_retention_days: 90, aggregate_retention_months: 13, disk_warning_percent: 85, probe_timeout_seconds: 10, stale_minutes: 15 } };
+      return { ...base, settings: { row_version: 14, maintenance: false, notice: "PicKet bảo trì 23:00–23:30 tối nay, dữ liệu vẫn an toàn.", analytics_retention_days: 90, aggregate_retention_months: 13, disk_warning_percent: 85, probe_timeout_seconds: 10, stale_minutes: 15 } };
     default:
       return { ...base, rows: [], total: 0 };
   }

@@ -1,4 +1,4 @@
-// Generated from the Figma "Picket" icon set (Component page, Icon/*).
+// Generated from the Figma "PicKet" icon set (Component page, Icon/*).
 // Strokes use currentColor so icons follow the text colour.
 const icons: Record<string, [string, string]> = {
   "alert": ["0 0 24 24", "<path d=\"M12 4L21 20H3L12 4Z\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke=\"currentColor\"/><path d=\"M12 10V14\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke=\"currentColor\"/><path d=\"M12 17V17.5\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke=\"currentColor\"/>"],

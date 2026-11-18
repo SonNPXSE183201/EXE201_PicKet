@@ -80,7 +80,7 @@ export function LoginForm({ googleClientId, siteKey, initialError, admin = false
 
     try {
       if (credentials.phone) {
-        // Phone numbers live in Picket contact methods, so the API resolves them (same as mobile).
+        // Phone numbers live in PicKet contact methods, so the API resolves them (same as mobile).
         try {
           const tokens = await new PicketApiClient(apiBaseUrl).phoneLogin(credentials.phone, password);
           const { error } = await supabase.auth.setSession({ access_token: tokens.access_token, refresh_token: tokens.refresh_token });
@@ -178,8 +178,8 @@ export function LoginForm({ googleClientId, siteKey, initialError, admin = false
   return (
     <div className="pa-panel">
       <header className="pa-head is-login">
-        <p className="pa-eyebrow">{admin ? "Chỉ dành cho nhân sự Picket" : "Chào mừng trở lại"}</p>
-        <h1 className="pa-title">{admin ? "Đăng nhập quản trị" : "Đăng nhập Picket"}</h1>
+        <p className="pa-eyebrow">{admin ? "Chỉ dành cho nhân sự PicKet" : "Chào mừng trở lại"}</p>
+        <h1 className="pa-title">{admin ? "Đăng nhập quản trị" : "Đăng nhập PicKet"}</h1>
         <p className="pa-copy">{admin ? "Dùng email công ty. Phiên quản trị cần MFA để thay đổi dữ liệu." : "Đăng nhập để xem và quản lý tài chính cá nhân."}</p>
       </header>
 

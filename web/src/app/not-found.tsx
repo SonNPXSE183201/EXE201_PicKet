@@ -7,7 +7,7 @@ export default function NotFound() {
       <section className="auth-card">
         <Link className="brand auth-brand" href="/">
           <Image src="/picket-logo-192.png" alt="" width={48} height={48} />
-          <span>Picket</span>
+          <span>PicKet</span>
         </Link>
         <p className="eyebrow">Không tìm thấy trang</p>
         <h1 className="auth-title">Nội dung không còn ở đây</h1>

@@ -303,7 +303,7 @@ function StandardWorkspaceShell({
           >
             <Icon name={drawerOpen ? "close" : "menu"} />
           </button>
-          <p className="workspace-breadcrumb"><span>Picket</span><span aria-hidden="true">/</span><strong>{pageLabel}</strong></p>
+          <p className="workspace-breadcrumb"><span>PicKet</span><span aria-hidden="true">/</span><strong>{pageLabel}</strong></p>
           <button
             className="workspace-mobile-search-toggle"
             type="button"
@@ -345,7 +345,7 @@ function StandardWorkspaceShell({
                 <div className="workspace-account-identity">
                   <span className="workspace-avatar-large" aria-hidden="true">{initial}</span>
                   <div>
-                    <strong>{userName || "Tài khoản Picket"}</strong>
+                    <strong>{userName || "Tài khoản PicKet"}</strong>
                     {userEmail ? <small>{userEmail}</small> : null}
                   </div>
                 </div>

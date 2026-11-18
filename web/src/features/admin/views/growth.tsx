@@ -24,7 +24,7 @@ function Footnote({ p, children }: { p: ViewProps; children?: React.ReactNode })
   return (
     <p className="ap-footnote">
       <AdminIcon name="sparkle" size={14} />
-      <span>{children ? <>{children} </> : null}Nguồn: API Picket · Múi giờ {str(p.data.timezone) || "—"} · Truy vấn lúc {formatDateTime(p.data.asOf)}. Nguồn ngoài giữ ngày/timezone riêng.</span>
+      <span>{children ? <>{children} </> : null}Nguồn: API PicKet · Múi giờ {str(p.data.timezone) || "—"} · Truy vấn lúc {formatDateTime(p.data.asOf)}. Nguồn ngoài giữ ngày/timezone riêng.</span>
     </p>
   );
 }

@@ -14,8 +14,8 @@ export default async function PinLoginPage() {
           <h1 className="pa-title">{available ? "Nhập mã PIN" : "Trình duyệt này chưa bật PIN"}</h1>
           <p className="pa-copy">
             {available
-              ? "Nhập PIN 6 số bạn đã đặt trên trình duyệt này để vào lại Picket mà không cần mật khẩu."
-              : "PIN giúp bạn mở lại Picket nhanh trên máy tính riêng. Bật một lần, dùng trong 30 ngày."}
+              ? "Nhập PIN 6 số bạn đã đặt trên trình duyệt này để vào lại PicKet mà không cần mật khẩu."
+              : "PIN giúp bạn mở lại PicKet nhanh trên máy tính riêng. Bật một lần, dùng trong 30 ngày."}
           </p>
         </header>
         {available ? (

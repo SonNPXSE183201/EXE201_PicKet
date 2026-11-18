@@ -89,7 +89,7 @@ export function AdminRecordForm({
             <p className="ap-card-note">
               Yêu cầu xóa tài khoản: ghi nhận xác minh chủ tài khoản và tiến
               trình bằng ghi chú nội bộ. Hướng dẫn chủ tài khoản dùng chức năng
-              xóa trong Picket; nút lưu ticket chỉ cập nhật tiến trình hỗ trợ.
+              xóa trong PicKet; nút lưu ticket chỉ cập nhật tiến trình hỗ trợ.
             </p>
             <label className="ap-field">
               <span>Ưu tiên</span>

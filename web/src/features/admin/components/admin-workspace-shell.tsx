@@ -102,7 +102,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
       <aside className="ap-sidebar" id="admin-sidebar" aria-label="Điều hướng quản trị">
         <Link className="ap-brand" href="/admin">
           <span className="ap-coin"><img src="/picket-logo-192.png" alt="" width={30} height={30} /></span>
-          <span><strong>Picket</strong><small>Không gian quản trị</small></span>
+          <span><strong>PicKet</strong><small>Không gian quản trị</small></span>
         </Link>
         <p className="ap-nav-label">QUẢN LÝ ỨNG DỤNG</p>
         <nav className="ap-nav" aria-label="Quản trị">
@@ -140,7 +140,7 @@ export function AdminWorkspaceShell({ children, role, permissions, email, avatar
             <AdminIcon name="list" size={20} />
           </button>
           <div className="ap-context">
-            <span>Picket / Quản trị</span>
+            <span>PicKet / Quản trị</span>
             <h1>{adminSections[current].title}</h1>
           </div>
           {visible("users") && (

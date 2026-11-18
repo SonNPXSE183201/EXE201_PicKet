@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { AdminIcon } from "@/features/admin/ui/admin-icon";
 import "../paper-auth.css";
 
-/* Left purple panel: the original Picket story (two receipt tickets + money bloom).
+/* Left purple panel: the original PicKet story (two receipt tickets + money bloom).
    The tickets are illustrations (aria-hidden), not live figures. The right side
    (forms) follows Figma › Web per screen. */
 const stories = {
@@ -18,7 +18,7 @@ const stories = {
     ],
   },
   admin: {
-    title: "Sổ tay vận hành\ncủa Picket",
+    title: "Sổ tay vận hành\ncủa PicKet",
     copy: "Theo dõi người dùng, hoá đơn, sự cố và nội dung — tất cả trên những trang giấy gọn gàng.",
     subtitle: "Không gian quản trị",
     cards: [
@@ -48,9 +48,9 @@ export function PaperAuthShell({
     <div className={`pa-root${fixedViewport ? " is-fixed" : ""}${footer ? " has-footer" : ""}`}>
       <a className="pa-skip" href="#auth-content">Đến biểu mẫu</a>
       <aside className="pa-pouch">
-        <Link className="pa-brand" href={storyKey === "admin" ? "/login?next=/admin" : "/"} aria-label="Picket, trang chủ">
+        <Link className="pa-brand" href={storyKey === "admin" ? "/login?next=/admin" : "/"} aria-label="PicKet, trang chủ">
           <span className="pa-coin"><Image src="/picket-logo-192.png" alt="" width={40} height={40} priority /></span>
-          <span><strong>Picket</strong>{story.subtitle && <small>{story.subtitle}</small>}</span>
+          <span><strong>PicKet</strong>{story.subtitle && <small>{story.subtitle}</small>}</span>
         </Link>
         <div className="pa-story">
           <p className="pa-story-h">{story.title}</p>
@@ -74,7 +74,7 @@ export function PaperAuthShell({
       </main>
       {footer && (
         <footer className="pa-footer">
-          <span>© {new Date().getFullYear()} Picket, chăm chút từng khoản nhỏ.</span>
+          <span>© {new Date().getFullYear()} PicKet, chăm chút từng khoản nhỏ.</span>
           <nav aria-label="Thông tin và hỗ trợ">
             <a href="https://picketfinance.com/privacy.html">Quyền riêng tư</a>
             <a href="mailto:picketfinance@gmail.com">Liên hệ hỗ trợ</a>

@@ -1,4 +1,4 @@
-/* Picket admin "Paper" design system, measured from Figma "Picket" › Admin Web.
+/* PicKet admin "Paper" design system, measured from Figma "PicKet" › Admin Web.
    Classes are prefixed ap- so they never collide with the legacy admin CSS. */
 @font-face { font-family: ApNunito; src: url("/admin-paper/nunito-600.ttf") format("truetype"); font-weight: 400 600; font-display: swap; }
 @font-face { font-family: ApNunito; src: url("/auth-paper/nunito-700.ttf") format("truetype"); font-weight: 700; font-display: swap; }

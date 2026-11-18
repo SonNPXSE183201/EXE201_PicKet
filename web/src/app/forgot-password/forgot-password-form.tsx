@@ -24,7 +24,7 @@ type Notice = { text: string; info?: boolean } | null;
 
 /* Figma › Web › 28 Quên mật khẩu. Email sends a reset link (Supabase). When SMS is enabled and
    Firebase is configured, the phone path verifies a Firebase SMS code and sets the new password
-   through the Picket API (POST /v1/auth/phone-signup reset-start → reset). */
+   through the PicKet API (POST /v1/auth/phone-signup reset-start → reset). */
 export function ForgotPasswordForm({ siteKey, firebase }: { siteKey?: string; firebase?: FirebaseWebConfig }) {
   const supabase = useMemo(() => createClient(), []);
   const api = useMemo(() => new PicketApiClient(apiBaseUrl), []);
@@ -90,7 +90,7 @@ export function ForgotPasswordForm({ siteKey, firebase }: { siteKey?: string; fi
     setPhoneMessage(null);
   }
 
-  /** Picket checks the number and daily limits first, then Firebase sends the SMS. */
+  /** PicKet checks the number and daily limits first, then Firebase sends the SMS. */
   async function sendSms(target: string): Promise<boolean> {
     try {
       await api.phoneResetStart(target);
