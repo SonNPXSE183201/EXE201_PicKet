@@ -135,3 +135,14 @@ test("a tax-code strip never truncates a damaged amount",()=>{
   const r=items([...head,cell("Ca phe da 12.00O",20,3,0,200),cell("Tổng",20,5),cell("12.000",480,5,0,60)]);
   assert.deepEqual(r,[]);
 });
+
+test("a quantity cell may carry its unit after the number (1- Cái, 2 hộp)",()=>{
+  const r=items([...head,cell("Đơn giá",20,2,0,80),cell("Số lượng",200,2,0,90),cell("Thành tiền",480,2,0,100),
+    cell("ASim Online - Moi",20,3,0,200),cell("290,000",20,4,0,70),cell("1- Cái",200,4,0,60),cell("290,000",480,4,0,70),cell("Tổng tiền:",200,6),cell("290,000",480,6,0,70)]);
+  assert.deepEqual(r,[{name:"ASim Online - Moi",quantity:1,unitPrice:290000,total:290000}]);
+});
+
+test("one-character fold fragments in the left margin do not block an item row",()=>{
+  const r=items([...head,cell("E",0,3,0,8),cell("Dau Dac Biet",30,3,0,140),cell("1",300,3,0,10),cell("103,000",480,3,0,70),cell("Tổng",30,6),cell("103,000",480,6,0,70)]);
+  assert.deepEqual(r,[{name:"Dau Dac Biet",quantity:1,unitPrice:103000,total:103000}]);
+});

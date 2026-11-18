@@ -125,6 +125,21 @@ export function isReceiptSummary(text: string): boolean {
   return /^(?:tong\b|tng\b|t[06b]ng\b|teng cong\b|total\b|grand total\b|sub[ -]?total\b|tam tinh\b|thanh toan\b|so tien\b|tien\s*(?:hang|thue|khach|thua|thanh toan|ca\s*the|the|mat|chuyen\s*khoan|quet\s*the)\b|phai\s*(?:thanh\s*toan|tra)\b|can\s*(?:thanh\s*toan|tra)\b|vat\b|thue\b|tax\b|giam gia\b|discount\b|service\b|phi dich vu\b|cash\b|change\b|tendered\b|amount due\b|due\b)/.test(normalizeReceiptLabel(text)) || noisyReceiptSummaryRole(text) !== null;
 }
 
+/** Printed units of measure that POS receipts put beside a quantity ("GOI 2", "1- Cái"). */
+export const receiptUnitWord=/^(?:goi|hop|cai|chai|lon|tui|vi|vien|ong|lo|hu|cap|bo|thung|ly|coc|phan|dia|suat|cay|qua|chiec|doi|kg|g|gr|l|ml|m|pcs|pc|ea|box|pack|unit|dvt)$/;
+
+/** A quantity cell with its unit ("1- Cái", "2 hộp") is a value, never a product name. */
+export function isReceiptQuantityWithUnit(text:string):boolean{
+  const match=/^\d{1,4}(?:[.,]\d{1,3})?\s*[-–]?\s*(\p{L}+)$/u.exec(text.trim());
+  return match!==null&&receiptUnitWord.test(normalizeReceiptLabel(match[1]));
+}
+
+/** A grouped amount ("290,000") is not a quantity; a weight keeps a small integer part ("0,375", "1,500"). */
+export function isReceiptQuantityText(text:string):boolean{
+  const match=/^(\d+)(?:[.,](\d+))?$/.exec(text.trim());
+  return match!==null&&!(match[2]?.length===3&&Number(match[1])>=100);
+}
+
 export function isReceiptDocumentLabel(text: string): boolean {
   return /^(?:hoa\s*(?:don|dn|bn)\b|h[do]a\s*don\b|phieu\b|bien lai\b|bin lai\b|receipt\b|sales\s*invo|invoice\b|cash\s*bill\b|(?:gia|g)\s*ban\b|(?:gia|g|ca)\s*dang\s*k(?:y)?\b|don gia\b|thanh\s*ti[eêi]n\b|thanh\s*tin\b|t[.]?\s*tien\b|mat hang\b|(?:tt\s+)?ten\s*(?:mon|hang|san\s*pham|sp)\b|sl\b|so luong\b|qty\b|bao hanh\b|thong tin\b|hinh thuc\b|phuong thuc\b)/.test(normalizeReceiptLabel(text));
 }

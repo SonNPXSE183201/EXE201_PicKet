@@ -1,6 +1,6 @@
 import type {ReceiptTextLine} from "./receipt-parser";
 import {parseReceiptMoney,parseReceiptItemMoney} from "./receipt-money";
-import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptSummary,receiptBodyStart} from "./receipt-semantics";
+import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptQuantityText,isReceiptQuantityWithUnit,isReceiptSummary,receiptBodyStart} from "./receipt-semantics";
 import {looksLikeContactAmount} from "./receipt-total-role";
 type Box=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
 const positioned=(line:ReceiptTextLine):line is Box=>[line.left,line.right,line.top,line.bottom].every(x=>typeof x==='number'&&Number.isFinite(x))&&line.right!>line.left!&&line.bottom!>line.top!;
@@ -36,12 +36,12 @@ export function receiptUnheadedRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
   for(const name of boxes){
     if(used.has(name)||replacements.has(name))continue;
     const explicitQuantity=/^\d+(?:[.,]\d+)?\s*[xX×]\s+/.test(name.text);
-    if(name.bottom>=summaryTop||name.text.replace(/[^A-Za-zÀ-ỹ]/g,'').length<3||(!explicitQuantity&&/\d\s*(?:[xX*@]|[.,]\d{3})/.test(name.text))||isReceiptMetadata(name.text)||isReceiptSummary(name.text)||isReceiptDocumentLabel(name.text))continue;
+    if(name.bottom>=summaryTop||name.text.replace(/[^A-Za-zÀ-ỹ]/g,'').length<3||isReceiptQuantityWithUnit(name.text)||(!explicitQuantity&&/\d\s*(?:[xX*@]|[.,]\d{3})/.test(name.text))||isReceiptMetadata(name.text)||isReceiptSummary(name.text)||isReceiptDocumentLabel(name.text))continue;
     const right=boxes.filter(line=>line!==name&&!used.has(line)&&line.left>=name.right&&line.top<summaryTop&&numeric.test(line.text)&&!looksLikeContactAmount(line.text)&&(explicitQuantity?parseReceiptItemMoney(line.text):parseReceiptMoney(line.text))!==null&&
       Math.min(name.bottom,line.bottom)-Math.max(name.top,line.top)>=Math.min(name.bottom-name.top,line.bottom-line.top)*.3);
     if(right.length!==1)continue;
     const amount=right[0],total=parseReceiptItemMoney(amount.text)!;
-    const quantities=boxes.filter(line=>line.right<=name.left&&!used.has(line)&&Math.abs(cy(line)-cy(name))<Math.min(name.bottom-name.top,line.bottom-line.top)*.6&&/^\d+(?:[.,]\d+)?\s*[xX]?$/.test(line.text));
+    const quantities=boxes.filter(line=>line.right<=name.left&&!used.has(line)&&Math.abs(cy(line)-cy(name))<Math.min(name.bottom-name.top,line.bottom-line.top)*.6&&/^\d+(?:[.,]\d+)?\s*[xX]?$/.test(line.text)&&isReceiptQuantityText(line.text.replace(/\s*[xX]$/,"")));
     let text=`${name.text} ${total}`,confidence=Math.min(name.confidence??.75,amount.confidence??.75,.65);
     if(quantities.length===1){
       const quantity=Number(quantities[0].text.replace(/[xX\s]/g,'').replace(',','.')),unit=total/quantity;

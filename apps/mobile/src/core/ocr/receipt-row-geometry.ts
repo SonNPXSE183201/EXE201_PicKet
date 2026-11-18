@@ -1,6 +1,6 @@
 import type {ReceiptTextLine} from "./receipt-parser";
 import {parseReceiptItemMoney} from "./receipt-money";
-import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptSummary,normalizeReceiptLabel,receiptBodyStart,receiptNameHasWord} from "./receipt-semantics";
+import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptSummary,normalizeReceiptLabel,receiptBodyStart,receiptNameHasWord,receiptUnitWord} from "./receipt-semantics";
 import {looksLikeContactAmount} from "./receipt-total-role";
 
 type Box=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
@@ -16,8 +16,6 @@ const letters=(text:string)=>text.replace(/[^A-Za-zÀ-ỹ]/g,"").length;
 const clamp=(slope:number)=>Math.max(-maxSlope,Math.min(maxSlope,slope));
 // Payment and summary words anywhere in a name row; such rows are never products.
 const paymentWords=/\b(?:tong|total|thanh toan|phai tra|can tra|khach dua|tien (?:mat|khach|thua|tra lai)|tra lai|change|cash)\b/;
-// Printed units of measure that POS receipts put before quantity and unit price.
-const unitWord=/^(?:goi|hop|cai|chai|lon|tui|vi|vien|ong|lo|hu|cap|bo|thung|ly|coc|phan|dia|suat|cay|qua|chiec|doi|kg|g|gr|l|ml|m|pcs|pc|ea|box|pack|unit|dvt)$/;
 
 /** Least-squares slope of one recognized line from its word boxes (sign-free, no angle convention). */
 function lineSlope(line:Box):number|null{
@@ -60,6 +58,9 @@ function tokensOf(text:string):Token[]|null{
   const clean=text.replace(/\s*\((?=[^)]*[A-Za-z])[^)]*\)?\s*$/,"").replace(/\s*(?:vnd|đ|₫)\s*$/i,"").trim();
   if(!clean||!/\d/.test(clean))return null;
   if(/^\d{8,}$/.test(clean))return [];
+  // A quantity printed with its unit after it ("1- Cái", "2 hộp") is just that quantity.
+  const counted=/^(\d{1,4}(?:[.,]\d{1,3})?)\s*[-–]?\s*(\p{L}+)$/u.exec(clean);
+  if(counted&&receiptUnitWord.test(normalizeReceiptLabel(counted[2])))return [{raw:counted[1],money:parseReceiptItemMoney(counted[1]),quantity:Number(counted[1].replace(",","."))}];
   const whole=parseReceiptItemMoney(clean);
   if(whole!==null&&/^[\d.,\s]+$/.test(clean))return [{raw:clean,money:whole,quantity:/^\d{1,4}(?:[.,]\d{1,3})?$/.test(clean)?Number(clean.replace(",",".")):null}];
   let parts=clean.split(/\s+/);
@@ -67,7 +68,7 @@ function tokensOf(text:string):Token[]|null{
   // separate quantity and unit price ("2 X 16,000"). Both are dropped only when every other part is a number,
   // so a name such as "GOI CUON" never becomes a value row.
   const numeric=(part:string)=>/^-?\d[\d.,]*$/.test(part);
-  const rest=parts.slice(unitWord.test(normalizeReceiptLabel(parts[0]))?1:0).filter(part=>!/^[xX×*]$/.test(part));
+  const rest=parts.slice(receiptUnitWord.test(normalizeReceiptLabel(parts[0]))?1:0).filter(part=>!/^[xX×*]$/.test(part));
   if(rest.length>=2&&rest.length<parts.length&&rest.every(numeric))parts=rest;
   const tokens:Token[]=[];
   for(const part of parts){
@@ -179,7 +180,11 @@ export function receiptGeometryRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
   if(boxes.length<2)return lines;
   const {top:bodyTop}=receiptBodyStart(lines);
   const summaryTop=Math.min(Infinity,...boxes.filter(line=>(typeof bodyTop!=="number"||line.top>bodyTop)&&isReceiptSummary(line.text)).map(line=>line.top));
-  const entries=boxes.filter(line=>line.top<summaryTop).map(line=>({line,...classify(line)}));
+  // One-character marks left of everything else on their row (fold or edge fragments: "E", "(") are noise, not cells.
+  const leftEdge=Math.min(...boxes.map(line=>line.left));
+  const fragment=(line:Box)=>/^\D$/.test(line.text.trim())&&line.left<=leftEdge+(line.bottom-line.top)*2&&
+    boxes.some(other=>other!==line&&other.left>=line.right&&Math.min(other.bottom,line.bottom)-Math.max(other.top,line.top)>0&&receiptNameHasWord(other.text));
+  const entries=boxes.filter(line=>line.top<summaryTop&&!fragment(line)).map(line=>({line,...classify(line)}));
   const rows=buildRows(entries,receiptLineSlopes(lines));
   const height=median(entries.map(({line})=>line.bottom-line.top))||1;
   const used=new Set<ReceiptTextLine>(),replacements=new Map<ReceiptTextLine,ReceiptTextLine>();
