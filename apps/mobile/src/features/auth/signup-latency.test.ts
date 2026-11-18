@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createEmailCodeDelivery, emailCodeStateFor } from "./email-code-delivery";
+import { createEmailCodeDelivery, emailCodeErrorFor, emailCodeStateFor } from "./email-code-delivery";
 import { initialOtpState, otpReducer, shouldAutoSubmitOtp, type OtpState } from "./otp-state";
-import { createSignupVerificationLoader, emailOnlyVerification, type SignupChannelsStorage } from "./signup-channels";
+import { createSignupVerificationLoader, emailOnlyVerification, shownSignupMethod, type SignupChannelsStorage } from "./signup-channels";
 
 const typed = (value: string): OtpState => otpReducer(initialOtpState(0), { type: "input", value });
 
@@ -145,4 +145,29 @@ test("sign-up channels: first run without storage is email only on error, and th
   const corrupt = memoryStorage("{not json");
   const fresh = createSignupVerificationLoader(() => 0, 1000, corrupt.storage);
   assert.deepEqual(await fresh({ authChannels: async () => ({ verification: { email: true, sms: true } }) }), { email: true, sms: true });
+});
+
+test("email code send: a failed resend keeps the earlier code usable and reports the error", async () => {
+  const delivery = createEmailCodeDelivery();
+  delivery.start("a@picket.test", async () => undefined);
+  await delivery.delivered();
+  const limited = Object.assign(new Error("email rate limit exceeded"), { status: 429 });
+  delivery.start("a@picket.test", () => Promise.reject(limited));
+  assert.equal(emailCodeStateFor(delivery.snapshot(), "a@picket.test"), "sending");
+  await delivery.delivered();
+  assert.equal(emailCodeStateFor(delivery.snapshot(), "a@picket.test"), "ready", "the code boxes stay open");
+  assert.equal(emailCodeErrorFor(delivery.snapshot(), "a@picket.test"), limited);
+  assert.equal(emailCodeErrorFor(delivery.snapshot(), "b@picket.test"), null, "another address shows no error");
+  // A first send that fails is still a failure (nothing to enter yet).
+  delivery.start("b@picket.test", () => Promise.reject(limited));
+  await delivery.delivered();
+  assert.equal(emailCodeStateFor(delivery.snapshot(), "b@picket.test"), "failed");
+});
+
+test("register method: a channel refresh does not switch the form shown to the user", () => {
+  // Cached settings offered SMS only: the form shows phone and keeps it as the choice.
+  const shown = shownSignupMethod("email", ["phone"]);
+  assert.equal(shown, "phone");
+  assert.equal(shownSignupMethod(shown, ["email", "phone"]), "phone");
+  assert.equal(shownSignupMethod("phone", ["email"]), "email", "a method no longer offered falls back");
 });

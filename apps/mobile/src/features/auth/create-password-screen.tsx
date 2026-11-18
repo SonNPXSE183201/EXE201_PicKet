@@ -1,5 +1,5 @@
 import { Redirect, router } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { routes } from "@/core/navigation/routes";
 import { useAuth } from "./auth-context";
@@ -54,6 +54,12 @@ export function CreatePasswordScreen({ purpose = "signup" }: { purpose?: PhoneFl
   const [message, setMessage] = useState<string | null>(null);
   // The server needs a new start (expired, used, unknown phone): only "send again" remains.
   const [restart, setRestart] = useState(false);
+
+  // A finished flow ends with this screen (home after sign-up, system back after
+  // recovery): do not leave "completed" behind for a later visit.
+  useEffect(() => () => {
+    if (flow.snapshot().step === "completed") flow.reset();
+  }, [flow]);
 
   if (mode === "none") return <Redirect href={session ? routes.home : startRoute} />;
 

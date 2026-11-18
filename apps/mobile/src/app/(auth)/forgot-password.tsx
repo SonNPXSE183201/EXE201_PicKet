@@ -28,6 +28,7 @@ export default function ForgotPasswordScreen() {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
+  const starting = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
 
   function changeMethod(next: RecoveryMethod) {
@@ -55,25 +56,33 @@ export default function ForgotPasswordScreen() {
     const destination = vietnamPhoneToE164(phone);
     if (!destination) return setMessage(invalidLocalPhoneMessage);
     running.current = true;
+    starting.current = true;
     setBusy(true);
     setMessage(null);
     try {
       // reset-start must pass before Firebase sends; the code screen opens while it sends
       // (and moves on to the new password itself after Android instant verification).
-      if (await phoneReset.start(destination)) {
+      const started = await phoneReset.start(destination);
+      starting.current = false;
+      if (started) {
         router.push(routes.verifyCode("phone", destination, "reset"));
         return; // running stays set until this screen is focused again (no double push).
       }
     } catch (error) {
       setMessage(phoneResetSendErrorMessage(error));
     } finally {
+      starting.current = false;
       setBusy(false);
     }
     running.current = false;
   }
 
+  // Leaving while reset-start is pending abandons it: no SMS, no code screen pushed later.
   useFocusEffect(useCallback(() => {
     running.current = false;
+    return () => {
+      if (starting.current) phoneReset.reset();
+    };
   }, []));
 
   const phoneMode = activeMethod === "phone";

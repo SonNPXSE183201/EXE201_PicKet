@@ -20,7 +20,7 @@ import {
 import { emailCodeDelivery } from "@/features/auth/email-code-delivery";
 import { invalidLocalPhoneMessage, sanitizeLocalPhoneInput, vietnamPhonePrefix, vietnamPhoneToE164 } from "@/features/auth/phone-input";
 import { phoneSignup } from "@/features/auth/phone-signup-store";
-import type { SignupMethod } from "@/features/auth/signup-channels";
+import { shownSignupMethod, type SignupMethod } from "@/features/auth/signup-channels";
 import { phoneSendErrorMessage } from "@/features/auth/signup-errors";
 import { useSignupMethods } from "@/features/auth/signup-verification-store";
 
@@ -40,10 +40,14 @@ export default function RegisterScreen() {
   const [invalid, setInvalid] = useState(false);
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
+  const starting = useRef(false);
   const [message, setMessage] = useState<string | null>(
     configured ? null : "Đăng nhập chưa sẵn sàng. Bạn vẫn có thể sử dụng trên thiết bị.",
   );
-  const activeMethod = methods.includes(method) ? method : methods[0];
+  const activeMethod = shownSignupMethod(method, methods);
+  // Keep the method on screen as the choice: a channel refresh that offers the
+  // default again must not switch the form while the user is typing.
+  if (activeMethod !== method) setMethod(activeMethod);
 
   function changeMethod(next: SignupMethod) {
     setMethod(next);
@@ -80,25 +84,33 @@ export default function RegisterScreen() {
       return; // running stays set until this screen is focused again (no double push).
     }
     setBusy(true);
+    starting.current = true;
     try {
       // The API start (duplicate number, rate limits) must pass before Firebase sends an SMS;
       // the code screen then opens while Firebase is still sending (or verifies instantly).
-      if (await phoneSignup.start(destination)) {
+      const started = await phoneSignup.start(destination);
+      starting.current = false;
+      if (started) {
         router.push(routes.verifyCode("phone", destination));
         return;
       }
     } catch (error) {
       setMessage(phoneSendErrorMessage(error));
     } finally {
+      starting.current = false;
       setBusy(false);
     }
     running.current = false;
   }
 
   // Back from the code screen ("Đổi số" / "Đổi email" or the system back): allow a new send.
+  // Leaving while the API start is pending abandons it: no SMS, no code screen pushed later.
   useFocusEffect(useCallback(() => {
     running.current = false;
     setBusy(false);
+    return () => {
+      if (starting.current) phoneSignup.reset();
+    };
   }, []));
 
   return (

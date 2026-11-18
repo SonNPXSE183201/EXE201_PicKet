@@ -204,7 +204,14 @@ function createPhoneVerificationSession(deps: {
    * Firebase part of a send, after the API accepted the number. Runs while the OTP
    * screen is already visible; never rejects (failures become "send-failed").
    */
-  async function deliver(driver: PhoneAuthDriver, nextPhone: string, forceResend: boolean, current: number) {
+  async function deliver(
+    driver: PhoneAuthDriver,
+    nextPhone: string,
+    forceResend: boolean,
+    current: number,
+    /** verificationId of the code already sent: still usable if this resend fails. */
+    previousId: string | null,
+  ) {
     const startedAt = perfStart();
     try {
       const result = await requestPhoneCode(driver, nextPhone, {
@@ -244,9 +251,17 @@ function createPhoneVerificationSession(deps: {
     } catch (error) {
       perfLog("firebase-send-failed", startedAt);
       if (current !== generation) return;
-      verificationId = autoCode = null;
+      autoCode = null;
       sendError = error;
-      step = "send-failed";
+      if (previousId) {
+        // A failed resend: the code that was already sent can still be entered
+        // (the error is shown next to the code boxes instead of locking them).
+        verificationId = previousId;
+        step = "code-sent";
+      } else {
+        verificationId = null;
+        step = "send-failed";
+      }
       emit();
     }
   }
@@ -259,16 +274,22 @@ function createPhoneVerificationSession(deps: {
     const api = requireApi();
     const driver = requireDriver();
     const current = ++generation;
+    // A new start signs out any Firebase user left by an earlier, abandoned attempt
+    // (its cached ID token would be reused by instant verification and refused by the
+    // API). Runs while the API answers, so it adds no wait.
+    const cleared = forceResend ? Promise.resolve() : driver.cleanup().catch(() => undefined);
     await timed("api-start", () => api.start(nextPhone));
+    await cleared;
     // A resend lost the race to a confirm of the previous code: keep that verification.
     if (current !== generation || (forceResend && step === "verified")) return false;
+    const previousId = forceResend && step === "code-sent" ? verificationId : null;
     phone = nextPhone;
     verificationId = idToken = autoCode = null;
     sendError = null;
     confirming = null;
     step = "sending";
     emit();
-    delivering = deliver(driver, nextPhone, forceResend, current);
+    delivering = deliver(driver, nextPhone, forceResend, current, previousId);
     return true;
   }
 

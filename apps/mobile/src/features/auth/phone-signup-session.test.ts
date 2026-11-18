@@ -108,7 +108,8 @@ test("SMS sign-up: API start, Firebase code, one sign-in, then account + session
   assert.deepEqual(sessions, [{ access_token: "a", refresh_token: "r" }]);
   assert.equal(session.snapshot().step, "completed");
   await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(fake.log, ["cleanup"]);
+  // One before the start (stale Firebase user), one after the flow ended.
+  assert.deepEqual(fake.log, ["cleanup", "cleanup"]);
 });
 
 test("API refusal stops before Firebase sends an SMS; reset clears a verified Firebase user", async () => {
@@ -157,7 +158,8 @@ test("invalid tokens from the API never become a session", async () => {
   session.reset();
   assert.equal(session.snapshot().step, "idle");
   await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(fake.log, ["cleanup"]);
+  // One before the start (stale Firebase user), one after the flow ended.
+  assert.deepEqual(fake.log, ["cleanup", "cleanup"]);
 });
 
 const okSignupApi = () => ({
@@ -272,7 +274,8 @@ test("SMS password recovery: reset-start, code, reset with the new password, the
   ]);
   assert.equal(session.snapshot().step, "completed");
   await new Promise((resolve) => setImmediate(resolve));
-  assert.deepEqual(fake.log, ["cleanup"]);
+  // One before the start (stale Firebase user), one after the flow ended.
+  assert.deepEqual(fake.log, ["cleanup", "cleanup"]);
 });
 
 test("SMS recovery keeps the verified step when the API asks for a new code", async () => {
@@ -387,4 +390,42 @@ test("a resend that loses the race to a confirm of the previous code keeps the v
   assert.equal(await resent, false);
   assert.equal(session.snapshot().step, "verified");
   assert.equal(fake.calls.length, 1, "no new SMS once the number is verified");
+});
+
+test("a new start signs out a leftover Firebase user before Firebase sends; a resend does not", async () => {
+  const fake = fakeDriver();
+  const order: string[] = [];
+  const driver: PhoneAuthDriver = {
+    ...fake.driver,
+    verifyPhoneNumber(...args) {
+      order.push("send");
+      fake.driver.verifyPhoneNumber(...args);
+    },
+    async cleanup() {
+      order.push("cleanup");
+    },
+  };
+  const session = createPhoneSignupSession({ driver: () => driver, api: okSignupApi, setSession: async () => undefined });
+  await session.start("+84912345678");
+  assert.deepEqual(order, ["cleanup", "send"]);
+  fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
+  await session.delivered();
+  await session.resend();
+  assert.deepEqual(order, ["cleanup", "send", "send"], "a resend keeps the flow's own state");
+});
+
+test("a failed resend keeps the code that was already sent usable", async () => {
+  const fake = fakeDriver();
+  const session = createPhoneSignupSession({ driver: () => fake.driver, api: okSignupApi, setSession: async () => undefined });
+  await session.start("+84912345678");
+  fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
+  await session.delivered();
+  assert.equal(await session.resend(), true);
+  assert.equal(session.snapshot().step, "sending");
+  const tooMany = { code: "auth/too-many-requests" };
+  fake.calls[1].emit({ state: "error", verificationId: null, code: null, error: tooMany });
+  await session.delivered();
+  assert.deepEqual(session.snapshot(), { step: "code-sent", phone: "+84912345678", autoCode: null, sendError: tooMany });
+  assert.equal(await session.confirm("123456"), "token:v1:123456", "the first SMS code still signs in");
+  assert.equal(session.snapshot().sendError, null);
 });

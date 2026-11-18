@@ -13,7 +13,7 @@ import { PicketText as Text } from "@/core/ui/picket-text";
 import { useAuth } from "@/features/auth/auth-context";
 import { authErrorMessage } from "@/features/auth/auth-errors";
 import { AuthButton, AuthError, AuthHint, AuthLink, AuthOverline, AuthPage, CodeCard, CodeDigits } from "@/features/auth/auth-figma";
-import { emailCodeDelivery, emailCodeStateFor, useEmailCodeDelivery } from "@/features/auth/email-code-delivery";
+import { emailCodeDelivery, emailCodeErrorFor, emailCodeStateFor, useEmailCodeDelivery } from "@/features/auth/email-code-delivery";
 import { canSubmitOtp, formatCountdown, initialOtpState, otpLength, otpReducer, resendSecondsLeft, shouldAutoSubmitOtp } from "@/features/auth/otp-state";
 import { perfLog, perfStart } from "@/features/auth/perf-log";
 import { formatVietnamPhone } from "@/features/auth/phone-input";
@@ -45,11 +45,12 @@ export default function VerifyCodeScreen() {
   const start = purpose === "reset" ? routes.forgotPassword : routes.register;
   if (!destination || lostPhoneSession) return <Redirect href={start} />;
   const delivery = channel === "phone" ? phoneDelivery(phoneState) : emailCodeStateFor(emailState, destination);
-  const sendError = channel === "phone" ? phoneState.sendError : emailState.error;
+  // With delivery "ready" an error means a failed resend: the earlier code still works.
+  const sendError = channel === "phone" ? phoneState.sendError : emailCodeErrorFor(emailState, destination);
   return <VerifyCode channel={channel} purpose={purpose} destination={destination}
     autoCode={channel === "phone" ? phoneState.autoCode : null}
     delivery={delivery}
-    sendError={delivery === "failed" ? sendError : null}
+    sendError={delivery === "sending" ? null : sendError}
     phoneVerified={channel === "phone" && phoneState.step === "verified"} />;
 }
 
@@ -94,8 +95,13 @@ function VerifyCode({ channel, purpose, destination, autoCode, delivery, sendErr
 
   const verify = useCallback(async (code: string) => {
     if (verifying.current || code.length !== otpLength) return;
+    // Not before the code went out (keyboard "done" while sending): the auto-submit
+    // sends it once delivery is ready.
+    if (!ready) return;
     // The code cannot be checked before Firebase reported CODE_SENT (no verificationId yet).
     if (channel === "phone" && flow.snapshot().step !== "code-sent" && flow.snapshot().step !== "verified") return;
+    // A code submitted by hand is not auto-submitted again.
+    lastAutoSubmitted.current = code;
     verifying.current = true;
     dispatch({ type: "submit" });
     setNotice(null);
@@ -125,7 +131,7 @@ function VerifyCode({ channel, purpose, destination, autoCode, delivery, sendErr
     } finally {
       verifying.current = false;
     }
-  }, [channel, destination, flow, passwordRoute, verifyEmailCode]);
+  }, [channel, destination, flow, passwordRoute, ready, verifyEmailCode]);
 
   // Firebase verified the number without a code (Android instant verification).
   useEffect(() => {
@@ -165,9 +171,10 @@ function VerifyCode({ channel, purpose, destination, autoCode, delivery, sendErr
       dispatch({ type: "resent", now: Date.now() });
       setNow(Date.now());
       await (channel === "phone" ? flow.delivered() : emailCodeDelivery.delivered());
+      // A failed resend keeps the earlier code usable ("code-sent"/"sent") with an error.
       const delivered = channel === "phone"
-        ? flow.snapshot().step === "code-sent"
-        : emailCodeDelivery.snapshot().status === "sent";
+        ? flow.snapshot().step === "code-sent" && !flow.snapshot().sendError
+        : emailCodeDelivery.snapshot().status === "sent" && !emailCodeDelivery.snapshot().error;
       if (delivered) setNotice("Mã mới đã được gửi.");
     } catch (error) {
       dispatch({ type: "failed", message: channel === "phone" ? sendErrorMessage(error) : authErrorMessage(error) });
@@ -188,9 +195,12 @@ function VerifyCode({ channel, purpose, destination, autoCode, delivery, sendErr
       ? t("Bạn đã nhập sai quá nhiều lần. Hãy gửi lại mã.")
       : t("Mã chưa đúng. Bạn còn {{count}} lần thử.", { count: state.attemptsLeft })
     : state.message;
-  const error = failed
+  // The latest problem wins: an error from the last tap (e.g. a resend refused by the
+  // API) over the earlier send failure, which is cleared when a resend starts.
+  const sendFailure = failed || sendError
     ? channel === "phone" ? sendErrorMessage(sendError) : authErrorMessage(sendError)
-    : otpError;
+    : null;
+  const error = otpError ?? sendFailure;
   const changeLabel = channel === "phone" ? "Đổi số" : "Đổi email";
   const heading = sending ? "Đang gửi mã tới" : failed ? "Chưa gửi được mã tới" : "Mã 6 số đã gửi tới";
 

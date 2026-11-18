@@ -29,7 +29,16 @@ export function availableSignupMethods(verification: SignupVerification, smsSupp
   return methods.length ? methods : ["email"];
 }
 
-type ChannelsApi = { authChannels(): Promise<unknown> } | null;
+/**
+ * Method shown on the register screen: the user's choice while it is offered,
+ * else the first offered one. The screen stores the result as its choice, so a
+ * later refresh that offers the old default again does not switch the form.
+ */
+export function shownSignupMethod(choice: SignupMethod, methods: readonly SignupMethod[]): SignupMethod {
+  return methods.includes(choice) ? choice : (methods[0] ?? "email");
+}
+
+type ChannelsApi ={ authChannels(): Promise<unknown> } | null;
 
 /** Persists the last good channel settings (SecureStore on device). */
 export type SignupChannelsStorage = {

@@ -36,6 +36,8 @@ export function createEmailCodeDelivery() {
      */
     start(email: string, send: (email: string) => Promise<void>): boolean {
       if (snapshot.status === "sending" && snapshot.email === email) return false;
+      // A resend after a code already went out: if it fails, that code still works.
+      const resend = snapshot.status === "sent" && snapshot.email === email;
       const current = ++generation;
       set({ status: "sending", email, error: null });
       delivering = timed("email-send", () => send(email)).then(
@@ -43,7 +45,8 @@ export function createEmailCodeDelivery() {
           if (current === generation) set({ status: "sent", email, error: null });
         },
         (error: unknown) => {
-          if (current === generation) set({ status: "failed", email, error });
+          // "sent" with an error: the resend failed, the earlier code can still be entered.
+          if (current === generation) set({ status: resend ? "sent" : "failed", email, error });
         },
       );
       return true;
@@ -61,6 +64,11 @@ export function createEmailCodeDelivery() {
 }
 
 export type EmailCodeDelivery = ReturnType<typeof createEmailCodeDelivery>;
+
+/** Why the latest send for `email` failed, if it did (also a failed resend, see `start`). */
+export function emailCodeErrorFor(snapshot: EmailCodeSnapshot, email: string): unknown {
+  return snapshot.email === email ? snapshot.error : null;
+}
 
 /** OTP screen state for `email`: a send for another address (or none) counts as already sent. */
 export function emailCodeStateFor(snapshot: EmailCodeSnapshot, email: string): "sending" | "ready" | "failed" {
