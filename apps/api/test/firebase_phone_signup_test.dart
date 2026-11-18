@@ -81,6 +81,26 @@ FirebasePhoneTokenVerifier verifier() => FirebasePhoneTokenVerifier(
   now: () => now,
 );
 
+/// Behaves like `IOClient` after `close()`: requests still in flight fail.
+class ClosingClient extends http.BaseClient {
+  ClosingClient(this._inner, this._answered);
+  final http.Client _inner;
+  final void Function(String path) _answered;
+  bool closed = false;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    if (closed) throw http.ClientException('Client is already closed.');
+    final response = await _inner.send(request);
+    if (closed) throw http.ClientException('Connection closed.');
+    _answered(request.url.path);
+    return response;
+  }
+
+  @override
+  void close() => closed = true;
+}
+
 Matcher status(int code) => throwsA(
   isA<GatewayException>().having((e) => e.statusCode, 'status', code),
 );
@@ -165,8 +185,10 @@ void main() {
                 ? 'quota_reached'
                 : 'ok';
             return http.Response(jsonEncode(status), 200);
-          case '/rest/v1/rpc/auth_phone_signup_complete_gate':
+          case '/rest/v1/rpc/auth_phone_signup_verified_gate':
             final args = jsonDecode(request.body) as Map<String, Object?>;
+            expect(args['p_uid'], 'firebase-uid');
+            expect(args['p_auth_time'], nowSeconds - 30);
             return http.Response(
               jsonEncode({
                 'status': args['p_password_ok'] == false
@@ -229,6 +251,7 @@ void main() {
         env,
         verifier: verifier(),
         client: client,
+        backgroundClient: () => client,
       );
     }
 
@@ -323,34 +346,43 @@ void main() {
       Object? pending,
       Object? recoveryTarget = 'user-9',
       bool createTimesOut = false,
+      bool claimFails = false,
     }) {
       calls = [];
       final client = MockClient((request) async {
         final path = request.url.path;
         calls.add(path);
-        final status = reserved ? gateStatus : 'no_reservation';
+        final status = !reserved
+            ? 'no_reservation'
+            : gateStatus == 'ok' && !freshProof
+            ? 'proof_used'
+            : gateStatus;
         final answers = <String, Object?>{
-          '/rest/v1/rpc/auth_phone_signup_complete_gate': {
+          '/rest/v1/rpc/auth_phone_signup_verified_gate': {
             'status': status,
             'pending': pending,
           },
-          '/rest/v1/rpc/auth_phone_reset_gate': status,
+          '/rest/v1/rpc/auth_phone_reset_verified_gate': {
+            'status': status == 'ok' && recoveryTarget == null
+                ? 'no_account'
+                : status,
+            'target': recoveryTarget,
+          },
           '/rest/v1/rpc/contact_claim_verified_phone': <String, Object>{},
           '/auth/v1/token': {'access_token': 'at', 'refresh_token': 'rt'},
-          '/rest/v1/rpc/auth_verification_public': {'email': true, 'sms': true},
-          '/rest/v1/rpc/auth_rate_hit': true,
-          '/rest/v1/rpc/auth_phone_owner': null,
-          '/rest/v1/rpc/auth_phone_signup_consume': reserved,
-          '/rest/v1/rpc/auth_firebase_proof_use': freshProof,
+          // Used only by the cleanup after a lost create response.
           '/rest/v1/rpc/auth_pending_phone_signup': pending,
-          '/rest/v1/rpc/auth_phone_recovery_target': recoveryTarget,
           '/v1/accounts:delete': <String, Object>{},
+          '/auth/v1/admin/users/user-1': <String, Object>{},
           '/auth/v1/admin/users/user-9': <String, Object>{},
           '/auth/v1/admin/users/orphan': <String, Object>{},
         };
         if (path == '/auth/v1/admin/users') {
           if (createTimesOut) throw http.ClientException('timeout');
           return http.Response('{"id":"user-1"}', 200);
+        }
+        if (path == '/rest/v1/rpc/contact_claim_verified_phone' && claimFails) {
+          return http.Response('{"code":"23505"}', 409);
         }
         if (answers.containsKey(path)) {
           return http.Response(jsonEncode(answers[path]), 200);
@@ -363,6 +395,7 @@ void main() {
         env,
         verifier: verifier(),
         client: client,
+        backgroundClient: () => client,
       );
     }
 
@@ -416,20 +449,61 @@ void main() {
       expect(calls, contains('/auth/v1/admin/users/orphan'));
     });
 
-    test('a forged token loses to the gate and burns no proof', () async {
-      Future<Object> forged(PhoneSignupService s) => s.complete(
-        phone: '+84912345678',
-        idToken: 'not-a-token',
-        password: 'Str0ng!Passw0rd',
-        client: 'ip',
-      );
-      await expectLater(forged(build(gateStatus: 'rate_limited')), status(429));
-      await expectLater(forged(build()), status(401));
-      expect(calls.contains('/rest/v1/rpc/auth_firebase_proof_use'), false);
-      expect(calls.contains('/auth/v1/admin/users'), false);
+    test('a bad token touches nothing, so the reservation survives', () async {
+      for (final (idToken, phone) in [
+        ('not-a-token', '+84912345678'),
+        (token(key: otherKey), '+84912345678'),
+        // A valid proof for another number.
+        (token(), '+84900000000'),
+      ]) {
+        await expectLater(
+          build().complete(
+            phone: phone,
+            idToken: idToken,
+            password: 'Str0ng!Passw0rd',
+            client: 'ip',
+          ),
+          status(401),
+        );
+        expect(calls, isEmpty);
+        await expectLater(
+          build().reset(
+            phone: phone,
+            idToken: idToken,
+            password: 'Str0ng!Passw0rd',
+            client: 'ip',
+          ),
+          status(401),
+        );
+        expect(calls, isEmpty);
+      }
     });
 
-    test('token verification starts while the gate is running', () async {
+    test('a replayed proof is rejected for recovery too', () async {
+      await expectLater(
+        build(freshProof: false).reset(
+          phone: '+84912345678',
+          idToken: token(),
+          password: 'Str0ng!Passw0rd',
+          client: 'ip',
+        ),
+        status(401),
+      );
+      expect(calls.contains('/auth/v1/admin/users/user-9'), false);
+    });
+
+    test(
+      'a failed phone claim deletes the account before any sign-in',
+      () async {
+        await expectLater(complete(build(claimFails: true)), status(409));
+        // Signing in would set last_sign_in_at and hide a leftover account
+        // from the pending cleanup.
+        expect(calls.contains('/auth/v1/token'), false);
+        expect(calls, contains('/auth/v1/admin/users/user-1'));
+      },
+    );
+
+    test('the token is verified before the gate runs', () async {
       final order = <String>[];
       final client = MockClient((request) async {
         order.add(request.url.path);
@@ -448,9 +522,10 @@ void main() {
           now: () => now,
         ),
         client: client,
+        backgroundClient: () => client,
       );
       await expectLater(complete(concurrent), status(429));
-      expect(order.first, 'keys');
+      expect(order, ['keys', '/rest/v1/rpc/auth_phone_signup_verified_gate']);
     });
 
     test('the Firebase user delete does not delay the response', () async {
@@ -458,11 +533,8 @@ void main() {
       final client = MockClient((request) async {
         final path = request.url.path;
         if (path == '/v1/accounts:delete') return delete.future;
-        if (path.endsWith('complete_gate')) {
+        if (path.endsWith('verified_gate')) {
           return http.Response('{"status":"ok"}', 200);
-        }
-        if (path.endsWith('auth_firebase_proof_use')) {
-          return http.Response('true', 200);
         }
         if (path == '/auth/v1/admin/users') {
           return http.Response('{"id":"user-1"}', 200);
@@ -481,12 +553,65 @@ void main() {
         env,
         verifier: verifier(),
         client: client,
+        backgroundClient: () => client,
       );
       final session = await complete(s).timeout(const Duration(seconds: 2));
       expect(session, isA<Map<String, dynamic>>());
       delete.complete(http.Response('{}', 500));
       await Future<void>.delayed(const Duration(milliseconds: 20));
     });
+
+    test(
+      'the Firebase user delete survives the route closing its client',
+      () async {
+        {
+          final release = Completer<void>();
+          final deleted = <String>[];
+          Future<http.Response> handle(http.Request request) async {
+            final path = request.url.path;
+            if (path == '/v1/accounts:delete') {
+              await release.future;
+              return http.Response('{}', 200);
+            }
+            if (path.endsWith('verified_gate')) {
+              return http.Response('{"status":"ok"}', 200);
+            }
+            if (path == '/auth/v1/admin/users') {
+              return http.Response('{"id":"user-1"}', 200);
+            }
+            if (path == '/auth/v1/token') {
+              return http.Response(
+                '{"access_token":"at","refresh_token":"rt"}',
+                200,
+              );
+            }
+            return http.Response('{}', 200);
+          }
+
+          final requestClient = ClosingClient(MockClient(handle), deleted.add);
+          final background = <ClosingClient>[];
+          final s = PhoneSignupService(
+            config,
+            AdminService(config, client: requestClient, environment: env),
+            env,
+            verifier: verifier(),
+            client: requestClient,
+            backgroundClient: () {
+              final c = ClosingClient(MockClient(handle), deleted.add);
+              background.add(c);
+              return c;
+            },
+          );
+          await complete(s);
+          // What the route does in `finally` as soon as the response is built.
+          s.close();
+          release.complete();
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          expect(deleted, contains('/v1/accounts:delete'));
+          expect(background.single.closed, true);
+        }
+      },
+    );
 
     test('recovery sets a new password for the verified owner', () async {
       final service = build();
@@ -511,6 +636,38 @@ void main() {
       );
     });
   });
+
+  test(
+    'a Firebase user delete reports failures instead of hiding them',
+    () async {
+      Future<String?> run(http.Response Function() answer) =>
+          deleteFirebaseUser(
+            MockClient((_) async => answer()),
+            'web-key',
+            'id-token',
+          );
+      expect(await run(() => http.Response('{}', 200)), isNull);
+      expect(
+        await run(
+          () => http.Response('{"error":{"message":"USER_NOT_FOUND"}}', 400),
+        ),
+        isNull,
+      );
+      expect(await run(() => http.Response('{}', 500)), 'HTTP 500');
+      expect(
+        await run(() => throw http.ClientException('down, key=web-key')),
+        isNot(contains('web-key')),
+      );
+      expect(
+        await deleteFirebaseUser(
+          MockClient((_) async => fail('no call')),
+          '',
+          't',
+        ),
+        isNotNull,
+      );
+    },
+  );
 
   test('password rule matches the clients', () {
     expect(strongPassword('Str0ng!Passw0rd'), true);

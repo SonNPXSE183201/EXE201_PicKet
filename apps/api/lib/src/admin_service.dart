@@ -65,8 +65,8 @@ class AdminService {
       'auth_pending_phone_signup',
       'auth_phone_recovery_target',
       'auth_phone_signup_start',
-      'auth_phone_signup_complete_gate',
-      'auth_phone_reset_gate',
+      'auth_phone_signup_verified_gate',
+      'auth_phone_reset_verified_gate',
     }.contains(name)) {
       throw const FormatException('Invalid auth operation.');
     }

@@ -30,12 +30,17 @@ class PhoneSignupService {
     this.env, {
     required this.verifier,
     http.Client? client,
-  }) : _client = client ?? http.Client();
+    http.Client Function()? backgroundClient,
+  }) : _client = client ?? http.Client(),
+       _backgroundClient = backgroundClient ?? http.Client.new;
   final ApiConfig config;
   final AdminService store;
   final Map<String, String> env;
   final FirebasePhoneTokenVerifier verifier;
   final http.Client _client;
+
+  /// Creates the client for work that outlives the request (see [close]).
+  final http.Client Function() _backgroundClient;
 
   String _hash(String value) {
     final key = env['OTP_HMAC_KEY'] ?? env['SUPABASE_SECRET_KEY'] ?? '';
@@ -65,48 +70,40 @@ class PhoneSignupService {
         throw const GatewayException(429, 'SMS limit reached for today.');
       case 'no_reservation':
         throw const GatewayException(403, 'Request a new code first.');
+      case 'proof_used':
+        throw const GatewayException(401, 'Invalid phone verification.');
+      case 'no_account':
+        throw const GatewayException(404, 'No account uses this phone.');
       case 'weak_password':
         throw const FormatException('Weak password.');
     }
     throw const GatewayException(502, 'Phone verification unavailable.');
   }
 
-  /// Checks the proof's phone and burns it (single use).
-  Future<void> _useProof(
-    VerifiedFirebasePhone proof,
-    String phone,
-    String purpose,
-  ) async {
+  /// Verifies the Firebase token for [phone] before anything in the database
+  /// changes, so a request without a valid proof cannot consume the number's
+  /// reservation. With cached certificates this is local signature work.
+  Future<VerifiedFirebasePhone> _proofFor(String idToken, String phone) async {
+    final proof = await verifier.verify(idToken);
     if (proof.phone != phone) {
       throw const GatewayException(401, 'Invalid phone verification.');
     }
-    final fresh = await store.authRpc('auth_firebase_proof_use', {
-      'p_uid': proof.uid,
-      'p_auth_time': proof.authTime,
-      'p_phone': phone,
-      'p_purpose': purpose,
-    });
-    if (fresh != true) {
-      throw const GatewayException(401, 'Invalid phone verification.');
-    }
+    return proof;
   }
 
-  /// Starts verifying the Firebase token without waiting; failures surface
-  /// only when the result is awaited, after the database gate has passed.
-  Future<VerifiedFirebasePhone> _verifyInBackground(String idToken) {
-    return verifier.verify(idToken)..ignore();
-  }
-
-  /// Deletes the temporary Firebase user after the response is ready.
+  /// Deletes the temporary Firebase user after the response is ready. Uses
+  /// its own client: the request's client is closed as soon as the route
+  /// returns, which would cancel the call.
   void _deleteFirebaseUserLater(String idToken) {
+    final client = _backgroundClient();
     unawaited(
-      deleteFirebaseUser(
-        _client,
-        env['FIREBASE_WEB_API_KEY'] ?? '',
-        idToken,
-      ).catchError((Object error) {
-        stderr.writeln('Firebase user delete failed: $error');
-      }),
+      deleteFirebaseUser(client, env['FIREBASE_WEB_API_KEY'] ?? '', idToken)
+          .then((failure) {
+            if (failure != null) {
+              stderr.writeln('Firebase user delete failed: $failure');
+            }
+          })
+          .whenComplete(client.close),
     );
   }
 
@@ -137,25 +134,23 @@ class PhoneSignupService {
     required String password,
     required String client,
   }) async {
-    // The token check (certificates + signature) overlaps with the gate; its
-    // outcome is only looked at once the gate has passed.
-    final proofFuture = _verifyInBackground(idToken);
-    final gate = await store.authRpc('auth_phone_signup_complete_gate', {
+    final proof = await _proofFor(idToken, phone);
+    // One round trip: limits, password rule, reservation and proof (consumed
+    // together, so a replayed proof leaves the reservation intact).
+    final gate = await store.authRpc('auth_phone_signup_verified_gate', {
       'p_phone': phone,
       'p_client_key': _hash(client),
       'p_reservation': _reservation('signup', phone),
       'p_password_ok': strongPassword(password),
+      'p_uid': proof.uid,
+      'p_auth_time': proof.authTime,
     });
     final result = gate is Map ? gate : const <String, Object?>{};
     _throwForStatus(result['status']);
     // The single-use reservation makes this attempt exclusive for the number,
     // so an account left behind by an earlier timed-out attempt can go.
     final pending = result['pending'];
-    final proof = await proofFuture;
-    await Future.wait([
-      _useProof(proof, phone, 'signup'),
-      if (pending is String) _deletePending(pending),
-    ]);
+    if (pending is String) await _deletePending(pending);
     final String userId;
     try {
       userId = await store.createPhoneUser(phone, password);
@@ -168,15 +163,17 @@ class PhoneSignupService {
       rethrow;
     }
     try {
-      final claim = store.authRpc('contact_claim_verified_phone', {
+      await store.authRpc('contact_claim_verified_phone', {
         'p_user': userId,
         'p_phone': phone,
         'p_via': 'firebase',
       });
-      final signIn = _signIn(phone, password);
-      await Future.wait<Object?>([claim, signIn]);
+      // Sign in only after the claim succeeded: a password sign-in sets
+      // last_sign_in_at, and an account with it set is no longer seen as
+      // pending, so a failed claim plus a failed delete would lock the number.
+      final session = await _signIn(phone, password);
       _deleteFirebaseUserLater(idToken);
-      return await signIn;
+      return session;
     } on Object {
       await store.deleteUser(userId);
       rethrow;
@@ -191,26 +188,21 @@ class PhoneSignupService {
     required String password,
     required String client,
   }) async {
-    final proofFuture = _verifyInBackground(idToken);
-    final status = await store.authRpc('auth_phone_reset_gate', {
+    final proof = await _proofFor(idToken, phone);
+    // One round trip: limit, password rule, reservation + proof, account.
+    final gate = await store.authRpc('auth_phone_reset_verified_gate', {
+      'p_phone': phone,
       'p_client_key': _hash(client),
       'p_reservation': _reservation('reset', phone),
       'p_password_ok': strongPassword(password),
+      'p_uid': proof.uid,
+      'p_auth_time': proof.authTime,
     });
-    _throwForStatus(status);
-    final proof = await proofFuture;
-    if (proof.phone != phone) {
-      throw const GatewayException(401, 'Invalid phone verification.');
-    }
-    // The target lookup is read-only and independent; the proof result is
-    // checked first so its outcome decides the error.
-    final targetFuture = store.authRpc('auth_phone_recovery_target', {
-      'p_phone': phone,
-    })..ignore();
-    await _useProof(proof, phone, 'recovery');
-    final target = await targetFuture;
+    final result = gate is Map ? gate : const <String, Object?>{};
+    _throwForStatus(result['status']);
+    final target = result['target'];
     if (target is! String) {
-      throw const GatewayException(404, 'No account uses this phone.');
+      throw const GatewayException(502, 'Phone verification unavailable.');
     }
     await store.setUserPassword(target, password);
     _deleteFirebaseUserLater(idToken);

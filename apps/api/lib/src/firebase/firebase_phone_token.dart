@@ -149,15 +149,17 @@ class FirebasePhoneTokenVerifier {
 }
 
 /// Deletes the temporary Firebase user once the phone is recorded in Supabase,
-/// so Firebase keeps no phone number. Failure is not fatal.
-Future<void> deleteFirebaseUser(
+/// so Firebase keeps no phone number. Failure is not fatal (the device also
+/// deletes its Firebase user), so this never throws: it returns `null` when
+/// the user is gone, otherwise why it could not be deleted, for the logs.
+Future<String?> deleteFirebaseUser(
   http.Client client,
   String apiKey,
   String idToken,
 ) async {
-  if (apiKey.isEmpty) return;
+  if (apiKey.isEmpty) return 'FIREBASE_WEB_API_KEY is not configured';
   try {
-    await client
+    final response = await client
         .post(
           Uri.parse(
             'https://identitytoolkit.googleapis.com/v1/accounts:delete?key=$apiKey',
@@ -166,7 +168,11 @@ Future<void> deleteFirebaseUser(
           body: jsonEncode({'idToken': idToken}),
         )
         .timeout(const Duration(seconds: 10));
-  } on Object {
-    // Best effort: the client also signs out and deletes its Firebase user.
+    if (response.statusCode < 300) return null;
+    // Already deleted by the device.
+    if (response.body.contains('USER_NOT_FOUND')) return null;
+    return 'HTTP ${response.statusCode}';
+  } on Object catch (error) {
+    return error.runtimeType.toString();
   }
 }
