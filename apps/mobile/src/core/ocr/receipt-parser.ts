@@ -5,6 +5,7 @@ import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodySta
 import {receiptPosRows} from "./receipt-pos-rows";
 import {receiptTotalRole,looksLikeContactAmount} from "./receipt-total-role";
 import {receiptUnheadedRows} from "./receipt-unheaded-rows";
+import {receiptGeometryRows} from "./receipt-row-geometry";
 import {receiptAdjustmentLabel} from "./receipt-adjustments";
 import { receiptDate } from "./receipt-date";
 export { parseReceiptMoney } from "./receipt-money";
@@ -219,7 +220,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     // A bare "Cộng" is a weak label; a damaged read of it is not evidence of a summary row.
     .filter((line) => line.text.length > 0 && !(bareSumLabel.test(normalized(line.text)) && typeof line.confidence === "number" && line.confidence < weakSumLabelConfidence)))));
   const assembledTable=receiptHasTableColumns(structured)&&structured.some(line=>assembledTableRow.test(line.text));
-  const lines=assembledTable?structured:receiptUnheadedRows(structured);
+  // Geometry rows pair what headers/total anchors could not; totals still read the same visual lines.
+  const lines=assembledTable?structured:receiptGeometryRows(receiptUnheadedRows(structured));
   // Preserve an unambiguous visual total row in the text saved to drafts.
   // Re-parsing that text after restart must not depend on lost native frames.
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>(),unlinkedAmounts=new Set<ReceiptTextLine>();
