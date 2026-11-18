@@ -144,3 +144,18 @@ Các agent làm song song trên worktree riêng. Phiên chính gộp lại, ch�
   - Mobile 1182 test đạt, typecheck và lint không lỗi.
   - Web 107 test đạt, API Dart 206 test đạt, 27 bộ SQL đạt, landing 17 test đạt.
   - Build APK QA biên dịch được cả hai module Kotlin.
+
+## 6. Thay đổi theo yêu cầu của chủ dự án và phát hành (18/11/2026)
+- Không có mục "Ứng dụng" trong Hồ sơ; dòng phiên bản chỉ hiện `Phiên bản 1.3.0` (bỏ versionCode).
+- Cập nhật tự động, không cần bấm:
+  - **Tải về:** bản Play tự bắt đầu tải mọi bản mới (Google luôn hiện một hộp thoại đồng ý). Bản APK (landing và APKPure) tự tải khi có Wi-Fi và pin đủ.
+  - **Cài đặt:** ngay khi vừa mở app, hoặc khi quay lại sau hơn 2 phút ở nền. Bản bắt buộc cài ngay.
+  - Không cài khi app chỉ vừa vào nền, để không cắt ngang bộ chọn ảnh, màn thanh toán hay đăng nhập.
+- Phát hành:
+  - AAB 1.3.0 (35) lên kênh nội bộ: hoàn tất.
+  - APK 1.3.0 (35) lên landing, `picket-1.3.0-35-20261118-97b0f390.apk`: đã kiểm tra SHA-256 trên `picketfinance.com` và địa chỉ sslip.io cũ.
+  - APK QA đã cài trên Redmi 7, chạy không lỗi.
+- Còn chờ:
+  - Đẩy 2 migration lên Supabase (`20261115090000`, `20261118090000`), sau đó deploy API và web.
+  - Tải APK lên APKPure.
+  - Thử bản nội bộ từ Play, rồi phát hành công khai.
