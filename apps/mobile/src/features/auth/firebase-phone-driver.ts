@@ -1,6 +1,7 @@
 import type * as FirebaseAppModule from "@react-native-firebase/app";
 import type * as FirebaseAuthModule from "@react-native-firebase/auth";
 
+import { timed } from "./perf-log";
 import type { PhoneAuthDriver, PhoneAuthEvent } from "./phone-signup-session";
 
 type Modules = { app: typeof FirebaseAppModule; auth: typeof FirebaseAuthModule };
@@ -18,6 +19,7 @@ function loadFirebase(): Modules | null {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module
     const app = require("@react-native-firebase/app") as typeof FirebaseAppModule;
     if (!app.getApps().length) {
+      console.warn("[PicketFirebase] no default Firebase app; SMS sign-up hidden");
       loaded = null;
       return loaded;
     }
@@ -25,7 +27,9 @@ function loadFirebase(): Modules | null {
     const auth = require("@react-native-firebase/auth") as typeof FirebaseAuthModule;
     auth.getAuth();
     loaded = { app, auth };
-  } catch {
+  } catch (error) {
+    // Logged so a hidden SMS option can be diagnosed from logcat on QA devices.
+    console.warn("[PicketFirebase] unavailable; SMS sign-up hidden:", error instanceof Error ? error.message : String(error));
     loaded = null;
   }
   return loaded;
@@ -71,12 +75,15 @@ export function firebasePhoneDriver(): PhoneAuthDriver | null {
     async signInWithCode(verificationId, code) {
       const instance = firebase.getAuth();
       const credential = firebase.PhoneAuthProvider.credential(verificationId, code);
-      const result = await firebase.signInWithCredential(instance, credential);
-      return firebase.getIdToken(result.user, true);
+      const result = await timed("firebase-sign-in", () => firebase.signInWithCredential(instance, credential));
+      // The sign-in just minted this token: forcing a refresh here cost an extra
+      // securetoken.googleapis.com round trip before the OTP screen could move on.
+      return firebase.getIdToken(result.user);
     },
-    async refreshIdToken() {
+    async currentIdToken() {
       const user = firebase.getAuth().currentUser;
-      return user ? firebase.getIdToken(user, true) : null;
+      // Not forced: Firebase refreshes the cached token only when it is (nearly) expired.
+      return user ? firebase.getIdToken(user) : null;
     },
     async instantIdToken(phone) {
       // RNFirebase may already have signed in after Android instant verification.
@@ -84,7 +91,7 @@ export function firebasePhoneDriver(): PhoneAuthDriver | null {
       if (!user) return null;
       const phoneSignIn = user.phoneNumber === phone
         || user.providerData.some((provider) => provider.providerId === "phone" && provider.phoneNumber === phone);
-      return phoneSignIn ? firebase.getIdToken(user, true) : null;
+      return phoneSignIn ? firebase.getIdToken(user) : null;
     },
     async cleanup() {
       const instance = firebase.getAuth();

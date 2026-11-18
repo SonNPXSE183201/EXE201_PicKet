@@ -1,10 +1,10 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { routes } from "@/core/navigation/routes";
 import { useAuth } from "@/features/auth/auth-context";
-import { authErrorMessage, validateEmail } from "@/features/auth/auth-errors";
+import { validateEmail } from "@/features/auth/auth-errors";
 import {
   AuthButton,
   AuthCard,
@@ -17,6 +17,7 @@ import {
   ConsentCheckbox,
   MethodChips,
 } from "@/features/auth/auth-figma";
+import { emailCodeDelivery } from "@/features/auth/email-code-delivery";
 import { invalidLocalPhoneMessage, sanitizeLocalPhoneInput, vietnamPhonePrefix, vietnamPhoneToE164 } from "@/features/auth/phone-input";
 import { phoneSignup } from "@/features/auth/phone-signup-store";
 import type { SignupMethod } from "@/features/auth/signup-channels";
@@ -70,25 +71,35 @@ export default function RegisterScreen() {
     }
     if (!consent) return setMessage("Hãy đồng ý với Điều khoản và Chính sách quyền riêng tư để tiếp tục.");
     running.current = true;
-    setBusy(true);
     setInvalid(false);
     setMessage(null);
+    if (activeMethod === "email") {
+      // Open the code screen at once; it shows "sending" and any send error with "Đổi email".
+      emailCodeDelivery.start(destination, sendEmailCode);
+      router.push(routes.verifyCode("email", destination));
+      return; // running stays set until this screen is focused again (no double push).
+    }
+    setBusy(true);
     try {
-      if (activeMethod === "phone") {
-        await phoneSignup.start(destination);
-      } else {
-        await sendEmailCode(destination);
+      // The API start (duplicate number, rate limits) must pass before Firebase sends an SMS;
+      // the code screen then opens while Firebase is still sending (or verifies instantly).
+      if (await phoneSignup.start(destination)) {
+        router.push(routes.verifyCode("phone", destination));
+        return;
       }
-      // Android instant verification needs no code: go straight to the password step.
-      if (activeMethod === "phone" && phoneSignup.snapshot().step === "verified") router.push(routes.createPassword);
-      else router.push(routes.verifyCode(activeMethod, destination));
     } catch (error) {
-      setMessage(activeMethod === "phone" ? phoneSendErrorMessage(error) : authErrorMessage(error));
+      setMessage(phoneSendErrorMessage(error));
     } finally {
-      running.current = false;
       setBusy(false);
     }
+    running.current = false;
   }
+
+  // Back from the code screen ("Đổi số" / "Đổi email" or the system back): allow a new send.
+  useFocusEffect(useCallback(() => {
+    running.current = false;
+    setBusy(false);
+  }, []));
 
   return (
     <AuthPage

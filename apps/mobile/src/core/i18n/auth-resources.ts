@@ -161,6 +161,12 @@ export const authEn = {
   "Hôm nay Picket đã gửi đủ SMS. Hãy thử lại vào ngày mai hoặc dùng email.":"Picket has reached today’s SMS limit. Try again tomorrow or use email.",
   "Không tìm thấy tài khoản dùng số này.":"No account uses this phone number.",
   "Phiên xác thực số điện thoại đã hết hạn. Hãy gửi lại mã.":"Phone verification expired. Request a new code.",
+  "Đang gửi mã tới":"Sending a code to",
+  "Chưa gửi được mã tới":"Could not send a code to",
+  "Đang gửi mã…":"Sending code…",
+  "Đang tạo tài khoản…":"Creating your account…",
+  "Đang lưu mật khẩu…":"Saving your password…",
+  "Đang đặt lại mật khẩu…":"Resetting your password…",
   processing:"Processing {{label}}", verificationDestination:"Enter the code sent to {{email}}.",
 } as const;
 export const authVi:Record<keyof typeof authEn,string>={

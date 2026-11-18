@@ -12,6 +12,7 @@ import {
   AuthFieldRow,
   AuthHero,
   AuthLink,
+  AuthNote,
   AuthPage,
   PasswordRuleList,
   PasswordVisibilityToggle,
@@ -38,7 +39,9 @@ export function CreatePasswordScreen({ purpose = "signup" }: { purpose?: PhoneFl
     : createPasswordMode({
       sessionRequiresSetup: passwordSetupRequired,
       hasSession: session !== null,
-      phoneVerified: phoneState.step === "verified",
+      // "completed": the account exists and its session is being applied; the auth
+      // layout leaves for home once it lands (no flash back to the register screen).
+      phoneVerified: phoneState.step === "verified" || phoneState.step === "completed",
     });
   const startRoute = resetting ? routes.forgotPassword : routes.register;
   const [password, setPassword] = useState("");
@@ -70,13 +73,17 @@ export function CreatePasswordScreen({ purpose = "signup" }: { purpose?: PhoneFl
         // Sign-up applies the new session; recovery shows the success state below.
         await flow.complete(password);
       }
+      // SMS success: stay busy until the auth layout leaves for home (no second submit).
+      if (mode === "session") {
+        running.current = false;
+        setBusy(null);
+      }
     } catch (error) {
       if (mode === "session") setMessage(authErrorMessage(error));
       else {
         setMessage(resetting ? phoneResetErrorMessage(error) : phoneSignupCompleteErrorMessage(error));
         setRestart(phoneFlowRestartsFromPhone(error));
       }
-    } finally {
       running.current = false;
       setBusy(null);
     }
@@ -157,6 +164,9 @@ export function CreatePasswordScreen({ purpose = "signup" }: { purpose?: PhoneFl
         />
       </AuthCard>
       <AuthError>{message}</AuthError>
+      {busy === "save" ? (
+        <AuthNote>{resetting ? "Đang đặt lại mật khẩu…" : mode === "phone" ? "Đang tạo tài khoản…" : "Đang lưu mật khẩu…"}</AuthNote>
+      ) : null}
       <PasswordRuleList password={password} />
     </AuthPage>
   );

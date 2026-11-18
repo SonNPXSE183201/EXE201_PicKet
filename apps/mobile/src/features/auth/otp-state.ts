@@ -33,6 +33,15 @@ export function canSubmitOtp(state: OtpState): boolean {
   return state.status === "editing" && state.code.length === otpLength;
 }
 
+/**
+ * Auto-submit when the 6th digit arrives (typing, paste or SMS autofill), once per
+ * code: a code that was already auto-submitted and refused is not sent again by
+ * itself (the user edits it or taps "Xác thực"). Waits until the code was sent.
+ */
+export function shouldAutoSubmitOtp(state: OtpState, deliveryReady: boolean, lastAutoSubmitted: string | null): boolean {
+  return deliveryReady && canSubmitOtp(state) && state.code !== lastAutoSubmitted;
+}
+
 export function otpReducer(state: OtpState, action: OtpAction): OtpState {
   switch (action.type) {
     case "input":

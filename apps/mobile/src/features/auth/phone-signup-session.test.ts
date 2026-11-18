@@ -23,7 +23,7 @@ function fakeDriver(options: { currentUserToken?: string | null } = {}) {
       if (code === "000000") throw Object.assign(new Error("bad"), { code: "auth/invalid-verification-code" });
       return `token:${verificationId}:${code}`;
     },
-    async refreshIdToken() {
+    async currentIdToken() {
       return "fresh-token";
     },
     async instantIdToken(phone) {
@@ -83,11 +83,13 @@ test("SMS sign-up: API start, Firebase code, one sign-in, then account + session
     },
   });
   await assert.rejects(session.complete("PicketPassword1!"), PhoneSignupStepError);
-  const started = session.start("+84912345678");
-  await new Promise((resolve) => setImmediate(resolve));
+  // The code screen opens as soon as the API accepted the number; Firebase is still sending.
+  assert.equal(await session.start("+84912345678"), true);
+  assert.deepEqual(session.snapshot(), { step: "sending", phone: "+84912345678", autoCode: null, sendError: null });
+  await assert.rejects(session.confirm("123456"), PhoneSignupStepError, "no sign-in before CODE_SENT");
   fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
-  await started;
-  assert.deepEqual(session.snapshot(), { step: "code-sent", phone: "+84912345678", autoCode: null });
+  await session.delivered();
+  assert.deepEqual(session.snapshot(), { step: "code-sent", phone: "+84912345678", autoCode: null, sendError: null });
 
   await assert.rejects(session.confirm("000000"), (error: { code?: string }) => error.code === "auth/invalid-verification-code");
   assert.equal(session.snapshot().step, "code-sent");
@@ -120,7 +122,7 @@ test("API refusal stops before Firebase sends an SMS; reset clears a verified Fi
     setSession: async () => undefined,
   });
   await assert.rejects(session.start("+84912345678"), (error: { status?: number }) => error.status === 409);
-  assert.equal(fake.calls.length, 0);
+  assert.equal(fake.calls.length, 0, "a refused number never reaches Firebase");
   assert.equal(session.snapshot().step, "idle");
 });
 
@@ -147,6 +149,7 @@ test("invalid tokens from the API never become a session", async () => {
   await new Promise((resolve) => setImmediate(resolve));
   fake.calls[0].emit({ state: "verified", verificationId: "v9", code: "999999" });
   await started;
+  await session.delivered();
   assert.equal(session.snapshot().autoCode, "999999");
   await session.confirm("999999");
   await assert.rejects(session.complete("PicketPassword1!"), PhoneSignupStepError);
@@ -180,7 +183,8 @@ test("Android instant verification (no code, no verificationId) uses the signed-
   await new Promise((resolve) => setImmediate(resolve));
   fake.calls[0].emit({ state: "verified", verificationId: null, code: null });
   await started;
-  assert.deepEqual(session.snapshot(), { step: "verified", phone: "+84912345678", autoCode: null });
+  await session.delivered();
+  assert.deepEqual(session.snapshot(), { step: "verified", phone: "+84912345678", autoCode: null, sendError: null });
   assert.equal(fake.signIns(), 0, "no credential sign-in without a code");
   assert.equal(await session.confirm("123456"), "instant-token", "a late manual confirm reuses the instant token");
   await session.complete("PicketPassword1!");
@@ -195,6 +199,7 @@ test("instant verification without a Firebase user signs in only when verificati
   await new Promise((resolve) => setImmediate(resolve));
   withCode.calls[0].emit({ state: "verified", verificationId: "v7", code: "777777" });
   await started;
+  await first.delivered();
   // A code arrived: the normal auto-code path fills the OTP screen.
   assert.equal(first.snapshot().autoCode, "777777");
 
@@ -203,8 +208,12 @@ test("instant verification without a Firebase user signs in only when verificati
   const pending = second.start("+84912345678");
   await new Promise((resolve) => setImmediate(resolve));
   noUser.calls[0].emit({ state: "verified", verificationId: null, code: null });
-  await assert.rejects(pending, (error: { code?: string }) => error instanceof PhoneSignupStepError && error.code === "instant-unavailable");
-  assert.equal(second.snapshot().step, "idle");
+  assert.equal(await pending, true);
+  await second.delivered();
+  // Shown on the code screen (with "Đổi số" / resend) instead of rejecting the start.
+  const failed = second.snapshot();
+  assert.equal(failed.step, "send-failed");
+  assert.ok(failed.sendError instanceof PhoneSignupStepError && failed.sendError.code === "instant-unavailable");
   assert.equal(noUser.signIns(), 0);
 
   const idOnly = fakeDriver();
@@ -213,6 +222,7 @@ test("instant verification without a Firebase user signs in only when verificati
   await new Promise((resolve) => setImmediate(resolve));
   idOnly.calls[0].emit({ state: "verified", verificationId: "v8", code: null });
   await waiting;
+  await third.delivered();
   // verificationId without a code: stay on the code step instead of a failing sign-in.
   assert.equal(third.snapshot().step, "code-sent");
   assert.equal(idOnly.signIns(), 0);
@@ -225,6 +235,7 @@ test("a late instant verification after CODE_SENT moves straight to the password
   await new Promise((resolve) => setImmediate(resolve));
   fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
   await started;
+  await session.delivered();
   assert.equal(session.snapshot().step, "code-sent");
   fake.calls[0].emit({ state: "verified", verificationId: null, code: null });
   await new Promise((resolve) => setImmediate(resolve));
@@ -252,6 +263,7 @@ test("SMS password recovery: reset-start, code, reset with the new password, the
   await new Promise((resolve) => setImmediate(resolve));
   fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
   await started;
+  await session.delivered();
   await session.confirm("123456");
   await session.complete("PicketPassword1!");
   assert.deepEqual(calls, [
@@ -276,9 +288,103 @@ test("SMS recovery keeps the verified step when the API asks for a new code", as
   await new Promise((resolve) => setImmediate(resolve));
   fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
   await started;
+  await session.delivered();
   await session.confirm("123456");
   await assert.rejects(session.complete("PicketPassword1!"), (error: { status?: number }) => error.status === 403);
   assert.equal(session.snapshot().step, "verified");
   session.reset();
   assert.equal(session.snapshot().step, "idle");
+});
+
+test("a Firebase error after the code screen opened becomes send-failed; resend starts over through the API", async () => {
+  const fake = fakeDriver();
+  const starts: string[] = [];
+  const session = createPhoneSignupSession({
+    driver: () => fake.driver,
+    api: () => ({ ...okSignupApi(), phoneSignupStart: async (phone: string) => { starts.push(phone); return { ok: true }; } }),
+    setSession: async () => undefined,
+  });
+  assert.equal(await session.start("+84912345678"), true);
+  assert.equal(session.snapshot().step, "sending");
+  assert.equal(await session.resend(), false, "no second send while Firebase is still sending");
+  const quota = { code: "auth/quota-exceeded" };
+  fake.calls[0].emit({ state: "error", verificationId: null, code: null, error: quota });
+  await session.delivered();
+  assert.deepEqual(session.snapshot(), { step: "send-failed", phone: "+84912345678", autoCode: null, sendError: quota });
+  await assert.rejects(session.confirm("123456"), PhoneSignupStepError);
+
+  assert.equal(await session.resend(), true);
+  assert.deepEqual(starts, ["+84912345678", "+84912345678"], "every send passes the API start first");
+  assert.equal(session.snapshot().step, "sending");
+  assert.equal(session.snapshot().sendError, null);
+  assert.equal(fake.calls[1].forceResend, true);
+  fake.calls[1].emit({ state: "sent", verificationId: "v2", code: null });
+  await session.delivered();
+  assert.equal(session.snapshot().step, "code-sent");
+  assert.equal(await session.confirm("123456"), "token:v2:123456");
+});
+
+test("late Firebase results of a send left with 'Đổi số' or replaced by a new start are ignored", async () => {
+  const fake = fakeDriver();
+  const session = createPhoneSignupSession({ driver: () => fake.driver, api: okSignupApi, setSession: async () => undefined });
+  await session.start("+84912345678");
+  session.reset();
+  fake.calls[0].emit({ state: "error", verificationId: null, code: null, error: { code: "auth/too-many-requests" } });
+  await session.delivered();
+  assert.equal(session.snapshot().step, "idle", "no error shown after leaving with 'Đổi số'");
+
+  await session.start("+84912345678");
+  await session.start("+84987654321");
+  fake.calls[1].emit({ state: "sent", verificationId: "old", code: null });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(session.snapshot().step, "sending", "the first number's CODE_SENT does not unlock the second");
+  fake.calls[2].emit({ state: "sent", verificationId: "new", code: null });
+  await session.delivered();
+  assert.equal(session.snapshot().step, "code-sent");
+  assert.equal(session.snapshot().phone, "+84987654321");
+  assert.equal(await session.confirm("123456"), "token:new:123456");
+});
+
+test("a start superseded while the API answers does not open the code screen", async () => {
+  const fake = fakeDriver();
+  let release: () => void = () => undefined;
+  const session = createPhoneSignupSession({
+    driver: () => fake.driver,
+    api: () => ({ ...okSignupApi(), phoneSignupStart: () => new Promise((resolve) => { release = () => resolve({ ok: true }); }) }),
+    setSession: async () => undefined,
+  });
+  const started = session.start("+84912345678");
+  await new Promise((resolve) => setImmediate(resolve));
+  session.reset();
+  release();
+  assert.equal(await started, false);
+  assert.equal(fake.calls.length, 0, "no SMS for an abandoned start");
+  assert.equal(session.snapshot().step, "idle");
+});
+
+test("a resend that loses the race to a confirm of the previous code keeps the verification", async () => {
+  const fake = fakeDriver();
+  let release: () => void = () => undefined;
+  let calls = 0;
+  const session = createPhoneSignupSession({
+    driver: () => fake.driver,
+    api: () => ({
+      ...okSignupApi(),
+      phoneSignupStart: () => {
+        calls++;
+        return calls === 1 ? Promise.resolve({ ok: true }) : new Promise((resolve) => { release = () => resolve({ ok: true }); });
+      },
+    }),
+    setSession: async () => undefined,
+  });
+  await session.start("+84912345678");
+  fake.calls[0].emit({ state: "sent", verificationId: "v1", code: null });
+  await session.delivered();
+  const resent = session.resend();
+  await new Promise((resolve) => setImmediate(resolve));
+  await session.confirm("123456");
+  release();
+  assert.equal(await resent, false);
+  assert.equal(session.snapshot().step, "verified");
+  assert.equal(fake.calls.length, 1, "no new SMS once the number is verified");
 });

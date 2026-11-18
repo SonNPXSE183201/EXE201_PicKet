@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 
 import { picketApi } from "@/core/api/client";
 import { firebasePhoneAuthAvailable } from "./firebase-phone-driver";
@@ -9,22 +10,29 @@ import {
   type SignupMethod,
 } from "./signup-channels";
 
-const loadVerification = createSignupVerificationLoader();
+const storageKey = "picket_signup_channels_v1";
 
-/** Sign-up methods chosen by admins; email only until the settings load or on any error. */
+const loadVerification = createSignupVerificationLoader(Date.now, undefined, {
+  read: () => SecureStore.getItemAsync(storageKey),
+  write: (value) => SecureStore.setItemAsync(storageKey, value),
+});
+
+/** Called when an auth screen first mounts so the register screen opens with the right method. */
+export function prefetchSignupMethods(): void {
+  loadVerification.prefetch(picketApi);
+}
+
+/**
+ * Sign-up methods chosen by admins: the last good settings at once, refreshed in
+ * the background. Email only on the very first run until the settings load or on any error.
+ */
 export function useSignupMethods(): { methods: SignupMethod[]; loading: boolean } {
-  const [state, setState] = useState<{ methods: SignupMethod[]; loading: boolean }>({
-    methods: availableSignupMethods(emailOnlyVerification, false),
-    loading: true,
-  });
+  const verification = useSyncExternalStore(loadVerification.subscribe, loadVerification.peek, loadVerification.peek);
   useEffect(() => {
-    let active = true;
-    void loadVerification(picketApi).then((verification) => {
-      if (active) setState({ methods: availableSignupMethods(verification, firebasePhoneAuthAvailable()), loading: false });
-    });
-    return () => {
-      active = false;
-    };
+    void loadVerification(picketApi);
   }, []);
-  return state;
+  return useMemo(() => ({
+    methods: availableSignupMethods(verification ?? emailOnlyVerification, verification !== null && firebasePhoneAuthAvailable()),
+    loading: verification === null,
+  }), [verification]);
 }

@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { routes } from "@/core/navigation/routes";
@@ -58,17 +58,23 @@ export default function ForgotPasswordScreen() {
     setBusy(true);
     setMessage(null);
     try {
-      await phoneReset.start(destination);
-      // Android instant verification needs no code: go straight to the new password.
-      if (phoneReset.snapshot().step === "verified") router.push(routes.resetPasswordByPhone);
-      else router.push(routes.verifyCode("phone", destination, "reset"));
+      // reset-start must pass before Firebase sends; the code screen opens while it sends
+      // (and moves on to the new password itself after Android instant verification).
+      if (await phoneReset.start(destination)) {
+        router.push(routes.verifyCode("phone", destination, "reset"));
+        return; // running stays set until this screen is focused again (no double push).
+      }
     } catch (error) {
       setMessage(phoneResetSendErrorMessage(error));
     } finally {
-      running.current = false;
       setBusy(false);
     }
+    running.current = false;
   }
+
+  useFocusEffect(useCallback(() => {
+    running.current = false;
+  }, []));
 
   const phoneMode = activeMethod === "phone";
   const submit = () => void (phoneMode ? submitPhone() : submitEmail());
