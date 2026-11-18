@@ -40,6 +40,8 @@ Lỗi đã gặp ngày 14/11/2026:
 $py="C:/Users/nguyen.son/.codex/tools/play-store-mcp/.venv/Scripts/python.exe"
 & $py .agents/skills/picket-play-release/play_release.py internal --aab .artifacts/releases/picket-<ver>-<code>-google-play.aab --mapping .artifacts/releases/picket-<ver>-<code>-mapping.txt --code <code> --name "<ver> (<code>)" --notes-vi "..." --notes-en "..."
 ```
+Tùy chọn `--priority N` (số nguyên 0-5) đặt `inAppUpdatePriority` cho bản phát hành mới: 0-2 là cập nhật linh hoạt không làm phiền, 3 là linh hoạt có banner, 4-5 là bắt buộc cập nhật ngay. Không truyền cờ này thì hành vi như cũ (không đặt priority). Chỉ đặt được khi tạo bản phát hành mới, nên dùng khi chạy `internal` hoặc `alpha` với code mới.
+
 Sau đó đọc lại bằng MCP `get_releases` (chỉ đọc): internal phải là code mới, trạng thái `completed`.
 - Nếu gặp lỗi "This edit has expired": đọc `get_releases` trước (thường chưa có gì được commit) rồi chạy lại. Nguyên nhân hay gặp là admin-worker trên VPS mở edit để đọc track Play mỗi 5 phút; tải AAB lâu (khoảng 3 phút) dễ trùng lúc đó.
 - `completed` trên API chưa có nghĩa là tester nhận được bản mới: nếu bật managed publishing, máy chỉ thấy nút "Cập nhật" sau khi chủ tài khoản bấm "Phát hành thay đổi" ở "Tổng quan về việc xuất bản".
