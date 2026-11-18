@@ -154,8 +154,10 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
   const top=label.top,bottom=label.bottom,right=label.right,left=typeof label.left==="number"&&Number.isFinite(label.left)?label.left:right;
   const angle=typeof label.angle==="number"&&Number.isFinite(label.angle)&&Math.abs(label.angle)<=15?label.angle:0;
   const role=receiptTotalRole(label.text);
-  const parseCandidateAmount=(text:string)=>parseReceiptMoney(text)??(role>=2?parseReceiptSummaryMoney(text):null);
-  const isCandidateAmount=(text:string)=>/^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(text)||role>=2&&/^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?[oO]\s*$/i.test(text);
+  // A leading dong sign ("₫784.000") is often read as "d"/"đ"; it is part of the amount cell.
+  const withoutDongPrefix=(text:string)=>text.replace(/^\s*[dđ₫](?=\d)/i,"");
+  const parseCandidateAmount=(text:string)=>parseReceiptMoney(withoutDongPrefix(text))??(role>=2?parseReceiptSummaryMoney(withoutDongPrefix(text)):null);
+  const isCandidateAmount=(raw:string)=>{const text=withoutDongPrefix(raw);return /^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(text)||role>=2&&/^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?[oO]\s*$/i.test(text);};
   const shift=(line:ReceiptTextLine)=>angle&&typeof line.left==="number"&&typeof line.right==="number"?((line.left+line.right)/2-(left+right)/2)*Math.tan(angle*Math.PI/180):0;
   const labelCy=(top+bottom)/2;
   const raw=lines.filter(line=>{
@@ -172,6 +174,23 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
       other.right<=line.left!&&/[A-Za-zÀ-ỹ]/.test(other.text)&&Math.abs((other.top+other.bottom)/2+shift(line)-lineCy)+1<dist);
   });
   return closer.length>0?closer:raw;
+}
+
+/** True when a payable label carries an amount token of its own, on its row, or directly above/below it. */
+function payableAmountPrinted(label:ReceiptTextLine,index:number,lines:ReceiptTextLine[]):boolean{
+  if(/\d/.test(label.text))return true;
+  if(typeof label.top!=="number"||typeof label.bottom!=="number"||![label.top,label.bottom].every(Number.isFinite)||label.bottom<=label.top)return true;
+  const top=label.top,bottom=label.bottom,height=bottom-top,left=typeof label.left==="number"&&Number.isFinite(label.left)?label.left:-Infinity;
+  // A compact numeric cell, damaged or not ("140.000", "12O000", "VND 179,000"), unlike a sentence or card field.
+  const amountCell=/^\s*(?:vnd|đ|d|₫)?\s*\S*\d\S*\d\S*\s*(?:vnd|đ|d|₫)?\s*$/i;
+  return lines.some((line,j)=>{
+    if(j===index||typeof line.top!=="number"||typeof line.bottom!=="number"||![line.top,line.bottom].every(Number.isFinite)||line.bottom<=line.top||!/\d/.test(line.text))return false;
+    if(typeof line.left==="number"&&Number.isFinite(line.left)&&typeof line.right==="number"&&line.right<left)return false;
+    const overlap=Math.min(bottom,line.bottom)-Math.max(top,line.top);
+    if(overlap>=Math.min(height,line.bottom-line.top)*0.2)return true;
+    const gap=line.top>=bottom?line.top-bottom:top-line.bottom;
+    return gap>=0&&gap<=Math.min(height,line.bottom-line.top)*1.5&&amountCell.test(line.text);
+  });
 }
 
 /** Match a nearby, non-overlapping amount only to one explicit payable label. */
@@ -265,7 +284,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     const role=receiptTotalRole(line.text);
     if (isReceiptMetadata(line.text) || (!totalWords.test(clean)&&noisyReceiptSummaryRole(line.text)===null) || rejectedTotalWords.test(clean) || role===0) return;
     // A misread "Tổng" ("T6ng") is a label, not a damaged amount token.
-    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:").replace(/^t[06b]ng\b/i,"Tong").replace(/\([^)]*\)/g," ");
+    // Likewise "Số tiền" read as "S6 tiên"/"S0 tiền" is a label word, not a damaged amount.
+    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:").replace(/^t[06b]ng\b/i,"Tong").replace(/^s[06]\s+ti[eêềể]n\b/i,"So tien").replace(/\([^)]*\)/g," ");
     // Do not truncate a damaged token (12O000 -> 12) into a valid amount.
     const ownNumbers = [...amountText.matchAll(/(?:^|[^\p{L}\d.,])(\d.*|[A-Za-z]\d.*)$/gu)].map(match=>[match[1].trim()]);
     const spatial=ownNumbers.length===0?spatialTotalCandidates(line,lines):[];
@@ -302,7 +322,9 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     totals.push({ amount, score, evidenceConfidence:Math.min(score,confidence(source)),role });
   });
   totals.sort((left, right) => right.role-left.role||right.score - left.score);
-  const hasExplicitPayable = lines.some(line=>!isReceiptMetadata(line.text)&&(totalWords.test(normalized(line.text))||noisyReceiptSummaryRole(line.text)!==null)&&!rejectedTotalWords.test(normalized(line.text))&&receiptTotalRole(line.text)>=2);
+  // An explicit payable label hides generic totals only when an amount (even an unreadable one) is
+  // printed with it; a title ("THANH TOÁN") or a signature sentence that names payment has none.
+  const hasExplicitPayable = lines.some((line,index)=>!isReceiptMetadata(line.text)&&(totalWords.test(normalized(line.text))||noisyReceiptSummaryRole(line.text)!==null)&&!rejectedTotalWords.test(normalized(line.text))&&receiptTotalRole(line.text)>=2&&payableAmountPrinted(line,index,lines));
   const selectedTotal = hasExplicitPayable&&(totals[0]?.role??0)<2?null:totals[0]??null;
   const conflictingTotals = selectedTotal !== null && totals.some(candidate => candidate.role===selectedTotal.role && candidate.amount !== selectedTotal.amount && candidate.score >= 0.8 && selectedTotal.score - candidate.score < 0.15);
 
