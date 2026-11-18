@@ -12,6 +12,7 @@ type NativeSession={
  prepare?():Promise<void>;
 };
 let scanning=false;
+let pendingClose:Promise<void>=Promise.resolve();
 let prepared:Promise<void>|null=null;
 /** Loads the recognition model in the background (camera screen open), so the first scan skips it. */
 export function prepareReceiptOcr():void{
@@ -25,8 +26,12 @@ export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Prom
  try{
   const {requireNativeModule}=await import("expo");
   const module=requireNativeModule<NativeSession>("PicketReceiptOcr");
+  // The previous session must be closed before a new one opens; that close never delayed the previous result.
+  await pendingClose;
   const native:ReceiptOcrSession={open:uri=>module.open(uri),direction:(...args)=>module.direction(...args),inspect:(...args)=>module.inspect(...args),select:(...args)=>module.select(...args),
-   crop:(id,region,timeout)=>module.crop(id,region.originX,region.originY,region.width,region.height,timeout),close:id=>module.close(id)};
+   crop:(id,region,timeout)=>module.crop(id,region.originX,region.originY,region.width,region.height,timeout),
+   // Closing only releases native pixels; waiting for it cost ~0.4 s on device while the JS thread rendered.
+   close:id=>{pendingClose=module.close(id).catch(()=>undefined);return Promise.resolve();}};
   const called=Date.now();
   const result=await scanReceiptSession(imageUri,native,()=>Date.now(),signal);
   // Wall time the caller waited, including closing the native session.
