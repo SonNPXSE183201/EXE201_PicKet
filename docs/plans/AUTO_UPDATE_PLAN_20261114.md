@@ -1,5 +1,7 @@
 # Kế hoạch: tự động cập nhật khi mở ứng dụng (14/11/2026)
 
+> **18/11/2026:** Phần A được thay bằng `docs/plans/IN_APP_UPDATE_PLAN_20261118.md`. Phần B vẫn có hiệu lực.
+
 ## Mục tiêu
 - Khi người dùng mở Picket, nếu có phiên bản mới thì ứng dụng **tự kiểm tra và tự cập nhật**, không cần vào mục "Ứng dụng › Cập nhật ứng dụng" và bấm "Kiểm tra cập nhật".
 - Gỡ mục `AppUpdateSection` khỏi màn hình Hồ sơ (`src/app/(tabs)/profile.tsx`, dòng `<AppUpdateSection />`). Giữ dòng hiển thị phiên bản đang cài (`InstalledVersion`).
