@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
@@ -136,6 +137,7 @@ void main() {
   group('SMS sign-up', () {
     late List<String> calls;
     late Map<String, Object?> created;
+    final starts = <Map<String, Object?>>[];
 
     PhoneSignupService service({
       bool smsEnabled = true,
@@ -146,10 +148,33 @@ void main() {
     }) {
       calls = [];
       created = {};
+      starts.clear();
       final client = MockClient((request) async {
         final path = request.url.path;
         calls.add(path);
         switch (path) {
+          case '/rest/v1/rpc/auth_phone_signup_start':
+            starts.add(jsonDecode(request.body) as Map<String, Object?>);
+            final status = !smsEnabled
+                ? 'sms_disabled'
+                : !allowed
+                ? 'rate_limited'
+                : owner != null
+                ? 'phone_taken'
+                : !quota
+                ? 'quota_reached'
+                : 'ok';
+            return http.Response(jsonEncode(status), 200);
+          case '/rest/v1/rpc/auth_phone_signup_complete_gate':
+            final args = jsonDecode(request.body) as Map<String, Object?>;
+            return http.Response(
+              jsonEncode({
+                'status': args['p_password_ok'] == false
+                    ? 'weak_password'
+                    : 'ok',
+              }),
+              200,
+            );
           case '/rest/v1/rpc/auth_verification_public':
             return http.Response(
               jsonEncode({'email': true, 'sms': smsEnabled}),
@@ -209,6 +234,15 @@ void main() {
 
     test('start checks switch, limits, ownership and daily cap', () async {
       expect(await service().start('+84912345678', '1.2.3.4'), {'ok': true});
+      // One round trip, hashed keys only.
+      expect(calls, ['/rest/v1/rpc/auth_phone_signup_start']);
+      expect(starts.single['p_purpose'], 'signup');
+      expect(starts.single['p_phone_key'], matches(RegExp(r'^[a-f0-9]{32}$')));
+      expect(starts.single['p_client_key'], isNot(contains('1.2.3.4')));
+      expect(
+        starts.single['p_reservation'],
+        matches(RegExp(r'^[a-f0-9]{64}$')),
+      );
       await expectLater(
         service(smsEnabled: false).start('+84912345678', 'ip'),
         status(403),
@@ -239,6 +273,8 @@ void main() {
       expect(created['phone_confirm'], true);
       expect(created['app_metadata'], {'signup_via': 'firebase_sms'});
       expect(calls, contains('/rest/v1/rpc/contact_claim_verified_phone'));
+      // Firebase cleanup is fire-and-forget; let it run.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
       expect(calls.last, '/v1/accounts:delete');
     });
 
@@ -281,6 +317,7 @@ void main() {
   group('SMS sign-up hardening', () {
     late List<String> calls;
     PhoneSignupService build({
+      String gateStatus = 'ok',
       bool reserved = true,
       bool freshProof = true,
       Object? pending,
@@ -291,7 +328,15 @@ void main() {
       final client = MockClient((request) async {
         final path = request.url.path;
         calls.add(path);
+        final status = reserved ? gateStatus : 'no_reservation';
         final answers = <String, Object?>{
+          '/rest/v1/rpc/auth_phone_signup_complete_gate': {
+            'status': status,
+            'pending': pending,
+          },
+          '/rest/v1/rpc/auth_phone_reset_gate': status,
+          '/rest/v1/rpc/contact_claim_verified_phone': <String, Object>{},
+          '/auth/v1/token': {'access_token': 'at', 'refresh_token': 'rt'},
           '/rest/v1/rpc/auth_verification_public': {'email': true, 'sms': true},
           '/rest/v1/rpc/auth_rate_hit': true,
           '/rest/v1/rpc/auth_phone_owner': null,
@@ -345,6 +390,102 @@ void main() {
         throwsA(isA<http.ClientException>()),
       );
       expect(calls, contains('/auth/v1/admin/users/orphan'));
+    });
+
+    test('gate statuses map to the same HTTP errors', () async {
+      for (final entry in {
+        'sms_disabled': 403,
+        'rate_limited': 429,
+        'phone_taken': 409,
+        'no_reservation': 403,
+      }.entries) {
+        await expectLater(
+          complete(build(gateStatus: entry.key)),
+          status(entry.value),
+        );
+        expect(calls.contains('/auth/v1/admin/users'), false);
+      }
+      await expectLater(
+        complete(build(gateStatus: 'weak_password')),
+        throwsFormatException,
+      );
+    });
+
+    test('a pending half-created account is deleted before sign-up', () async {
+      await complete(build(pending: 'orphan'));
+      expect(calls, contains('/auth/v1/admin/users/orphan'));
+    });
+
+    test('a forged token loses to the gate and burns no proof', () async {
+      Future<Object> forged(PhoneSignupService s) => s.complete(
+        phone: '+84912345678',
+        idToken: 'not-a-token',
+        password: 'Str0ng!Passw0rd',
+        client: 'ip',
+      );
+      await expectLater(forged(build(gateStatus: 'rate_limited')), status(429));
+      await expectLater(forged(build()), status(401));
+      expect(calls.contains('/rest/v1/rpc/auth_firebase_proof_use'), false);
+      expect(calls.contains('/auth/v1/admin/users'), false);
+    });
+
+    test('token verification starts while the gate is running', () async {
+      final order = <String>[];
+      final client = MockClient((request) async {
+        order.add(request.url.path);
+        return http.Response('{"status":"rate_limited"}', 200);
+      });
+      final concurrent = PhoneSignupService(
+        config,
+        AdminService(config, client: client, environment: env),
+        env,
+        verifier: FirebasePhoneTokenVerifier(
+          projectId: projectId,
+          keys: (kid) async {
+            order.add('keys');
+            return publicKey;
+          },
+          now: () => now,
+        ),
+        client: client,
+      );
+      await expectLater(complete(concurrent), status(429));
+      expect(order.first, 'keys');
+    });
+
+    test('the Firebase user delete does not delay the response', () async {
+      final delete = Completer<http.Response>();
+      final client = MockClient((request) async {
+        final path = request.url.path;
+        if (path == '/v1/accounts:delete') return delete.future;
+        if (path.endsWith('complete_gate')) {
+          return http.Response('{"status":"ok"}', 200);
+        }
+        if (path.endsWith('auth_firebase_proof_use')) {
+          return http.Response('true', 200);
+        }
+        if (path == '/auth/v1/admin/users') {
+          return http.Response('{"id":"user-1"}', 200);
+        }
+        if (path == '/auth/v1/token') {
+          return http.Response(
+            '{"access_token":"at","refresh_token":"rt"}',
+            200,
+          );
+        }
+        return http.Response('{}', 200);
+      });
+      final s = PhoneSignupService(
+        config,
+        AdminService(config, client: client, environment: env),
+        env,
+        verifier: verifier(),
+        client: client,
+      );
+      final session = await complete(s).timeout(const Duration(seconds: 2));
+      expect(session, isA<Map<String, dynamic>>());
+      delete.complete(http.Response('{}', 500));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
     });
 
     test('recovery sets a new password for the verified owner', () async {

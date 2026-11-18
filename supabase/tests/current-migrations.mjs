@@ -15,6 +15,7 @@ const suites = [
   "release-policy",
   "contact-methods-otp",
   "auth-verification-settings",
+  "phone-signup-fast-paths",
   "admin-platform",
   "appearance-preferences",
   "appearance-backup",
