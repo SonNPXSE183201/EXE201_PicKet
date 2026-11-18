@@ -38,3 +38,10 @@ test('decimal quantity units and receipt metadata are not monetary evidence',()=
   assert.equal(receiptCurrencyWarning('SHOP\nTrà 12.000\nTỔNG 12.000'),null);
   assert.equal(receiptCurrencyWarning('SHOP\nTrà 25000.00\nTỔNG 25000'),null);
 });
+
+test("a currency symbol never spans two lines or matches the start of a product word",()=>{
+  assert.equal(receiptCurrencyWarning("PMC TAM BONG 1 x 28000 | 28000\nFRESSI CARE KHAN UOT 2 x 21000 | 42000\nTổng 70000"),null);
+  assert.equal(receiptCurrencyWarning("Ca phe 30000\nRMIT Coffee 25000"),null);
+  assert.equal(receiptCurrencyWarning("Total 12 Fr"),receiptCurrencyWarning("Total 12 CHF"));
+  assert.notEqual(receiptCurrencyWarning("Total 12 Fr"),null);
+});
