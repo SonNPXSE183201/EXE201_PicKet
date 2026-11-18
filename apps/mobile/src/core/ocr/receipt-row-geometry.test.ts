@@ -95,3 +95,31 @@ test("a rebuilt row keeps a street-word product name, while an address beside a 
   assert.deepEqual(parseReceiptText(r.rawText).lineItems.map(item=>item.total),[32000,28000]);
   assert.deepEqual(items([...head,cell("Đường Nguyễn Trãi",20,3),cell("0901234567",330,3,0,100)]),[]);
 });
+
+test("a stacked value row may start with the printed unit of measure (GOI 2 21.000 ... 42.000)",()=>{
+  const rows=[["KHAN UOT CHAM SOC DA (20 MIENG)","GOI 2 21.000","0","42.000"],["TAM BONG (HOP/200 QUE)","HOP 1 28.000","0","28.000"]]
+    .flatMap(([name,lead,discount,total],index)=>[cell(name,20,3+index*2,0,320),cell(lead,20,4+index*2,0,130),cell(discount,250,4+index*2,0,10),cell(total,480,4+index*2,0,60)]);
+  assert.deepEqual(items([...head,...rows,cell("Tổng tiền:",20,8),cell("70.000",480,8,0,60)]),
+    [{name:"KHAN UOT CHAM SOC DA (20 MIENG)",quantity:2,unitPrice:21000,total:42000},{name:"TAM BONG (HOP/200 QUE)",quantity:1,unitPrice:28000,total:28000}]);
+});
+
+test("a printed multiplication sign separates quantity and unit price (2 X 16,000 ... 32,000)",()=>{
+  const r=items([...head,cell("VIEN TAM",20,3,0,120),cell("2 X 16,000",250,4,0,100),cell("32,000",480,4,0,60),cell("Tổng:",20,6),cell("32,000",480,6,0,60)]);
+  assert.deepEqual(r,[{name:"VIEN TAM",quantity:2,unitPrice:16000,total:32000}]);
+});
+
+test("a unit word is not stripped from text that is a product name",()=>{
+  const r=items([...head,cell("GOI CUON TOM",20,3,0,140),cell("35.000",480,3,0,60)]);
+  assert.deepEqual(r.map(item=>item.name),["GOI CUON TOM"]);
+});
+
+test("a one-line column header starts the item body, so a loyalty-points line above it is not the summary",()=>{
+  const r=items([...head,cell("Tổng điểm thành viên hiện tại: 660",20,2,0,300),cell("Tên SL Đơn giá Khuyến mại",20,3,0,300),cell("Thành tiền",400,4,0,90),
+    cell("KHAN UOT CHAM SOC DA",20,5,0,240),cell("GOI 2 21.000",20,6,0,130),cell("0",250,6,0,10),cell("42.000",480,6,0,60),cell("Tổng Tiền:",20,8),cell("42.000",480,8,0,60)]);
+  assert.deepEqual(r,[{name:"KHAN UOT CHAM SOC DA",quantity:2,unitPrice:21000,total:42000}]);
+});
+
+test("a person-name field is not a column header",()=>{
+  const r=parseReceiptLines([...head,cell("Tên khách: An",20,2,0,160),cell("Ca phe da",20,3),cell("10.000",480,3,0,60)]);
+  assert.deepEqual(r.lineItems.map(item=>item.name),["Ca phe da"]);
+});

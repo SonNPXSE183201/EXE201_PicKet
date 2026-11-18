@@ -16,6 +16,8 @@ const letters=(text:string)=>text.replace(/[^A-Za-zÀ-ỹ]/g,"").length;
 const clamp=(slope:number)=>Math.max(-maxSlope,Math.min(maxSlope,slope));
 // Payment and summary words anywhere in a name row; such rows are never products.
 const paymentWords=/\b(?:tong|total|thanh toan|phai tra|can tra|khach dua|tien (?:mat|khach|thua|tra lai)|tra lai|change|cash)\b/;
+// Printed units of measure that POS receipts put before quantity and unit price.
+const unitWord=/^(?:goi|hop|cai|chai|lon|tui|vi|vien|ong|lo|hu|cap|bo|thung|ly|coc|phan|dia|suat|cay|qua|chiec|doi|kg|g|gr|l|ml|m|pcs|pc|ea|box|pack|unit|dvt)$/;
 
 /** Least-squares slope of one recognized line from its word boxes (sign-free, no angle convention). */
 function lineSlope(line:Box):number|null{
@@ -59,7 +61,13 @@ function tokensOf(text:string):Token[]|null{
   if(!clean||!/\d/.test(clean))return null;
   const whole=parseReceiptItemMoney(clean);
   if(whole!==null&&/^[\d.,\s]+$/.test(clean))return [{raw:clean,money:whole,quantity:/^\d{1,4}(?:[.,]\d{1,3})?$/.test(clean)?Number(clean.replace(",",".")):null}];
-  const parts=clean.split(/\s+/);
+  let parts=clean.split(/\s+/);
+  // A printed unit of measure may lead the value cells ("GOI 2 21.000"), and a multiplication sign may
+  // separate quantity and unit price ("2 X 16,000"). Both are dropped only when every other part is a number,
+  // so a name such as "GOI CUON" never becomes a value row.
+  const numeric=(part:string)=>/^-?\d[\d.,]*$/.test(part);
+  const rest=parts.slice(unitWord.test(normalizeReceiptLabel(parts[0]))?1:0).filter(part=>!/^[xX×*]$/.test(part));
+  if(rest.length>=2&&rest.length<parts.length&&rest.every(numeric))parts=rest;
   const tokens:Token[]=[];
   for(const part of parts){
     const raw=part;
@@ -213,7 +221,9 @@ export function receiptGeometryRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
       }
       pending=[];continue;
     }
-    if(names.length===0&&values.length>0&&!blocked&&pending.length>0&&row.y-pendingY<=height*2.4&&row.y-pendingY>=height*0.6){
+    // A stacked "q X unit" row (it may also be a promotion note) pairs only above a printed summary.
+    const multiplied=values.some(cell=>/\s[xX×*]\s/.test(cell.line.text));
+    if(names.length===0&&values.length>0&&!blocked&&pending.length>0&&(!multiplied||Number.isFinite(summaryTop))&&row.y-pendingY<=height*2.4&&row.y-pendingY>=height*0.6){
       const tokens=valueTokens(values);
       // A stacked value row needs its own structure (two or more cells), never a lone number.
       const reading=tokens.length>=2&&values[0].line.left>=Math.min(...pending.map(cell=>cell.line.left))-height*2?readValues(tokens,[]):null;

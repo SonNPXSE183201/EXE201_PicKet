@@ -132,7 +132,9 @@ export function isReceiptDocumentLabel(text: string): boolean {
 /** A header is positive evidence of a body boundary; a document title is a fallback. */
 export function receiptBodyStart(lines: ReceiptTextLine[]): {index:number;top:number|null;hasTable:boolean} {
   const labels=lines.map(line=>normalizeReceiptLabel(line.text));
-  let index=labels.findIndex(text=>/^(?:mat hang|(?:tt\s+|stt\s+)?ten\s*(?:mon|hang(?:\s*hoa)?|san\s*pham|sp)|description|item)(?:\b|$)/.test(text));
+  // A one-line column header ("Tên SL Đơn giá Khuyến mại") names a quantity or price column after the name column.
+  let index=labels.findIndex(text=>/^(?:mat hang|(?:tt\s+|stt\s+)?ten\s*(?:mon|hang(?:\s*hoa)?|san\s*pham|sp)|description|item)(?:\b|$)/.test(text)||
+    /^(?:tt\s+|stt\s+)?(?:ten|san\s*pham)\s+(?:sl|so luong|qty|dvt|don gia|gia)\b.*\b(?:sl|so luong|qty|don gia|gia|thanh\s*tien|khuyen\s*mai)\b/.test(text));
   const quantity=/^(?:sl|s[.]l[.]?|so luong|qty|quantity)$/;
   for(let i=0;i<lines.length;i++){
     const line=lines[i];
