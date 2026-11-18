@@ -33,6 +33,23 @@ class ContractTest(unittest.TestCase):
         self.assertEqual(result["rawText"], "PICKET STORE\nTỔNG 45.000")
         self.assertAlmostEqual(result["confidence"], 0.85)
         self.assertEqual(len(result["lines"]), 2)
+        self.assertEqual(result["lines"][0]["box"], [[0.0, 0.0], [1.0, 1.0]])
+        self.assertEqual(result["lines"][0]["confidence"], 0.9)
+
+    def test_retains_long_receipt_lines_up_to_safe_limit(self):
+        line_count = 240
+        result = normalize_results(
+            [
+                {
+                    "rec_texts": ["x"] * line_count,
+                    "rec_scores": [0.75] * line_count,
+                    "rec_polys": [[[1, 2], [3, 4]]] * line_count,
+                }
+            ]
+        )
+        self.assertEqual(len(result["lines"]), line_count)
+        self.assertIn("x\nx\nx", result["rawText"])
+        self.assertEqual(result["lines"][-1]["box"], [[1.0, 2.0], [3.0, 4.0]])
 
     def test_bounds_untrusted_model_output(self):
         result = normalize_results(
@@ -45,6 +62,12 @@ class ContractTest(unittest.TestCase):
         )
         self.assertEqual(len(result["lines"]), MAX_LINES)
         self.assertEqual(result["confidence"], 0)
+
+    def test_invalid_polygon_points_are_omitted(self):
+        result = normalize_results(
+            [{"rec_texts": ["text"], "rec_polys": [[[1, 2], [math.inf, 3], [4]]]}]
+        )
+        self.assertEqual(result["lines"][0]["box"], [[1.0, 2.0]])
 
     def test_empty_result_has_valid_contract(self):
         result = normalize_results([])

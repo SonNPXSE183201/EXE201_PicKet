@@ -30,6 +30,79 @@ class OcrWorkerJob {
   final int attempts;
 }
 
+class PpOcrTextLine {
+  const PpOcrTextLine({
+    required this.text,
+    required this.confidence,
+    required this.box,
+  });
+
+  factory PpOcrTextLine.fromJson(Object? value) {
+    if (value is! Map) {
+      throw const OcrWorkerException(
+        'PROVIDER_INVALID_RESULT',
+        retryable: false,
+      );
+    }
+    final json = Map<String, dynamic>.from(value);
+    final text = json['text'];
+    final confidence = json['confidence'];
+    final rawBox = json['box'];
+    if (text is! String ||
+        text.isEmpty ||
+        text.length > 500 ||
+        confidence is! num ||
+        !confidence.isFinite ||
+        confidence < 0 ||
+        confidence > 1 ||
+        (rawBox != null && rawBox is! List)) {
+      throw const OcrWorkerException(
+        'PROVIDER_INVALID_RESULT',
+        retryable: false,
+      );
+    }
+    final box = <List<double>>[];
+    if (rawBox is List) {
+      if (rawBox.length > 16) {
+        throw const OcrWorkerException(
+          'PROVIDER_INVALID_RESULT',
+          retryable: false,
+        );
+      }
+      for (final point in rawBox) {
+        if (point is! List ||
+            point.length != 2 ||
+            point.any(
+              (coordinate) => coordinate is! num || !coordinate.isFinite,
+            )) {
+          throw const OcrWorkerException(
+            'PROVIDER_INVALID_RESULT',
+            retryable: false,
+          );
+        }
+        box.add([(point[0] as num).toDouble(), (point[1] as num).toDouble()]);
+      }
+    }
+    return PpOcrTextLine(
+      text: text,
+      confidence: confidence.toDouble(),
+      box: box,
+    );
+  }
+
+  final String text;
+  final double confidence;
+  final List<List<double>> box;
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'confidence': confidence,
+    'box': box,
+  };
+}
+
+const _maxProviderResultBytes = 262144;
+
 class PpOcrResult {
   const PpOcrResult(this.value);
 
@@ -65,10 +138,21 @@ class PpOcrResult {
       'amount': amount,
       'date': json['date'],
       'confidence': confidence.toDouble(),
-      'lines': json['lines'] is List ? json['lines'] : const <Object>[],
       'provider': 'pp-ocr',
     };
-    if (utf8.encode(jsonEncode(normalized)).length > 65536) {
+    final rawLines = json['lines'];
+    if (rawLines != null) {
+      if (rawLines is! List || rawLines.length > 1000) {
+        throw const OcrWorkerException(
+          'PROVIDER_INVALID_RESULT',
+          retryable: false,
+        );
+      }
+      normalized['lines'] = rawLines
+          .map((line) => PpOcrTextLine.fromJson(line).toJson())
+          .toList();
+    }
+    if (utf8.encode(jsonEncode(normalized)).length > _maxProviderResultBytes) {
       throw const OcrWorkerException(
         'PROVIDER_RESULT_TOO_LARGE',
         retryable: false,
@@ -114,10 +198,7 @@ class PpOcrProvider {
     try {
       return PpOcrResult.fromJson(jsonDecode(response.body));
     } on FormatException {
-      throw const OcrWorkerException(
-        'PROVIDER_INVALID_JSON',
-        retryable: false,
-      );
+      throw const OcrWorkerException('PROVIDER_INVALID_JSON', retryable: false);
     }
   }
 }
@@ -162,9 +243,8 @@ class OcrWorkerGateway {
     }
     return body
         .map(
-          (item) => OcrWorkerJob.fromJson(
-            Map<String, dynamic>.from(item as Map),
-          ),
+          (item) =>
+              OcrWorkerJob.fromJson(Map<String, dynamic>.from(item as Map)),
         )
         .toList();
   }

@@ -5,7 +5,10 @@ from math import isfinite
 from typing import Any
 
 MAX_RAW_TEXT_CHARS = 32_000
-MAX_LINES = 160
+# Bound the response while allowing long multi-item receipts to retain their
+# spatial rows. 20 MP is the input pixel ceiling; 1,000 text regions is a
+# generous output ceiling for that image size without permitting unbounded JSON.
+MAX_LINES = 1000
 MAX_LINE_CHARS = 500
 
 
@@ -52,11 +55,27 @@ def normalize_results(results: Iterable[Any]) -> dict[str, Any]:
                 confidence = 0.0
             confidence = min(1.0, max(0.0, confidence))
             box = polygons[index] if isinstance(polygons, list) and index < len(polygons) else []
+            box = _plain(box)
+            if not isinstance(box, list):
+                box = []
+            # Keep only finite numeric coordinate pairs. Paddle returns a
+            # quadrilateral for detected text regions, while older/partial
+            # engine results may omit geometry entirely.
+            points: list[list[float]] = []
+            for point in box:
+                if not isinstance(point, (list, tuple)) or len(point) != 2:
+                    continue
+                try:
+                    x, y = float(point[0]), float(point[1])
+                except (TypeError, ValueError):
+                    continue
+                if isfinite(x) and isfinite(y):
+                    points.append([x, y])
             lines.append(
                 {
                     "text": text,
                     "confidence": confidence,
-                    "box": _plain(box),
+                    "box": points,
                 }
             )
 
