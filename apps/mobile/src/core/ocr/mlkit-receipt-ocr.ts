@@ -27,10 +27,14 @@ export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Prom
   const module=requireNativeModule<NativeSession>("PicketReceiptOcr");
   const native:ReceiptOcrSession={open:uri=>module.open(uri),direction:(...args)=>module.direction(...args),inspect:(...args)=>module.inspect(...args),select:(...args)=>module.select(...args),
    crop:(id,region,timeout)=>module.crop(id,region.originX,region.originY,region.width,region.height,timeout),close:id=>module.close(id)};
+  const called=Date.now();
   const result=await scanReceiptSession(imageUri,native,()=>Date.now(),signal);
-  console.info("PICKET_OCR_PERF",JSON.stringify({durationMs:result.durationMs,budgetExceeded:result.budgetExceeded,...result.stats,
+  // Wall time the caller waited, including closing the native session.
+  const totalMs=Date.now()-called;
+  // Diagnostics re-parse the evidence; run them after the review screen has rendered, never on the result path.
+  setTimeout(()=>console.info("PICKET_OCR_PERF",JSON.stringify({durationMs:result.durationMs,totalMs,budgetExceeded:result.budgetExceeded,...result.stats,
    hasAmount:result.draft.amount!==null,hasMerchant:result.draft.merchant!==null,hasDate:result.draft.date!==null,itemsCount:result.draft.lineItems.length,
-   parsedEligible:canAttachParsedReceipt(result.draft),rawEligible:canAttachReceipt(result.draft)}));
+   parsedEligible:canAttachParsedReceipt(result.draft),rawEligible:canAttachReceipt(result.draft)})),1500);
   return result;
  }catch(error){
   const code=["OCR_BUSY","OCR_TIMEOUT","OCR_CANCELLED","OCR_ORIENTATION_UNCERTAIN"].find(code=>String(error).includes(code))??"OCR_FAILED";

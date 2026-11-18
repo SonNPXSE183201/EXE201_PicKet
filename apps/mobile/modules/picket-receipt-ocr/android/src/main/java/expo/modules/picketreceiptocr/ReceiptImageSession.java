@@ -43,11 +43,22 @@ public final class ReceiptImageSession implements AutoCloseable {
     TextRecognizer client;
     synchronized (ReceiptImageSession.class) { if (warmed) return; client = recognizer(); }
     long started = SystemClock.elapsedRealtime();
-    Bitmap blank = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888);
-    try { Tasks.await(client.process(InputImage.fromBitmap(blank, 0)), 15_000, TimeUnit.MILLISECONDS); }
-    finally { blank.recycle(); }
+    // A few printed-looking lines, so detection and line recognition both run (a blank image leaves the
+    // recognition path cold and the first real read still paid ~250 ms extra on a Redmi 7).
+    Bitmap sample = Bitmap.createBitmap(480, 160, Bitmap.Config.ARGB_8888);
+    try {
+      android.graphics.Canvas canvas = new android.graphics.Canvas(sample);
+      canvas.drawColor(android.graphics.Color.WHITE);
+      android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+      paint.setColor(android.graphics.Color.BLACK); paint.setTextSize(28f); paint.setTypeface(android.graphics.Typeface.MONOSPACE);
+      canvas.drawText("PICKET MART  12/11/2026", 12, 42, paint);
+      canvas.drawText("Banh mi 2 x 15.000  30.000", 12, 90, paint);
+      canvas.drawText("TONG THANH TOAN  30.000", 12, 138, paint);
+      Tasks.await(client.process(InputImage.fromBitmap(sample, 0)), 15_000, TimeUnit.MILLISECONDS);
+    }
+    finally { sample.recycle(); }
     synchronized (ReceiptImageSession.class) { warmed = true; }
-    metric("warmup", started, 64, 64);
+    metric("warmup", started, 480, 160);
   }
 
   /** Process teardown only; sessions never close the shared client. */
