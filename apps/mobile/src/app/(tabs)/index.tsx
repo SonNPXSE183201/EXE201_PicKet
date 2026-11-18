@@ -25,6 +25,7 @@ import { useProfile } from "@/features/profile/profile-context";
 import { useSync } from "@/features/sync/sync-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 import { AnnouncementBanner } from "@/features/announcements/announcement-views";
+import { AppUpdateBanner } from "@/features/updates/app-update-banner";
 
 export default function HomeScreen() {
   const { receiptMonth } = useLocalSearchParams<{ receiptMonth?: string }>();
@@ -90,6 +91,7 @@ function HomeContent({ initialMonth }: { initialMonth?: string }) {
   });
   return <View style={styles.root}><PicketScreen onRefresh={pullRefresh}>
     <HomeHeader title={t("homeToday", { name: profile?.displayName?.trim().split(/\s+/).pop() || t("friend") })} dateText={new Date().toLocaleDateString(localeFor(language), { weekday: "long", day: "numeric", month: "long", timeZone })} bell={t("notifications")} />
+    <AppUpdateBanner />
     <AnnouncementBanner />
     <HomeHero label={t("balance")} balance={totalText("balance")} lines={Math.max(1, totals.length)} hidden={hideBalance} onToggle={toggleBalance} toggleLabel={hideBalance ? t("showBalance") : t("hideBalance")} wallets={accounts.length === 1 ? undefined : t("homeWallets", { count: accounts.length })} onWallets={() => router.navigate(routes.accounts)} stub={stub} />
     {(!summary || summary.unscopedTransactionIds.length>0) && <Text accessibilityRole="alert" style={{color:colors.expense}}>{t("summaryError")}</Text>}

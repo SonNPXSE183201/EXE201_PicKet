@@ -2,12 +2,16 @@ import { requireOptionalNativeModule } from "expo";
 import { Directory, File, Paths } from "expo-file-system";
 import { Linking, Platform } from "react-native";
 import { APP_RELEASE_URL, resolveAppUpdate, type AppRelease, type InstalledApp } from "./app-update-policy";
+import type { ApkInstallOutcome, DeviceConditions, PlayUpdateBindings } from "./update-types";
 
 type NativeUpdates = {
   getInstalledAppInfo(): InstalledApp; canInstallUpdates(): boolean;
   openInstallPermissionSettings(): Promise<void>;
   verifyDownloadedApk(uri: string, bytes: number, hash: string, code: number, version: string): Promise<void>;
   openInstaller(uri: string, bytes: number, hash: string, code: number, version: string): Promise<void>;
+  // Added in 1.3.0; older native builds lack them, so callers must feature-check.
+  installWithSession?(uri: string, bytes: number, hash: string, code: number, version: string): Promise<string>;
+  getDeviceConditions?(): DeviceConditions;
 };
 const native = Platform.OS === "android" ? requireOptionalNativeModule<NativeUpdates>("PicketAppUpdates") : null;
 export function getInstalledAppInfo(): InstalledApp | null {
@@ -18,6 +22,11 @@ const verify = (file: File, release: AppRelease) => {
   return native.verifyDownloadedApk(file.uri, release.bytes, release.sha256, release.versionCode, release.version);
 };
 let downloading = false;
+// Failures another installer cannot fix: the APK itself was rejected or install permission is missing.
+// Errors the system installer would hit the same way, or where a committed session may still be live.
+const NO_INSTALLER_FALLBACK = new Set(["ERR_UPDATE_VERIFICATION", "ERR_INSTALL_PERMISSION", "ERR_INSTALL_TIMEOUT", "ERR_INSTALL_ABORTED", "ERR_INSTALL_CONFLICT", "ERR_INSTALL_INCOMPATIBLE"]);
+const errorCode = (error: unknown) =>
+  typeof error === "object" && error !== null && "code" in error ? String((error as { code: unknown }).code) : "";
 export const androidAppUpdates = {
   async check() {
     const installed = getInstalledAppInfo();
@@ -74,4 +83,27 @@ export const androidAppUpdates = {
     await native.openInstaller(file, release.bytes, release.sha256, release.versionCode, release.version);
   },
   async openStore() { await Linking.openURL("https://play.google.com/store/apps/details?id=com.picket.mobile"); },
+  /** Google Play In-App Updates exist only in the Play build (android-app-updates.play.ts). */
+  play: null as PlayUpdateBindings | null,
+  deviceConditions(): DeviceConditions | null {
+    try { return native?.getDeviceConditions?.() ?? null; } catch { return null; }
+  },
+  /**
+   * Installs a downloaded, verified APK through a PackageInstaller session (silent on Android 12+
+   * once Picket is the installer of record). Falls back to the system installer screen when the
+   * session API is missing or fails for a reason other than verification.
+   */
+  async install(file: string, release: AppRelease): Promise<ApkInstallOutcome> {
+    if (!native) throw new Error("Updates unavailable");
+    if (typeof native.installWithSession === "function") {
+      try {
+        const outcome = await native.installWithSession(file, release.bytes, release.sha256, release.versionCode, release.version);
+        return outcome === "started" ? "started" : "pending-user-action";
+      } catch (error) {
+        if (NO_INSTALLER_FALLBACK.has(errorCode(error))) throw error;
+      }
+    }
+    await native.openInstaller(file, release.bytes, release.sha256, release.versionCode, release.version);
+    return "pending-user-action";
+  },
 };

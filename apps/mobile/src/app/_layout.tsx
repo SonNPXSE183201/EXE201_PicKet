@@ -33,6 +33,8 @@ import { ScheduleSync } from "@/features/cashflow/schedule-sync";
 import * as SplashScreen from "expo-splash-screen";
 import { AnnouncementsProvider } from "@/features/announcements/announcements-context";
 import { MaintenanceGate } from "@/features/announcements/announcement-views";
+import { AppUpdateProvider } from "@/features/updates/use-app-update";
+import { AppUpdateGate } from "@/features/updates/app-update-gate";
 import { PendingPhoneAttach } from "@/features/auth/pending-phone-attach";
 import { CreatePasswordScreen } from "@/features/auth/create-password-screen";
 
@@ -91,9 +93,12 @@ function SessionReadyTree() {
   return (
         <MaintenanceGate><MobileAccessBoundary><DeviceLockProvider>
           <SessionProviders>
-            <StatusBar style={theme === "dark" ? "light" : "dark"} />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
-            <NavigationShell />
+            <AppUpdateProvider>
+              <StatusBar style={theme === "dark" ? "light" : "dark"} />
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
+              <NavigationShell />
+              <AppUpdateGate />
+            </AppUpdateProvider>
           </SessionProviders>
         </DeviceLockProvider></MobileAccessBoundary></MaintenanceGate>
   );

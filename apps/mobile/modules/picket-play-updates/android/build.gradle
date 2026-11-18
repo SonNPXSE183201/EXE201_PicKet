@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+group = 'com.picket'
+version = '1.0.0'
+android {
+  namespace 'expo.modules.picketplayupdates'
+  defaultConfig { versionCode 1; versionName '1.0.0' }
+}
+dependencies {
+  // Google Play In-App Updates; linked only into Play builds (see plugins/with-play-store-build.js).
+  implementation 'com.google.android.play:app-update-ktx:2.1.0'
+  testImplementation 'junit:junit:4.13.2'
+}

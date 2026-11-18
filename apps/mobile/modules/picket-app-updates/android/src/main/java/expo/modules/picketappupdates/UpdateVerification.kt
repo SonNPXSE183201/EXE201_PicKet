@@ -2,11 +2,19 @@ package expo.modules.picketappupdates
 
 import java.io.File
 import java.io.InputStream
+import java.io.OutputStream
 import java.security.MessageDigest
 
 data class ApkIdentity(val packageName: String, val code: Long, val version: String, val certificates: Set<String>)
 
-fun verifyUpdateStream(input: InputStream, expectedBytes: Long, expectedHash: String) {
+fun verifyUpdateStream(input: InputStream, expectedBytes: Long, expectedHash: String) = copyVerifiedUpdate(input, null, expectedBytes, expectedHash)
+
+/**
+ * Streams the update into [output] (when given) while hashing it, so the bytes written to an
+ * install session are exactly the bytes that matched the published size and SHA-256.
+ * The caller must discard [output] when this throws.
+ */
+fun copyVerifiedUpdate(input: InputStream, output: OutputStream?, expectedBytes: Long, expectedHash: String) {
   require(expectedBytes in 1..(500L * 1024 * 1024) && expectedHash.matches(Regex("[a-f0-9]{64}"))) { "Invalid update metadata" }
   val digest = MessageDigest.getInstance("SHA-256")
   var total = 0L
@@ -18,6 +26,7 @@ fun verifyUpdateStream(input: InputStream, expectedBytes: Long, expectedHash: St
       total += count
       require(total <= expectedBytes) { "Update exceeds expected size" }
       digest.update(buffer, 0, count)
+      output?.write(buffer, 0, count)
     }
   }
   val actual = digest.digest().joinToString("") { "%02x".format(it) }

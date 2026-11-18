@@ -24,7 +24,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useAnalyticsConsent } from "@/features/settings/analytics-consent";
 import { useProfile } from "@/features/profile/profile-context";
 import { useDeviceLock } from "@/features/security/device-lock";
-import { AppUpdateSection, InstalledVersion } from "@/features/updates/app-update-section";
+import { InstalledVersion } from "@/features/updates/installed-version";
 import { pendingMutationCount, mutationConflictCount } from "@/core/sync/mutation-queue";
 import { signOutCopy } from "@/features/profile/sign-out-copy";
 import { useAppTheme } from "@/features/settings/appearance-provider";
@@ -350,7 +350,6 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
             </Pressable>
           </View>
         </View>
-        <AppUpdateSection />
         <InstalledVersion />
       </ScrollView>
 

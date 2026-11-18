@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 const file = (path: string) => new URL(path, import.meta.url);
-test("profile exposes the updater and ends with the installed version", () => {
+test("profile no longer embeds the manual updater and ends with the installed version", () => {
   const profile = readFileSync(file("../../app/(tabs)/profile.tsx"), "utf8");
-  assert.match(profile, /<AppUpdateSection\s*\/>/);
+  assert.doesNotMatch(profile, /AppUpdateSection/);
   assert.match(profile, /<InstalledVersion\s*\/>\s*<\/ScrollView>/);
 });
 test("profile loading and unavailable-cache states retain the installed version", () => {
