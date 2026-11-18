@@ -27,10 +27,6 @@ export function passwordMeetsRules(password: string): boolean {
 
 /** First problem with a new password and its confirmation, or null when both are fine. */
 export function newPasswordIssue(password: string, confirmation: string): string | null {
-  // Pasted or keyboard-added spaces at the ends are invisible and make the fields "not match".
-  if (password !== password.trim() || confirmation !== confirmation.trim()) {
-    return "Mật khẩu không được có dấu cách ở đầu hoặc cuối.";
-  }
   const checks = passwordRuleChecks(password);
   if (!checks.length) return "Mật khẩu cần ít nhất 12 ký tự.";
   if (!checks.mixedCase || !checks.digit || !checks.symbol) {

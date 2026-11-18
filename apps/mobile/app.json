@@ -20,6 +20,7 @@
       "./plugins/with-android-release-signing",
       "./plugins/with-play-store-build",
       "./plugins/with-safe-launcher-icon",
+      "./plugins/with-text-handles",
       "./plugins/with-network-pool-guard",
       "./plugins/with-current-activity-intent",
       "./plugins/with-release-shrinking",
