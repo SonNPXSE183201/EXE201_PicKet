@@ -57,7 +57,7 @@ export function AuthHero({ title, subtitle }: { title: [string, string]; subtitl
       <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={styles.heroArt}>
         <View style={[styles.polaroid, figmaShadow("paper")]}>
           <View style={styles.polaroidPhoto}>
-            <PaperArt id="bloom" style={styles.polaroidArt} />
+            <PaperArt id="moneyBloomScene" style={styles.polaroidArt} />
           </View>
         </View>
         <View style={styles.tape} />
@@ -335,8 +335,8 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   heroSubtitle: { ...figmaType.bodySmall, color: colors.muted },
   heroArt: { flex: 1, minWidth: 140, height: 236 },
   polaroid: { position: "absolute", top: 12, right: 8, width: 128, height: 134, borderRadius: 6, backgroundColor: colors.paper, padding: 6, transform: [{ rotate: "7deg" }] },
-  polaroidPhoto: { width: 116, height: 108, borderRadius: 3, backgroundColor: colors.pocketMint, overflow: "hidden", alignItems: "center", justifyContent: "center" },
-  polaroidArt: { width: 96, height: 96 },
+  polaroidPhoto: { width: 116, height: 116, borderRadius: 3, backgroundColor: colors.pocketMint, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  polaroidArt: { width: 104, height: 88 },
   tape: { position: "absolute", top: 4, right: 46, width: 46, height: 14, backgroundColor: colors.pocketCoral, opacity: 0.9, transform: [{ rotate: "-10deg" }] },
   stub: { position: "absolute", top: 140, right: -6, width: 170, minHeight: 84, backgroundColor: colors.paper, paddingHorizontal: 12, paddingTop: 14, paddingBottom: 12, gap: 2, transform: [{ rotate: "-3deg" }] },
   stubDate: { color: colors.muted, letterSpacing: 1.2 },

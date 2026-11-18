@@ -5,6 +5,8 @@ export const paperAssets = {
   receipt: require("../../../assets/paper/receipt-envelope-v1.webp") as ImageSourcePropType,
   receiptNote: require("../../../assets/paper/auth-receipt-v2.webp") as ImageSourcePropType,
   bloom: require("../../../assets/paper/picket-money-bloom-v2.webp") as ImageSourcePropType,
+  // Figma Auth/Hero polaroid ("Art/money-bloom-scene-v1"): a seedling growing from a coin.
+  moneyBloomScene: require("../../../assets/paper-v3/home/money-bloom-scene-v1.webp") as ImageSourcePropType,
   food: require("../../../assets/paper/pocket-food-v2.webp") as ImageSourcePropType,
   transport: require("../../../assets/paper/pocket-transport-v2.webp") as ImageSourcePropType,
   leisure: require("../../../assets/paper/pocket-leisure-v2.webp") as ImageSourcePropType,
@@ -33,7 +35,7 @@ export const paperAssets = {
 };
 export type PaperAssetId = keyof typeof paperAssets;
 export function resolvePaperAsset(id: string): PaperAssetId { return Object.hasOwn(paperAssets, id) ? id as PaperAssetId : "shopping"; }
-export const paperArtOptions: { id: PaperAssetId; label: string }[] = ["shopping", "home", "health", "gift", ...Object.keys(paperAssets).filter(id => !["shopping", "home", "health", "gift", "receipt", "receiptNote", "empty", "error"].includes(id))].map(id => ({ id: id as PaperAssetId, label: `paper${id[0].toUpperCase()}${id.slice(1)}` }));
+export const paperArtOptions: { id: PaperAssetId; label: string }[] = ["shopping", "home", "health", "gift", ...Object.keys(paperAssets).filter(id => !["shopping", "home", "health", "gift", "receipt", "receiptNote", "empty", "error", "moneyBloomScene"].includes(id))].map(id => ({ id: id as PaperAssetId, label: `paper${id[0].toUpperCase()}${id.slice(1)}` }));
 export const pocketDecorations: readonly { id: PaperAssetId; tone: "pocketCoral" | "pocketMint" | "pocketBlue" | "pocketLilac" }[] = [
   { id: "food", tone: "pocketCoral" }, { id: "transport", tone: "pocketMint" },
   { id: "leisure", tone: "pocketBlue" }, { id: "shopping", tone: "pocketLilac" },

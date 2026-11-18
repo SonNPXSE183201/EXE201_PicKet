@@ -683,9 +683,9 @@ const createStyles = (colors: MobileThemeColors) =>
     planArt: { height: 94, position: "absolute", right: -6, top: 24, width: 112 },
     planCard: { backgroundColor: colors.paper, borderRadius: 18, gap: 8, padding: 16 },
     // The closing actions, legal links and version read as one compact block.
-    footer: { alignItems: "center", gap: 0, marginTop: -8 },
-    // Legal links keep a 48 dp touch target; the version tucks up under it instead of adding more space.
-    version: { paddingVertical: 0, marginTop: -10 },
+    footer: { alignItems: "center", gap: 0, marginTop: -14 },
+    // The version reads as the last line of the footer, just under the compact legal row.
+    version: { paddingVertical: 0, marginTop: 6 },
     editAvatarRow: { alignItems: "center", flexDirection: "row", gap: 16, marginBottom: 16 },
     editAvatar: { alignItems: "center", backgroundColor: colors.pocketLilac, borderRadius: 30, height: 60, justifyContent: "center", width: 60 },
     editAvatarText: { color: colors.primary, fontSize: 22, fontWeight: "800" },
@@ -698,9 +698,10 @@ const createStyles = (colors: MobileThemeColors) =>
       justifyContent: "center",
       gap: 8,
     },
+    // A compact 28 dp row; the shared pressable widens the touch area to 48 dp with hitSlop.
     legalLink: {
+      height: 28,
       justifyContent: "center",
-      paddingVertical: 4,
     },
     legalText: {
       color: colors.muted,
