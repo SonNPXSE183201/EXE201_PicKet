@@ -42,8 +42,16 @@ type Phase = ReturnType<typeof paymentOrderPhase>;
 const phaseTone = (phase: Phase) =>
   phase === "paid" ? "success" : phase === "pending" || phase === "verifying" || phase === "review" ? "warning" : "outline";
 
+// PayOS wording lives only in this screen, which the Google Play build never bundles
+// (billing-entry.play.tsx), so the Play AAB carries no PayOS text.
+const payosCopy = {
+  prepaid: { vi: "Thanh toán trước qua PayOS. Không tự động gia hạn.", en: "Prepaid with PayOS. No automatic renewal." },
+  unavailable: { vi: "Các gói PayOS chưa mở bán.", en: "PayOS plans are not available yet." },
+} as const;
+
 function PayosBillingContent({ token }: { token: string }) {
-  const { t } = useTranslation("auth");
+  const { t, i18n } = useTranslation("auth");
+  const payosText = (key: keyof typeof payosCopy) => payosCopy[key][i18n?.language?.startsWith("en") ? "en" : "vi"];
   const [data, setData] = useState<PaymentCustomer | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -212,7 +220,7 @@ function PayosBillingContent({ token }: { token: string }) {
             label={t("Gói hiện tại · {{tier}}", { tier: paid ? tier.toUpperCase() : tierName(tier) })}
             headline={quota ? t("{{remaining}}/{{limit}} lượt", { remaining: quota.remaining, limit: quota.limit }) : tierName(tier)}
             meter={quota ? quota.remaining / Math.max(1, quota.limit) : null}
-            caption={paid ? t("Thanh toán trước qua PayOS. Không tự động gia hạn.") : t("Lượt quét cloud hôm nay")}
+            caption={paid ? payosText("prepaid") : t("Lượt quét cloud hôm nay")}
           />
         ) : (
           <Skeleton height={150} radius={28} />
@@ -224,7 +232,7 @@ function PayosBillingContent({ token }: { token: string }) {
           />
         )}
         {!data && <Skeleton height={168} radius={18} />}
-        {data && !data.catalog.length && <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{t("Các gói PayOS chưa mở bán.")}</Text>}
+        {data && !data.catalog.length && <Text style={[figmaType.bodySmall, { color: colors.muted }]}>{payosText("unavailable")}</Text>}
         {!paid && !!tiles.length && (
           <>
             {hasYearly && (

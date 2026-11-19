@@ -12,12 +12,17 @@ test("auth screens and mapped validation errors have complete vi/en copy",()=>{
   for(const path of paths){
     const source=ts.createSourceFile(path,readFileSync(resolve("src",path),"utf8"),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX);
     const visit=(node:ts.Node)=>{
+      // PayOS copy carries its own vi/en pair in the PayOS-only screen (kept out of the Play bundle).
+      if(ts.isVariableDeclaration(node)&&node.name.getText()==="payosCopy")return;
       if(ts.isStringLiteralLike(node)&&/[À-ỹ]/.test(node.text)&&(!(authVi as Record<string,string>)[node.text]||!(authEn as Record<string,string>)[node.text]))missing.add(node.text);
       ts.forEachChild(node,visit);
     };
     visit(source);
   }
   assert.deepEqual([...missing],[]);
+});
+test("shared auth copy, bundled in the Google Play build, never mentions PayOS",()=>{
+  assert.doesNotMatch(JSON.stringify({authEn,authVi}),/payos/i);
 });
 test("auth interpolation and existing validation messages switch language without changing input",async()=>{
   const i18n=createAppI18n("en");
