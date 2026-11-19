@@ -56,3 +56,19 @@ Chỉ khi bước 3 đạt:
 & $py .agents/skills/picket-play-release/play_release.py alpha --code <code> --name "<ver> (<code>)" --notes-vi "..." --notes-en "..."
 ```
 Script từ chối nếu alpha đã có code lớn hơn hoặc bằng code mới, và không động vào tester/quốc gia. Đọc lại bằng `get_releases`. Với managed publishing, thay đổi có thể chờ ở "Tổng quan về việc xuất bản" cho tới khi chủ tài khoản bấm "Phát hành thay đổi".
+
+## 5. Lỗi đã gặp ngày 19/11/2026 (đọc trước mỗi lần phát hành)
+| Lỗi | Nguyên nhân | Cách tránh |
+|---|---|---|
+| Tải bản lên Internal mà các thay đổi khác (ví dụ "thêm 177 quốc gia" cho production) cũng bị gửi đi duyệt | `play_release.py` commit edit không có `changesNotSentForReview`, nên Play gửi **mọi** thay đổi đang chờ trong Console đi duyệt | Trước khi chạy script, mở "Tổng quan về việc xuất bản" và xem mục "Các thay đổi chưa được gửi". Nếu có thay đổi của chủ dự án thì hỏi trước. Script tự viết chỉ để tải file (không đổi track) thì commit với `changesNotSentForReview=True` |
+| `This Edit has been deleted` khi tải mapping/AAB | admin-worker trên VPS mở edit khác cùng lúc | Đọc `get_releases` (thường chưa có gì được lưu) rồi chạy lại |
+| Cảnh báo "App Bundle chứa mã gốc nhưng chưa tải biểu tượng gỡ lỗi" | AAB chưa kèm ký hiệu native | Đã xử lý từ 1.3.3 bằng plugin `with-play-device-reach` (`debugSymbolLevel 'SYMBOL_TABLE'`). **Không tải bù được** cho bản đã dùng trong một release: API báo `Deobfuscation File can't be modified`. Kiểm tra AAB có `BUNDLE-METADATA/com.android.tools.build.debugsymbols/` trước khi tải lên |
+| Kiểm tra nhanh trước khi gửi duyệt báo "Ứng dụng bị hạn chế phạm vi do tính năng phần cứng bắt buộc `android.hardware.screen.portrait`" | App khoá màn hình dọc, Play tự suy ra tính năng bắt buộc | Đã xử lý từ 1.3.3: plugin khai báo `android:required="false"`. Không tự bấm "Bỏ qua vấn đề" thay chủ dự án |
+| Play Store trên Redmi tải bản mới kẹt ở 2% | Lỗi của Play Store | Bấm Huỷ, `am force-stop com.android.vending`, mở lại trang app và bấm Cập nhật. Bản mới có thể mất 5–10 phút mới hiện nút Cập nhật |
+| "Xoá các thay đổi" ở Tổng quan xuất bản | Nút này xoá **tất cả** thay đổi trong nhóm, kể cả bản Closed testing | Không dùng để gỡ một mục lẻ. Muốn đổi quốc gia production thì sửa ở Phát hành công khai → Quốc gia/khu vực |
+| Tài khoản cho người review | Phải có hướng dẫn tiếng Anh, đăng nhập email + mật khẩu không OTP, có Pro | Tài khoản: xem memory `play-review-account`. Claude không đặt và không nhập mật khẩu; chủ dự án tự làm |
+
+## 6. Production (chỉ khi chủ dự án yêu cầu rõ)
+- Quốc gia: chỉ Việt Nam (gói đăng ký chỉ có giá VND).
+- Tạo bản ở Phát hành công khai → Tạo bản phát hành mới → "Thêm từ thư viện" với đúng versionCode đã qua Internal và Closed testing; ghi chú vi và en-US.
+- Ở Tổng quan xuất bản, chờ "kiểm tra nhanh" chạy xong (tối đa khoảng 15 phút), xử lý hết vấn đề rồi mới bấm "Gửi … thay đổi để được xem xét".

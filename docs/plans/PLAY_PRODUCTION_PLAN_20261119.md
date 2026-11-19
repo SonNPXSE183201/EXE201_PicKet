@@ -1,100 +1,84 @@
 # Kế hoạch đưa PicKet lên chính thức (Production) trên Google Play — 19/11/2026
 
-Gói `com.picket.mobile`. Tài khoản nhà phát triển cá nhân. Google đã duyệt quyền phát hành production.
-Nguồn chính sách: các trang support.google.com và developer.android.com được liệt kê ở cuối file (đọc ngày 19/11/2026).
+Gói `com.picket.mobile`. Tài khoản nhà phát triển cá nhân.
+Google đã cấp quyền phát hành công khai (production) và cho phép dùng thử nghiệm mở (open testing).
+Đã kiểm tra trực tiếp Play Console ngày 19/11/2026 (bản cập nhật sau khi mở Chrome).
 
-## 0. Hiện trạng đã kiểm tra
+## 0. Hiện trạng trên Play Console
 
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
-| Target API | Đạt | Nhắm API 36; từ 31/8/2026 bản mới và bản cập nhật bắt buộc API 36 |
-| Quyền ảnh | Đạt | Dùng Photo Picker, không khai `READ_MEDIA_IMAGES`; `READ_EXTERNAL_STORAGE` chỉ áp dụng đến Android 12 (`maxSdk 32`) |
-| Quyền SMS | Đạt | Không có `READ_SMS`/`RECEIVE_SMS` (OTP qua Firebase) |
-| Thanh toán bản Play | Đạt | Gói Plus/Pro dùng Play Billing; PayOS chỉ có trong APK ngoài Play |
-| Xoá tài khoản | Đạt | Có trong app và trên web (`picketfinance.com/account-deletion.html`) |
-| Chính sách quyền riêng tư | Đạt | `picketfinance.com/privacy.html`, có liên kết trong app |
-| Chữ "PayOS" trong bản Play | **Cần sửa** | Còn 2 câu tiếng Anh trong file bản dịch dùng chung (không hiển thị trên bản Play, nhưng nên tách hẳn ra) |
-| Tên trên biểu tượng | **Cần sửa** | Ảnh biểu tượng (launcher và 512×512 trên Play) vẫn ghi "Picket" |
-| Tài khoản cho người review | **Chưa có** | Cần tài khoản demo đăng nhập được mà không cần OTP |
-| Closed testing (alpha) | Giữ nguyên | Không đóng track, không xoá tester; chỉ thêm bản mới |
+| Quyền phát hành công khai | Đã có | Trang tổng quan: "Ứng dụng của bạn đã được cấp quyền phát hành công khai" |
+| Closed testing (alpha) 1.3.1 (36) | Đã xuất bản | Giữ nguyên track, không xoá tester |
+| Nội dung ứng dụng (App content) | Xong 11/11 | An toàn dữ liệu, đối tượng mục tiêu, phân loại nội dung, quảng cáo, tính năng tài chính, sức khoẻ, ứng dụng chính phủ, chính sách quyền riêng tư, mã nhận dạng quảng cáo, tư cách người bán, thông tin đăng nhập. Mục "Cần chú ý" trống |
+| Tư cách người bán | Đã khai báo 14/11/2026 | Hạn chót của Google là 1/2/2027, đã xong |
+| Trang cửa hàng | Đã có | Tiếng Việt và tiếng Anh, 5 ảnh chụp màn hình, ảnh nổi bật |
+| Gói đăng ký | 4 gói ACTIVE | Plus/Pro, tháng/năm. **Chỉ có giá ở Việt Nam (VND)** |
+| Màn hình gói (bản Play) | Đạt | Có "Tự gia hạn mỗi tháng/năm", nút "Quản lý hoặc hủy gói trên Google Play", ghi chú hoàn tiền/huỷ |
+| Đăng nhập trong app | Đạt | Email + mật khẩu, không có OTP |
+| Biểu tượng | Giữ nguyên | Theo yêu cầu của chủ dự án, không đổi |
+| Thay đổi chưa gửi duyệt | 2 mục | Production: thêm 177 quốc gia và "các nơi khác trên thế giới" |
 
-## 1. Việc cần làm trước khi gửi duyệt (ước tính 2–4 ngày)
+## 1. Việc còn phải làm trước khi gửi duyệt
 
-### 1.1 Mã nguồn và build
-- [ ] Tách các câu nói về PayOS ra khỏi file bản dịch dùng chung, để chúng chỉ có trong APK ngoài Play. Sau khi build, quét lại AAB: chữ "PayOS" phải bằng 0.
-- [ ] Đổi ảnh biểu tượng có chữ "PicKet" (adaptive icon và ảnh 512×512 PNG 32-bit, tối đa 1 MB).
-- [ ] Màn hình gói (Play Billing) phải ghi rõ: giá bằng VND, chu kỳ, tự gia hạn, cách huỷ (liên kết tới trang quản lý gói đăng ký của Play), và rằng app vẫn dùng được khi không mua gói. Không chỉ hiện giá quy ra tháng cho gói năm.
-- [ ] Rà lại Android vitals của các bản test: tỉ lệ crash dưới 1,09%, ANR dưới 0,47%.
+### 1.1 Bắt buộc
+- [ ] **Hướng dẫn cho người review phải bằng tiếng Anh.** Mục "Thông tin đăng nhập" → "PicKet review access" đang ghi hướng dẫn bằng tiếng Việt. Google yêu cầu tiếng Anh. Nội dung đề xuất:
+  > Open PicKet → tap "Đăng nhập" (Sign in) → enter the email and password above. No verification code is needed. The account has the Pro plan active, so all paid features are available. Guest mode works without an account and stores data only on the device.
+- [ ] **Kiểm tra tài khoản review vẫn dùng được:** đăng nhập bằng mật khẩu đã khai, tài khoản đang có gói Pro (phần khai báo đã tick "truy cập đầy đủ kể cả nội dung trả phí"). Nếu chưa có Pro, cấp Pro cho tài khoản này từ trang admin.
+- [ ] **Chốt quốc gia phát hành.** Đang có thay đổi chờ gửi: phát hành cho 177 quốc gia và các nơi khác. Nhưng gói đăng ký chỉ có giá VND ở Việt Nam, nên người dùng ở nước khác không mua được gói. Chọn một trong hai:
+  - Chỉ Việt Nam (đúng với nội dung, tiền tệ, OCR hoá đơn Việt): bỏ 2 thay đổi này.
+  - Toàn cầu: giữ, và thêm giá vùng cho 4 gói (Play Console tự quy đổi được).
+- [ ] **Rà lại An toàn dữ liệu** (khai ngày 24/10/2026). Từ đó đến nay app đã thêm đăng ký bằng số điện thoại (Firebase) và OCR dự phòng trên server. Phải có: số điện thoại, email, tên; ảnh hoá đơn; thông tin tài chính khác; thống kê tuỳ chọn.
 
-### 1.2 Tài khoản cho người review (mục App access)
-- [ ] Tạo tài khoản demo **email + mật khẩu**, không có OTP, luôn hợp lệ, không chặn theo vùng. Mở sẵn gói Pro, hoặc ghi cách vào tính năng trả phí. Viết hướng dẫn bằng tiếng Anh.
-- [ ] Không dùng số điện thoại thử của Firebase làm đường chính cho người review (chưa xác nhận được Google có chấp nhận hay không).
+### 1.2 Nên làm (không chặn việc gửi duyệt)
+- [ ] Tách 2 câu nói về PayOS khỏi `apps/mobile/src/core/i18n/auth-resources.ts` sang phần chỉ dùng cho APK ngoài Play. Hai câu này không hiện trên bản Play. Có thể làm ở bản cập nhật sau.
+- [ ] Thay ảnh chụp màn hình bằng ảnh từ bản 1.3.1 nếu giao diện đã khác ảnh cũ (đăng nhập/đăng ký mới).
+- [ ] Rà Android vitals: crash < 1,09%, ANR < 0,47%.
 
-### 1.3 Trang cửa hàng (Store listing)
-- [ ] Tên: "PicKet - Quản lý thu chi" (24/30 ký tự). Không dùng emoji hay "#1", không nhắc giá hoặc khuyến mãi.
-- [ ] Mô tả ngắn tối đa 80 ký tự, mô tả đầy đủ tối đa 4.000 ký tự, chỉ mô tả tính năng app thật sự có.
-- [ ] Ảnh nổi bật (feature graphic) 1024×500 JPEG hoặc PNG 24-bit.
-- [ ] Ít nhất 4 ảnh chụp màn hình điện thoại 1080×1920 (9:16), chụp từ bản 1.3.1.
-- [ ] Email hỗ trợ: picketfinance@gmail.com.
-
-### 1.4 Khai báo nội dung ứng dụng (App content)
-- [ ] **Data safety**, khớp với hành vi thật của app và các SDK (Firebase):
-  - Ảnh hoá đơn gửi lên server khi OCR dự phòng → "Photos".
-  - Số điện thoại, email, tên → "Personal info".
-  - Thống kê (có hỏi đồng ý) → "App interactions" / "App info and performance", đánh dấu là tuỳ chọn.
-  - Dữ liệu tài chính người dùng nhập (giao dịch, ngân sách) → "Financial info → Other financial info".
-  - Dữ liệu được mã hoá khi truyền; người dùng yêu cầu xoá được (dán URL trang xoá tài khoản).
-- [ ] **Tính năng tài chính:** chọn "My app doesn't provide any financial features", vì app chỉ ghi chép chi tiêu, không cho vay, không giữ hay chuyển tiền. Cần xác nhận lại trong Play Console.
-- [ ] **Sức khoẻ:** chọn không có tính năng sức khoẻ. **Tin tức, chính phủ:** chọn không.
-- [ ] **Quảng cáo:** chọn không. **Đối tượng mục tiêu:** từ 18 tuổi trở lên (tránh chính sách Families).
-- [ ] **Phân loại nội dung (IARC):** điền bảng câu hỏi.
-- [ ] **Quốc gia:** Việt Nam (có thể thêm sau). **Giá:** miễn phí; gói đăng ký là mua trong ứng dụng.
+### 1.3 Không cần nữa
+- Không cần build bản mới: dùng luôn AAB **1.3.1 (36)** đã qua Internal và Closed testing.
+- Không cần thử nghiệm mở (open testing). Đây là tuỳ chọn để ai cũng tham gia thử được. Đã có quyền production thì có thể phát hành thẳng.
+- Không cần đổi biểu tượng.
+- Không cần tạo tài khoản review mới: đã có, chỉ cần sửa hướng dẫn sang tiếng Anh và kiểm tra (mục 1.1).
 
 ## 2. Gửi bản Production (ngày D)
-1. Tạo bản Production từ **cùng AAB đã thử ở Internal/Closed** (không build lại). Ghi chú phát hành bằng vi-VN và en-US.
-2. Bản production đầu tiên phát hành **100%** cho các quốc gia đã chọn; lần đầu không dùng được phát hành theo giai đoạn (staged rollout).
-3. Bấm "Gửi để xem xét". Google review từ vài giờ đến **7 ngày**. **Không gửi thêm thay đổi trong lúc đang review**, vì có thể bị đẩy về cuối hàng đợi.
-4. Managed publishing: lần phát hành đầu có thể không áp dụng. Với các bản cập nhật sau, thay đổi chờ ở "Tổng quan về việc xuất bản" và chủ tài khoản bấm "Phát hành thay đổi".
+1. Vào **Phát hành → Phát hành công khai → Tạo bản phát hành mới**. Chọn "Thêm từ thư viện" → AAB 1.3.1 (36). Không build lại.
+2. Ghi chú phát hành vi-VN và en-US.
+3. Bản production đầu tiên phát hành **100%**; lần đầu không dùng staged rollout.
+4. Tổng quan về việc xuất bản → "Gửi … thay đổi để được xem xét". Gồm bản phát hành, quốc gia và các sửa đổi ở mục 1.1.
+5. Google duyệt từ vài giờ đến 7 ngày. **Không gửi thêm thay đổi trong lúc đang duyệt.**
+6. Chế độ xuất bản có quản lý đang bật: duyệt xong, chủ tài khoản bấm "Phát hành thay đổi" thì app mới hiện công khai.
 
 ## 3. Sau khi lên chính thức
-- Các bản cập nhật sau phát hành theo giai đoạn: 10% → 50% → 100%. Mỗi giai đoạn theo dõi crash/ANR 1–2 ngày; dừng lại (halt) nếu vượt ngưỡng.
-- Đặt `inAppUpdatePriority` khi tạo bản phát hành: 0–2 cho bản thường, 4–5 cho bản sửa lỗi nghiêm trọng (giá trị này không sửa được sau khi tạo).
+- Bản cập nhật sau phát hành theo giai đoạn 10% → 50% → 100%, mỗi giai đoạn theo dõi crash/ANR 1–2 ngày.
+- Đặt `inAppUpdatePriority` khi tạo bản: 0–2 bản thường, 4–5 bản sửa lỗi nghiêm trọng.
 - Closed testing vẫn giữ để thử bản mới trước production.
-- APK ngoài Play (landing, APKPure) và PayOS vẫn giữ nguyên. Chương trình xác minh nhà phát triển Android áp dụng toàn cầu từ 2027; cần theo dõi để đăng ký kịp cho APK ngoài Play.
-- Trả lời đánh giá trên Play và cập nhật phần Câu hỏi thường gặp trên landing.
+- APK ngoài Play (landing) và PayOS giữ nguyên. Theo dõi chương trình xác minh nhà phát triển Android (toàn cầu từ 2027) cho APK ngoài Play.
+- Trả lời đánh giá trên Play.
 
-## 4. Lý do bị từ chối thường gặp và cách tránh
+## 4. Lý do bị từ chối thường gặp
 | Lý do | Cách tránh |
 |---|---|
-| Người review không đăng nhập được (OTP, tài khoản hết hạn) | Tài khoản demo email/mật khẩu cố định (mục 1.2) |
-| Data safety không khớp app hoặc SDK | Đối chiếu mục 1.4 với mã nguồn và Firebase |
-| Dẫn người dùng sang thanh toán ngoài Play | Tách hẳn PayOS khỏi bản Play (mục 1.1) |
-| Mô tả hoặc ảnh không đúng với app | Chụp ảnh từ đúng bản gửi duyệt |
-| Gói đăng ký gây hiểu lầm, không có cách huỷ | Mục 1.1, màn hình gói |
-| App lỗi hoặc quá sơ sài | Thử đủ luồng chính trên Redmi trước khi gửi |
+| Người review không đăng nhập được | Hướng dẫn tiếng Anh, tài khoản có Pro, kiểm tra trước khi gửi |
+| Data safety không khớp | Rà lại theo mục 1.1 |
+| Dẫn sang thanh toán ngoài Play | Bản Play không có màn hình PayOS |
+| Gói đăng ký không rõ cách huỷ | Đã có, xem mục 0 |
+| Mô tả hoặc ảnh không đúng app | Ảnh chụp từ bản đang gửi |
 
 ## 5. Mốc thời gian đề xuất
 | Ngày | Việc |
 |---|---|
-| D-4 → D-2 | Mục 1.1 (build 1.3.2), tạo tài khoản demo, chuẩn bị ảnh và trang cửa hàng |
-| D-1 | Điền App content; thử bản 1.3.2 qua Internal → Closed |
-| D | Gửi bản Production |
-| D+1 → D+7 | Chờ duyệt; không gửi thay đổi khác |
-| Sau khi duyệt | Theo dõi vitals 7 ngày; bản sau phát hành theo giai đoạn |
+| D-1 | Mục 1.1: sửa hướng dẫn review, kiểm tra tài khoản, chốt quốc gia, rà Data safety |
+| D | Tạo bản Production từ AAB 36 và gửi duyệt |
+| D+1 → D+7 | Chờ duyệt, không gửi thay đổi khác |
+| Sau khi duyệt | Bấm "Phát hành thay đổi", theo dõi vitals 7 ngày |
 
 ## Nguồn
 - Quyền production cho tài khoản cá nhân: https://support.google.com/googleplay/android-developer/answer/14151465
 - Managed publishing, thời gian review: https://support.google.com/googleplay/android-developer/answer/9859654
-- Trang cửa hàng và đồ hoạ: https://support.google.com/googleplay/android-developer/answer/9859152, https://support.google.com/googleplay/android-developer/answer/9866151
-- App content, App access: https://support.google.com/googleplay/android-developer/answer/9859455, https://support.google.com/googleplay/android-developer/answer/15748846
+- App access (thông tin đăng nhập, phải bằng tiếng Anh): https://support.google.com/googleplay/android-developer/answer/15748846
 - Data safety: https://support.google.com/googleplay/android-developer/answer/10787469
-- Khai báo tính năng tài chính: https://support.google.com/googleplay/android-developer/answer/13849271
-- Xoá tài khoản: https://support.google.com/googleplay/android-developer/answer/13327111
-- Thanh toán: https://support.google.com/googleplay/android-developer/answer/9858738, https://support.google.com/googleplay/android-developer/answer/10281818
 - Gói đăng ký: https://support.google.com/googleplay/android-developer/answer/9900533
-- Target API: https://support.google.com/googleplay/android-developer/answer/11926878
-- Quyền ảnh và media: https://support.google.com/googleplay/android-developer/answer/14115180
-- SMS: https://support.google.com/googleplay/android-developer/answer/10208820
-- Phát hành và staged rollout: https://support.google.com/googleplay/android-developer/answer/9859348, https://support.google.com/googleplay/android-developer/answer/6346149
+- Phát hành và staged rollout: https://support.google.com/googleplay/android-developer/answer/9859348
+- Thử nghiệm mở/kín/nội bộ: https://support.google.com/googleplay/android-developer/answer/9845334
 - Android vitals: https://developer.android.com/topic/performance/vitals
-- Xác minh nhà phát triển: https://developer.android.com/developer-verification
