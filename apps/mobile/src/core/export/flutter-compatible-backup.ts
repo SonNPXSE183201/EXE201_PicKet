@@ -38,7 +38,7 @@ async function shareText(owner:string,contents: string, extension: string, mimeT
   if (!FileSystem.cacheDirectory || !(await Sharing.isAvailableAsync())) throw new Error("Không thể chia sẻ bản sao trên thiết bị này.");
   const uri = `${FileSystem.cacheDirectory}picket-${Crypto.randomUUID()}.${extension}`;
   await withLocalOwnerAccess(owner,()=>FileSystem.writeAsStringAsync(uri, contents, { encoding: FileSystem.EncodingType.UTF8 }));
-  await Sharing.shareAsync(uri, { dialogTitle:"Lưu dữ liệu Picket", mimeType });
+  await Sharing.shareAsync(uri, { dialogTitle:"Lưu dữ liệu PicKet", mimeType });
 }
 
 function requireCloud() {

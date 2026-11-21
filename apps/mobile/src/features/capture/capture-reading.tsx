@@ -39,7 +39,7 @@ export function CaptureReading({ onCancel, statusLabel = "Đang đọc hóa đơ
           </View>
         </View>
         <View style={styles.copy}>
-          <Text style={[figmaType.display, styles.title]}>Picket đang đọc hoá đơn</Text>
+          <Text style={[figmaType.display, styles.title]}>PicKet đang đọc hoá đơn</Text>
           <Text style={[figmaType.bodySmall, styles.body]}>Thường mất vài giây. Đọc trên máy nên không cần mạng.</Text>
         </View>
       </View>

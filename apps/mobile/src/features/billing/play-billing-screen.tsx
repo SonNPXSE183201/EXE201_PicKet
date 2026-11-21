@@ -43,22 +43,22 @@ const planKeys: Record<
   { name: string; cadence: string; summary: string }
 > = {
   picket_plus_monthly: {
-    name: "Picket Plus",
+    name: "PicKet Plus",
     cadence: "monthly",
     summary: "plusMonthly",
   },
   picket_plus_yearly: {
-    name: "Picket Plus",
+    name: "PicKet Plus",
     cadence: "yearly",
     summary: "plusYearly",
   },
   picket_pro_monthly: {
-    name: "Picket Pro",
+    name: "PicKet Pro",
     cadence: "monthly",
     summary: "proMonthly",
   },
   picket_pro_yearly: {
-    name: "Picket Pro",
+    name: "PicKet Pro",
     cadence: "yearly",
     summary: "proYearly",
   },

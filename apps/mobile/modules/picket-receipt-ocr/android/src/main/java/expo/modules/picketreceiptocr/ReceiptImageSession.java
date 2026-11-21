@@ -25,9 +25,47 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-/** One decoded source and one recognizer per scan. Never writes image files. */
+/** One decoded source per scan; the recognizer is shared and warmed once per process. Never writes image files. */
 public final class ReceiptImageSession implements AutoCloseable {
   private static final long MAX_DECODE_PIXELS = 16_000_000L;
+  // Creating a client and running its first image loads the model (~350 ms on a Redmi 7). Keep one per process.
+  private static TextRecognizer sharedRecognizer;
+  private static boolean warmed;
+
+  static synchronized TextRecognizer recognizer() {
+    if (sharedRecognizer == null) sharedRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+    return sharedRecognizer;
+  }
+
+  /** Loads the model on a worker thread before the user picks a photo. Safe to call repeatedly. */
+  public static void warmUp() throws Exception {
+    requireWorker();
+    TextRecognizer client;
+    synchronized (ReceiptImageSession.class) { if (warmed) return; client = recognizer(); }
+    long started = SystemClock.elapsedRealtime();
+    // A few printed-looking lines, so detection and line recognition both run (a blank image leaves the
+    // recognition path cold and the first real read still paid ~250 ms extra on a Redmi 7).
+    Bitmap sample = Bitmap.createBitmap(480, 160, Bitmap.Config.ARGB_8888);
+    try {
+      android.graphics.Canvas canvas = new android.graphics.Canvas(sample);
+      canvas.drawColor(android.graphics.Color.WHITE);
+      android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+      paint.setColor(android.graphics.Color.BLACK); paint.setTextSize(28f); paint.setTypeface(android.graphics.Typeface.MONOSPACE);
+      canvas.drawText("PICKET MART  12/11/2026", 12, 42, paint);
+      canvas.drawText("Banh mi 2 x 15.000  30.000", 12, 90, paint);
+      canvas.drawText("TONG THANH TOAN  30.000", 12, 138, paint);
+      Tasks.await(client.process(InputImage.fromBitmap(sample, 0)), 15_000, TimeUnit.MILLISECONDS);
+    }
+    finally { sample.recycle(); }
+    synchronized (ReceiptImageSession.class) { warmed = true; }
+    metric("warmup", started, 480, 160);
+  }
+
+  /** Process teardown only; sessions never close the shared client. */
+  static synchronized void closeShared() {
+    if (sharedRecognizer != null) sharedRecognizer.close();
+    sharedRecognizer = null; warmed = false;
+  }
   private final String id = UUID.randomUUID().toString();
   private Bitmap source;
   private TextRecognizer recognizer;
@@ -75,7 +113,7 @@ public final class ReceiptImageSession implements AutoCloseable {
         Bitmap corrected = Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
         if (corrected != source) { source.recycle(); source = corrected; }
       }
-      recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+      recognizer = recognizer();
       metric("decode", started, source.getWidth(), source.getHeight());
     } catch (Exception error) { source.recycle(); source = null; throw error; }
   }
@@ -180,7 +218,7 @@ public final class ReceiptImageSession implements AutoCloseable {
     if (closed) return;
     fullSourceRead.invalidate();
     if (source != null && !source.isRecycled()) source.recycle(); source = null;
-    if (recognizer != null) recognizer.close(); recognizer = null; closed = true;
+    recognizer = null; closed = true;
   }
   private void ensureSelected() { ensureActive(); if (!selected) throw new IllegalStateException("OCR_NO_SELECTED_ANGLE"); }
   private void ensureActive() { if (closing || closed || (pending != null && !pending.isComplete())) throw new IllegalStateException("OCR_BUSY"); }

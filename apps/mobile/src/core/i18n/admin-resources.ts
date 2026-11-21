@@ -1,6 +1,6 @@
 export const adminVi = {
-  title: "Quản trị Picket", users: "Người dùng", ocr: "OCR", partners: "Đối tác", settings: "Cài đặt", audit: "Nhật ký",
-  processing: "Đang xử lý…", forbidden: "Không có quyền quản trị", forbiddenDescription: "Màn hình này chỉ dành cho nhân viên Picket.",
+  title: "Quản trị PicKet", users: "Người dùng", ocr: "OCR", partners: "Đối tác", settings: "Cài đặt", audit: "Nhật ký",
+  processing: "Đang xử lý…", forbidden: "Không có quyền quản trị", forbiddenDescription: "Màn hình này chỉ dành cho nhân viên PicKet.",
   loading: "Đang tải quản trị", loadingDescription: "Dữ liệu chỉ mở khi máy chủ xác nhận quyền nhân viên.", retry: "Thử lại",
   loadFailed: "Không tải được quản trị. Kiểm tra mạng và quyền nhân viên.",
   confirmTitle: "Xác nhận quản trị", confirmAction: "{{label}} cho tài khoản {{userId}}? Thao tác sẽ được ghi vào nhật ký.", cancel: "Hủy", confirm: "Xác nhận",
@@ -21,8 +21,8 @@ export const adminVi = {
   transaction: "Giao dịch", close: "Đóng", reload: "Tải lại dữ liệu quản trị",
 };
 export const adminEn: Record<keyof typeof adminVi, string> = {
-  title: "Picket administration", users: "Users", ocr: "OCR", partners: "Partners", settings: "Settings", audit: "Audit log",
-  processing: "Processing…", forbidden: "Admin access required", forbiddenDescription: "This screen is for Picket staff only.",
+  title: "PicKet administration", users: "Users", ocr: "OCR", partners: "Partners", settings: "Settings", audit: "Audit log",
+  processing: "Processing…", forbidden: "Admin access required", forbiddenDescription: "This screen is for PicKet staff only.",
   loading: "Loading administration", loadingDescription: "Data is available only after the server confirms staff access.", retry: "Retry",
   loadFailed: "Could not load administration. Check your connection and staff permissions.",
   confirmTitle: "Confirm admin action", confirmAction: "{{label}} for account {{userId}}? This action will be recorded in the audit log.", cancel: "Cancel", confirm: "Confirm",

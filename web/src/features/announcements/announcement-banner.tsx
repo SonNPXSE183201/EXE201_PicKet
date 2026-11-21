@@ -23,10 +23,10 @@ export async function AnnouncementBanner({
   const maintenance = feed.maintenance.active || items.some((i) => i.blocking);
   if (!items.length && !maintenance) return null;
   return (
-    <section className="announcement-stack" aria-label="Thông báo từ Picket">
+    <section className="announcement-stack" aria-label="Thông báo từ PicKet">
       {feed.maintenance.active && !items.some((i) => i.blocking) && (
         <p role="alert" className="announcement announcement-critical">
-          <strong>Picket đang bảo trì.</strong> {feed.maintenance.notice}
+          <strong>PicKet đang bảo trì.</strong> {feed.maintenance.notice}
         </p>
       )}
       {items.map((item) => {

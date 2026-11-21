@@ -6,6 +6,11 @@ export type Row = Record<string, unknown>;
 export type Query = Record<string, string | undefined>;
 export type Document = Record<string, unknown>;
 
+export type VerificationSettingsView = {
+  settings: { emailEnabled: boolean; smsEnabled: boolean; smsProvider: string; smsDailyLimit: number; revision: number; updatedAt: string };
+  history: { before: Record<string, unknown>; after: Record<string, unknown>; reason: string; createdAt: string }[];
+};
+
 /** Everything a section view needs; data comes from GET /v1/admin/portal. */
 export type ViewProps = {
   section: AdminSection;
@@ -33,6 +38,10 @@ export type ViewProps = {
     history: { plan: string; before: number | null; after: number; reason: string; createdAt: string }[];
     canManage: boolean;
   };
+  /** Sign-up verification channels (email / SMS OTP), shown with auth.verification.manage. */
+  verificationSettings?: VerificationSettingsView;
+  /** The settings page shows only the verification card (no settings.read). */
+  verificationOnly?: boolean;
   /** First name for greetings, derived from the staff email. */
   greetingName?: string;
 };
@@ -78,7 +87,7 @@ export function statusTone(status: unknown): StatusTone {
 
 /** Display names/icons for health components and data sources (Figma wording). */
 export const componentInfo: Record<string, { name: string; icon: string; tone: "coral" | "mint" | "blue" | "lilac" | "cream" }> = {
-  api: { name: "API Picket", icon: "bolt", tone: "mint" },
+  api: { name: "API PicKet", icon: "bolt", tone: "mint" },
   database: { name: "Cơ sở dữ liệu", icon: "grid", tone: "blue" },
   ocr_cloud: { name: "OCR cloud", icon: "receipt", tone: "coral" },
   realtime: { name: "Đồng bộ realtime", icon: "calendar", tone: "lilac" },

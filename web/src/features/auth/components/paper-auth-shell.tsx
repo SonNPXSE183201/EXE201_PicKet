@@ -1,10 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { AdminIcon } from "@/features/admin/ui/admin-icon";
 import "../paper-auth.css";
 
-/* Figma › User Web › W1/W2 and Admin Web › Đăng nhập. The two receipt cards are
-   illustrations (aria-hidden), not live figures. */
+/* Left purple panel: the original PicKet story (two receipt tickets + money bloom).
+   The tickets are illustrations (aria-hidden), not live figures. The right side
+   (forms) follows Figma › Web per screen. */
 const stories = {
   user: {
     title: "Tiền có chỗ.\nBạn có khoảng thở.",
@@ -16,7 +18,7 @@ const stories = {
     ],
   },
   admin: {
-    title: "Sổ tay vận hành\ncủa Picket",
+    title: "Sổ tay vận hành\ncủa PicKet",
     copy: "Theo dõi người dùng, hoá đơn, sự cố và nội dung — tất cả trên những trang giấy gọn gàng.",
     subtitle: "Không gian quản trị",
     cards: [
@@ -26,34 +28,42 @@ const stories = {
   },
 } as const;
 
+/** Screens that use the shell; every user screen shares the same left panel. */
+export type AuthStory = "login" | "register" | "phone" | "forgot" | "verify" | "admin";
+
 export function PaperAuthShell({
-  variant = "user",
+  story: storyKey = "login",
   fixedViewport = false,
+  footer = false,
   children,
 }: {
-  variant?: keyof typeof stories;
+  story?: AuthStory;
   fixedViewport?: boolean;
+  /** Copyright + links row (Figma shows it on the sign-in screen). */
+  footer?: boolean;
   children: ReactNode;
 }) {
-  const story = stories[variant];
+  const story = stories[storyKey === "admin" ? "admin" : "user"];
   return (
-    <div className={`pa-root${fixedViewport ? " is-fixed" : ""}`}>
+    <div className={`pa-root${fixedViewport ? " is-fixed" : ""}${footer ? " has-footer" : ""}`}>
       <a className="pa-skip" href="#auth-content">Đến biểu mẫu</a>
       <aside className="pa-pouch">
-        <Link className="pa-brand" href={variant === "admin" ? "/login?next=/admin" : "/"} aria-label="Picket, trang chủ">
-          <span className="pa-coin"><img src="/admin-paper/picket-mark-192.png" alt="" width={34} height={34} /></span>
-          <span><strong>Picket</strong>{story.subtitle && <small>{story.subtitle}</small>}</span>
+        <Link className="pa-brand" href={storyKey === "admin" ? "/login?next=/admin" : "/"} aria-label="PicKet, trang chủ">
+          <span className="pa-coin"><Image src="/picket-logo-192.png" alt="" width={40} height={40} priority /></span>
+          <span><strong>PicKet</strong>{story.subtitle && <small>{story.subtitle}</small>}</span>
         </Link>
         <div className="pa-story">
-          <h1>{story.title}</h1>
-          <p>{story.copy}</p>
+          <p className="pa-story-h">{story.title}</p>
+          <p className="pa-story-p">{story.copy}</p>
         </div>
         <div className="pa-cards" aria-hidden="true">
           {story.cards.map((card, i) => (
             <div key={card.label} className={`pa-ticket ${i === 0 ? "is-a" : "is-b"}`}>
-              <div className="pa-ticket-head"><span><AdminIcon name={card.icon} size={18} /></span><span>{card.label}</span></div>
-              <b>{card.value}</b>
-              <small>{card.note}</small>
+              <div className="pa-ticket-paper">
+                <div className="pa-ticket-head"><span><AdminIcon name={card.icon} size={18} /></span><span>{card.label}</span></div>
+                <b>{card.value}</b>
+                <small>{card.note}</small>
+              </div>
             </div>
           ))}
         </div>
@@ -62,13 +72,15 @@ export function PaperAuthShell({
       <main className="pa-main" id="auth-content">
         <div className="pa-form-wrap">{children}</div>
       </main>
-      <footer className="pa-footer">
-        <span>© {new Date().getFullYear()} Picket. Chăm chút từng khoản nhỏ.</span>
-        <nav aria-label="Thông tin và hỗ trợ">
-          <a href="https://picketfinance.com/privacy.html">Quyền riêng tư</a>
-          <a href="mailto:picketfinance@gmail.com">Liên hệ hỗ trợ</a>
-        </nav>
-      </footer>
+      {footer && (
+        <footer className="pa-footer">
+          <span>© {new Date().getFullYear()} PicKet, chăm chút từng khoản nhỏ.</span>
+          <nav aria-label="Thông tin và hỗ trợ">
+            <a href="https://picketfinance.com/privacy.html">Quyền riêng tư</a>
+            <a href="mailto:picketfinance@gmail.com">Liên hệ hỗ trợ</a>
+          </nav>
+        </footer>
+      )}
     </div>
   );
 }

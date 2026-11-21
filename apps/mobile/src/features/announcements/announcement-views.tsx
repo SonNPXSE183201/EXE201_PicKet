@@ -58,7 +58,7 @@ export function AnnouncementInbox() {
   if (!items.length) return null;
   return (
     <View style={styles.inbox}>
-      <Text accessibilityRole="header" style={[figmaType.overline, styles.inboxTitle, { color: colors.muted }]}>{t("Thông báo từ Picket").toUpperCase()}</Text>
+      <Text accessibilityRole="header" style={[figmaType.overline, styles.inboxTitle, { color: colors.muted }]}>{t("Thông báo từ PicKet").toUpperCase()}</Text>
       {items.map((item) => <AnnouncementCard key={item.id} item={item} />)}
     </View>
   );
@@ -74,7 +74,7 @@ export function MaintenanceGate({ children }: { children: ReactNode }) {
     <View style={[styles.gate, { backgroundColor: colors.canvas }]} accessibilityViewIsModal>
       <View style={[styles.gateCard, { backgroundColor: colors.surface }, figmaShadow("paper")]}>
         <Chip size="small" tone="warning" label={t("Bảo trì")} style={styles.chip} />
-        <Text accessibilityRole="header" style={[figmaType.titleSection, { color: colors.text }]}>{gate.title || t("Picket đang bảo trì")}</Text>
+        <Text accessibilityRole="header" style={[figmaType.titleSection, { color: colors.text }]}>{gate.title || t("PicKet đang bảo trì")}</Text>
         {!!gate.body && <Text style={[figmaType.bodySmall, { color: colors.text }]}>{gate.body}</Text>}
         {gate.endsAt && (
           <Text style={[figmaType.bodySmall, { color: colors.muted }]}>

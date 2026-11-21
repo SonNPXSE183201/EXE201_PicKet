@@ -1,18 +1,42 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { routes } from "@/core/navigation/routes";
 import { authErrorMessage, validateEmail } from "@/features/auth/auth-errors";
+import { MethodChips } from "@/features/auth/auth-figma";
 import { AuthField, AuthMessage, AuthScreen, PrimaryButton, TextLink } from "@/features/auth/auth-screen";
+import { invalidLocalPhoneMessage, sanitizeLocalPhoneInput, vietnamPhoneToE164 } from "@/features/auth/phone-input";
+import { phoneReset } from "@/features/auth/phone-signup-store";
+import { phoneResetSendErrorMessage } from "@/features/auth/signup-errors";
+import { useSignupMethods } from "@/features/auth/signup-verification-store";
 
+type RecoveryMethod = "email" | "phone";
+const methodLabels: Record<RecoveryMethod, string> = { email: "Email", phone: "Số điện thoại" };
+
+/**
+ * Email: Supabase reset link (unchanged). Phone (SMS enabled by admins and
+ * Firebase available): reset-start → Firebase code → new password → reset.
+ */
 export default function ForgotPasswordScreen() {
   const { requestPasswordReset } = useAuth();
+  const { methods } = useSignupMethods();
+  const smsAvailable = methods.includes("phone");
+  const [method, setMethod] = useState<RecoveryMethod>("email");
+  const activeMethod: RecoveryMethod = smsAvailable ? method : "email";
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
+  const running = useRef(false);
+  const starting = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function submit() {
+  function changeMethod(next: RecoveryMethod) {
+    setMethod(next);
+    setMessage(null);
+  }
+
+  async function submitEmail() {
     const issue = validateEmail(email);
     if (issue) return setMessage(issue);
     setBusy(true);
@@ -27,11 +51,62 @@ export default function ForgotPasswordScreen() {
     }
   }
 
+  async function submitPhone() {
+    if (running.current) return;
+    const destination = vietnamPhoneToE164(phone);
+    if (!destination) return setMessage(invalidLocalPhoneMessage);
+    running.current = true;
+    starting.current = true;
+    setBusy(true);
+    setMessage(null);
+    try {
+      // reset-start must pass before Firebase sends; the code screen opens while it sends
+      // (and moves on to the new password itself after Android instant verification).
+      const started = await phoneReset.start(destination);
+      starting.current = false;
+      if (started) {
+        router.push(routes.verifyCode("phone", destination, "reset"));
+        return; // running stays set until this screen is focused again (no double push).
+      }
+    } catch (error) {
+      setMessage(phoneResetSendErrorMessage(error));
+    } finally {
+      starting.current = false;
+      setBusy(false);
+    }
+    running.current = false;
+  }
+
+  // Leaving while reset-start is pending abandons it: no SMS, no code screen pushed later.
+  useFocusEffect(useCallback(() => {
+    running.current = false;
+    return () => {
+      if (starting.current) phoneReset.reset();
+    };
+  }, []));
+
+  const phoneMode = activeMethod === "phone";
+  const submit = () => void (phoneMode ? submitPhone() : submitEmail());
   return (
-    <AuthScreen title="Quên mật khẩu" subtitle="Nhập email để nhận liên kết đặt lại mật khẩu.">
-      <AuthField autoCapitalize="none" autoComplete="email" editable={!busy} keyboardType="email-address" onChangeText={setEmail} onSubmitEditing={() => void submit()} placeholder="Email" value={email} />
+    <AuthScreen
+      title="Quên mật khẩu"
+      subtitle={phoneMode ? "Nhập số điện thoại để nhận mã 6 số qua SMS." : "Nhập email để nhận liên kết đặt lại mật khẩu."}
+    >
+      {smsAvailable && (
+        <MethodChips
+          disabled={busy}
+          onChange={changeMethod}
+          options={(["email", "phone"] as const).map((value) => ({ value, label: methodLabels[value] }))}
+          value={activeMethod}
+        />
+      )}
+      {phoneMode ? (
+        <AuthField autoComplete="tel" editable={!busy} keyboardType="phone-pad" onChangeText={(value) => setPhone(sanitizeLocalPhoneInput(value))} onSubmitEditing={submit} placeholder="Số điện thoại" textContentType="telephoneNumber" value={phone} />
+      ) : (
+        <AuthField autoCapitalize="none" autoComplete="email" editable={!busy} keyboardType="email-address" onChangeText={setEmail} onSubmitEditing={submit} placeholder="Email" value={email} />
+      )}
       {message && <AuthMessage>{message}</AuthMessage>}
-      <PrimaryButton busy={busy} label="Gửi hướng dẫn" onPress={() => void submit()} />
+      <PrimaryButton busy={busy} label={phoneMode ? "Gửi mã xác thực" : "Gửi hướng dẫn"} onPress={submit} />
       <TextLink label="Quay lại đăng nhập" onPress={() => router.replace(routes.login)} />
     </AuthScreen>
   );

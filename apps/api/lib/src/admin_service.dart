@@ -55,6 +55,19 @@ class AdminService {
       'otp_create',
       'otp_verify',
       'contact_mark_phone_verified',
+      'auth_verification_public',
+      'auth_phone_owner',
+      'auth_sms_quota_hit',
+      'contact_claim_verified_phone',
+      'auth_phone_signup_reserve',
+      'auth_phone_signup_consume',
+      'auth_firebase_proof_use',
+      'auth_pending_phone_signup',
+      'auth_phone_recovery_target',
+      'auth_phone_signup_start',
+      'auth_phone_signup_verified_gate',
+      'auth_phone_reset_verified_gate',
+      'auth_email_signup_start',
     }.contains(name)) {
       throw const FormatException('Invalid auth operation.');
     }
@@ -71,6 +84,9 @@ class AdminService {
         'Please wait before requesting another code.',
       );
     }
+    if (response.body.contains('23505')) {
+      throw const GatewayException(409, 'Phone already used.');
+    }
     if (response.statusCode >= 300) {
       throw const GatewayException(
         502,
@@ -78,6 +94,73 @@ class AdminService {
       );
     }
     return jsonDecode(response.body);
+  }
+
+  /// Creates a phone-confirmed account after Firebase proved phone ownership.
+  /// Returns the new user id; a taken number yields HTTP 409.
+  Future<String> createPhoneUser(String phoneE164, String password) async {
+    final response = await _client
+        .post(
+          config.supabaseUrl.resolve('/auth/v1/admin/users'),
+          headers: _headers,
+          body: jsonEncode({
+            'phone': phoneE164.substring(1),
+            'password': password,
+            'phone_confirm': true,
+            'app_metadata': {'signup_via': 'firebase_sms'},
+            'user_metadata': {'password_setup_required': false},
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 422 || response.statusCode == 409) {
+      throw const GatewayException(409, 'Phone already used.');
+    }
+    final body = response.statusCode < 300 ? jsonDecode(response.body) : null;
+    final id = body is Map
+        ? (body['id'] ?? (body['user'] as Map?)?['id'])
+        : null;
+    if (id is! String) {
+      throw const GatewayException(502, 'Unable to create the account.');
+    }
+    return id;
+  }
+
+  /// Removes an account that could not be completed. Returns whether
+  /// Supabase confirmed the deletion; retried once.
+  Future<bool> deleteUser(String userId) async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final response = await _client
+            .delete(
+              config.supabaseUrl.resolve('/auth/v1/admin/users/$userId'),
+              headers: _headers,
+            )
+            .timeout(const Duration(seconds: 20));
+        if (response.statusCode < 300 || response.statusCode == 404) {
+          return true;
+        }
+      } on Object {
+        // Retry once below.
+      }
+    }
+    return false;
+  }
+
+  /// Sets a new password after the owner proved the phone again (recovery).
+  Future<void> setUserPassword(String userId, String password) async {
+    final response = await _client
+        .put(
+          config.supabaseUrl.resolve('/auth/v1/admin/users/$userId'),
+          headers: _headers,
+          body: jsonEncode({
+            'password': password,
+            'user_metadata': {'password_setup_required': false},
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode >= 300) {
+      throw const GatewayException(502, 'Unable to update the password.');
+    }
   }
 
   Future<void> rpc(String name, Map<String, dynamic> body) async {

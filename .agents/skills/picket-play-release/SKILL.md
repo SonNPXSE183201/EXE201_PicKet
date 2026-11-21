@@ -40,6 +40,8 @@ Lỗi đã gặp ngày 14/11/2026:
 $py="C:/Users/nguyen.son/.codex/tools/play-store-mcp/.venv/Scripts/python.exe"
 & $py .agents/skills/picket-play-release/play_release.py internal --aab .artifacts/releases/picket-<ver>-<code>-google-play.aab --mapping .artifacts/releases/picket-<ver>-<code>-mapping.txt --code <code> --name "<ver> (<code>)" --notes-vi "..." --notes-en "..."
 ```
+Tùy chọn `--priority N` (số nguyên 0-5) đặt `inAppUpdatePriority` cho bản phát hành mới: 0-2 là cập nhật linh hoạt không làm phiền, 3 là linh hoạt có banner, 4-5 là bắt buộc cập nhật ngay. Không truyền cờ này thì hành vi như cũ (không đặt priority). Chỉ đặt được khi tạo bản phát hành mới, nên dùng khi chạy `internal` hoặc `alpha` với code mới.
+
 Sau đó đọc lại bằng MCP `get_releases` (chỉ đọc): internal phải là code mới, trạng thái `completed`.
 - Nếu gặp lỗi "This edit has expired": đọc `get_releases` trước (thường chưa có gì được commit) rồi chạy lại. Nguyên nhân hay gặp là admin-worker trên VPS mở edit để đọc track Play mỗi 5 phút; tải AAB lâu (khoảng 3 phút) dễ trùng lúc đó.
 - `completed` trên API chưa có nghĩa là tester nhận được bản mới: nếu bật managed publishing, máy chỉ thấy nút "Cập nhật" sau khi chủ tài khoản bấm "Phát hành thay đổi" ở "Tổng quan về việc xuất bản".
@@ -54,3 +56,21 @@ Chỉ khi bước 3 đạt:
 & $py .agents/skills/picket-play-release/play_release.py alpha --code <code> --name "<ver> (<code>)" --notes-vi "..." --notes-en "..."
 ```
 Script từ chối nếu alpha đã có code lớn hơn hoặc bằng code mới, và không động vào tester/quốc gia. Đọc lại bằng `get_releases`. Với managed publishing, thay đổi có thể chờ ở "Tổng quan về việc xuất bản" cho tới khi chủ tài khoản bấm "Phát hành thay đổi".
+
+## 5. Lỗi đã gặp ngày 19/11/2026 (đọc trước mỗi lần phát hành)
+| Lỗi | Nguyên nhân | Cách tránh |
+|---|---|---|
+| Tải bản lên Internal mà các thay đổi khác (ví dụ "thêm 177 quốc gia" cho production) cũng bị gửi đi duyệt | `play_release.py` commit edit không có `changesNotSentForReview`, nên Play gửi **mọi** thay đổi đang chờ trong Console đi duyệt | Trước khi chạy script, mở "Tổng quan về việc xuất bản" và xem mục "Các thay đổi chưa được gửi". Nếu có thay đổi của chủ dự án thì hỏi trước. Không giữ lại được bằng `changesNotSentForReview=True`: Play trả lỗi "Changes are sent for review automatically". Nếu đang có bản nháp production chưa muốn gửi thì huỷ bản nháp đó trước, tải xong rồi tạo lại |
+| `This Edit has been deleted` khi tải mapping/AAB | admin-worker trên VPS mở edit khác cùng lúc | Đọc `get_releases` (thường chưa có gì được lưu) rồi chạy lại |
+| Cảnh báo "App Bundle chứa mã gốc nhưng chưa tải biểu tượng gỡ lỗi" | AAB chưa kèm ký hiệu native | Đã xử lý từ 1.3.3 bằng plugin `with-play-device-reach` (`debugSymbolLevel 'SYMBOL_TABLE'`). **Không tải bù được** cho bản đã dùng trong một release: API báo `Deobfuscation File can't be modified`. Kiểm tra AAB có `BUNDLE-METADATA/com.android.tools.build.debugsymbols/` trước khi tải lên |
+| Kiểm tra nhanh trước khi gửi duyệt báo "Ứng dụng bị hạn chế phạm vi do tính năng phần cứng bắt buộc `android.hardware.screen.portrait`" | App khoá màn hình dọc, Play tự suy ra tính năng bắt buộc | Đã xử lý từ 1.3.3: plugin khai báo `android:required="false"`. Không tự bấm "Bỏ qua vấn đề" thay chủ dự án |
+| Play Store trên Redmi tải bản mới kẹt ở 2% | Lỗi của Play Store | Bấm Huỷ, `am force-stop com.android.vending`, mở lại trang app và bấm Cập nhật. Bản mới có thể mất 5–10 phút mới hiện nút Cập nhật |
+| Chạm `adb shell input tap` khi app chưa mở (máy đã khoá/tắt màn hình) rơi vào launcher và trình gọi điện, máy đã gọi nhầm một số | `am start`/`monkey` không mở được app khi máy khoá; các lần chạm sau đó đi vào ứng dụng khác | Trước **mỗi** lần chạm, kiểm tra `adb shell dumpsys window \| grep mCurrentFocus` có `com.picket.mobile/`, nếu không thì dừng. Máy khoá (`mDreamingLockscreen=true`) thì nhờ chủ dự án mở khoá |
+| Bản 38 vẫn có cảnh báo thiếu biểu tượng gỡ lỗi | 15/28 thư viện native là bản dựng sẵn của bên thứ ba (Hermes, ML Kit…) đã bị strip | Cảnh báo không chặn gửi duyệt; ký hiệu của 13 thư viện tự build đã có trong AAB |
+| "Xoá các thay đổi" ở Tổng quan xuất bản | Nút này xoá **tất cả** thay đổi trong nhóm, kể cả bản Closed testing | Không dùng để gỡ một mục lẻ. Muốn đổi quốc gia production thì sửa ở Phát hành công khai → Quốc gia/khu vực |
+| Tài khoản cho người review | Phải có hướng dẫn tiếng Anh, đăng nhập email + mật khẩu không OTP, có Pro | Tài khoản: xem memory `play-review-account`. Claude không đặt và không nhập mật khẩu; chủ dự án tự làm |
+
+## 6. Production (chỉ khi chủ dự án yêu cầu rõ)
+- Quốc gia: chỉ Việt Nam (gói đăng ký chỉ có giá VND).
+- Tạo bản ở Phát hành công khai → Tạo bản phát hành mới → "Thêm từ thư viện" với đúng versionCode đã qua Internal và Closed testing; ghi chú vi và en-US.
+- Ở Tổng quan xuất bản, chờ "kiểm tra nhanh" chạy xong (tối đa khoảng 15 phút), xử lý hết vấn đề rồi mới bấm "Gửi … thay đổi để được xem xét".

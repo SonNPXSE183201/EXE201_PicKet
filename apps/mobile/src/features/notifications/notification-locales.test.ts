@@ -16,15 +16,15 @@ test("notification labels localize without changing the supplied merchant title"
  assert.throws(()=>reminderLabel("bill",title,"not-a-date","en"));
 });
 test("native copy is generic and the requested language is isolated per delivery",async()=>{
- assert.equal(privateReminderCopy("budget","en").title,"Picket · Budget");
- assert.equal(privateReminderCopy("reminder","vi").title,"Picket · Nhắc việc");
+ assert.equal(privateReminderCopy("budget","en").title,"PicKet · Budget");
+ assert.equal(privateReminderCopy("reminder","vi").title,"PicKet · Nhắc việc");
  const shown:string[]=[];
  const delivery=createBudgetNoticeDelivery<"vi"|"en">({read:async()=>[],save:async()=>undefined,show:async(owner,_id,_current,language)=>{shown.push(owner+":"+language);}});
  await Promise.all([delivery.deliver("a",["budget:food:2026-10"],()=>true,"en"),delivery.deliver("b",["budget:food:2026-10"],()=>true,"vi")]);
  await delivery.deliver("a",["budget:food:2026-10"],()=>true,"vi");
  assert.deepEqual(shown,["a:en","b:vi"]);
  assert.equal(createAppI18n("en").t("Thông báo",{ns:"notifications"}),"Notifications");
- assert.equal(privateReminderCopy("budget").title,"Picket · Ngân sách");
+ assert.equal(privateReminderCopy("budget").title,"PicKet · Ngân sách");
  assert.match(privateReminderCopy("reminder","en").body,/A payment or keepsake deadline/);
 });
 test("notification screen uses complete translations for visible and controlled copy",()=>{

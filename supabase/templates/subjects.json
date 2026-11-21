@@ -1,0 +1,8 @@
+{
+  "confirm-signup": "Mã xác minh PicKet: {{ .Token }}",
+  "magic-link-or-otp": "Mã xác minh PicKet: {{ .Token }}",
+  "reset-password": "Đặt lại mật khẩu PicKet",
+  "change-email-address": "Xác nhận email mới cho PicKet",
+  "reauthentication": "Mã xác nhận thao tác PicKet: {{ .Token }}",
+  "invite-user": "Bạn được mời dùng PicKet"
+}

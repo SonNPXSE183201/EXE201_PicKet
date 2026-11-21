@@ -53,6 +53,17 @@ export function canViewAdminSection(
   // This page manages only the signed-in user's MFA, not security admin data.
   if (permissions && section === 'security') return permissions.length > 0;
   const managed: Partial<Record<AdminSection, string>> = { finance: 'revenue.read', permissions: 'permissions.manage', promotions: 'promotions.manage', announcements: 'announcements.manage' };
-  if (permissions) return permissions.includes(managed[section] ?? `${section}.read`);
+  if (permissions) {
+    // Sign-up verification channels live on the settings page; that permission alone opens it.
+    if (section === 'settings' && permissions.includes(SIGNUP_VERIFICATION_PERMISSION)) return true;
+    return permissions.includes(managed[section] ?? `${section}.read`);
+  }
   return role === 'owner'; // Bootstrap compatibility only; normal calls pass database permissions.
+}
+
+/** Database permission for the "Xác thực đăng ký" card (email / SMS OTP channels). */
+export const SIGNUP_VERIFICATION_PERMISSION = 'auth.verification.manage';
+
+export function canManageSignupVerification(role: string | null, permissions?: readonly string[]) {
+  return permissions ? permissions.includes(SIGNUP_VERIFICATION_PERMISSION) : role === 'owner';
 }

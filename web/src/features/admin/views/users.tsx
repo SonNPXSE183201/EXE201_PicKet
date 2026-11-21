@@ -8,6 +8,7 @@ import { AdminIcon } from "../ui/admin-icon";
 import { AdminPager } from "../ui/admin-pager";
 import { Button, Card, Chip, Drawer, Field, Person, Table, Timeline, formatDate, formatDateTime, formatNumber, relativeTime, toneFor, type ChipTone, type Column } from "../ui/paper";
 import { can, label, num, rows, sectionHref, str, type Row, type ViewProps } from "./shared";
+import { userPhone, userPhoneVerified, userVerified } from "../user-contact";
 import "./views.css";
 
 const PAGE_SIZE = 25;
@@ -24,8 +25,9 @@ export function UsersView(p: ViewProps) {
 
   const columns: Column<Row>[] = [
     { key: "email", label: "Email", render: (u) => <Person name={identity(u)} sub={<span className="av-user-id">ID {str(u.id) || "—"}</span>} tone={toneFor(identity(u))} href={sectionHref(base, query, { userId: str(u.id) })} /> },
+    { key: "phone", label: "Số điện thoại", render: (u) => userPhone(u) || "—" },
     { key: "created_at", label: "Ngày đăng ký", render: (u) => formatDate(u.created_at) },
-    { key: "email_confirmed_at", label: "Email", render: (u) => (u.email_confirmed_at ? <Chip tone="success">Đã xác minh</Chip> : <Chip tone="warning">Chưa xác minh</Chip>) },
+    { key: "email_confirmed_at", label: "Xác minh", render: (u) => (userVerified(u) ? <Chip tone="success">Đã xác minh</Chip> : <Chip tone="warning">Chưa xác minh</Chip>) },
     { key: "last_activity_at", label: "Hoạt động gần nhất", muted: true, render: (u) => relativeTime(u.last_activity_at ?? u.last_sign_in_at) },
     { key: "app_version", label: "Phiên bản", render: (u) => str(u.app_version) || "—" },
     { key: "play_tier", label: "Gói Play", render: (u) => tierChip(u) },
@@ -87,9 +89,15 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
         <div>
           <b>{name}</b>
           <small className="av-user-id">User ID {userId || "—"}{user?.created_at ? ` · đăng ký ${formatDate(user.created_at)}` : ""}</small>
+          {user && (str(user.email) || userPhone(user)) && (
+            <small className="av-user-id">
+              {str(user.email) ? `Email ${str(user.email)}` : ""}{str(user.email) && userPhone(user) ? " · " : ""}
+              {userPhone(user) ? `SĐT ${userPhone(user)}${userPhoneVerified(user) ? "" : " (chưa xác minh)"}` : ""}
+            </small>
+          )}
           {user && (
             <span className="ap-row" style={{ gap: 6, marginTop: 6 }}>
-              {user.email_confirmed_at ? <Chip tone="success">Đã xác minh</Chip> : <Chip tone="warning">Chưa xác minh</Chip>}
+              {userVerified(user) ? <Chip tone="success">Đã xác minh</Chip> : <Chip tone="warning">Chưa xác minh</Chip>}
               {str(user.play_tier) && str(user.play_tier) !== "free" && <Chip tone="coral">{label(user.play_tier)} · Google Play</Chip>}
               {str(user.payos_tier) && <Chip tone="lilac">{label(user.payos_tier)} · PayOS</Chip>}
               {str(user.grant) && <Chip tone="lilac">Gói hỗ trợ {label(user.grant)}</Chip>}
@@ -177,7 +185,7 @@ function UserDrawer({ p, user, closeHref }: { p: ViewProps; user?: Row; closeHre
   );
 }
 
-const identity = (u: Row) => str(u.email) || str(u.phone) || str(u.id);
+const identity = (u: Row) => str(u.email) || userPhone(u) || str(u.id);
 const isSuspended = (u: Row) => Boolean(u.banned_until) && Date.parse(str(u.banned_until)) > Date.now();
 function tierChip(u: Row) {
   const tier = str(u.play_tier) || str(u.payos_tier) || str(u.grant) || "free";

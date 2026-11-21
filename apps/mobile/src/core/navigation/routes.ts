@@ -7,6 +7,11 @@ export const routes = {
   register: "/(auth)/register" as Href,
   verifyEmail: (email: string) =>
     ({ pathname: "/(auth)/verify-email", params: { email } }) as unknown as Href,
+  verifyCode: (channel: "email" | "phone", destination: string, purpose?: "reset") =>
+    ({ pathname: "/(auth)/verify-code", params: purpose ? { channel, destination, purpose } : { channel, destination } }) as unknown as Href,
+  createPassword: "/(auth)/create-password" as Href,
+  /** New password after SMS recovery (forgot-password → verify-code → here). */
+  resetPasswordByPhone: ({ pathname: "/(auth)/create-password", params: { purpose: "reset" } }) as unknown as Href,
   forgotPassword: "/(auth)/forgot-password" as Href,
   authCallback: "/auth/callback" as Href,
   resetPassword: "/auth/reset-password" as Href,

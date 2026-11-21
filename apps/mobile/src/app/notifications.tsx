@@ -262,7 +262,7 @@ export default function NotificationsScreen() {
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{item.label}</Text>
                   <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
-                    {item.notifyAt ? tx("Nhắc hẹn định kỳ Picket") : tx("Kiểm tra chi tiêu trong ngày của bạn")}
+                    {item.notifyAt ? tx("Nhắc hẹn định kỳ PicKet") : tx("Kiểm tra chi tiêu trong ngày của bạn")}
                   </Text>
                 </View>
                 <View style={{ alignItems: "flex-end", gap: 6 }}>

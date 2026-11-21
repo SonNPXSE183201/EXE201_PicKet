@@ -34,7 +34,7 @@ export default async function ProfilePage({ searchParams }: PageProps) {
     <>
       <FinancePageHeader
         title="Cá nhân"
-        description="Tùy chỉnh Picket theo cách bạn quản lý tiền mỗi ngày."
+        description="Tùy chỉnh PicKet theo cách bạn quản lý tiền mỗi ngày."
       />
       <nav className="feature-hub" aria-label="Tiện ích cá nhân">
         {[

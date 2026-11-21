@@ -26,8 +26,8 @@ end$$;
 reset role;
 
 do $$declare l jsonb; c jsonb; v jsonb;begin
- l:=public.auth_phone_lookup('+84912345678');
- if l->>'email'<>'phone-a@example.test' then raise exception 'attached phone not resolved: %',l;end if;
+ -- An attached but unverified phone must not resolve for password sign-in.
+ if public.auth_phone_lookup('+84912345678')<>'{}'::jsonb then raise exception 'unverified phone resolved';end if;
  l:=public.auth_phone_lookup('+84987654321');
  if l->>'authPhone'<>'84987654321' or l->>'email' is not null then raise exception 'legacy phone not resolved: %',l;end if;
  if public.auth_phone_lookup('+84900000000')<>'{}'::jsonb then raise exception 'unknown phone resolved';end if;
@@ -44,6 +44,8 @@ do $$declare l jsonb; c jsonb; v jsonb;begin
  if not (v->>'ok')::boolean then raise exception 'right code rejected: %',v;end if;
  if (public.otp_verify((c->>'id')::uuid,repeat('1',64),'e9000000-0000-4000-8000-000000000001')->>'ok')::boolean then raise exception 'challenge reused';end if;
  if (public.contact_mark_phone_verified('e9000000-0000-4000-8000-000000000001','+84912345678')->>'verified_via')<>'sms' then raise exception 'not marked verified';end if;
+ l:=public.auth_phone_lookup('+84912345678');
+ if l->>'email'<>'phone-a@example.test' then raise exception 'verified phone not resolved: %',l;end if;
 end$$;
 -- Banned accounts cannot be resolved.
 do $$begin

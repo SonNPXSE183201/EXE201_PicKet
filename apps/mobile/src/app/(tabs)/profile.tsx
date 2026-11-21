@@ -24,7 +24,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useAnalyticsConsent } from "@/features/settings/analytics-consent";
 import { useProfile } from "@/features/profile/profile-context";
 import { useDeviceLock } from "@/features/security/device-lock";
-import { AppUpdateSection, InstalledVersion } from "@/features/updates/app-update-section";
+import { InstalledVersion } from "@/features/updates/installed-version";
 import { pendingMutationCount, mutationConflictCount } from "@/core/sync/mutation-queue";
 import { signOutCopy } from "@/features/profile/sign-out-copy";
 import { useAppTheme } from "@/features/settings/appearance-provider";
@@ -195,7 +195,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     }
   }
 
-  const tierLabel = entitlements?.tier === "pro" ? "Picket PRO" : entitlements?.tier === "plus" ? "Picket PLUS" : "Picket Miễn phí";
+  const tierLabel = entitlements?.tier === "pro" ? "PicKet PRO" : entitlements?.tier === "plus" ? "PicKet PLUS" : "PicKet Miễn phí";
   const tierSummary = entitlements?.tier === "pro"
     ? "Hạn mức tối đa · 100 lượt OCR Cloud/ngày"
     : entitlements?.tier === "plus"
@@ -219,7 +219,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         >
           <View style={styles.avatar}><Text style={styles.avatarText}>{initial}</Text></View>
           <View style={styles.profileTextCol}>
-            <Text numberOfLines={1} style={styles.profileName}>{profile.displayName || t("Bạn của Picket")}</Text>
+            <Text numberOfLines={1} style={styles.profileName}>{profile.displayName || t("Bạn của PicKet")}</Text>
             <Text numberOfLines={1} style={styles.profileSub}>
               {localMode || !session?.user.email ? t("Lưu riêng an toàn trên máy") : session.user.email}
             </Text>
@@ -349,9 +349,8 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
               <Text style={styles.legalText}>{hub.support}</Text>
             </Pressable>
           </View>
+          <InstalledVersion style={styles.version} />
         </View>
-        <AppUpdateSection />
-        <InstalledVersion />
       </ScrollView>
 
       {/* Edit Profile Sheet (G17) */}
@@ -413,15 +412,10 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
       >
         <Text style={styles.description}>{signOutPrompt ? t(signOutPrompt.copy) : ""}</Text>
         <View style={styles.confirmActions}>
+          {/* Stacked full-width buttons: long labels ("Thoát chế độ trên máy") never overflow. */}
           <Pressable
             disabled={busy}
-            onPress={() => setSignOutPrompt(null)}
-            style={[styles.cancelBtn, styles.confirmButton]}
-          >
-            <Text style={styles.cancelBtnText}>{t("Hủy")}</Text>
-          </Pressable>
-          <Pressable
-            disabled={busy}
+            accessibilityRole="button"
             accessibilityState={{ busy, disabled: busy }}
             onPress={() => void performSignOut()}
             style={[styles.confirmPrimaryBtn, styles.confirmButton]}
@@ -431,6 +425,14 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
             ) : (
               <Text style={styles.confirmPrimaryText}>{localMode ? t("Thoát chế độ trên máy") : t("Đăng xuất")}</Text>
             )}
+          </Pressable>
+          <Pressable
+            disabled={busy}
+            accessibilityRole="button"
+            onPress={() => setSignOutPrompt(null)}
+            style={[styles.cancelBtn, styles.confirmButton]}
+          >
+            <Text style={styles.cancelBtnText}>{t("Hủy")}</Text>
           </Pressable>
         </View>
       </ActionSheet>
@@ -680,7 +682,10 @@ const createStyles = (colors: MobileThemeColors) =>
     planLinkText: { color: colors.primary, fontSize: 12, fontWeight: "700", lineHeight: 18 },
     planArt: { height: 94, position: "absolute", right: -6, top: 24, width: 112 },
     planCard: { backgroundColor: colors.paper, borderRadius: 18, gap: 8, padding: 16 },
-    footer: { alignItems: "center", gap: 6 },
+    // The closing actions, legal links and version read as one compact block.
+    footer: { alignItems: "center", gap: 0, marginTop: -14 },
+    // The version reads as the last line of the footer, just under the compact legal row.
+    version: { paddingVertical: 0, marginTop: 6 },
     editAvatarRow: { alignItems: "center", flexDirection: "row", gap: 16, marginBottom: 16 },
     editAvatar: { alignItems: "center", backgroundColor: colors.pocketLilac, borderRadius: 30, height: 60, justifyContent: "center", width: 60 },
     editAvatarText: { color: colors.primary, fontSize: 22, fontWeight: "800" },
@@ -692,10 +697,11 @@ const createStyles = (colors: MobileThemeColors) =>
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      marginTop: 10,
     },
+    // A compact 28 dp row; the shared pressable widens the touch area to 48 dp with hitSlop.
     legalLink: {
-      paddingVertical: 6,
+      height: 28,
+      justifyContent: "center",
     },
     legalText: {
       color: colors.muted,
@@ -801,13 +807,14 @@ const createStyles = (colors: MobileThemeColors) =>
       fontWeight: "700",
     },
     confirmActions: {
-      flexDirection: "row",
-      gap: 12,
+      gap: 10,
       marginTop: 16,
     },
     confirmButton: {
-      flex: 1,
-      minHeight: 46,
+      alignSelf: "stretch",
+      minHeight: 48,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
       borderRadius: paperShape.button,
       alignItems: "center",
       justifyContent: "center",
@@ -818,6 +825,7 @@ const createStyles = (colors: MobileThemeColors) =>
       backgroundColor: colors.surface,
     },
     cancelBtnText: {
+      textAlign: "center",
       color: colors.ink,
       fontSize: 15,
       fontWeight: "600",
@@ -826,6 +834,7 @@ const createStyles = (colors: MobileThemeColors) =>
       backgroundColor: colors.mauve,
     },
     confirmPrimaryText: {
+      textAlign: "center",
       color: colors.onPrimary,
       fontSize: 15,
       fontWeight: "700",

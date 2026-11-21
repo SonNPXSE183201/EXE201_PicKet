@@ -41,3 +41,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+google-services.json
+
+# Firebase (SMS sign-up); provided per machine/CI, never committed
+google-services.json

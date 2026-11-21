@@ -90,6 +90,8 @@ export interface PicketApiClientOptions {
 
 type PicketRequestInit = RequestInit & { timeoutMs?: number };
 
+export type SignupVerification={email:boolean;sms:boolean;smsProvider:'firebase'};
+export type AdminVerificationSettings={settings:{emailEnabled:boolean;smsEnabled:boolean;smsProvider:'firebase';smsDailyLimit:number;revision:number;updatedAt:string};history:{before:Record<string,unknown>;after:Record<string,unknown>;reason:string;createdAt:string}[]};
 export class ApiError extends Error {
   readonly status: number;
   readonly details?: unknown;
@@ -877,10 +879,35 @@ export class PicketApiClient {
   phoneLogin(phone:string,password:string):Promise<{access_token:string;refresh_token:string;expires_in?:number;expires_at?:number;token_type?:string}> {
     return this.request('/v1/auth/phone-login',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({phone,password})});
   }
-  authChannels():Promise<{email:boolean;sms:boolean;order:string[]}> {
+  /** Sign-up verification channels set by admins (`verification`); email is the default. */
+  authChannels():Promise<{email:boolean;sms:boolean;order:string[];verification?:SignupVerification}> {
     return this.request('/v1/auth/channels',{});
   }
-  accountPhone(accessToken:string,body:{phone:string;action?:'attach'|'send'|'verify';challengeId?:string;code?:string}):Promise<Record<string,unknown>> {
+  /** SMS sign-up: `start` before Firebase sends the 6-digit code, `complete` with the Firebase ID token and the new password. */
+  /** Email sign-up pre-check before Supabase sends the code: 409 when the address already has an account. */
+  emailSignupStart(email:string):Promise<{ok:true}> {
+    return this.request('/v1/auth/email-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'start',email})});
+  }
+  phoneSignupStart(phone:string):Promise<{ok:true}> {
+    return this.request('/v1/auth/phone-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'start',phone})});
+  }
+  phoneSignupComplete(phone:string,idToken:string,password:string):Promise<{access_token:string;refresh_token:string;expires_in?:number;expires_at?:number;token_type?:string}> {
+    return this.request('/v1/auth/phone-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'complete',phone,idToken,password})});
+  }
+  /** Password recovery by SMS for accounts with a verified phone: `reset-start` before Firebase sends the code, then `reset` with the Firebase ID token and the new password. */
+  phoneResetStart(phone:string):Promise<{ok:true}> {
+    return this.request('/v1/auth/phone-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'reset-start',phone})});
+  }
+  phoneReset(phone:string,idToken:string,password:string):Promise<{ok:true}> {
+    return this.request('/v1/auth/phone-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'reset',phone,idToken,password})});
+  }
+  adminVerificationSettings<T=AdminVerificationSettings>(accessToken:string):Promise<T> {
+    return this.request('/v1/admin/verification-settings',{headers:this.authHeaders(accessToken)});
+  }
+  saveVerificationSettings(accessToken:string,body:{emailEnabled:boolean;smsEnabled:boolean;smsDailyLimit:number;revision:number;reason:string}):Promise<AdminVerificationSettings['settings']> {
+    return this.request('/v1/admin/verification-settings',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
+  }
+  accountPhone(accessToken:string,body:{phone:string;action?:'attach'|'send'|'verify'|'firebase';challengeId?:string;code?:string;idToken?:string}):Promise<Record<string,unknown>> {
     return this.request('/v1/account/phone',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
   }
   announcements(query:{channel:'play'|'apk'|'web';versionCode?:number;locale?:string},accessToken?:string|null):Promise<import('@picket/domain').AnnouncementFeed> {

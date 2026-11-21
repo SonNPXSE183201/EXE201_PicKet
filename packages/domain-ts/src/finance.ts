@@ -417,12 +417,30 @@ export type OcrFallbackJobStatus =
   | "cancelled"
   | "expired";
 
+/** One PaddleOCR text region. Geometry/confidence are optional for older results. */
+export interface OcrTextLine {
+  text: string;
+  confidence?: number;
+  /** Polygon points in source image pixels, in PaddleOCR order. */
+  box?: [number, number][];
+}
+
+/** OCR result fields remain optional so previously stored job results stay valid. */
+export interface OcrFallbackResult extends Record<string, unknown> {
+  rawText?: string;
+  merchant?: string | null;
+  amount?: number | null;
+  date?: string | null;
+  confidence?: number;
+  lines?: OcrTextLine[];
+}
+
 export interface OcrFallbackJob {
   id: EntityId;
   storagePath: string;
   localConfidence: number;
   status: OcrFallbackJobStatus;
-  result: Record<string, unknown> | null;
+  result: OcrFallbackResult | null;
   errorCode: string | null;
   createdAt: IsoDateTime;
   updatedAt: IsoDateTime;

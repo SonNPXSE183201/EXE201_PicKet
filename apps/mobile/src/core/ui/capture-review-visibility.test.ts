@@ -64,7 +64,7 @@ function render(eligible: boolean, recognizing = false, lineItems: ReceiptDraftL
  const context:Record<string,unknown>={exports,element:(type:string,props:Record<string,unknown>,...children:unknown[])=>({type,props:props??{},children}),Fragment:"Fragment",
   styles:{},colors:{},currencyWarning,imageUri:"file:///receipt.jpg",receiptEligible:eligible,isRecognizing:recognizing,isContinuing:false,isQueueingFallback:false,
   message:"Không nhận diện được hóa đơn hợp lệ.",ocrDurationMs:null,__DEV__:false,lineItems,formatMoney:(amount:number)=>`${amount} VND`,serverFallbackEnabled:false,localMode:false,needsFallback:false,fallbackStatus:null,attachReceipt:false,
-  title:"",amount:"",purchasedAt:"2026-10-26",hasObservedDate,calendarReceiptDay:()=>"2026-10-26",setTitle:noop,setAmount:noop,
+  title:"",titleFocused:false,setTitleFocused:noop,amount:"",purchasedAt:"2026-10-26",hasObservedDate,calendarReceiptDay:()=>"2026-10-26",setTitle:noop,setAmount:noop,
  };
  context.figmaType=new Proxy({},{get:()=>({})});context.receiptArt=1;context.busyAny=recognizing;context.reviewCount=eligible?1:0;context.pinnedPhoto="PinnedPhoto";
  for(const name of ["SafeAreaView","ScrollView","TopAppBar","Text","Image","View","AppIcon","Pressable","ActivityIndicator","TextInput","Chip","Overline","ReceiptDivider","ReceiptSheet"])context[name]=name;
@@ -113,7 +113,7 @@ test('foreign currency rows retain numeric evidence without VND labels or an ena
 });
 
 test('ineligible foreign currency receipt still displays its currency warning while hiding transaction inputs',()=>{
- const warning='Hóa đơn có dấu hiệu dùng ngoại tệ. Picket chưa hỗ trợ chuyển hóa đơn này thành giao dịch VND; không tự quy đổi số tiền.';
+ const warning='Hóa đơn có dấu hiệu dùng ngoại tệ. PicKet chưa hỗ trợ chuyển hóa đơn này thành giao dịch VND; không tự quy đổi số tiền.';
  const result=render(false,false,[],warning);
  assert.match(result.text,/Hóa đơn có dấu hiệu dùng ngoại tệ/);
  assert.equal(result.nodes.filter(node=>node.type==='TextInput').length,0);

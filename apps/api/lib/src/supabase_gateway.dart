@@ -446,6 +446,8 @@ class SupabaseGateway {
       'billing_plan_summary',
       'plan_limits_list',
       'plan_limits_save',
+      'auth_verification_settings_get',
+      'auth_verification_settings_save',
       'revenue_entries',
       'revenue_adjust',
       'promotion_list',
@@ -488,6 +490,24 @@ class SupabaseGateway {
             HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
           },
           body: '{}',
+        )
+        .timeout(const Duration(seconds: 10));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    return value is Map<String, dynamic> ? value : null;
+  }
+
+  /// Public update policy for the in-app updater (`play` or `apk`).
+  Future<Map<String, dynamic>?> releasePolicy(String channel) async {
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/public_release_policy'),
+          headers: {
+            'apikey': config.supabasePublishableKey,
+            HttpHeaders.acceptHeader: ContentType.json.mimeType,
+            HttpHeaders.contentTypeHeader: ContentType.json.mimeType,
+          },
+          body: jsonEncode({'p_channel': channel}),
         )
         .timeout(const Duration(seconds: 10));
     _ensureSuccess(response);

@@ -61,8 +61,8 @@ export function ResetPasswordForm() {
   return (
     <div className="auth-card">
       <div className="brand auth-brand">
-        <Image src="/picket-logo.png" alt="" width={48} height={48} />
-        <span>Picket</span>
+        <Image src="/picket-logo-192.png" alt="" width={48} height={48} />
+        <span>PicKet</span>
       </div>
       <p className="eyebrow">Bảo mật tài khoản</p>
       <h1 className="auth-title">Đặt mật khẩu mới</h1>

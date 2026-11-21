@@ -3,8 +3,9 @@
 export function receiptCurrencyWarning(rawText: string | null): string | null {
   if (!rawText) return null;
   const codes = 'AED|AFN|AMD|ANG|AOA|ARS|AUD|AWG|AZN|BAM|BBD|BDT|BGN|BHD|BIF|BMD|BND|BRL|BSD|BTN|BWP|BYN|BZD|CAD|CDF|CHF|CLP|CNH|CNY|COP|CRC|CVE|CZK|DJF|DKK|DOP|DZD|EGP|ERN|ETB|EUR|FJD|FKP|GBP|GHS|GIP|GMD|GNF|GTQ|GYD|HKD|HNL|HRK|HTG|HUF|IDR|ILS|INR|IQD|IRR|ISK|JMD|JOD|JPY|KES|KGS|KHR|KMF|KPW|KRW|KWD|KYD|KZT|LAK|LBP|LKR|LRD|LSL|LYD|MDL|MGA|MKD|MMK|MNT|MRU|MUR|MVR|MWK|MXN|MYR|MZN|NAD|NGN|NIO|NOK|NPR|NZD|OMR|PAB|PGK|PHP|PKR|PLN|PYG|QAR|RMB|RSD|RUB|RWF|SAR|SBD|SCR|SDG|SEK|SGD|SHP|SLE|SLL|SRD|SSP|STN|SYP|SZL|THB|TJS|TMT|TND|TTD|TWD|TZS|UAH|UGX|USD|UYU|UZS|VES|VUV|WST|XAF|XCD|XOF|XPF|YER|ZAR|ZMW|ZWG|ZWL';
-  if (new RegExp(`(?:\\b(?:${codes})\\s*[:.]?\\s*\\d|\\d[\\d., ]*\\s*\\b(?:${codes})\\b|\\b(?:Rp|RM|Kr|Fr|zł|Kč|Ft|lei)\\.?\\s*\\d|\\d[\\d., ]*\\s*\\b(?:Rp|RM|Kr|Fr|zł|Kč|Ft|lei)\\.?|(?:(?!₫)\\p{Sc})\\s*\\d|\\d[\\d., ]*\\s*(?:(?!₫)\\p{Sc}))`, 'iu').test(rawText) || /(?:\b(?:ALL|BOB|CUP|GEL|MAD|MOP|PEN|RON|SOS|SVC|TOP|TRY)\s*[:.]?\s*\d|\d[\d., ]*\s*\b(?:ALL|BOB|CUP|GEL|MAD|MOP|PEN|RON|SOS|SVC|TOP|TRY)\b)/.test(rawText)) {
-    return 'Hóa đơn có dấu hiệu dùng ngoại tệ. Picket chưa hỗ trợ chuyển hóa đơn này thành giao dịch VND; không tự quy đổi số tiền.';
+  // Spaces only, never a newline: a number ending one line and a word starting the next are unrelated.
+  if (new RegExp(`(?:\\b(?:${codes})\[ \t]*[:.]?\[ \t]*\\d|\\d[\\d., ]*\[ \t]*\\b(?:${codes})\\b|\\b(?:Rp|RM|Kr|Fr|zł|Kč|Ft|lei)\\.?\[ \t]*\\d|\\d[\\d., ]*\[ \t]*\\b(?:Rp|RM|Kr|Fr|zł|Kč|Ft|lei)\\.?|(?:(?!₫)\\p{Sc})\[ \t]*\\d|\\d[\\d., ]*\[ \t]*(?:(?!₫)\\p{Sc}))`, 'iu').test(rawText) || /(?:\b(?:ALL|BOB|CUP|GEL|MAD|MOP|PEN|RON|SOS|SVC|TOP|TRY)[ \t]*[:.]?[ \t]*\d|\d[\d., ]*[ \t]*\b(?:ALL|BOB|CUP|GEL|MAD|MOP|PEN|RON|SOS|SVC|TOP|TRY)\b)/.test(rawText)) {
+    return 'Hóa đơn có dấu hiệu dùng ngoại tệ. PicKet chưa hỗ trợ chuyển hóa đơn này thành giao dịch VND; không tự quy đổi số tiền.';
   }
   const hasDecimalPrice = rawText.split(/\r?\n/).some(line => {
     if (/(?:total|amount\s*due|tổng|thanh\s*toán|tong|thanh\s*toan|đơn\s*giá|don\s*gia|thành\s*tiền|thanh\s*tien)/i.test(line)

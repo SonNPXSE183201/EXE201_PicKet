@@ -33,7 +33,10 @@ import { ScheduleSync } from "@/features/cashflow/schedule-sync";
 import * as SplashScreen from "expo-splash-screen";
 import { AnnouncementsProvider } from "@/features/announcements/announcements-context";
 import { MaintenanceGate } from "@/features/announcements/announcement-views";
+import { AppUpdateProvider } from "@/features/updates/use-app-update";
+import { AppUpdateGate } from "@/features/updates/app-update-gate";
 import { PendingPhoneAttach } from "@/features/auth/pending-phone-attach";
+import { CreatePasswordScreen } from "@/features/auth/create-password-screen";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -77,16 +80,25 @@ export default function RootLayout() {
 function SessionReadyTree() {
   const { theme, colors } = useAppTheme();
   const { t } = useTranslation("common");
-  const { loading } = useAuth();
+  const { loading, passwordSetupRequired } = useAuth();
   if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }}>
-    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.link} />
+    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên PicKet")} color={colors.link} />
   </View>;
+  // Email OTP sign-up is unfinished until a password exists: no route (tabs,
+  // deep links, data providers) mounts before it; signing out stays possible.
+  if (passwordSetupRequired) return <MaintenanceGate>
+    <StatusBar style={theme === "dark" ? "light" : "dark"} />
+    <CreatePasswordScreen />
+  </MaintenanceGate>;
   return (
         <MaintenanceGate><MobileAccessBoundary><DeviceLockProvider>
           <SessionProviders>
-            <StatusBar style={theme === "dark" ? "light" : "dark"} />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
-            <NavigationShell />
+            <AppUpdateProvider>
+              <StatusBar style={theme === "dark" ? "light" : "dark"} />
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
+              <NavigationShell />
+              <AppUpdateGate />
+            </AppUpdateProvider>
           </SessionProviders>
         </DeviceLockProvider></MobileAccessBoundary></MaintenanceGate>
   );

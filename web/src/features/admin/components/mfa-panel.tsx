@@ -63,7 +63,7 @@ export function MfaPanel() {
     try {
       const { data, error } = await client.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: `Picket Admin ${new Date().toISOString()}`,
+        friendlyName: `PicKet Admin ${new Date().toISOString()}`,
       });
       if (error || !data) throw new Error();
       setFactor(data.id);
@@ -124,7 +124,7 @@ export function MfaPanel() {
             <span className="ap-eyebrow">Xác thực hai bước</span>
             <b>{aal2 ? "MFA đang bật cho phiên này" : factor ? "Cần xác minh MFA cho phiên này" : "Chưa thiết lập MFA"}</b>
             <p>
-              Dùng ứng dụng xác thực trên thiết bị của bạn. Picket yêu cầu MFA trước khi thay đổi dữ liệu quản trị.
+              Dùng ứng dụng xác thực trên thiết bị của bạn. PicKet yêu cầu MFA trước khi thay đổi dữ liệu quản trị.
             </p>
           </div>
         </div>
@@ -160,13 +160,13 @@ export function MfaPanel() {
       <Card eyebrow={factor ? (qr ? "Thêm thiết bị" : "Xác minh lại") : "Thiết lập"} title={qr ? "Quét mã bằng ứng dụng xác thực" : factor ? "Nhập mã xác thực" : "Bật xác thực hai bước"}>
         {showEnroll && (
           <>
-            <p className="ap-card-note">Bạn chưa có ứng dụng xác thực. Tạo mã QR để thêm Picket Admin vào ứng dụng của bạn.</p>
+            <p className="ap-card-note">Bạn chưa có ứng dụng xác thực. Tạo mã QR để thêm PicKet Admin vào ứng dụng của bạn.</p>
             <button className="ap-btn is-block" type="button" disabled={busy} onClick={enroll}>Thiết lập MFA</button>
           </>
         )}
         {qr && (
           <div className="am-qr">
-            <Image unoptimized src={qr} width={240} height={240} alt="Mã QR để thêm Picket Admin vào ứng dụng xác thực" />
+            <Image unoptimized src={qr} width={240} height={240} alt="Mã QR để thêm PicKet Admin vào ứng dụng xác thực" />
             {secret && <p>Hoặc nhập khoá: <code>{secret.replace(/(.{4})/g, "$1 ").trim()}</code></p>}
           </div>
         )}
@@ -193,7 +193,7 @@ export function MfaPanel() {
                   />
                 ))}
               </div>
-              <p id="mfa-otp-help" className="ap-card-note">Mở ứng dụng xác thực và nhập mã đang hiển thị cho Picket Admin.</p>
+              <p id="mfa-otp-help" className="ap-card-note">Mở ứng dụng xác thực và nhập mã đang hiển thị cho PicKet Admin.</p>
               <button className="ap-btn is-block" type="submit" disabled={busy || code.length !== DIGITS}>
                 {busy ? "Đang xác minh…" : "Xác minh MFA"}
               </button>

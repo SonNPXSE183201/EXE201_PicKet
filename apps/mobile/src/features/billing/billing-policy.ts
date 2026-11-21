@@ -58,7 +58,7 @@ export async function verifyAndFinishPurchase(
 export type PlanTier = "plus" | "pro";
 const TIER_RANK: Record<string, number> = { free: 0, plus: 1, pro: 2 };
 
-/** Tier sold by a Picket product id (picket_pro_* is Pro, every other Picket plan is Plus). */
+/** Tier sold by a PicKet product id (picket_pro_* is Pro, every other PicKet plan is Plus). */
 export function productTier(productId: string): PlanTier {
   return productId.startsWith("picket_pro_") ? "pro" : "plus";
 }

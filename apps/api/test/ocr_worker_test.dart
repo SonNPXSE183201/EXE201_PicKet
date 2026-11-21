@@ -89,11 +89,59 @@ void main() {
       'amount': 45000,
       'date': '2026-10-09T00:00:00.000Z',
       'confidence': 0.91,
-      'lines': <Object>[],
+      'lines': [
+        {
+          'text': 'TOTAL 45000',
+          'confidence': 0.88,
+          'box': [
+            [10, 20],
+            [100, 20],
+            [100, 40],
+            [10, 40],
+          ],
+        },
+      ],
     });
     expect(result.value['provider'], 'pp-ocr');
     expect(result.value['amount'], 45000);
     expect(jsonEncode(result.value), contains('PICKET STORE'));
+    expect(((result.value['lines'] as List).single as Map)['box'], [
+      [10.0, 20.0],
+      [100.0, 20.0],
+      [100.0, 40.0],
+      [10.0, 40.0],
+    ]);
+    expect(((result.value['lines'] as List).single as Map)['confidence'], 0.88);
+  });
+
+  test('PP-OCR result keeps legacy payloads without line geometry', () {
+    final result = PpOcrResult.fromJson({
+      'rawText': 'TOTAL 45000',
+      'merchant': null,
+      'amount': null,
+      'date': null,
+      'confidence': 0.5,
+    });
+    expect(result.value.containsKey('lines'), isFalse);
+  });
+
+  test('PP-OCR rejects malformed line geometry', () {
+    expect(
+      () => PpOcrResult.fromJson({
+        'rawText': 'x',
+        'confidence': 0.8,
+        'lines': [
+          {
+            'text': 'x',
+            'confidence': 0.8,
+            'box': [
+              [1, double.nan],
+            ],
+          },
+        ],
+      }),
+      throwsA(isA<OcrWorkerException>()),
+    );
   });
 
   test('PP-OCR result rejects unsafe output', () {
@@ -117,10 +165,10 @@ void main() {
     });
     final client = _InspectMultipartClient();
 
-    final result = await PpOcrProvider(config, client).recognize(
-      Uint8List.fromList([137, 80, 78, 71]),
-      'receipt.PNG',
-    );
+    final result = await PpOcrProvider(
+      config,
+      client,
+    ).recognize(Uint8List.fromList([137, 80, 78, 71]), 'receipt.PNG');
 
     expect(client.contentType, 'image/png');
     expect(client.language, 'vi,en');

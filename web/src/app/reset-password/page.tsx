@@ -10,7 +10,7 @@ export default async function ResetPasswordPage() {
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) redirect("/forgot-password");
   return (
-    <PaperAuthShell>
+    <PaperAuthShell story="forgot">
       <ResetPasswordForm />
     </PaperAuthShell>
   );

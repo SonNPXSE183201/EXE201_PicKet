@@ -117,7 +117,7 @@ export async function pollServerOcrFallback(input: {
   timeoutMs?: number;
   onStatus?(job: OcrFallbackJob): void;
 }): Promise<OcrFallbackJob> {
-  if (!picketApi) throw new Error("Cấu hình Picket API chưa sẵn sàng.");
+  if (!picketApi) throw new Error("Cấu hình PicKet API chưa sẵn sàng.");
   const deadline = Date.now() + (input.timeoutMs ?? 45000);
   let latest: OcrFallbackJob | null = null;
   while (Date.now() < deadline) {

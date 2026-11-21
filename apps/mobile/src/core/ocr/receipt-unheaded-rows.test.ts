@@ -30,3 +30,8 @@ test("headerless stacked quantities need explicit multiplication and matching li
   assert.equal(parseReceiptLines(row.map(x=>x.text==='34000'&&x.top===137?{...x,text:'35000'}:x)).lineItems.length,0);
   assert.equal(parseReceiptLines(row.filter(x=>x.top<200)).lineItems.length,0);
 });
+
+test("a grouped amount left of a name is never read as a decimal quantity (290,000 is not 290 x 1000)",()=>{
+  const r=parseReceiptLines([c('PICKET SHOP',20,0,180),c('290,000',20,100,70),c('Ao thun co tron',120,100,160),c('290,000',330,100,70),c('TOTAL',20,200),c('290,000',330,200,70)]);
+  assert.ok(r.lineItems.every(item=>item.unitPrice!==1000&&item.quantity!==290),JSON.stringify(r.lineItems));
+});

@@ -5,12 +5,12 @@ import "./compact.css";
 import "./user-workspace.css";
 
 export const metadata: Metadata = {
-  title: "Picket — Quản lý tài chính thông minh",
+  title: "PicKet — Quản lý tài chính thông minh",
   description: "Theo dõi chi tiêu, quét hóa đơn và lập kế hoạch tài chính.",
   icons: {
-    icon: "/picket-logo.png?v=picket-2",
-    shortcut: "/picket-logo.png?v=picket-2",
-    apple: "/picket-logo.png?v=picket-2",
+    icon: "/picket-logo-192.png?v=picket-3",
+    shortcut: "/picket-logo-192.png?v=picket-3",
+    apple: "/picket-logo-192.png?v=picket-3",
   },
 };
 

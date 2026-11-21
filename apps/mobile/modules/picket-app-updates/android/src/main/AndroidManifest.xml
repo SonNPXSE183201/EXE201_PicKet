@@ -1,9 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+  <!-- Lets Android 12+ apply a session update without a prompt once Picket is the installer of record. -->
+  <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
   <queries><intent><action android:name="android.intent.action.VIEW" /><data android:mimeType="application/vnd.android.package-archive" /></intent></queries>
   <application>
     <provider android:name="expo.modules.picketappupdates.PicketUpdateFileProvider" android:authorities="${applicationId}.picketupdates" android:exported="false" android:grantUriPermissions="true">
       <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/picket_update_paths" />
     </provider>
+    <receiver android:name="expo.modules.picketappupdates.PicketInstallResultReceiver" android:exported="false" />
   </application>
 </manifest>

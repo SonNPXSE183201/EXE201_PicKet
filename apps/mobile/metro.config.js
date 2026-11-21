@@ -23,6 +23,14 @@ config.watchFolders = [
   ]),
 ];
 
+// Matches files directly inside src/features/updates by suffix, so it also works
+// when the project is opened through a subst drive or a junction.
+function isInsideUpdates(originModulePath) {
+  return path
+    .dirname(path.normalize(originModulePath))
+    .endsWith(path.join("src", "features", "updates"));
+}
+
 if (process.env.PICKET_PLAY_BUILD === "1") {
   const playUpdates = path.join(
     projectRoot,
@@ -32,11 +40,12 @@ if (process.env.PICKET_PLAY_BUILD === "1") {
     if (moduleName === "@/features/billing/billing-entry") {
       return {filePath:path.join(projectRoot,"src/features/billing/billing-entry.play.tsx"),type:"sourceFile"};
     }
+    // Every importer inside src/features/updates gets the Play bindings, so the
+    // APK installer module is never bundled into the Play build.
     if (
-      moduleName === "./android-app-updates" &&
-      context.originModulePath.endsWith(
-        path.join("features", "updates", "app-update-section.tsx"),
-      )
+      moduleName === "@/features/updates/android-app-updates" ||
+      (moduleName === "./android-app-updates" &&
+        isInsideUpdates(context.originModulePath))
     ) {
       return { filePath: playUpdates, type: "sourceFile" };
     }

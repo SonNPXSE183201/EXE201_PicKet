@@ -132,7 +132,7 @@ export function UserNotificationMenu() {
             <b>Thông báo</b>
             <small>{statusLabel}</small>
           </div>
-          <span className="workspace-notification-route">Picket</span>
+          <span className="workspace-notification-route">PicKet</span>
         </header>
         <div className="workspace-notification-list" aria-busy={loading}>
           {loading ? (

@@ -83,7 +83,7 @@ export async function loadNotificationFeed(): Promise<{
       id: "system:" + settings.data.notice,
       title: settings.data.maintenance
         ? "Thông báo bảo trì"
-        : "Thông báo từ Picket",
+        : "Thông báo từ PicKet",
       body: settings.data.notice,
       date: today,
       href: "/help",
@@ -97,7 +97,7 @@ export async function loadNotificationFeed(): Promise<{
   ) {
     rows.unshift({
       id: `maintenance:${announcements.maintenance.notice}`,
-      title: "Picket đang bảo trì",
+      title: "PicKet đang bảo trì",
       body: announcements.maintenance.notice,
       date: today,
       href: "/notifications",

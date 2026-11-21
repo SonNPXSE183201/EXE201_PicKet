@@ -41,14 +41,14 @@ export function OverviewView(p: ViewProps) {
   return (
     <>
       <p className="ap-greeting">
-        Chào {p.greetingName ?? "bạn"}, đây là Picket trong {days} ngày qua.
+        Chào {p.greetingName ?? "bạn"}, đây là PicKet trong {days} ngày qua.
         <Chip tone={degraded.length ? "warning" : "success"}>{degraded.length ? `${degraded.length} dịch vụ cần chú ý` : "Mọi dịch vụ ổn định"}</Chip>
       </p>
 
       <div className="av-hero-row">
         <Card receipt className="av-users-card">
           <img className="av-users-art" src="/admin-paper/money-bloom-scene-v1.webp" alt="" width={150} height={126} />
-          <span className="ap-eyebrow">Người dùng Picket</span>
+          <span className="ap-eyebrow">Người dùng PicKet</span>
           <div className="ap-row">
             <p className="ap-kpi-value is-hero">{formatNumber(total)}</p>
             {newUsers !== undefined && <Chip tone="success">+{formatNumber(newUsers)} trong {days} ngày</Chip>}

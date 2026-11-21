@@ -46,7 +46,7 @@ async function notifyOnce(items: Announcement[], notified: Set<string>) {
   const permission = await Notifications.getPermissionsAsync().catch(() => null);
   if (!permission?.granted) return;
   await Notifications.setNotificationChannelAsync("picket-announcements", {
-    name: "Picket", importance: Notifications.AndroidImportance.DEFAULT,
+    name: "PicKet", importance: Notifications.AndroidImportance.DEFAULT,
   }).catch(() => undefined);
   for (const item of items) {
     await Notifications.scheduleNotificationAsync({

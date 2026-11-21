@@ -1,6 +1,6 @@
 import { ApiError } from "@picket/api-client";
 import { requireApiSession } from "@/core/auth/require-api-session";
-import { adminSections, canViewAdminSection, type AdminSection } from "../admin-permissions";
+import { adminSections, canManageSignupVerification, canViewAdminSection, type AdminSection } from "../admin-permissions";
 import { MfaPanel } from "./mfa-panel";
 import { PaymentAdmin } from "./payment-admin";
 import { FinanceAdmin } from "./finance-admin";
@@ -9,7 +9,7 @@ import { PromotionAdmin } from "./promotion-admin";
 import { AnnouncementAdmin } from "./announcement-admin";
 import { ReleaseAdmin } from "./release-admin";
 import { Banner, Button, EmptyState } from "../ui/paper";
-import { billingWindow, firstName, type Document, type Query, type ViewProps } from "../views/shared";
+import { billingWindow, firstName, type Document, type Query, type VerificationSettingsView, type ViewProps } from "../views/shared";
 import { renderSection } from "../views";
 
 /* Loads one admin section and renders it in the Paper design (Figma › Admin Web).
@@ -29,6 +29,23 @@ export async function AdminModule({ section, searchParams }: { section: AdminSec
   if (section === "announcements") return <>{notices}<AnnouncementAdmin query={query} /></>;
   if (section === "releases") return <>{notices}<ReleaseAdmin query={query} /></>;
   if (section === "payments" || section === "permissions") return <>{notices}<PaymentAdmin section={section} query={query} /></>;
+
+  let verificationSettings: VerificationSettingsView | undefined;
+  if (section === "settings" && canManageSignupVerification(role, permissions)) {
+    try {
+      const loaded = await api.adminVerificationSettings<VerificationSettingsView>(accessToken);
+      if (typeof loaded?.settings?.emailEnabled === "boolean") verificationSettings = { settings: loaded.settings, history: loaded.history ?? [] };
+    } catch {
+      verificationSettings = undefined; // Older API/database: the card is simply not shown.
+    }
+    // Staff with only auth.verification.manage see just this card.
+    if (permissions && !permissions.includes("settings.read")) {
+      const props = { section, data: {}, query, role, permissions, mfaVerified, days: 30, page: 0, verificationSettings, verificationOnly: true } satisfies ViewProps;
+      return verificationSettings
+        ? <>{notices}{renderSection(props)}</>
+        : <>{notices}<LoadErrorState href={adminSections.settings.href} canSeeIncidents={canViewAdminSection(role, "incidents", permissions)} /></>;
+    }
+  }
 
   const days = ["7", "30", "90"].includes(query.days ?? "") ? Number(query.days) : 30;
   const page = /^\d{1,5}$/.test(query.page ?? "") ? Math.min(Number(query.page), 10000) : 0;
@@ -70,7 +87,7 @@ export async function AdminModule({ section, searchParams }: { section: AdminSec
       planLimits = undefined; // Older API/database: the card is simply not shown.
     }
   }
-  const props: ViewProps = { section, data, query, billingFinance, planLimits, role, permissions, mfaVerified, days, page, greetingName: firstName(claims.email) };
+  const props: ViewProps = { section, data, query, billingFinance, planLimits, verificationSettings, role, permissions, mfaVerified, days, page, greetingName: firstName(claims.email) };
   return <>{notices}{renderSection(props)}</>;
 }
 

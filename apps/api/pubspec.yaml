@@ -10,10 +10,12 @@ dependencies:
   crypto: 3.0.8
   cryptography: 2.9.0
   dart_frog: ^1.2.6
+  dart_jsonwebtoken: ^3.4.1
   http: ^1.6.0
   http_parser: ^4.1.2
 
 dev_dependencies:
   dart_frog_lint: ^0.1.2
   mocktail: ^1.0.4
+  pointycastle: ^4.0.0
   test: ^1.26.3

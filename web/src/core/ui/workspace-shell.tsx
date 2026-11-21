@@ -258,7 +258,7 @@ function StandardWorkspaceShell({
       >
         <div className="workspace-sidebar-heading">
           <Link className="brand workspace-brand" href="/dashboard" onClick={closeDrawer}>
-            <Image src="/picket-logo.png" alt="" width={40} height={40} />
+            <Image src="/picket-logo-192.png" alt="" width={40} height={40} />
             <span>PicKet<small>KHÔNG GIAN CÁ NHÂN</small></span>
           </Link>
           <button className="workspace-drawer-close" type="button" aria-label="Đóng menu" onClick={closeDrawer}>
@@ -303,7 +303,7 @@ function StandardWorkspaceShell({
           >
             <Icon name={drawerOpen ? "close" : "menu"} />
           </button>
-          <p className="workspace-breadcrumb"><span>Picket</span><span aria-hidden="true">/</span><strong>{pageLabel}</strong></p>
+          <p className="workspace-breadcrumb"><span>PicKet</span><span aria-hidden="true">/</span><strong>{pageLabel}</strong></p>
           <button
             className="workspace-mobile-search-toggle"
             type="button"
@@ -345,7 +345,7 @@ function StandardWorkspaceShell({
                 <div className="workspace-account-identity">
                   <span className="workspace-avatar-large" aria-hidden="true">{initial}</span>
                   <div>
-                    <strong>{userName || "Tài khoản Picket"}</strong>
+                    <strong>{userName || "Tài khoản PicKet"}</strong>
                     {userEmail ? <small>{userEmail}</small> : null}
                   </div>
                 </div>

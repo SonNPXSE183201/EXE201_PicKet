@@ -10,7 +10,7 @@ export default async function BillingPage() {
     <>
       <FinancePageHeader
         title="Gói của bạn"
-        description="Quyền lợi được dùng chung với tài khoản Picket trên Android."
+        description="Quyền lợi được dùng chung với tài khoản PicKet trên Android."
       />
       <article className="data-panel">
         <h2>Gói hiện tại: {entitlements.tier.toUpperCase()}</h2>

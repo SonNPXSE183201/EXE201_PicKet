@@ -34,7 +34,11 @@ parser.add_argument('--code', required=True)
 parser.add_argument('--name', required=True)
 parser.add_argument('--notes-vi', required=True)
 parser.add_argument('--notes-en', required=True)
+parser.add_argument('--priority', type=int, default=None,
+                    help='in-app update priority 0-5 for the new release (optional; omitted = not set)')
 args = parser.parse_args()
+if args.priority is not None and not 0 <= args.priority <= 5:
+    parser.error(f'--priority must be an integer from 0 to 5, got {args.priority}')
 
 raw = httplib2.Http(timeout=900)
 raw.redirect_codes = raw.redirect_codes - {308}  # resumable uploads answer 308 Resume Incomplete
@@ -66,8 +70,10 @@ try:
         assert codes and all(int(c) < int(args.code) for c in codes), f'alpha has {codes}; only a newer code may be added'
         print('alpha before', sorted(codes), flush=True)
     notes = [{'language': 'vi-VN', 'text': args.notes_vi}, {'language': 'en-US', 'text': args.notes_en}]
-    edits.tracks().update(packageName=PKG, editId=edit, track=args.track, body={'track': args.track, 'releases': [
-        {'name': args.name, 'versionCodes': [args.code], 'status': 'completed', 'releaseNotes': notes}]}).execute()
+    release = {'name': args.name, 'versionCodes': [args.code], 'status': 'completed', 'releaseNotes': notes}
+    if args.priority is not None:
+        release['inAppUpdatePriority'] = args.priority
+    edits.tracks().update(packageName=PKG, editId=edit, track=args.track, body={'track': args.track, 'releases': [release]}).execute()
     print('commit', edits.commit(packageName=PKG, editId=edit).execute(num_retries=3).get('id'), flush=True)
     done = True
 finally:

@@ -31,3 +31,9 @@ test("merchant suffix in a payment document heading is retained without promotin
   assert.equal(draft.merchant,'CỬA HÀNG AN LẠC');
   assert.equal(parseReceiptText('PHIẾU THANH TOÁN\n03/09/2026\nCà rốt (kg)').merchant,null);
 });
+
+test("a bare store-type heading takes the brand printed on the next line",()=>{
+  const r=parseReceiptLines([{text:"NHÀTHUỘC",top:0,bottom:40,left:300,right:600,confidence:.8},{text:"Pharmacity",top:40,bottom:90,left:280,right:620,confidence:.8},
+    {text:"34 Man Thiện, Phường Tăng Nhơn Phú A",top:100,bottom:140,left:100,right:800,confidence:.8},{text:"Tổng Tiền:",top:400,bottom:440,left:40,right:200,confidence:.9},{text:"140.000",top:400,bottom:440,left:650,right:800,confidence:.9}]);
+  assert.equal(r.merchant,"Pharmacity");
+});

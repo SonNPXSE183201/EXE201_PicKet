@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
+import { passwordSetupRequestRedirect } from "@/core/auth/password-setup";
 import { getSupabasePublicConfig } from "@/core/supabase/config";
 
 export async function updateSession(request: NextRequest) {
@@ -25,6 +26,18 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  // OTP-first sign-up: the account must set a password before using the app.
+  // Server actions (POST + next-action, e.g. sign out) pass through; GET/HEAD are always gated.
+  const target = passwordSetupRequestRedirect({
+    method: request.method,
+    pathname: request.nextUrl.pathname,
+    hasNextAction: request.headers.has("next-action"),
+  }, data?.claims);
+  if (target) {
+    const redirect = NextResponse.redirect(new URL(target, request.url));
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  }
   return response;
 }

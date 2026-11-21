@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 const file = (path: string) => new URL(path, import.meta.url);
-test("profile exposes the updater and ends with the installed version", () => {
+test("profile no longer embeds the manual updater and ends with the installed version", () => {
   const profile = readFileSync(file("../../app/(tabs)/profile.tsx"), "utf8");
-  assert.match(profile, /<AppUpdateSection\s*\/>/);
-  assert.match(profile, /<InstalledVersion\s*\/>\s*<\/ScrollView>/);
+  assert.doesNotMatch(profile, /AppUpdateSection/);
+  // The version closes the footer block, which is the last element of the scroll view.
+  assert.match(profile, /<InstalledVersion style=\{styles\.version\} \/>\s*<\/View>\s*<\/ScrollView>/);
 });
 test("profile loading and unavailable-cache states retain the installed version", () => {
   const profile = readFileSync(file("../../app/(tabs)/profile.tsx"), "utf8");

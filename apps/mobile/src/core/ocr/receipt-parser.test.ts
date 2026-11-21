@@ -218,12 +218,12 @@ Round d Total (RM)
 
 test("requires manual review when no payable total is found", () => {
   const result = parseReceiptLines([
-    { text: "Picket", top: 5, bottom: 30 },
+    { text: "PicKet", top: 5, bottom: 30 },
     { text: "Chao mung tro lai", top: 40, bottom: 65 },
     { text: "Email", top: 75, bottom: 100 },
   ]);
 
-  assert.equal(result.merchant, "Picket");
+  assert.equal(result.merchant, "PicKet");
   assert.equal(result.amount, null);
   assert.equal(result.needsReview, true);
   assert.equal(result.reviewReason, "Không tìm thấy tổng tiền cần thanh toán.");

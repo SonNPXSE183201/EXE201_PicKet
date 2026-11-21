@@ -2,6 +2,8 @@ import Link from "next/link";
 import { randomUUID } from "node:crypto";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { mutateAdmin } from "../actions";
+import { saveVerificationSettingsAction } from "../payment-actions";
+import { VerificationSettingsForm } from "../components/verification-settings-form";
 import { AdminIcon } from "../ui/admin-icon";
 import { AdminPager } from "../ui/admin-pager";
 import { Button, Card, Chip, Field, Person, Table, Tile, display, formatDateTime, formatNumber, relativeTime, toneFor, type ChipTone, type Column } from "../ui/paper";
@@ -167,7 +169,43 @@ export function StaffView(p: ViewProps) {
 }
 
 /* Figma › Admin Web › 22 · Cấu hình ứng dụng (154:8341). */
+const CHANNEL_NAMES: Record<string, string> = { emailEnabled: "Email", smsEnabled: "SMS", smsDailyLimit: "Giới hạn SMS/ngày" };
+function channelSummary(value: Record<string, unknown>): string {
+  return Object.entries(CHANNEL_NAMES)
+    .filter(([key]) => key in value)
+    .map(([key, name]) => `${name}: ${typeof value[key] === "boolean" ? (value[key] ? "bật" : "tắt") : formatNumber(num(value[key]) ?? 0)}`)
+    .join(" · ");
+}
+
+/* Sign-up verification channels (Email OTP default, SMS OTP via Firebase). */
+export function VerificationSettingsCard(p: ViewProps) {
+  const v = p.verificationSettings;
+  if (!v) return null;
+  return (
+    <Card receipt eyebrow="Xác thực đăng ký" title="Kênh gửi mã xác minh" actions={<Chip tone="outline">Phiên bản v{formatNumber(v.settings.revision)}</Chip>}>
+      <div className="av-card-body">
+        <p className="ap-card-note">Người đăng ký nhận mã 6 số qua kênh được bật, xác minh xong mới tạo mật khẩu. Cần quyền <b>Cấu hình kênh xác thực đăng ký</b> và xác thực MFA.</p>
+        {p.query.verificationSaved && <p className="av-ok" role="status">Đã lưu cấu hình xác thực.</p>}
+        {p.query.verificationError && (
+          <p className="av-error" role="alert">{p.query.verificationError === "stale"
+            ? "Cấu hình vừa được người khác thay đổi. Tải lại trang rồi lưu lại."
+            : "Chưa lưu được. Kiểm tra quyền, MFA, ít nhất một kênh bật, giới hạn SMS (0–100000) và lý do (5–500 ký tự)."}</p>
+        )}
+        <VerificationSettingsForm key={v.settings.revision} settings={v.settings} disabled={!p.mfaVerified} action={saveVerificationSettingsAction} />
+        {!!v.history.length && (
+          <ol className="av-log" aria-label="Lịch sử thay đổi gần đây">
+            {v.history.slice(0, 5).map((h, i) => (
+              <li key={i}><b>{channelSummary(h.before ?? {})} → {channelSummary(h.after ?? {})}</b><small>{formatDateTime(h.createdAt)} · {h.reason}</small></li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function SettingsView(p: ViewProps) {
+  if (p.verificationOnly) return <VerificationSettingsCard {...p} />;
   const { data, mfaVerified, role } = p;
   const s = object(data.settings);
   const owner = role === "owner";
@@ -211,6 +249,7 @@ export function SettingsView(p: ViewProps) {
           </div>
         </fieldset>
       </form>
+      <VerificationSettingsCard {...p} />
       <AsOf data={data} />
     </>
   );

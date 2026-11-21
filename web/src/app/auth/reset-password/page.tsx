@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 export default function Page() {
   return (
-    <PaperAuthShell>
+    <PaperAuthShell story="forgot">
       <RecoveryReceiver />
     </PaperAuthShell>
   );

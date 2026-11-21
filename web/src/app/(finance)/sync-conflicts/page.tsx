@@ -5,7 +5,7 @@ export default function SyncConflicts() {
     <>
       <FinancePageHeader
         title="Kiểm tra đồng bộ"
-        description="Giữ dữ liệu mới nhất khi dùng Picket trên nhiều thiết bị."
+        description="Giữ dữ liệu mới nhất khi dùng PicKet trên nhiều thiết bị."
       />
       <article className="finance-panel">
         <h2>Khi một thay đổi bị từ chối</h2>

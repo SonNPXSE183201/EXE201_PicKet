@@ -1,7 +1,9 @@
 "use server";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { revalidatePath } from "next/cache";
 import { requireApiSession } from "@/core/auth/require-api-session";
+import { minSupportedRisk } from "./release-min-guard";
 export async function saveUserPermission(form: FormData) {
   const { api, accessToken } = await requireApiSession("admin");
   const userId = String(form.get("userId") ?? "");
@@ -152,7 +154,18 @@ export async function saveReleaseAction(form: FormData) {
   const id = String(form.get("id") ?? "");
   const text = (key: string) => String(form.get(key) ?? "").trim();
   const int = (key: string) => (text(key) ? Number(text(key)) : null);
+  const back = (extra: string) => `/admin/releases?${id ? `edit=${id}&` : ""}${extra}`;
   try {
+    const minSupported = int("minSupportedCode");
+    const versionCode = int("versionCode");
+    if (minSupported !== null && (!Number.isInteger(minSupported) || minSupported < 1 || (versionCode !== null && minSupported > versionCode))) {
+      redirect(back("error=min"));
+    }
+    const data = await api.adminReleases<{ releases: { id: string; channel: string; version_code: number; status: string; min_supported_code: number | null }[] }>(accessToken);
+    const channel = id ? data.releases.find((r) => r.id === id)?.channel : text("channel");
+    const unchanged = id && data.releases.find((r) => r.id === id)?.min_supported_code === minSupported;
+    const risk = channel && !unchanged ? minSupportedRisk(channel, minSupported, data.releases) : "none";
+    if (risk !== "none" && form.get("confirmMinSupported") !== "yes") redirect(back(`error=confirm-${risk}`));
     await api.saveRelease(
       accessToken,
       {
@@ -171,8 +184,9 @@ export async function saveReleaseAction(form: FormData) {
       },
       text("reason"),
     );
-  } catch {
-    redirect(`/admin/releases?${id ? `edit=${id}&` : ""}error=save`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect(back("error=save"));
   }
   revalidatePath("/admin", "layout");
   redirect("/admin/releases?saved=1");
@@ -196,4 +210,30 @@ export async function savePlanLimitAction(form: FormData) {
   }
   revalidatePath("/admin", "layout");
   redirect("/admin/billing?limitSaved=1");
+}
+
+/** Sign-up verification channels (Email OTP / SMS OTP via Firebase). */
+export async function saveVerificationSettingsAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  let outcome = "verificationSaved=1";
+  try {
+    const emailEnabled = form.get("emailEnabled") === "on";
+    const smsEnabled = form.get("smsEnabled") === "on";
+    if (!emailEnabled && !smsEnabled) throw new Error("channel");
+    const smsDailyLimit = Number(form.get("smsDailyLimit"));
+    if (!Number.isInteger(smsDailyLimit) || smsDailyLimit < 0 || smsDailyLimit > 100_000) throw new Error("limit");
+    const reason = String(form.get("reason") ?? "").trim();
+    if (reason.length < 5 || reason.length > 500) throw new Error("reason");
+    await api.saveVerificationSettings(accessToken, {
+      emailEnabled,
+      smsEnabled,
+      smsDailyLimit,
+      revision: Number(form.get("revision")),
+      reason,
+    });
+  } catch (error) {
+    outcome = (error as { status?: unknown })?.status === 409 ? "verificationError=stale" : "verificationError=1";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/settings?${outcome}`);
 }

@@ -31,7 +31,7 @@ export function AppearanceScreen() {
   const modeLabels = { system: vi ? "Theo máy" : "System", light: vi ? "Sáng" : "Light", dark: vi ? "Tối" : "Dark" } as const;
   const modeA11y = { system: vi ? "Theo hệ thống" : "System", light: vi ? "Sáng" : "Light", dark: vi ? "Tối" : "Dark" } as const;
   const captions: Record<string, [string, string]> = {
-    paper: ["Picket", vi ? "Kem & mận" : "Cream & plum"], nomad: ["Nomad", vi ? "Cát & rêu" : "Sand & moss"],
+    paper: ["PicKet", vi ? "Kem & mận" : "Cream & plum"], nomad: ["Nomad", vi ? "Cát & rêu" : "Sand & moss"],
     rose: ["Rose", vi ? "Hồng & gỗ" : "Pink & wood"], ocean: ["Ocean", vi ? "Sương & biển" : "Mist & sea"],
   };
   return <PicketScreen>

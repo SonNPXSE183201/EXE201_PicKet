@@ -7,7 +7,7 @@ import { PicketText as Text } from "@/core/ui/picket-text";
 
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import type { PropsWithChildren, ReactNode } from "react";
+import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { StyleSheet, type TextInputProps, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,7 +27,7 @@ export function AuthScreen({
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <View style={styles.heroCopy}>
-            <Text style={styles.overline}>PICKET</Text>
+            <Text style={styles.overline}>PicKet</Text>
             <Text accessibilityRole="header" style={styles.title}>{t(title)}</Text>
             <Text style={styles.subtitle}>{t(subtitle)}</Text>
           </View>
@@ -42,14 +42,18 @@ export function AuthScreen({
 export function AuthField(props: TextInputProps) {
   const {t}=useTranslation("auth");
   const { colors, styles } = useMobileStyles(createStyles);
-  const { accessibilityLabel, placeholder, ...inputProps } = props;
+  const { accessibilityLabel, placeholder, onFocus, onBlur, ...inputProps } = props;
+  // Same as the auth field rows: the muted hint disappears while the field is being edited.
+  const [focused, setFocused] = useState(false);
   return (
     <TextInput
       accessibilityLabel={accessibilityLabel ? t(accessibilityLabel) : placeholder ? t(placeholder) : undefined}
-      placeholder={placeholder ? t(placeholder) : undefined}
+      placeholder={placeholder && !focused ? t(placeholder) : undefined}
       placeholderTextColor={colors.muted}
       style={styles.input}
       {...inputProps}
+      onFocus={(event) => { setFocused(true); onFocus?.(event); }}
+      onBlur={(event) => { setFocused(false); onBlur?.(event); }}
     />
   );
 }
@@ -88,7 +92,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   hero: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
   heroCopy: { flex: 1, gap: 8, paddingTop: 4 },
   heroArt: { width: 120, height: 120 },
-  overline: { ...figmaType.overline, color: colors.primary, textTransform: "uppercase" },
+  overline: { ...figmaType.overline, color: colors.primary },
   title: { ...figmaType.amountHero, color: colors.text },
   subtitle: { ...figmaType.bodySmall, color: colors.muted },
   form: { gap: 12, marginTop: 16, backgroundColor: colors.paper, borderRadius: figmaRadii.receipt, padding: 16, ...figmaShadow("paper") },

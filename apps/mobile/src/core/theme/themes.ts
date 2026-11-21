@@ -117,7 +117,7 @@ export const oceanDark: AppTheme = {
   "chart5": "#F4D278"
 };
 
-/** Approved Picket paper palette. All amounts and business states keep their semantics. */
+/** Approved PicKet paper palette. All amounts and business states keep their semantics. */
 export const paperLight: AppTheme = {
   ...lightTheme,
   pocketCoral: "#FFB4A2", pocketMint: "#BCE0B4", pocketBlue: "#B8D8E2", pocketLilac: "#DDCBE8",

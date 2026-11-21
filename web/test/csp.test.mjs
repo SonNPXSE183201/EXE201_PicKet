@@ -4,7 +4,7 @@ import { buildCsp } from '../src/core/security/csp.ts';
 
 test('production CSP normalizes origins and restricts active content', () => {
   const csp = buildCsp({ apiUrl: 'https://api.example.com/v1', supabaseUrl: 'https://project.supabase.co/auth/v1', dev: false });
-  assert.equal(csp, "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.example.com https://project.supabase.co wss://project.supabase.co https://accounts.google.com; frame-src https://challenges.cloudflare.com https://accounts.google.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests");
+  assert.equal(csp, "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://accounts.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.example.com https://project.supabase.co wss://project.supabase.co https://accounts.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google.com; frame-src https://challenges.cloudflare.com https://accounts.google.com https://www.google.com https://recaptcha.google.com https://*.firebaseapp.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests");
   assert.ok(!csp.includes('unsafe-eval'));
 });
 
@@ -18,7 +18,16 @@ test('development permits HMR without upgrading local HTTP', () => {
 test('missing or invalid envs never produce undefined or unsafe origins', () => {
   for (const options of [{}, { apiUrl: 'invalid', supabaseUrl: 'javascript:alert(1)' }]) {
     const csp = buildCsp({ ...options, dev: false });
-    assert.ok(csp.includes("connect-src 'self' https://accounts.google.com;"));
+    assert.ok(csp.includes("connect-src 'self' https://accounts.google.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google.com;"));
     assert.ok(!/undefined|null|javascript:/.test(csp));
   }
+});
+
+test('Firebase Phone Auth and invisible reCAPTCHA are allowed without widening default-src', () => {
+  const csp = buildCsp({ dev: false });
+  const directive = (name) => csp.split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
+  for (const source of ['https://www.google.com/recaptcha/', 'https://www.gstatic.com/recaptcha/', 'https://apis.google.com']) assert.ok(directive('script-src').includes(source), source);
+  for (const source of ['https://identitytoolkit.googleapis.com', 'https://securetoken.googleapis.com']) assert.ok(directive('connect-src').includes(source), source);
+  for (const source of ['https://recaptcha.google.com', 'https://*.firebaseapp.com']) assert.ok(directive('frame-src').includes(source), source);
+  assert.equal(directive('default-src'), "default-src 'self'");
 });

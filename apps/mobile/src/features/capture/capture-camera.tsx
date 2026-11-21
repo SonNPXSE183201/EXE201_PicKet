@@ -13,6 +13,7 @@ import { FigmaButton, figmaShadow } from "@/core/ui/figma-ui";
 import { IconButton } from "@/core/ui/picket-ui";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { receiptArt } from "./capture-art";
+import { prepareReceiptOcr } from "@/core/ocr/mlkit-receipt-ocr";
 
 const promises: { icon: IconName; label: string }[] = [
   { icon: "camera-outline", label: "Chỉ bật khi bạn bấm chụp" },
@@ -38,6 +39,9 @@ export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, disabl
     setFocused(true);
     return () => { setFocused(false); setReady(false); };
   }, []));
+
+  // Load the recognition model while the user frames or picks a photo, so the scan does not pay for it.
+  useEffect(() => { prepareReceiptOcr(); }, []);
 
   useEffect(() => {
     const listener = AppState.addEventListener("change", (state) => {
@@ -77,9 +81,9 @@ export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, disabl
           <View style={[styles.cameraBadge, figmaShadow("camera")]}><AppIcon name="camera-outline" size={26} color={colors.onCamera} /></View>
         </View>
         <View style={styles.copy}>
-          <Text style={[figmaType.display, { color: colors.text }]}>Cho Picket dùng camera</Text>
+          <Text style={[figmaType.display, { color: colors.text }]}>Cho PicKet dùng camera</Text>
           <Text style={[figmaType.bodySmall, { color: colors.muted }]}>
-            {error ?? "Chụp hoá đơn, Picket tự đọc tổng tiền và ngày. Bạn luôn xem lại trước khi lưu."}
+            {error ?? "Chụp hoá đơn, PicKet tự đọc tổng tiền và ngày. Bạn luôn xem lại trước khi lưu."}
           </Text>
         </View>
         <View style={[styles.promises, figmaShadow("paper")]}>

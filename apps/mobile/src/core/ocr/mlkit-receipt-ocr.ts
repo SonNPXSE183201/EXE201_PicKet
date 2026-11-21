@@ -9,8 +9,16 @@ type NativeSession={
  select(id:string,angle:number):Promise<{width:number;height:number}>;
  crop(id:string,x:number,y:number,width:number,height:number,timeoutMs:number):Promise<OcrSample>;
  close(id:string):Promise<void>;
+ prepare?():Promise<void>;
 };
 let scanning=false;
+let pendingClose:Promise<void>=Promise.resolve();
+let prepared:Promise<void>|null=null;
+/** Loads the recognition model in the background (camera screen open), so the first scan skips it. */
+export function prepareReceiptOcr():void{
+ prepared??=import("expo").then(({requireNativeModule})=>requireNativeModule<NativeSession>("PicketReceiptOcr").prepare?.())
+  .then(()=>undefined,(error:unknown)=>{prepared=null;console.info("PICKET_OCR_STATUS",JSON.stringify({code:"OCR_PREPARE_FAILED",detail:String(error).slice(0,120)}));});
+}
 /** Native owns decoded pixels and the recognizer; no PNG files cross the bridge. */
 export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Promise<ReceiptOcrResult>{
  if(scanning)throw new Error("OCR_BUSY");
@@ -18,12 +26,20 @@ export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Prom
  try{
   const {requireNativeModule}=await import("expo");
   const module=requireNativeModule<NativeSession>("PicketReceiptOcr");
+  // The previous session must be closed before a new one opens; that close never delayed the previous result.
+  await pendingClose;
   const native:ReceiptOcrSession={open:uri=>module.open(uri),direction:(...args)=>module.direction(...args),inspect:(...args)=>module.inspect(...args),select:(...args)=>module.select(...args),
-   crop:(id,region,timeout)=>module.crop(id,region.originX,region.originY,region.width,region.height,timeout),close:id=>module.close(id)};
+   crop:(id,region,timeout)=>module.crop(id,region.originX,region.originY,region.width,region.height,timeout),
+   // Closing only releases native pixels; waiting for it cost ~0.4 s on device while the JS thread rendered.
+   close:id=>{pendingClose=module.close(id).catch(()=>undefined);return Promise.resolve();}};
+  const called=Date.now();
   const result=await scanReceiptSession(imageUri,native,()=>Date.now(),signal);
-  console.info("PICKET_OCR_PERF",JSON.stringify({durationMs:result.durationMs,budgetExceeded:result.budgetExceeded,...result.stats,
+  // Wall time the caller waited, including closing the native session.
+  const totalMs=Date.now()-called;
+  // Diagnostics re-parse the evidence; run them after the review screen has rendered, never on the result path.
+  setTimeout(()=>console.info("PICKET_OCR_PERF",JSON.stringify({durationMs:result.durationMs,totalMs,budgetExceeded:result.budgetExceeded,...result.stats,
    hasAmount:result.draft.amount!==null,hasMerchant:result.draft.merchant!==null,hasDate:result.draft.date!==null,itemsCount:result.draft.lineItems.length,
-   parsedEligible:canAttachParsedReceipt(result.draft),rawEligible:canAttachReceipt(result.draft)}));
+   parsedEligible:canAttachParsedReceipt(result.draft),rawEligible:canAttachReceipt(result.draft)})),1500);
   return result;
  }catch(error){
   const code=["OCR_BUSY","OCR_TIMEOUT","OCR_CANCELLED","OCR_ORIENTATION_UNCERTAIN"].find(code=>String(error).includes(code))??"OCR_FAILED";

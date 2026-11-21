@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Picket",
+    "name": "PicKet",
     "slug": "picket",
     "scheme": "com.picket.mobile",
-    "version": "1.1.0",
+    "version": "1.3.3",
     "orientation": "portrait",
     "icon": "./assets/picket-logo.png",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.picket.mobile",
-      "versionCode": 33,
+      "versionCode": 38,
       "adaptiveIcon": {
         "backgroundColor": "#FFF8ED",
         "foregroundImage": "./assets/picket-logo.png"
@@ -20,9 +20,11 @@
       "./plugins/with-android-release-signing",
       "./plugins/with-play-store-build",
       "./plugins/with-safe-launcher-icon",
+      "./plugins/with-text-handles",
       "./plugins/with-network-pool-guard",
       "./plugins/with-current-activity-intent",
       "./plugins/with-release-shrinking",
+      "./plugins/with-play-device-reach",
       [
         "expo-font",
         {
@@ -63,15 +65,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Cho phép Picket dùng camera để quét hóa đơn.",
+          "cameraPermission": "Cho phép PicKet dùng camera để quét hóa đơn.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Cho phép Picket dùng camera để chụp hóa đơn.",
-          "photosPermission": "Cho phép Picket truy cập ảnh để chọn hóa đơn.",
+          "cameraPermission": "Cho phép PicKet dùng camera để chụp hóa đơn.",
+          "photosPermission": "Cho phép PicKet truy cập ảnh để chọn hóa đơn.",
           "microphonePermission": false
         }
       ],

@@ -1,10 +1,11 @@
 import { parseReceiptMoney, parseReceiptItemMoney, parseReceiptSummaryMoney } from "./receipt-money";
 import {receiptHasTableColumns,receiptTableRows} from "./receipt-table-layout";
 import { receiptVatSummaryRows } from "./receipt-vat-summary";
-import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,merchantDisplayName,receiptMerchantFromDocumentHeading,noisyReceiptSummaryRole} from "./receipt-semantics";
+import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,receiptNameHasWord,merchantDisplayName,receiptMerchantFromDocumentHeading,noisyReceiptSummaryRole,normalizeReceiptLabel} from "./receipt-semantics";
 import {receiptPosRows} from "./receipt-pos-rows";
 import {receiptTotalRole,looksLikeContactAmount} from "./receipt-total-role";
 import {receiptUnheadedRows} from "./receipt-unheaded-rows";
+import {receiptGeometryRows} from "./receipt-row-geometry";
 import {receiptAdjustmentLabel} from "./receipt-adjustments";
 import { receiptDate } from "./receipt-date";
 export { parseReceiptMoney } from "./receipt-money";
@@ -47,7 +48,7 @@ const bareSumLabel=/^cong\b(?!\s*tien\s*hang)/;
 const weakSumLabelConfidence=0.6;
 // Row text emitted by receiptTableRows: "name qty x unit | total".
 const assembledTableRow=/\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/;
-const totalWords = /^cong(?=\s*(?:[:|]\s*)?(?:\d|$))|^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
+const totalWords = /^cong(?=\s*(?:[:|]\s*)?(?:\d|$))|^t[06b]ng\b|^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*(?:thanh\s*toan|tra)|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|can\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
 const rejectedTotalWords = /hinh\s*thuc|phuong\s*thuc|payment\s*method|\b(?:dt|dien\s*thoai|phone|hotline|tel)\b|subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|total\s*item|\b(?:qty|0ty)\b|so\s*luong/i;
@@ -82,7 +83,9 @@ function receiptItemCandidates(
     if (isReceiptMetadata(text)||isReceiptDocumentLabel(text)||isReceiptSummary(text)) continue;
     if (header >= 0 && (typeof tableTop === "number" && typeof line.top === "number" ? line.top < tableTop : index <= header)) continue;
     if (summary >= 0 && (typeof recognizedLines[summary].top === "number" && typeof line.top === "number" ? line.top >= recognizedLines[summary].top! : index >= summary)) continue;
-    if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean) || /^(?:so|so hd|ma|no|dt|sdt)\s*[:.#-]/.test(clean)) continue;
+    // Leading OCR punctuation ("(VAT; 100") must not hide a rejected label.
+    // A payable label anywhere ("Khách phải trả") is a summary row, never a product.
+    if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean.replace(/^[^a-z0-9]+/, "")) || strongTotalWords.test(clean) || /^(?:so|so hd|ma|no|dt|sdt)\s*[:.#-]/.test(clean)) continue;
     const priceMatch = text.match(
       /(?:^|[\s|:~])(\d{1,3}(?:[.,][ \u00a0]*\d{3}|[ \u00a0]\d{3})+(?:[.,]\d{2})?|\d{3,}(?:[.,]\d{2})?|0(?:[.,]0{2})?)(?:\s*(?:vnd|đ|d|₫))?\s*$/i,
     );
@@ -125,7 +128,7 @@ function receiptItemCandidates(
         continue;
       }
     }
-    if ((total === 0 && !quantityMatch && !leadingQuantity) || name.length < 3 || name.length > 200 || name.replace(/[^A-Za-zÀ-ỹ]/g, "").length < 2 || isReceiptMetadata(name) || isReceiptSummary(name) || isReceiptDocumentLabel(name) || /^(?:\d+[\s\-_]*)?(?:cai|lon|chai|ly|hop|goi|dia|bat|to|phan|chiec|kg|g)$/i.test(normalized(name)) || (/^[\d.,\s\-_oOcCsSdDleI]+$/i.test(name) && /\d/.test(name)) || /(?:^|\s)(?:\d+[Oo]+|[Oo]+\d+)$/.test(name)) continue;
+    if ((total === 0 && !quantityMatch && !leadingQuantity) || name.length < 3 || !receiptNameHasWord(name) || name.length > 200 || name.replace(/[^A-Za-zÀ-ỹ]/g, "").length < 2 || isReceiptMetadata(name, { priced: true }) || isReceiptSummary(name) || isReceiptDocumentLabel(name) || /^(?:\d+[\s\-_]*)?(?:cai|lon|chai|ly|hop|goi|dia|bat|to|phan|chiec|kg|g)$/i.test(normalized(name)) || (/^[\d.,\s\-_oOcCsSdDleI]+$/i.test(name) && /\d/.test(name)) || /(?:^|\s)(?:\d+[Oo]+|[Oo]+\d+)$/.test(name)) continue;
     items.push({source:line,item:{
       name,
       quantity,
@@ -151,8 +154,10 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
   const top=label.top,bottom=label.bottom,right=label.right,left=typeof label.left==="number"&&Number.isFinite(label.left)?label.left:right;
   const angle=typeof label.angle==="number"&&Number.isFinite(label.angle)&&Math.abs(label.angle)<=15?label.angle:0;
   const role=receiptTotalRole(label.text);
-  const parseCandidateAmount=(text:string)=>parseReceiptMoney(text)??(role>=2?parseReceiptSummaryMoney(text):null);
-  const isCandidateAmount=(text:string)=>/^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(text)||role>=2&&/^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?[oO]\s*$/i.test(text);
+  // A leading dong sign ("₫784.000") is often read as "d"/"đ"; it is part of the amount cell.
+  const withoutDongPrefix=(text:string)=>text.replace(/^\s*[dđ₫](?=\d)/i,"");
+  const parseCandidateAmount=(text:string)=>parseReceiptMoney(withoutDongPrefix(text))??(role>=2?parseReceiptSummaryMoney(withoutDongPrefix(text)):null);
+  const isCandidateAmount=(raw:string)=>{const text=withoutDongPrefix(raw);return /^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(text)||role>=2&&/^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?[oO]\s*$/i.test(text);};
   const shift=(line:ReceiptTextLine)=>angle&&typeof line.left==="number"&&typeof line.right==="number"?((line.left+line.right)/2-(left+right)/2)*Math.tan(angle*Math.PI/180):0;
   const labelCy=(top+bottom)/2;
   const raw=lines.filter(line=>{
@@ -169,6 +174,40 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
       other.right<=line.left!&&/[A-Za-zÀ-ỹ]/.test(other.text)&&Math.abs((other.top+other.bottom)/2+shift(line)-lineCy)+1<dist);
   });
   return closer.length>0?closer:raw;
+}
+
+/**
+ * Marks printed around a grouped amount that are not part of it: a dong sign read as a leading
+ * "d"/"đ" ("d784.000") and a one-letter VAT class after it ("2,400,000.00 C", "784.000T").
+ * Letters that look like digits (O, I, S, B, G, Z, L) are never stripped, so a damaged amount stays damaged.
+ */
+const groupedAmount=String.raw`\d{1,3}(?:[.,]\d{3})+(?:[.,]00)?`;
+const dongPrefix=new RegExp(String.raw`(^|\s)[dđ₫](?=${groupedAmount}(?![\d.,]))`,"g");
+const vatClassSuffix=new RegExp(String.raw`(${groupedAmount})\s?[ACEFHKNPTV]$`);
+function withoutAmountMarks(text:string):string{
+  return text.replace(dongPrefix,"$1").replace(vatClassSuffix,"$1");
+}
+
+/** True when a payable label carries an amount token of its own, on its row, or directly above/below it. */
+function payableAmountPrinted(label:ReceiptTextLine,index:number,lines:ReceiptTextLine[]):boolean{
+  if(/\d/.test(label.text))return true;
+  // A compact numeric cell, damaged or not ("140.000", "12O000", "VND 179,000"), unlike a sentence or card field.
+  const amountCell=/^\s*(?:vnd|đ|d|₫)?\s*\S*\d\S*\d\S*\s*(?:vnd|đ|d|₫)?\s*$/i;
+  // Saved draft text has no frames. Only a bare title line or a confirmation sentence is clearly not a
+  // payable row; any other label ("Amount Due unreadable") may carry a damaged amount and still counts.
+  if(typeof label.top!=="number"||typeof label.bottom!=="number"||![label.top,label.bottom].every(Number.isFinite)||label.bottom<=label.top){
+    const text=normalizeReceiptLabel(label.text);
+    return !/^(?:thanh\s*toan|payment)$/.test(text)&&!/\bxac\s*nhan\b/.test(text)||[lines[index-1],lines[index+1]].some(line=>line!==undefined&&amountCell.test(line.text));
+  }
+  const top=label.top,bottom=label.bottom,height=bottom-top,left=typeof label.left==="number"&&Number.isFinite(label.left)?label.left:-Infinity;
+  return lines.some((line,j)=>{
+    if(j===index||typeof line.top!=="number"||typeof line.bottom!=="number"||![line.top,line.bottom].every(Number.isFinite)||line.bottom<=line.top||!/\d/.test(line.text))return false;
+    if(typeof line.left==="number"&&Number.isFinite(line.left)&&typeof line.right==="number"&&line.right<left)return false;
+    const overlap=Math.min(bottom,line.bottom)-Math.max(top,line.top);
+    if(overlap>=Math.min(height,line.bottom-line.top)*0.2)return true;
+    const gap=line.top>=bottom?line.top-bottom:top-line.bottom;
+    return gap>=0&&gap<=Math.min(height,line.bottom-line.top)*1.5&&amountCell.test(line.text);
+  });
 }
 
 /** Match a nearby, non-overlapping amount only to one explicit payable label. */
@@ -215,11 +254,12 @@ function adjacentTotalCandidate(label:ReceiptTextLine,candidate:ReceiptTextLine|
 /** Pure parser shared by the future native ML Kit adapter and review UI. */
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
   const structured = receiptVatSummaryRows(receiptPosRows(receiptTableRows(recognizedLines
-    .map((line) => ({ ...line, text: line.text.trim() }))
+    .map((line) => ({ ...line, text: withoutAmountMarks(line.text.trim()) }))
     // A bare "Cộng" is a weak label; a damaged read of it is not evidence of a summary row.
     .filter((line) => line.text.length > 0 && !(bareSumLabel.test(normalized(line.text)) && typeof line.confidence === "number" && line.confidence < weakSumLabelConfidence)))));
   const assembledTable=receiptHasTableColumns(structured)&&structured.some(line=>assembledTableRow.test(line.text));
-  const lines=assembledTable?structured:receiptUnheadedRows(structured);
+  // Geometry rows pair what headers/total anchors could not; totals still read the same visual lines.
+  const lines=assembledTable?structured:receiptGeometryRows(receiptUnheadedRows(structured));
   // Preserve an unambiguous visual total row in the text saved to drafts.
   // Re-parsing that text after restart must not depend on lost native frames.
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>(),unlinkedAmounts=new Set<ReceiptTextLine>();
@@ -260,7 +300,9 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     const clean = normalized(line.text);
     const role=receiptTotalRole(line.text);
     if (isReceiptMetadata(line.text) || (!totalWords.test(clean)&&noisyReceiptSummaryRole(line.text)===null) || rejectedTotalWords.test(clean) || role===0) return;
-    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:").replace(/\([^)]*\)/g," ");
+    // A misread "Tổng" ("T6ng") is a label, not a damaged amount token.
+    // Likewise "Số tiền" read as "S6 tiên"/"S0 tiền" is a label word, not a damaged amount.
+    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:").replace(/^t[06b]ng\b/i,"Tong").replace(/^s[06]\s+ti[eêềể]n\b/i,"So tien").replace(/\([^)]*\)/g," ");
     // Do not truncate a damaged token (12O000 -> 12) into a valid amount.
     const ownNumbers = [...amountText.matchAll(/(?:^|[^\p{L}\d.,])(\d.*|[A-Za-z]\d.*)$/gu)].map(match=>[match[1].trim()]);
     const spatial=ownNumbers.length===0?spatialTotalCandidates(line,lines):[];
@@ -297,7 +339,9 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     totals.push({ amount, score, evidenceConfidence:Math.min(score,confidence(source)),role });
   });
   totals.sort((left, right) => right.role-left.role||right.score - left.score);
-  const hasExplicitPayable = lines.some(line=>!isReceiptMetadata(line.text)&&(totalWords.test(normalized(line.text))||noisyReceiptSummaryRole(line.text)!==null)&&!rejectedTotalWords.test(normalized(line.text))&&receiptTotalRole(line.text)>=2);
+  // An explicit payable label hides generic totals only when an amount (even an unreadable one) is
+  // printed with it; a title ("THANH TOÁN") or a signature sentence that names payment has none.
+  const hasExplicitPayable = lines.some((line,index)=>!isReceiptMetadata(line.text)&&(totalWords.test(normalized(line.text))||noisyReceiptSummaryRole(line.text)!==null)&&!rejectedTotalWords.test(normalized(line.text))&&receiptTotalRole(line.text)>=2&&payableAmountPrinted(line,index,lines));
   const selectedTotal = hasExplicitPayable&&(totals[0]?.role??0)<2?null:totals[0]??null;
   const conflictingTotals = selectedTotal !== null && totals.some(candidate => candidate.role===selectedTotal.role && candidate.amount !== selectedTotal.amount && candidate.score >= 0.8 && selectedTotal.score - candidate.score < 0.15);
 
@@ -311,7 +355,11 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   const tableRowLines = receiptHasTableColumns(lines) ? lines.filter(line => /\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/.test(line.text)) : [];
   // Headers alone do not make a table: if no row could be assembled, read the lines as plain rows.
   const itemLines = tableRowLines.length > 0 ? tableRowLines : lines;
-  const {items:itemCandidates,hasArithmeticConflict}=receiptItemCandidates(itemLines),lineItems=itemCandidates.map(candidate=>candidate.item);
+  const {items:itemCandidates,hasArithmeticConflict}=receiptItemCandidates(itemLines);
+  // VND prices of counted (not weighed) goods are printed in whole hundreds. An odd tail ("30.030",
+  // "16,009") is usually a misread digit: keep the row as read, but never let it pass as confirmed.
+  const unusualAmount=(item:ReceiptDraftLine)=>Number.isInteger(item.quantity)&&item.total>=1000&&item.total%100!==0;
+  const lineItems=itemCandidates.map(candidate=>unusualAmount(candidate.item)?{...candidate.item,confidence:Math.min(candidate.item.confidence,0.45)}:candidate.item);
   const bodySources=new Set([...itemCandidates.map(candidate=>candidate.source),...lines.filter(line=>isReceiptSummary(line.text))]);
   const bodyTop=Math.min(Infinity,...[...bodySources].flatMap(line=>typeof line.top==='number'&&Number.isFinite(line.top)?[line.top]:[]));
   const bodyIndex=lines.findIndex(line=>bodySources.has(line));
@@ -339,7 +387,11 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
         (letter) => letter === letter.toUpperCase(),
       ).length;
       const uppercaseRatio = letters.length > 0 ? uppercaseCount / letters.length : 0;
-      return { value: merchantDisplayName(headingMerchant??line.text), score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
+      // A bare store-type heading ("NHÀ THUỐC") names the brand on the next line ("Pharmacity").
+      const brand=lines[index+1];
+      const storeType=headingMerchant===null&&/^(?:nha\s*thuoc|cua\s*hang|sieu\s*thi|nha\s*hang|ca\s*phe|quan|tiem)$/.test(normalizeReceiptLabel(merchantText).replace(/\s+/g," "))&&
+        brand!==undefined&&/\p{L}{3}/u.test(brand.text)&&!/\d/.test(brand.text)&&!isReceiptMetadata(brand.text)&&!isReceiptDocumentLabel(brand.text)&&!isReceiptSummary(brand.text);
+      return { value: storeType?merchantDisplayName(brand.text):merchantDisplayName(headingMerchant??line.text), score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
     })
     .filter((candidate): candidate is { value: string; score: number } => candidate !== null)
     .sort((left, right) => right.score - left.score);
@@ -353,6 +405,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
       ? "Một số ô tiền hàng hoặc thuế chưa khớp. Hãy kiểm tra tổng tiền."
     : hasArithmeticConflict || lines.some(line => line.reviewIssue === "inconsistent-item")
       ? "Một số dòng sản phẩm có số lượng, đơn giá và thành tiền không khớp nên chưa được đưa vào danh sách. Hãy đối chiếu và bổ sung dòng thiếu."
+    : lineItems.some(unusualAmount)
+      ? "Một số số tiền không tròn trăm đồng nên có thể bị đọc sai. Hãy đối chiếu các dòng được đánh dấu với hóa đơn."
     : lineItems.some(item => item.confidence < 0.7)
       ? "Một số số lượng hoặc đơn giá được suy ra, chưa được xác nhận từ ảnh. Hãy đối chiếu từng dòng với hóa đơn."
     : selectedTotal === null

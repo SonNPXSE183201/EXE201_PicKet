@@ -129,3 +129,20 @@
   .ao-partner { grid-template-columns: minmax(0, 1fr); }
   .ao-partner-logo { grid-template-columns: auto 1fr; justify-items: start; place-content: center start; border-right: 0; border-bottom: 2px dashed rgb(255 255 255 / 70%); text-align: left; }
 }
+
+/* Sign-up verification channels card (settings). */
+.av-card-body { display: grid; gap: 14px; }
+.av-form fieldset { display: grid; gap: 14px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.av-switches { display: grid; gap: 10px; }
+.av-switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border-radius: 14px; background: var(--ap-cream, #fbebdd); cursor: pointer; }
+.av-switch-row b { display: block; font-size: 13px; line-height: 18px; font-weight: 800; }
+.av-switch-row small { display: block; font-size: 11px; line-height: 16px; font-weight: 600; color: var(--ap-muted); }
+.av-fields { display: flex; flex-wrap: wrap; gap: 12px; }
+.av-fields > .ap-field { flex: 0 1 200px; }
+.av-fields > .ap-field:last-child { flex: 1 1 240px; }
+.av-error, .av-ok { margin: 0; padding: 10px 14px; border-radius: 14px; font-size: 12px; line-height: 18px; font-weight: 700; }
+.av-error { background: var(--ap-danger-bg); color: var(--ap-danger); }
+.av-ok { background: var(--ap-success-bg); color: var(--ap-success); }
+.av-log { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.av-log b { display: block; font-size: 12px; font-weight: 700; overflow-wrap: anywhere; }
+.av-log small { display: block; font-size: 11px; font-weight: 700; color: var(--ap-muted); }

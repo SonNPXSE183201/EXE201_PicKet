@@ -31,5 +31,5 @@ export function resolveAppUpdate(input: unknown, installed: InstalledApp): AppUp
 }
 
 export function installedVersionLabel(app: Pick<InstalledApp, "version" | "versionCode"> | null, language: "vi" | "en" = "vi"): string {
-  return app ? `${language === "en" ? "Version" : "Phiên bản"} ${app.version} (${app.versionCode})` : language === "en" ? "Installed version unavailable" : "Chưa xác định phiên bản đã cài";
+  return app ? `${language === "en" ? "Version" : "Phiên bản"} ${app.version}` : language === "en" ? "Installed version unavailable" : "Chưa xác định phiên bản đã cài";
 }

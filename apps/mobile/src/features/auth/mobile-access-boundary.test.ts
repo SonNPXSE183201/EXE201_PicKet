@@ -13,7 +13,7 @@ function nodes(value: any): Element[] {
 }
 function harness() {
   const slots: any[] = [];
-  let cursor = 0, owner = "owner-a", token = "token-a", signOuts = 0, clock = 1_000_000, reads = 0, stored: string | null = null;
+  let cursor = 0, owner = "owner-a", token = "token-a", signOuts = 0, setupMarks = 0, clock = 1_000_000, reads = 0, stored: string | null = null;
   let foreground: (state: string) => void = () => {};
   let read: () => Promise<unknown> = async () => ({ staff: false, mobileAllowed: true });
   const state = (initial: any) => {
@@ -38,7 +38,8 @@ function harness() {
     "@/core/ui/picket-text": { PicketText: "Text" },
     "@/core/ui/accessible-pressable": { AccessiblePressable: "Button" },
     "@/features/settings/appearance-provider": { useAppTheme: () => ({ colors: {} }) },
-    "./auth-context": { useAuth: () => ({ session: { user: { id: owner }, access_token: token }, signOut: async () => { signOuts++; } }) },
+    "./auth-context": { useAuth: () => ({ session: { user: { id: owner }, access_token: token }, signOut: async () => { signOuts++; }, markPasswordSetupRequired: () => { setupMarks++; } }) },
+    "./password-setup-gate": { isPasswordSetupRequiredError: (error: any) => error?.status === 403 && /password setup required/i.test(String(error?.message)) },
     "./mobile-access-policy": { mobileAccessAllowed: (value: any) => value.mobileAllowed === true, cachedMobileAccessAllowed: (value: any, who: string) => value?.owner === who && value?.allowed === true },
   };
   const module = { exports: {} as any };
@@ -56,6 +57,7 @@ function harness() {
     refreshToken: () => { token = "token-b"; },
     switchOwner: () => { owner = "owner-b"; token = "token-b"; },
     signOuts: () => signOuts,
+    setupMarks: () => setupMarks,
     advance: (ms: number) => { clock += ms; },
     store: (value: unknown) => { stored = JSON.stringify(value); },
     reads: () => reads,
@@ -137,4 +139,14 @@ test("another owner's saved allowance never opens this owner's app", async () =>
   app.setRead(() => new Promise(() => {}));
   app.render(); await settle();
   assert.equal(app.mounted(), false);
+});
+
+test("'Password setup required' shows create-password instead of signing out or blocking", async () => {
+  const app = harness();
+  app.setRead(async () => { throw Object.assign(new Error("Password setup required"), { status: 403 }); });
+  app.render(); await settle(); app.render();
+  assert.equal(app.setupMarks(), 1);
+  assert.equal(app.signOuts(), 0);
+  const texts = nodes(app.render()).map((node) => node.props.children).flat().filter((value) => typeof value === "string");
+  assert.equal(texts.includes("Quản trị PicKet trên web"), false);
 });

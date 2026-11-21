@@ -25,7 +25,7 @@ export function AsOf({ data }: { data: Record<string, unknown> }) {
   return (
     <p className="ap-footnote">
       <AdminIcon name="sparkle" size={14} />
-      Nguồn: API Picket · Múi giờ hiển thị: {str(data.timezone) || "—"} · Truy vấn lúc {formatDateTime(data.asOf)}. Nguồn ngoài giữ ngày/timezone riêng.
+      Nguồn: API PicKet · Múi giờ hiển thị: {str(data.timezone) || "—"} · Truy vấn lúc {formatDateTime(data.asOf)}. Nguồn ngoài giữ ngày/timezone riêng.
     </p>
   );
 }

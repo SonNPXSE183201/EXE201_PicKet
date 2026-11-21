@@ -81,7 +81,10 @@ export function PicketTextInput({
       accessibilityLabel={props.accessibilityLabel}
       editable={editable}
       placeholderTextColor={props.placeholderTextColor ?? colors.muted}
-      selectionColor={props.selectionColor ?? colors.focusRing}
+      // Brand-coloured caret and drag handles; the selection highlight stays light so text remains readable.
+      cursorColor={props.cursorColor ?? colors.primary}
+      selectionHandleColor={props.selectionHandleColor ?? colors.primary}
+      selectionColor={props.selectionColor ?? `${colors.primary}40`}
       onFocus={(event) => {
         setFocused(true);
         onFocus?.(event);

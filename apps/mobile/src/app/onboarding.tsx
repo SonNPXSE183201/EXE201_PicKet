@@ -86,10 +86,10 @@ export default function OnboardingScreen() {
         {skippable ? <Pressable accessibilityRole="button" hitSlop={8} onPress={() => setStep((current) => current + 1)}><Text style={styles.skip}>{t("Bỏ qua")}</Text></Pressable> : <View style={styles.topSpacer} />}
       </View>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        {step === 0 && <Step title={t("Giữ từng chi tiêu. Gom từng kỷ niệm.")} description={t("Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn.")}><View style={styles.art}><PaperArt id="bloom" style={{ width: 160, height: 160 }} /></View></Step>}
-        {step === 1 && <Step title={t("Mình gọi bạn là gì?")} description={t("Picket dùng tên này để chào bạn mỗi ngày.")}><View style={styles.nameCard}><Text style={styles.overline}>{t("TÊN HIỂN THỊ")}</Text><TextInput accessibilityLabel={t("Tên hiển thị")} value={displayName} onChangeText={setDisplayName} placeholder={t("Tên hiển thị")} placeholderTextColor={colors.muted} selectionColor={colors.primary} style={styles.nameInput} /><View style={styles.underline} /><Text style={styles.hint}>{t("Tên thật hay biệt danh đều được.")}</Text></View></Step>}
+        {step === 0 && <Step title={t("Giữ từng chi tiêu. Gom từng kỷ niệm.")} description={t("PicKet giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn.")}><View style={styles.art}><PaperArt id="bloom" style={{ width: 160, height: 160 }} /></View></Step>}
+        {step === 1 && <Step title={t("Mình gọi bạn là gì?")} description={t("PicKet dùng tên này để chào bạn mỗi ngày.")}><View style={styles.nameCard}><Text style={styles.overline}>{t("TÊN HIỂN THỊ")}</Text><TextInput accessibilityLabel={t("Tên hiển thị")} value={displayName} onChangeText={setDisplayName} placeholder={t("Tên hiển thị")} placeholderTextColor={colors.muted} selectionColor={colors.primary} style={styles.nameInput} /><View style={styles.underline} /><Text style={styles.hint}>{t("Tên thật hay biệt danh đều được.")}</Text></View></Step>}
         {step === 2 && <Step title={t("Nhịp sống của bạn")} description={t("Chọn nhóm gần nhất với hoàn cảnh hiện tại.")}><Choices values={personas} selected={persona} onSelect={setPersona} /></Step>}
-        {step === 3 && <Step title={t("Mục tiêu chính")} description={t("Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này.")}><Choices values={goals} selected={goal} onSelect={setGoal} /></Step>}
+        {step === 3 && <Step title={t("Mục tiêu chính")} description={t("PicKet sẽ ưu tiên thông tin liên quan tới mục tiêu này.")}><Choices values={goals} selected={goal} onSelect={setGoal} /></Step>}
         {step === 4 && <Step title={t("Đơn vị tiền tệ")} description={t("Bạn có thể thay đổi lựa chọn này sau.")}><Choices values={currencies} selected={currencyCode} onSelect={setCurrencyCode} /></Step>}
         {step === 5 && <Step title={t("Tạo ví đầu tiên")} description={t("Ví có thể là tiền mặt, tài khoản ngân hàng hoặc quỹ riêng.")}><Field value={walletName} onChangeText={setWalletName} placeholder={t("Tên ví")} /></Step>}
         {step === 6 && <Step title={t("Số dư hiện tại")} description={t("Nhập số dư để báo cáo bắt đầu đúng từ hôm nay.")}><Field money value={openingBalance} onChangeText={setOpeningBalance} keyboardType="number-pad" placeholder={t("Số dư")} /></Step>}
@@ -97,7 +97,7 @@ export default function OnboardingScreen() {
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
       </ScrollView>
       <View style={styles.actions}>
-        <FigmaButton label={step === 7 ? t("Bắt đầu cùng Picket") : t("Tiếp tục")} onPress={() => void next()} busy={busy} fullWidth />
+        <FigmaButton label={step === 7 ? t("Bắt đầu cùng PicKet") : t("Tiếp tục")} onPress={() => void next()} busy={busy} fullWidth />
       </View>
     </SafeAreaView>
   );

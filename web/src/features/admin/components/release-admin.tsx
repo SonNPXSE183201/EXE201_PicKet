@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { SubmitButton } from "@/core/ui/submit-button";
 import { saveReleaseAction } from "../payment-actions";
+import { MIN_SUPPORTED_WARNINGS } from "../release-min-guard";
 import { AdminPager } from "../ui/admin-pager";
 import { Banner, Card, Chip, Field, Table, formatDateTime, relativeTime, type ChipTone, type Column } from "../ui/paper";
 import "./modules.css";
@@ -122,7 +123,11 @@ export async function ReleaseAdmin({ query }: { query: Query }) {
         </Card>
 
         <Card eyebrow={form ? "Biên tập" : "Ghi nhận mới"} title={form ? `${RELEASE_CHANNEL_LABELS[form.channel]} ${form.version_name}` : "Phiên bản APKPure / landing"}>
-          {query.error && <p className="am-error" role="alert">Không lưu được. Kiểm tra MFA, lý do, checksum (bản landing đang phát hành cần SHA-256, dung lượng, tên file) hoặc có người vừa sửa.</p>}
+          {(query.error === "confirm-above_live" || query.error === "confirm-above_previous") && (
+            <p className="am-error" role="alert">{MIN_SUPPORTED_WARNINGS[query.error.slice(8) as keyof typeof MIN_SUPPORTED_WARNINGS]} Tích ô xác nhận bên dưới rồi lưu lại nếu bạn chắc chắn.</p>
+          )}
+          {query.error === "min" && <p className="am-error" role="alert">Mã bắt buộc cập nhật phải là số nguyên dương và không được lớn hơn version code của chính bản này.</p>}
+          {query.error === "save" && <p className="am-error" role="alert">Không lưu được. Kiểm tra MFA, lý do, checksum (bản landing đang phát hành cần SHA-256, dung lượng, tên file) hoặc có người vừa sửa.</p>}
           <form action={saveReleaseAction} className="ap-form">
             <fieldset disabled={!mfaVerified}>
               {form ? (
@@ -164,6 +169,8 @@ export async function ReleaseAdmin({ query }: { query: Query }) {
                 <Field label="minSdk"><input name="minSdk" type="number" min={24} max={40} defaultValue={form?.min_sdk ?? 24} /></Field>
               </div>
               <Field label="Bắt buộc cập nhật nếu thấp hơn code"><input name="minSupportedCode" type="number" min={1} defaultValue={form?.min_supported_code ?? ""} /></Field>
+              <p className="ap-card-note">Cảnh báo: người dùng có version code thấp hơn số này sẽ bị buộc cập nhật. Đặt cao hơn bản đang phát hành sẽ khóa toàn bộ người dùng của kênh; đặt cao hơn bản trước sẽ buộc mọi người dùng bản cũ cập nhật. Áp dụng cả cho Google Play · Production và landing.</p>
+              <label className="ap-check"><input type="checkbox" name="confirmMinSupported" value="yes" /> Tôi hiểu việc này có thể buộc người dùng cập nhật và đã kiểm tra bản mới đã sẵn sàng.</label>
               <Field label="Ghi chú phát hành (VI)"><textarea name="notesVi" maxLength={2000} defaultValue={form?.notes_vi ?? ""} /></Field>
               <Field label="Release notes (EN)"><textarea name="notesEn" maxLength={2000} defaultValue={form?.notes_en ?? ""} /></Field>
               <Field label="Lý do (lưu vào nhật ký)"><input name="reason" required minLength={5} maxLength={500} /></Field>

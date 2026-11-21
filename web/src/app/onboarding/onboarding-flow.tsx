@@ -66,7 +66,7 @@ export function OnboardingFlow() {
       {step === 0 && (
         <Intro
           title="Giữ từng chi tiêu. Gom từng kỷ niệm."
-          copy="Picket giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn."
+          copy="PicKet giúp bạn quét hóa đơn, hiểu dòng tiền và xây thói quen tài chính tốt hơn."
         />
       )}
       {step === 1 && (
@@ -102,7 +102,7 @@ export function OnboardingFlow() {
       {step === 3 && (
         <Intro
           title="Mục tiêu chính"
-          copy="Picket sẽ ưu tiên thông tin liên quan tới mục tiêu này."
+          copy="PicKet sẽ ưu tiên thông tin liên quan tới mục tiêu này."
         >
           <Choices
             label="Mục tiêu chính"
@@ -204,7 +204,7 @@ export function OnboardingFlow() {
           {busy
             ? "Đang lưu..."
             : step === 7
-              ? "Bắt đầu cùng Picket"
+              ? "Bắt đầu cùng PicKet"
               : "Tiếp tục"}
         </button>
       </div>

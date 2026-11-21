@@ -38,6 +38,10 @@ public class ReceiptCorpusDeviceTest extends InstrumentationTestCase {
     Map<String,Object> rotated=session.inspect(20000);
     assertFalse(Boolean.TRUE.equals(rotated.get("reused")));
     row.put("rotatedDurationMs",rotated.get("durationMs"));
+    // Resolution experiment: the same upright image read with its long side capped, to weigh speed vs accuracy.
+    JSONObject scaled=new JSONObject();
+    for(int longSide:new int[]{2048,1600})scaled.put(String.valueOf(longSide),new JSONObject(ScaledRead.read(input,longSide)));
+    row.put("scaled",scaled);
    } catch(Exception error){row.put("error",error.getClass().getSimpleName()+":"+error.getMessage());}
    finally {if(session!=null)session.close();input.delete();}
    row.put("durationMs",SystemClock.elapsedRealtime()-start);rows.put(row);

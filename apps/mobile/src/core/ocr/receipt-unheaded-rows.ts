@@ -1,6 +1,6 @@
 import type {ReceiptTextLine} from "./receipt-parser";
 import {parseReceiptMoney,parseReceiptItemMoney} from "./receipt-money";
-import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptSummary,receiptBodyStart} from "./receipt-semantics";
+import {isReceiptDocumentLabel,isReceiptMetadata,isReceiptQuantityText,isReceiptQuantityWithUnit,isReceiptSummary,receiptBodyStart} from "./receipt-semantics";
 import {looksLikeContactAmount} from "./receipt-total-role";
 type Box=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
 const positioned=(line:ReceiptTextLine):line is Box=>[line.left,line.right,line.top,line.bottom].every(x=>typeof x==='number'&&Number.isFinite(x))&&line.right!>line.left!&&line.bottom!>line.top!;
@@ -32,15 +32,16 @@ export function receiptUnheadedRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
     replacements.set(name,{...name,text:`${name.text} ${quantity} x ${unit} | ${total}`,right:amount.right,confidence:Math.min(name.confidence??.75,operand.confidence??.75,amount.confidence??.75)});
     used.add(operand);used.add(amount);
   }
+  const inline:{name:Box;amount:Box;quantity:Box|null}[]=[];
   for(const name of boxes){
     if(used.has(name)||replacements.has(name))continue;
     const explicitQuantity=/^\d+(?:[.,]\d+)?\s*[xX×]\s+/.test(name.text);
-    if(name.bottom>=summaryTop||name.text.replace(/[^A-Za-zÀ-ỹ]/g,'').length<3||(!explicitQuantity&&/\d\s*(?:[xX*@]|[.,]\d{3})/.test(name.text))||isReceiptMetadata(name.text)||isReceiptSummary(name.text)||isReceiptDocumentLabel(name.text))continue;
+    if(name.bottom>=summaryTop||name.text.replace(/[^A-Za-zÀ-ỹ]/g,'').length<3||isReceiptQuantityWithUnit(name.text)||(!explicitQuantity&&/\d\s*(?:[xX*@]|[.,]\d{3})/.test(name.text))||isReceiptMetadata(name.text)||isReceiptSummary(name.text)||isReceiptDocumentLabel(name.text))continue;
     const right=boxes.filter(line=>line!==name&&!used.has(line)&&line.left>=name.right&&line.top<summaryTop&&numeric.test(line.text)&&!looksLikeContactAmount(line.text)&&(explicitQuantity?parseReceiptItemMoney(line.text):parseReceiptMoney(line.text))!==null&&
       Math.min(name.bottom,line.bottom)-Math.max(name.top,line.top)>=Math.min(name.bottom-name.top,line.bottom-line.top)*.3);
     if(right.length!==1)continue;
     const amount=right[0],total=parseReceiptItemMoney(amount.text)!;
-    const quantities=boxes.filter(line=>line.right<=name.left&&!used.has(line)&&Math.abs(cy(line)-cy(name))<Math.min(name.bottom-name.top,line.bottom-line.top)*.6&&/^\d+(?:[.,]\d+)?\s*[xX]?$/.test(line.text));
+    const quantities=boxes.filter(line=>line.right<=name.left&&!used.has(line)&&Math.abs(cy(line)-cy(name))<Math.min(name.bottom-name.top,line.bottom-line.top)*.6&&/^\d+(?:[.,]\d+)?\s*[xX]?$/.test(line.text)&&isReceiptQuantityText(line.text.replace(/\s*[xX]$/,"")));
     let text=`${name.text} ${total}`,confidence=Math.min(name.confidence??.75,amount.confidence??.75,.65);
     if(quantities.length===1){
       const quantity=Number(quantities[0].text.replace(/[xX\s]/g,'').replace(',','.')),unit=total/quantity;
@@ -50,6 +51,20 @@ export function receiptUnheadedRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
       text=`${name.text} ${quantity} x ${unit} | ${total}`;confidence=Math.min(confidence,.55);used.add(quantities[0]);
     }
     replacements.set(name,{...name,text,right:amount.right,confidence});used.add(amount);
+    inline.push({name,amount,quantity:quantities.length===1?quantities[0]:null});
+  }
+  // A column drifting upward can make every amount overlap the next name down. An amount clearly
+  // above its name, with an unpriced product line just above that name, is ambiguous: undo it.
+  for(let changed=true;changed;){
+    changed=false;
+    for(const pair of inline){
+      const {name,amount}=pair,height=name.bottom-name.top;
+      if(!replacements.has(name)||cy(amount)>=cy(name)-height*.25)continue;
+      const unpricedAbove=boxes.some(other=>other!==name&&!used.has(other)&&!replacements.has(other)&&eligibleName(other)&&!numeric.test(other.text)&&
+        cy(other)<cy(name)&&cy(name)-cy(other)<=height*2&&Math.min(other.right,name.right)-Math.max(other.left,name.left)>0);
+      if(!unpricedAbove)continue;
+      replacements.delete(name);used.delete(amount);if(pair.quantity)used.delete(pair.quantity);changed=true;
+    }
   }
   return lines.filter(line=>!used.has(line)).map(line=>replacements.get(line)??line);
 }

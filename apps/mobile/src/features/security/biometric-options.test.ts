@@ -9,8 +9,8 @@ test("Android 11 and later allow device credential fallback", () => {
   assert.equal(biometricOptions(36).disableDeviceFallback, false);
 });
 test("translated prompts retain strong biometric restrictions on Android 10",()=>{
-  const options=biometricOptions(29,{promptMessage:"Unlock Picket",promptDescription:"Authenticate to continue",cancelLabel:"Cancel"});
-  assert.equal(options.promptMessage,"Unlock Picket");
+  const options=biometricOptions(29,{promptMessage:"Unlock PicKet",promptDescription:"Authenticate to continue",cancelLabel:"Cancel"});
+  assert.equal(options.promptMessage,"Unlock PicKet");
   assert.equal(options.disableDeviceFallback,true);
   assert.equal(options.biometricsSecurityLevel,"strong");
 });

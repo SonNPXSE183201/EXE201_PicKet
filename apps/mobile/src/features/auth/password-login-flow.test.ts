@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import * as domain from '@picket/domain';
 import * as googleSignInPolicy from './google-sign-in-policy';
+import * as passwordSetupGate from './password-setup-gate';
 
 const phoneCalls:unknown[]=[];
 function provider(signInWithPassword:(credentials:domain.PasswordLoginCredentials)=>Promise<{error:Error|null}>){
@@ -21,6 +22,7 @@ function provider(signInWithPassword:(credentials:domain.PasswordLoginCredential
   '@/core/storage/secure-auth-storage':{},'@/features/auth/auth-callback':{},'@/features/auth/session-recovery':{},
   '@/features/auth/device-sign-out':{createAuthMutationQueue:()=> (action:()=>unknown)=>action()},
   '@/features/auth/google-sign-in-policy':googleSignInPolicy,
+  '@/features/auth/password-setup-gate':passwordSetupGate,
  };
  const exports={} as {AuthProvider:(props:unknown)=>{props:{value:{signIn:(identifier:string,password:string)=>Promise<void>}}}};
  const compiled=ts.transpileModule(readFileSync('src/features/auth/auth-context.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText;

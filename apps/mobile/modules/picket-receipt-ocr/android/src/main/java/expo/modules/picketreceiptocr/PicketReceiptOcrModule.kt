@@ -20,6 +20,8 @@ class PicketReceiptOcrModule : Module() {
     AsyncFunction("inspect") { id: String, timeout: Int -> synchronized(lock) { current(id).inspect(timeout) } }
     AsyncFunction("crop") { id: String, x: Int, y: Int, width: Int, height: Int, timeout: Int -> synchronized(lock) { current(id).crop(x, y, width, height, timeout) } }
     AsyncFunction("close") { id: String -> synchronized(lock) { current(id).close() } }
-    OnDestroy { Thread { synchronized(lock) { session?.close() } }.apply { isDaemon = true; start() } }
+    // Loads the recognition model while the camera screen is open, so the first scan does not pay for it.
+    AsyncFunction("prepare") { ReceiptImageSession.warmUp() }
+    OnDestroy { Thread { synchronized(lock) { session?.close() }; ReceiptImageSession.closeShared() }.apply { isDaemon = true; start() } }
   }
 }

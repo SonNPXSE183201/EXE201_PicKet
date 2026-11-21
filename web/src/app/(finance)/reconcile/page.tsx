@@ -13,7 +13,7 @@ export default async function ReconcilePage() {
     <>
       <FinancePageHeader
         title="Đối soát ví"
-        description="So số dư trong Picket với sao kê và ghi điều chỉnh khi cần."
+        description="So số dư trong PicKet với sao kê và ghi điều chỉnh khi cần."
       />
       <article className="finance-panel">
         <ReconcileForm
