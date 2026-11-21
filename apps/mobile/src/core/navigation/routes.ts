@@ -20,6 +20,7 @@ export const routes = {
   appearance: "/appearance" as Href,
   admin: "/admin" as Href,
   insights: "/insights" as Href,
+  forecast: "/forecast" as Href,
   keepsakes: "/keepsakes" as Href,
   learning: "/learning-preview" as Href,
   notifications: "/notifications" as Href,

@@ -92,6 +92,8 @@ type PicketRequestInit = RequestInit & { timeoutMs?: number };
 
 export type SignupVerification={email:boolean;sms:boolean;smsProvider:'firebase'};
 export type AdminVerificationSettings={settings:{emailEnabled:boolean;smsEnabled:boolean;smsProvider:'firebase';smsDailyLimit:number;revision:number;updatedAt:string};history:{before:Record<string,unknown>;after:Record<string,unknown>;reason:string;createdAt:string}[]};
+export type ForecastSettings={enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenario:boolean;revision:number};
+export type AdminForecastSettings={settings:{enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenarioPlans:('free'|'plus'|'pro')[];revision:number;updatedAt:string};history:{before:Record<string,unknown>;after:Record<string,unknown>;reason:string;createdAt:string}[]};
 export class ApiError extends Error {
   readonly status: number;
   readonly details?: unknown;
@@ -906,6 +908,16 @@ export class PicketApiClient {
   }
   saveVerificationSettings(accessToken:string,body:{emailEnabled:boolean;smsEnabled:boolean;smsDailyLimit:number;revision:number;reason:string}):Promise<AdminVerificationSettings['settings']> {
     return this.request('/v1/admin/verification-settings',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
+  }
+  /** End-of-month forecast settings for the app; `scenario` says whether the caller's plan has the purchase scenario (false without a token). */
+  forecastSettings(accessToken?:string,signal?:AbortSignal):Promise<ForecastSettings> {
+    return this.request('/v1/forecast/settings',{headers:accessToken?this.authHeaders(accessToken):{Accept:'application/json'},signal});
+  }
+  adminForecastSettings<T=AdminForecastSettings>(accessToken:string):Promise<T> {
+    return this.request('/v1/admin/forecast-settings',{headers:this.authHeaders(accessToken)});
+  }
+  saveForecastSettings(accessToken:string,body:{enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenarioPlans:('free'|'plus'|'pro')[];revision:number;reason:string}):Promise<AdminForecastSettings['settings']> {
+    return this.request('/v1/admin/forecast-settings',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
   }
   accountPhone(accessToken:string,body:{phone:string;action?:'attach'|'send'|'verify'|'firebase';challengeId?:string;code?:string;idToken?:string}):Promise<Record<string,unknown>> {
     return this.request('/v1/account/phone',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});

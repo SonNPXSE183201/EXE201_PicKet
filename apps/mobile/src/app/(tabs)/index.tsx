@@ -1,6 +1,7 @@
 import { usePullRefresh } from "@/features/sync/use-pull-refresh";
 import { useState } from "react";
 import { HomeWeeklyRhythm } from "@/features/cashflow/home-weekly-rhythm";
+import { HomeForecastCard } from "@/features/forecast/home-forecast-card";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { HomeBudgetPockets } from "@/features/budgets/home-budget-pockets";
 import { useTranslation } from "react-i18next";
@@ -99,6 +100,7 @@ function HomeContent({ initialMonth }: { initialMonth?: string }) {
     {(pendingCount > 0) && <Pressable onPress={() => { if (!localMode) void flush(); }} accessibilityState={{ busy: syncing }} style={styles.status}><AppIcon name={syncing ? "sync" : localMode ? "cellphone-check" : "cloud-sync-outline"} size={17} color={colors.muted} /><Text style={styles.statusText}>{localMode ? t("local") : syncing ? t("syncing") : t("pending",{count:pendingCount})}</Text></Pressable>}
     {conflictCount > 0 && <MenuRow icon="alert-circle-outline" title={t("conflicts",{count:conflictCount})} onPress={() => router.push(routes.syncConflicts)} />}
     <View style={styles.block}><HomeWeeklyRhythm /></View>
+    <View style={styles.block}><HomeForecastCard /></View>
     <View style={styles.block}><HomeBudgetPockets /></View>
     <View style={styles.block}><HomeRecent rows={recentRows} onAdd={() => router.push(routes.newTransaction)} onOpen={id => router.push(routes.transaction(id))} /></View>
   </PicketScreen></View>;

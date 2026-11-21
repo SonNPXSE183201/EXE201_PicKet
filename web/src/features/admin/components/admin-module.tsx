@@ -1,4 +1,5 @@
 import { ApiError } from "@picket/api-client";
+import { canManageForecast } from "../forecast-settings-form";
 import { requireApiSession } from "@/core/auth/require-api-session";
 import { adminSections, canManageSignupVerification, canViewAdminSection, type AdminSection } from "../admin-permissions";
 import { MfaPanel } from "./mfa-panel";
@@ -87,7 +88,16 @@ export async function AdminModule({ section, searchParams }: { section: AdminSec
       planLimits = undefined; // Older API/database: the card is simply not shown.
     }
   }
-  const props: ViewProps = { section, data, query, billingFinance, planLimits, verificationSettings, role, permissions, mfaVerified, days, page, greetingName: firstName(claims.email) };
+  let forecastSettings: ViewProps["forecastSettings"];
+  if (section === "settings" && canManageForecast(role, permissions)) {
+    try {
+      const loaded = await api.adminForecastSettings<NonNullable<ViewProps["forecastSettings"]>>(accessToken);
+      if (typeof loaded?.settings?.enabled === "boolean") forecastSettings = { settings: loaded.settings, history: loaded.history ?? [] };
+    } catch {
+      forecastSettings = undefined; // Older API/database: the card is simply not shown.
+    }
+  }
+  const props: ViewProps = { section, data, query, billingFinance, planLimits, verificationSettings, forecastSettings, role, permissions, mfaVerified, days, page, greetingName: firstName(claims.email) };
   return <>{notices}{renderSection(props)}</>;
 }
 
