@@ -1,6 +1,7 @@
 import { invalidLocalPhoneMessage } from "./phone-input";
 
 export const phoneAlreadyRegisteredMessage = "Số điện thoại đã được đăng ký. Hãy đăng nhập.";
+export const emailAlreadyRegisteredMessage = "Email đã được đăng ký. Hãy đăng nhập hoặc dùng Quên mật khẩu.";
 const networkMessage = "Không kết nối được dịch vụ. Hãy kiểm tra mạng và thử lại.";
 
 /** Firebase codes arrive as "auth/<code>" (or bare) on the native error. */
@@ -134,4 +135,25 @@ export function phoneResetErrorMessage(error: unknown): string {
 export function phoneFlowRestartsFromPhone(error: unknown): boolean {
   const status = errorStatus(error);
   return isPhoneCodeRestartError(error) || status === 401 || status === 404;
+}
+
+/**
+ * POST /v1/auth/email-signup {action:"start"} failure: the message that stops the
+ * sign-up, or null to send the code anyway. Only answers the server meant
+ * (taken address, limits, switched off, invalid) stop it; an unreachable or older
+ * API must not block email sign-up.
+ */
+export function emailSignupStartBlockMessage(error: unknown): string | null {
+  switch (errorStatus(error)) {
+    case 400:
+      return "Email không hợp lệ.";
+    case 403:
+      return "Đăng ký bằng email đang tạm tắt. Hãy thử cách khác.";
+    case 409:
+      return emailAlreadyRegisteredMessage;
+    case 429:
+      return "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại.";
+    default:
+      return null;
+  }
 }

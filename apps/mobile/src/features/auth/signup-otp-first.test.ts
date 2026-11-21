@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -11,6 +12,8 @@ import {
   parseSignupVerification,
 } from "./signup-channels";
 import {
+  emailAlreadyRegisteredMessage,
+  emailSignupStartBlockMessage,
   firebasePhoneErrorMessage,
   isExpiredCodeError,
   isWrongCodeError,
@@ -187,4 +190,22 @@ test("phone flow errors: 403 'Request a new code first.' restarts, recovery maps
   assert.equal(phoneFlowRestartsFromPhone({ status: 404 }), true);
   assert.equal(phoneFlowRestartsFromPhone(disabled), false);
   assert.equal(phoneFlowRestartsFromPhone({ status: 400 }), false);
+});
+
+test("email sign-up stops for a registered address but never because the API is unreachable", () => {
+  const err = (status: number) => Object.assign(new Error("x"), { status });
+  assert.equal(emailSignupStartBlockMessage(err(409)), emailAlreadyRegisteredMessage);
+  assert.match(emailSignupStartBlockMessage(err(429)) ?? "", /quá nhanh/);
+  assert.match(emailSignupStartBlockMessage(err(403)) ?? "", /tạm tắt/);
+  assert.match(emailSignupStartBlockMessage(err(400)) ?? "", /không hợp lệ/);
+  // Network failure, older API without the route, or a server error: send the code anyway.
+  for (const status of [0, 404, 500, 502, 503, 504]) assert.equal(emailSignupStartBlockMessage(err(status)), null);
+  assert.equal(emailSignupStartBlockMessage(new TypeError("Network request failed")), null);
+});
+
+test("the register screen checks the address with the API before sending the email code", () => {
+  const source = readFileSync("src/app/(auth)/register.tsx", "utf8");
+  const check = source.indexOf("emailSignupStart(destination)");
+  const send = source.indexOf("emailCodeDelivery.start(destination, sendEmailCode)");
+  assert.ok(check > 0 && send > check, "pre-check must run before the code is sent");
 });

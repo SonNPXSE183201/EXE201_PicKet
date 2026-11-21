@@ -884,6 +884,10 @@ export class PicketApiClient {
     return this.request('/v1/auth/channels',{});
   }
   /** SMS sign-up: `start` before Firebase sends the 6-digit code, `complete` with the Firebase ID token and the new password. */
+  /** Email sign-up pre-check before Supabase sends the code: 409 when the address already has an account. */
+  emailSignupStart(email:string):Promise<{ok:true}> {
+    return this.request('/v1/auth/email-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'start',email})});
+  }
   phoneSignupStart(phone:string):Promise<{ok:true}> {
     return this.request('/v1/auth/phone-signup',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({action:'start',phone})});
   }

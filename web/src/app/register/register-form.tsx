@@ -15,6 +15,7 @@ import { GoogleMark, StackedField } from "@/features/auth/components/paper-field
 import { VerifyCodeForm } from "@/features/auth/components/verify-code-form";
 import { CreatePasswordForm } from "@/features/auth/components/create-password-form";
 import { confirmPhoneCode, discardFirebaseUser, sendPhoneCode } from "@/features/auth/firebase-phone";
+import { emailSignupStartBlockMessage } from "@/features/auth/email-signup-errors";
 import { firebasePhoneErrorMessage, isPhoneCodeRestartError, phoneSignupCompleteErrorMessage, phoneSignupStartErrorMessage } from "@/features/auth/phone-signup-errors";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -71,6 +72,16 @@ export function RegisterForm({ emailEnabled = true, smsEnabled = false, firebase
 
   async function submitEmail(email: string) {
     if (!(await passGate())) return setBusy(false);
+    try {
+      // An address that already has an account must sign in instead of getting a code here.
+      await api.emailSignupStart(email);
+    } catch (error) {
+      const blocked = emailSignupStartBlockMessage(error);
+      if (blocked) {
+        setMessage({ text: blocked });
+        return setBusy(false);
+      }
+    }
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,

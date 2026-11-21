@@ -2,6 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useRef, useState } from "react";
 
+import { picketApi } from "@/core/api/client";
 import { routes } from "@/core/navigation/routes";
 import { useAuth } from "@/features/auth/auth-context";
 import { validateEmail } from "@/features/auth/auth-errors";
@@ -21,7 +22,7 @@ import { emailCodeDelivery } from "@/features/auth/email-code-delivery";
 import { invalidLocalPhoneMessage, sanitizeLocalPhoneInput, vietnamPhonePrefix, vietnamPhoneToE164 } from "@/features/auth/phone-input";
 import { phoneSignup } from "@/features/auth/phone-signup-store";
 import { shownSignupMethod, type SignupMethod } from "@/features/auth/signup-channels";
-import { phoneSendErrorMessage } from "@/features/auth/signup-errors";
+import { emailSignupStartBlockMessage, phoneSendErrorMessage } from "@/features/auth/signup-errors";
 import { useSignupMethods } from "@/features/auth/signup-verification-store";
 
 const termsUrl = "https://picketfinance.com/terms.html";
@@ -78,6 +79,21 @@ export default function RegisterScreen() {
     setInvalid(false);
     setMessage(null);
     if (activeMethod === "email") {
+      setBusy(true);
+      try {
+        // An address that already has an account must sign in instead of getting a code here.
+        await picketApi?.emailSignupStart(destination);
+      } catch (error) {
+        const blocked = emailSignupStartBlockMessage(error);
+        if (blocked) {
+          setInvalid(true);
+          setMessage(blocked);
+          setBusy(false);
+          running.current = false;
+          return;
+        }
+      }
+      setBusy(false);
       // Open the code screen at once; it shows "sending" and any send error with "Đổi email".
       emailCodeDelivery.start(destination, sendEmailCode);
       router.push(routes.verifyCode("email", destination));
