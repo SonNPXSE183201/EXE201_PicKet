@@ -6,7 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as domain from "@picket/domain";
 type Element={type:unknown;props:Record<string,unknown>};
-function nodes(value:unknown):Element[]{if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=="object"||!("props" in value))return [];const n=value as Element;return [n,...nodes(n.props.children)];}
+function nodes(value:unknown):Element[]{if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=="object"||!("props" in value))return [];const n=value as Element;return [n,...nodes(n.props.children),...nodes(n.props.action)];}
 function text(value:unknown):string{if(typeof value==="string")return value;if(Array.isArray(value))return value.map(text).join("");if(value&&typeof value==="object"&&"props" in value)return text((value as Element).props.children);return "";}
 function harness(initialFailure=false){
  const slots:unknown[]=[];let cursor=0,completions=0,clears=0,reads=0,readFailure=initialFailure,release!:(value:unknown)=>void,reject!:(error:Error)=>void;const pending=new Promise((done,fail)=>{release=done;reject=fail;});
@@ -18,6 +18,7 @@ function harness(initialFailure=false){
  const pack={stages:[],lessons:[lesson]};
  const progress={version:1,completed:[]};const adapters:Record<string,unknown>={
     "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/theme/use-mobile-styles": { useMobileStyles: () => ({ colors: new Proxy({}, { get: () => "#000" }), styles: new Proxy({}, { get: () => ({}) }) }) },
     "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
     "@/core/theme/paper-foundations": { paperShape, paperSpace },
  react:{useState:state,useRef:ref,useEffect:effect},"react/jsx-runtime":{jsx:(type:unknown,props:unknown)=>({type,props}),jsxs:(type:unknown,props:unknown)=>({type,props})},
@@ -26,13 +27,13 @@ function harness(initialFailure=false){
  "@/features/learning/curriculum":{curriculumForLanguage:()=>({publicationGate:{publishable:false}})},
  "@/features/learning/lesson-blocks":{lessonBlocksForLanguage:()=>pack,orderedLessons:(value:typeof pack)=>value.lessons},
  "@/features/learning/lesson-player":{LessonPlayer:"Player",LessonComplete:"Complete"},
- "@/features/learning/learning-path":{LessonPath:"Path",TodayLessonCard:"Today"},
+ "@/features/learning/learning-path":{LessonPath:"Path",TodayLessonCard:"Today",LearningProgressCard:"Progress"},
  "@picket/domain":domain,
- "@/features/learning/progress-storage":{learningProgress:{subscribe:(_owner:string,callback:()=>void)=>{notify=callback;return ()=>{};},load:async()=>{reads++;if(customLoad)return customLoad();if(readFailure)throw Error("Unavailable");return progress;},dueReviews:async()=>customReviews?customReviews():[],complete:async()=>{completions++;return pending;}},learningDrafts:{load:async()=>null,save:async()=>{},clearIfUnchanged:async()=>{clears++;}}},
+ "@/features/learning/milestones":{learningMilestones:()=>({xp:0,badges:[]})},"@/features/learning/progress-storage":{weeklyPractice:{load:async()=>[],subscribe:()=>()=>{}},learningProgress:{subscribe:(_owner:string,callback:()=>void)=>{notify=callback;return ()=>{};},load:async()=>{reads++;if(customLoad)return customLoad();if(readFailure)throw Error("Unavailable");return progress;},dueReviews:async()=>customReviews?customReviews():[],complete:async()=>{completions++;return pending;}},learningDrafts:{load:async()=>null,save:async()=>{},clearIfUnchanged:async()=>{clears++;}}},
  };
  const exports:{Session?:(props:{owner:string})=>unknown}={};vm.runInNewContext(ts.transpileModule(readFileSync("src/app/learning-preview.tsx","utf8")+'\nexports.Session=LearningSession;',{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},Date,setInterval:()=>1,clearInterval:()=>{}});
  const render=()=>{cursor=0;return exports.Session!({owner:"guest"});};
- const button=(label:string)=>{const node=nodes(render()).find(n=>(label==="back"&&n.type==="Header"&&n.props.onBack)||(n.type==="Pressable"&&text(n.props.children).includes(label)));assert.ok(node,label);return node;};
+ const button=(label:string)=>{const node=nodes(render()).find(n=>(label==="back"&&n.type==="Header"&&n.props.onBack)||(n.type==="Pressable"&&text(n.props.children).includes(label))||(typeof n.props.label==="string"&&n.props.label.includes(label)&&typeof n.props.onPress==="function"));assert.ok(node,label);return node;};
  const find=(type:string)=>nodes(render()).find(n=>n.type===type);
  const open=()=>(find("Path")!.props.onOpen as (l:unknown)=>void)(lesson);
  const finish=()=>(find("Player")!.props.onFinish as (a:unknown)=>void)({q:0});
@@ -57,7 +58,7 @@ test("unavailable storage stays recoverable without clearing drafts or recording
  const app=harness(true);app.render();await settle();(app.button("retryStorage").props.onPress as ()=>void)();await settle();assert.ok(app.button("retryStorage"));assert.deepEqual(app.counts(),{completions:0,clears:0});
 });
 
-const done=(app:ReturnType<typeof harness>)=>app.find("Today")!.props.done;
+const done=(app:ReturnType<typeof harness>)=>app.find("Progress")!.props.done;
 test("late initial progress does not overwrite a newer subscription snapshot",async()=>{const app=harness();let release!:(v:unknown)=>void;const held=new Promise(done=>{release=done;});app.setLoad(()=>held);app.render();app.setLoad(async()=>({version:1,completed:[{lessonId:"lesson"}]}));app.notify();await settle();assert.equal(done(app),1);release({version:1,completed:[]});await settle();assert.equal(done(app),1);});
 
 test("superseded review refresh cannot restore an already completed review",async()=>{const app=harness();let release!:(v:unknown[])=>void;const held=new Promise<unknown[]>(done=>{release=done;});app.setReviews(()=>held);app.render();await settle();app.setReviews(async()=>[]);app.foreground();await settle();release([{lessonId:"lesson",version:1,offset:7,dueDay:"2026-10-01"}]);await settle();assert.throws(()=>app.button("reviewOpen"));});

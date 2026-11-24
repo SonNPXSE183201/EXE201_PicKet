@@ -27,6 +27,11 @@ export function Icon({ name }: { name: string }) {
     minus: "M5 12h14",
     plus: "M12 5v14M5 12h14",
     lock: "M6 11h12v10H6Zm2 0V8a4 4 0 0 1 8 0v3",
+    bolt: "M13 2 3 14h9l-1 8 10-12h-9l1-8Z",
+    sparkle: "M12 3 14.5 9.5 21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z",
+    camera: "M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm8 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
+    list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+    alert: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-14v4m0 4h.01",
   };
   return (
     <svg
