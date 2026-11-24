@@ -27,3 +27,4 @@ export * from "./announcements";
 export * from "./month-forecast";
 export * from "./forecast-copy";
 export * from "./forecast-settings-parse";
+export * from "./learning-blocks";
