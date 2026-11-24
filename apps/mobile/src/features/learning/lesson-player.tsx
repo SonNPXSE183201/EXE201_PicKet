@@ -173,9 +173,11 @@ function LessonActionBar({ primaryLabel, primaryDisabled, busy, onPrimary, secon
   return (
     <View style={styles.actionBar}>
       <FigmaButton variant="primary" size="large" fullWidth label={primaryLabel} disabled={primaryDisabled} busy={busy} onPress={onPrimary} />
+      {/* Keep the row on the first card too, so the primary button never moves and a fast
+          second tap cannot land on "Thẻ trước" instead of "Tiếp tục". */}
       {secondaryLabel && onSecondary ? (
         <FigmaButton variant="text" size="medium" label={secondaryLabel} disabled={busy} onPress={onSecondary} style={styles.secondaryAction} />
-      ) : null}
+      ) : <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.secondarySpacer} />}
     </View>
   );
 }
@@ -560,6 +562,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
     gap: 4,
     backgroundColor: colors.canvas,
   },
+  secondarySpacer: { minHeight: 40 },
   secondaryAction: {
     alignSelf: "center",
   },
