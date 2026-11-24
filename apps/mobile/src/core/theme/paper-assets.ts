@@ -2,6 +2,9 @@ import type { ImageSourcePropType } from "react-native";
 
 /** Metro needs literal require paths. Register new art here; screens use stable IDs. */
 export const paperAssets = {
+  monthCloseScene: require("../../../assets/paper-v3/planning/month-close-scene-v1.webp") as ImageSourcePropType,
+  saveJar: require("../../../assets/paper-v3/wallet/save-jar-v1.webp") as ImageSourcePropType,
+  receiptV2: require("../../../assets/paper-v3/ocr/receipt-v2.webp") as ImageSourcePropType,
   receipt: require("../../../assets/paper/receipt-envelope-v1.webp") as ImageSourcePropType,
   receiptNote: require("../../../assets/paper/auth-receipt-v2.webp") as ImageSourcePropType,
   bloom: require("../../../assets/paper/picket-money-bloom-v2.webp") as ImageSourcePropType,

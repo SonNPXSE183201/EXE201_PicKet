@@ -95,6 +95,7 @@ export const figmaColors = {
 export const figmaType = {
   display: { fontSize: 22, lineHeight: 29, fontWeight: "800", letterSpacing: -0.3 },
   amountHero: { fontSize: 34, lineHeight: 42, fontWeight: "800", letterSpacing: -0.6 },
+  amountLarge: { fontSize: 20, lineHeight: 26, fontWeight: "800", letterSpacing: -0.3 },
   amountPocket: { fontSize: 18, lineHeight: 26, fontWeight: "800" },
   amountRow: { fontSize: 14, lineHeight: 21, fontWeight: "800" },
   titleSection: { fontSize: 16, lineHeight: 26, fontWeight: "800" },

@@ -1,0 +1,7 @@
+.paper-notice { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); min-width: 0; }
+.paper-notice > div { flex: 1; min-width: 0; }
+.paper-notice strong { display: block; color: var(--ink); font-size: 14px; line-height: 21px; font-weight: 700; }
+.paper-notice p { margin: 2px 0 0; color: var(--muted); font-size: 12px; line-height: 18px; }
+.paper-notice-icon { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--elevated); color: var(--mauve); }
+.paper-notice.is-success .paper-notice-icon { background: var(--success-surface); color: var(--success); }
+.paper-notice.is-warning .paper-notice-icon { background: var(--warning-surface); color: var(--warning); }

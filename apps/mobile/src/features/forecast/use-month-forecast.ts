@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState } from "react-native";
 
 import { useAccounts } from "@/features/accounts/accounts-context";
 import { useProfile } from "@/features/profile/profile-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 import { useForecastSettings } from "./forecast-settings";
-import { forecastMonthEnd, type MonthForecast } from "@picket/domain";
+import { forecastAccess, forecastMonthEnd, type MonthForecast } from "@picket/domain";
 
 import { forecastCurrencies } from "./forecast-currencies";
 
 export function useMonthForecast(options: { currency?: string; purchase?: number } = {}) {
-  const settings = useForecastSettings();
-  const { accounts, loading: accountsLoading } = useAccounts();
-  const { transactions, loading } = useTransactions();
+  const { settings, loading: settingsLoading, error: settingsError, refetch } = useForecastSettings();
+  const access = forecastAccess(settings);
+  const { accounts, loading: accountsLoading, error: accountsError, refresh: refreshAccounts } = useAccounts();
+  const { transactions, loading, error: transactionsError, refresh: refreshTransactions } = useTransactions();
   const { profile } = useProfile();
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -23,18 +24,21 @@ export function useMonthForecast(options: { currency?: string; purchase?: number
   const currency = options.currency && currencies.includes(options.currency) ? options.currency : currencies[0] ?? "VND";
   const timeZone = profile?.timezone ?? "Asia/Ho_Chi_Minh";
   const purchase = settings.scenario ? options.purchase : undefined;
-  const run = (amount?: number): MonthForecast | null => {
-    if (!settings.enabled) return null;
+  const run = useCallback((amount?: number): MonthForecast | null => {
+    if (access !== "full" || accountsError || transactionsError || loading || accountsLoading) return null;
     try {
       return forecastMonthEnd({ accounts, transactions, currency, timeZone, now, lookbackMonths: settings.lookbackMonths, minHistoryDays: settings.minHistoryDays, purchase: amount });
     } catch {
       return null;
     }
+  }, [access, accountsError, transactionsError, loading, accountsLoading, accounts, transactions, currency, timeZone, now, settings.lookbackMonths, settings.minHistoryDays]);
+  const forecast = useMemo(() => run(), [run]);
+  const scenario = useMemo(() => (forecast && purchase ? run(purchase) : null), [forecast, purchase, run]);
+  const initialLoading = settingsLoading || (access === "full" && (loading || accountsLoading));
+  const retry = async () => {
+    refetch();
+    await Promise.allSettled([refreshAccounts(), refreshTransactions()]);
+    setNow(new Date());
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const forecast = useMemo(() => run(), [accounts, transactions, currency, timeZone, now, settings.enabled, settings.lookbackMonths, settings.minHistoryDays]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const scenario = useMemo(() => (purchase ? run(purchase) : null), [forecast, purchase]);
-  const initialLoading = (loading || accountsLoading) && accounts.length === 0 && transactions.length === 0;
-  return { settings, forecast, scenario, currency, currencies, initialLoading, hidden: profile?.hideBalance ?? false };
+  return { settings, access, forecast, scenario, currency, currencies, initialLoading, settingsError, retry, hidden: profile?.hideBalance ?? false };
 }

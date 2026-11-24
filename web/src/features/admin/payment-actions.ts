@@ -243,9 +243,11 @@ export async function saveForecastSettingsAction(form: FormData) {
   const { api, accessToken } = await requireApiSession("admin");
   let outcome = "forecastSaved=1";
   try {
-    await api.saveForecastSettings(accessToken, parseForecastSettingsForm(form));
+    const body = parseForecastSettingsForm(form);
+    await api.saveForecastSettings(accessToken, body);
   } catch (error) {
-    outcome = (error as { status?: unknown })?.status === 409 ? "forecastError=stale" : "forecastError=1";
+    const validation = error instanceof Error && ["history", "lookback", "access", "plans", "reason", "revision"].includes(error.message) ? error.message : "1";
+    outcome = (error as { status?: unknown })?.status === 409 ? "forecastError=stale" : `forecastError=${validation}`;
   }
   revalidatePath("/admin", "layout");
   redirect(`/admin/settings?${outcome}`);

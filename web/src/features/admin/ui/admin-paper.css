@@ -562,3 +562,51 @@
 
 .fs-settings { min-width: 0; overflow-wrap: anywhere; }
 .fs-toggle-row .ap-switch input { top: -12px; bottom: -12px; left: -4px; right: -4px; margin: 0; }
+
+/* Final forecast settings: existing backend fields, two-column paper layout. */
+.fs-final-form { min-width: 0; }
+.fs-final-grid { display: grid; grid-template-columns: minmax(0, 1.72fr) minmax(0, 1fr); gap: 24px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.fs-final-main, .fs-final-side { display: grid; align-content: start; gap: 24px; min-width: 0; }
+.fs-final-grid .ap-card { border-radius: 22px; padding: 24px; margin-bottom: 0; filter: none; box-shadow: var(--ap-shadow); }
+.fs-final-grid .ap-card:not(.is-receipt)::after { display: none; }
+.fs-final-grid .ap-card.is-receipt { border-radius: 22px 22px 0 0; margin-bottom: 8px; }
+.fs-final-side .ap-card { padding: 22px; }
+.fs-final-grid .ap-card-head { padding: 0; }
+.fs-final-body { display: grid; gap: 12px; padding: 0; min-width: 0; }
+.fs-final-warning { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px; border-radius: 14px; background: var(--ap-warning-bg); color: var(--ap-warning); font-size: 12px; line-height: 18px; }
+.fs-final-warning svg { flex: none; margin-top: 1px; }
+.fs-final-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.fs-final-field { display: grid; gap: 5px; min-width: 0; align-content: start; }
+.fs-final-field label, .fs-final-hint { color: var(--ap-muted); font-size: 10px; line-height: 15px; font-weight: 800; letter-spacing: .3px; }
+.fs-final-field input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 14px; border: 1px solid var(--ap-line); border-radius: 12px; background: var(--ap-card); color: var(--ap-ink); font: 600 12px/18px ApNunito, sans-serif; }
+.fs-final-field input[aria-invalid="true"] { border-color: var(--ap-danger); border-width: 1.5px; }
+.fs-final-field small { color: var(--ap-danger); font-size: 10px; line-height: 15px; }
+.fs-final-hint { margin: 0; }
+.fs-final-grid .fs-actions { display: flex; gap: 12px; }
+.fs-final-grid .fs-actions > * { flex: 1; min-height: 48px; }
+.fs-final-success { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--ap-line); border-radius: 16px; background: var(--ap-surface); }
+.fs-final-success > span { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 12px; background: var(--ap-success-bg); color: var(--ap-success); }
+.fs-final-success b { font-size: 14px; line-height: 21px; }
+.fs-final-success p { margin: 2px 0 0; color: var(--ap-muted); font-size: 12px; line-height: 18px; }
+.fs-switch-control { display: grid; place-items: center; width: 44px; min-height: 44px; cursor: pointer; }
+.fs-switch-control .ap-switch input { inset: -10px -2px; }
+.fs-final-grid .fs-chip { min-height: 44px; }
+.fs-final-grid .fs-chip > span { min-height: 44px; }
+.fs-final-grid .fs-plans { margin: 0; }
+@media (max-width: 1000px) { .fs-final-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 540px) { .fs-final-fields { grid-template-columns: minmax(0, 1fr); } }
+
+:root[data-theme="dark"] .ap-root {
+  --ap-canvas: var(--cream); --ap-surface: var(--surface); --ap-card: var(--paper); --ap-cream: var(--elevated);
+  --ap-peach: var(--peach); --ap-ink: var(--ink); --ap-muted: var(--muted); --ap-mauve: var(--mauve); --ap-line: var(--line);
+  --ap-blue: var(--pocket-blue); --ap-lilac: var(--pocket-lilac); --ap-success: var(--success); --ap-success-bg: var(--success-surface);
+  --ap-warning: var(--warning); --ap-warning-bg: var(--warning-surface); --ap-danger: var(--forecast-expense);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ap-root {
+    --ap-canvas: var(--cream); --ap-surface: var(--surface); --ap-card: var(--paper); --ap-cream: var(--elevated);
+    --ap-peach: var(--peach); --ap-ink: var(--ink); --ap-muted: var(--muted); --ap-mauve: var(--mauve); --ap-line: var(--line);
+    --ap-blue: var(--pocket-blue); --ap-lilac: var(--pocket-lilac); --ap-success: var(--success); --ap-success-bg: var(--success-surface);
+    --ap-warning: var(--warning); --ap-warning-bg: var(--warning-surface); --ap-danger: var(--forecast-expense);
+  }
+}

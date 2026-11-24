@@ -7,13 +7,16 @@ const form = (fields) => {
   for (const [k, v] of Object.entries(fields)) for (const item of [v].flat()) data.append(k, String(item));
   return data;
 };
-const valid = {enabled: 'on', minHistoryDays: '14', lookbackMonths: '3', scenarioPlans: ['pro', 'plus', 'pro'], revision: '2', reason: 'Mở kịch bản cho Plus'};
+const valid = {enabled: 'on', minHistoryDays: '14', lookbackMonths: '3', accessPlans: ['plus', 'pro', 'plus'], scenarioPlans: ['pro', 'plus', 'pro'], revision: '2', reason: 'Mở kịch bản cho Plus'};
 
 test('forecast settings form becomes the API body', () => {
-  assert.deepEqual(parseForecastSettingsForm(form(valid)), {enabled: true, minHistoryDays: 14, lookbackMonths: 3, scenarioPlans: ['pro', 'plus'], revision: 2, reason: 'Mở kịch bản cho Plus'});
+  assert.deepEqual(parseForecastSettingsForm(form(valid)), {enabled: true, minHistoryDays: 14, lookbackMonths: 3, accessPlans: ['plus', 'pro'], scenarioPlans: ['pro', 'plus'], revision: 2, reason: 'Mở kịch bản cho Plus'});
   const off = parseForecastSettingsForm(form({...valid, enabled: undefined, scenarioPlans: []}));
   assert.equal(off.enabled, false);
   assert.deepEqual(off.scenarioPlans, []);
+  assert.deepEqual(parseForecastSettingsForm(form({...valid, accessPlans: []})).accessPlans, []);
+  assert.deepEqual(parseForecastSettingsForm(form({...valid, accessPlans: ['free', 'pro']})).accessPlans, ['free', 'pro']);
+  assert.throws(() => parseForecastSettingsForm(form({...valid, accessPlans: ['vip']})), /access/);
 });
 
 test('out-of-range forecast settings are rejected before calling the API', () => {
