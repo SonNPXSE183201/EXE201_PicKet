@@ -31,6 +31,7 @@ export function Icon({ name }: { name: string }) {
     minus: "M5 12h14",
     plus: "M12 5v14M5 12h14",
     lock: "M6 11h12v10H6Zm2 0V8a4 4 0 0 1 8 0v3",
+    camera: "M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Zm8 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
   };
   return (
     <svg

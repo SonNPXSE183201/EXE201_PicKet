@@ -39,7 +39,7 @@ export const paperAssets = {
 };
 export type PaperAssetId = keyof typeof paperAssets;
 export function resolvePaperAsset(id: string): PaperAssetId { return Object.hasOwn(paperAssets, id) ? id as PaperAssetId : "shopping"; }
-export const paperArtOptions: { id: PaperAssetId; label: string }[] = ["shopping", "home", "health", "gift", ...Object.keys(paperAssets).filter(id => !["shopping", "home", "health", "gift", "receipt", "receiptNote", "empty", "error", "moneyBloomScene", "rhythmEmptyScene"].includes(id))].map(id => ({ id: id as PaperAssetId, label: `paper${id[0].toUpperCase()}${id.slice(1)}` }));
+export const paperArtOptions: { id: PaperAssetId; label: string }[] = ["shopping", "home", "health", "gift", ...Object.keys(paperAssets).filter(id => !["shopping", "home", "health", "gift", "receipt", "receiptNote", "empty", "error", "moneyBloomScene", "saveJar", "rhythmEmptyScene"].includes(id))].map(id => ({ id: id as PaperAssetId, label: `paper${id[0].toUpperCase()}${id.slice(1)}` }));
 export const pocketDecorations: readonly { id: PaperAssetId; tone: "pocketCoral" | "pocketMint" | "pocketBlue" | "pocketLilac" }[] = [
   { id: "food", tone: "pocketCoral" }, { id: "transport", tone: "pocketMint" },
   { id: "leisure", tone: "pocketBlue" }, { id: "shopping", tone: "pocketLilac" },
