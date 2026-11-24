@@ -530,3 +530,35 @@
 /* Sidebar/range navigations also drive the top progress bar (pure CSS via :has). */
 .ap-shell:has(.ap-nav-pending.is-pending) .ap-route-progress { opacity: 1; animation: ap-route 1.6s ease-out forwards; }
 .ap-shell:has(.ap-nav-pending.is-pending) #workspace-content { opacity: .72; transition: opacity .15s; }
+
+/* Forecast settings card (Figma "Admin forecast settings"): toggle, steppers, plan chips, reason, actions. */
+.fs-field, .fs-plans { display: grid; gap: 8px; margin: 0 0 20px; padding: 0; border: 0; min-width: 0; }
+.fs-label { color: var(--ap-ink); font-size: 12px; line-height: 18px; font-weight: 700; padding: 0; }
+.fs-toggle { margin-bottom: 20px; }
+.fs-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; cursor: pointer; }
+.fs-toggle-row > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.fs-toggle-row small { color: var(--ap-muted); font-size: 12px; line-height: 18px; }
+.fs-stepper { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.fs-step { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 1px solid var(--ap-line); border-radius: 14px; background: var(--ap-card); color: var(--ap-mauve); cursor: pointer; }
+.fs-step:disabled { opacity: .45; cursor: not-allowed; }
+.fs-step:hover:not(:disabled) { border-color: var(--ap-mauve); }
+.fs-value { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 96px; height: 44px; padding: 0 10px; border: 1px solid var(--ap-line); border-radius: 14px; background: var(--ap-card); color: var(--ap-ink); font-weight: 800; font-size: 14px; }
+.fs-value input { width: 3ch; min-width: 0; padding: 0; border: 0; background: transparent; color: var(--ap-ink); font: inherit; text-align: right; appearance: textfield; -moz-appearance: textfield; }
+.fs-value input::-webkit-outer-spin-button, .fs-value input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+.fs-value input:focus { outline: none; }
+.fs-value:focus-within { outline: 2px solid var(--ap-mauve); outline-offset: 2px; }
+.fs-stepper small { color: var(--ap-muted); font-size: 12px; line-height: 18px; }
+.fs-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.fs-chip { position: relative; display: inline-flex; }
+.fs-chip input { position: absolute; inset: 0; opacity: 0; cursor: pointer; margin: 0; }
+.fs-chip span { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 18px; border: 1px solid var(--ap-line); border-radius: 999px; background: var(--ap-card); color: var(--ap-ink); font-size: 13px; font-weight: 700; }
+.fs-chip svg { display: none; }
+.fs-chip input:checked + span { background: var(--ap-peach); border-color: var(--ap-mauve); color: var(--ap-mauve); }
+.fs-chip input:checked + span svg { display: block; }
+.fs-chip input:focus-visible + span { outline: 2px solid var(--ap-mauve); outline-offset: 2px; }
+.fs-reason { min-height: 96px; padding: 12px 14px; border: 1px solid var(--ap-line); border-radius: 16px; background: var(--ap-card); color: var(--ap-ink); font: inherit; font-size: 13px; resize: vertical; }
+.fs-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+.fs-actions .ap-btn { min-height: 44px; min-width: 44px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+
+.fs-settings { min-width: 0; overflow-wrap: anywhere; }
+.fs-toggle-row .ap-switch input { top: -12px; bottom: -12px; left: -4px; right: -4px; margin: 0; }

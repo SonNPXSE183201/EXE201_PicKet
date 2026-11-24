@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { forecastEn, forecastVi } from "../../core/i18n/forecast-resources";
-import { forecastStatus, parseScenarioAmount } from "./forecast-copy";
+import { forecastStatus, parseScenarioAmount } from "@picket/domain";
 import { forecastCurrencies } from "./forecast-currencies";
 
 test("scenario amounts accept grouped digits and reject everything else", () => {

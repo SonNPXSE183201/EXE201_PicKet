@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { defaultForecastSettings, parseForecastSettings } from "./forecast-settings-parse";
+import { defaultForecastSettings, parseForecastSettings } from "@picket/domain";
 
 test("well-formed settings from the API are used as they are", () => {
   assert.deepEqual(parseForecastSettings({ enabled: false, minHistoryDays: 21, lookbackMonths: 6, scenario: true, revision: 4 }),

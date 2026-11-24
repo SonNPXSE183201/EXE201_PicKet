@@ -10,5 +10,6 @@ export const userFinanceScreens = [
   "/categories",
   "/keepsakes",
   "/insights",
+  "/forecast",
   "/profile",
 ] as const;

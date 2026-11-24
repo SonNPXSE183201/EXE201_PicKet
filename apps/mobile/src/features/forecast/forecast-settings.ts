@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { picketApi } from "@/core/api/client";
 import { useAuth } from "@/features/auth/auth-context";
 
-import { defaultForecastSettings, parseForecastSettings, type ForecastSettings } from "./forecast-settings-parse";
+import { defaultForecastSettings, parseForecastSettings, type ForecastSettings } from "@picket/domain";
 
 export { defaultForecastSettings, parseForecastSettings, type ForecastSettings };
 
