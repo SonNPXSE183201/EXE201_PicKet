@@ -23,6 +23,7 @@ import type { PracticeEvent } from "@/features/learning/practice";
 import { learningMilestones } from "@/features/learning/milestones";
 import { WeeklyPractice } from "@/features/learning/weekly-practice";
 import { TopAppBar } from "@/core/ui/picket-ui";
+import { routes } from "@/core/navigation/routes";
 import { FigmaButton, Notice, figmaShadow, figmaText } from "@/core/ui/figma-ui";
 import { lessonBlocksForLanguage, orderedLessons } from "@/features/learning/lesson-blocks";
 import { LessonComplete, LessonPlayer } from "@/features/learning/lesson-player";
@@ -144,6 +145,17 @@ function LearningSession({ owner }: { owner: string }) {
     return () => subscription.remove();
   }, [completion]);
 
+  // Android back on the learning path behaves like the on-screen back arrow.
+  useEffect(() => {
+    if (lessonId !== null || completion) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (router.canGoBack()) return false;
+      if (alive.current && !operationBusy.current) router.replace(routes.profile);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [lessonId, completion]);
+
   async function retryStorage() {
     if (!canInteract()) return;
     operationBusy.current = true; setSaving(true);
@@ -167,6 +179,13 @@ function LearningSession({ owner }: { owner: string }) {
     setReviewOffset(offset);
     setCompletion(null);
     setLessonId(next.lessonId);
+  }
+
+  // Opened from a link or notification there is no screen to go back to, and router.back()
+  // silently does nothing; fall back to the profile hub where learning normally opens from.
+  function leaveLearning() {
+    if (router.canGoBack()) router.back();
+    else router.replace(routes.profile);
   }
 
   function closeLesson() {
@@ -278,7 +297,7 @@ function LearningSession({ owner }: { owner: string }) {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.fixedTopBar}>
-        <TopAppBar title={t("title")} backDisabled={saving} onBack={() => { if (canInteract()) router.back(); }} />
+        <TopAppBar title={t("title")} backDisabled={saving} onBack={() => { if (canInteract()) leaveLearning(); }} />
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {storageError ? (
