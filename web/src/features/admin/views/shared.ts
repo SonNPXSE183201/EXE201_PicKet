@@ -11,6 +11,11 @@ export type VerificationSettingsView = {
   history: { before: Record<string, unknown>; after: Record<string, unknown>; reason: string; createdAt: string }[];
 };
 
+export type ForecastSettingsView = {
+  settings: { enabled: boolean; minHistoryDays: number; lookbackMonths: number; accessPlans?: string[]; scenarioPlans: string[]; revision: number; updatedAt: string };
+  history: { before: Record<string, unknown>; after: Record<string, unknown>; reason: string; createdAt: string }[];
+};
+
 /** Everything a section view needs; data comes from GET /v1/admin/portal. */
 export type ViewProps = {
   section: AdminSection;
@@ -40,6 +45,8 @@ export type ViewProps = {
   };
   /** Sign-up verification channels (email / SMS OTP), shown with auth.verification.manage. */
   verificationSettings?: VerificationSettingsView;
+  /** End-of-month forecast settings, shown with forecast.manage. */
+  forecastSettings?: ForecastSettingsView;
   /** The settings page shows only the verification card (no settings.read). */
   verificationOnly?: boolean;
   /** First name for greetings, derived from the staff email. */

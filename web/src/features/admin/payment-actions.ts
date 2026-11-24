@@ -1,5 +1,6 @@
 "use server";
 import { redirect } from "next/navigation";
+import { parseForecastSettingsForm } from "./forecast-settings-form";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { revalidatePath } from "next/cache";
 import { requireApiSession } from "@/core/auth/require-api-session";
@@ -233,6 +234,20 @@ export async function saveVerificationSettingsAction(form: FormData) {
     });
   } catch (error) {
     outcome = (error as { status?: unknown })?.status === 409 ? "verificationError=stale" : "verificationError=1";
+  }
+  revalidatePath("/admin", "layout");
+  redirect(`/admin/settings?${outcome}`);
+}
+
+export async function saveForecastSettingsAction(form: FormData) {
+  const { api, accessToken } = await requireApiSession("admin");
+  let outcome = "forecastSaved=1";
+  try {
+    const body = parseForecastSettingsForm(form);
+    await api.saveForecastSettings(accessToken, body);
+  } catch (error) {
+    const validation = error instanceof Error && ["history", "lookback", "access", "plans", "reason", "revision"].includes(error.message) ? error.message : "1";
+    outcome = (error as { status?: unknown })?.status === 409 ? "forecastError=stale" : `forecastError=${validation}`;
   }
   revalidatePath("/admin", "layout");
   redirect(`/admin/settings?${outcome}`);

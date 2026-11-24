@@ -1,5 +1,5 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { ActivityIndicator, StyleSheet, View, type ViewStyle, type StyleProp } from "react-native";
+import { ActivityIndicator, Modal, StyleSheet, View, type ViewStyle, type StyleProp } from "react-native";
 import { figmaShadows, figmaType } from "@picket/design-tokens";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -38,22 +38,78 @@ export function SectionHeader({ overline, title, action = "none", actionLabel, a
 /** Figma Chip. success/warning = status, neutral = selected filter, outline = unselected filter. */
 export function Chip({ label, tone = "neutral", size = "medium", onPress, style }: { label: string; tone?: "success" | "warning" | "neutral" | "outline"; size?: "small" | "medium"; onPress?: () => void; style?: StyleProp<ViewStyle> }) {
   const { colors, styles } = useMobileStyles(createStyles);
-  const palette = { success: [colors.successSurface, colors.success], warning: [colors.warningSurface, colors.warning], neutral: [colors.selectedSurface, colors.primary], outline: ["transparent", colors.text] }[tone];
+  const palette = { success: [colors.successSurface, colors.success], warning: [colors.warningSurface, colors.warning], neutral: [colors.selectedSurface, colors.primary], outline: ["transparent", colors.muted] }[tone];
   const body = <View style={[styles.chip, size === "small" && { paddingVertical: 2, paddingHorizontal: 8 }, { backgroundColor: palette[0] }, tone === "outline" && { borderWidth: 1, borderColor: colors.border }, style]}><Text style={[size === "small" ? figmaType.micro : { fontSize: 11, lineHeight: 16, fontWeight: "800" }, { color: palette[1] }]}>{label}</Text></View>;
   return onPress ? <Pressable accessibilityRole="button" onPress={onPress}>{body}</Pressable> : body;
 }
 
-/** Figma Button: Primary / Secondary / Outline / Text × Large 48 / Medium 40. */
+/** Figma Button: Primary / Secondary / Outline / Text / Coral × Large 48 / Medium 40. */
 export function FigmaButton({ label, onPress, variant = "primary", size = "large", icon, disabled = false, busy = false, fullWidth = false, style }: {
-  label: string; onPress(): void; variant?: "primary" | "secondary" | "outline" | "text"; size?: "large" | "medium"; icon?: IconName; disabled?: boolean; busy?: boolean; fullWidth?: boolean; style?: StyleProp<ViewStyle>;
+  label: string; onPress(): void; variant?: "primary" | "secondary" | "outline" | "text" | "coral"; size?: "large" | "medium"; icon?: IconName; disabled?: boolean; busy?: boolean; fullWidth?: boolean; style?: StyleProp<ViewStyle>;
 }) {
   const { colors, styles } = useMobileStyles(createStyles);
-  const fg = variant === "primary" ? colors.onPrimary : variant === "text" ? colors.primary : colors.text;
-  const bg = variant === "primary" ? colors.primary : variant === "secondary" ? colors.selectedSurface : variant === "outline" ? colors.surface : "transparent";
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
-    style={({ pressed }) => [styles.button, { minHeight: size === "large" ? 48 : 40, backgroundColor: bg }, variant === "outline" && { borderWidth: 1, borderColor: colors.border }, fullWidth && { alignSelf: "stretch" }, (disabled || busy) && { opacity: .5 }, pressed && { opacity: .75 }, style]}>
-    {busy ? <ActivityIndicator accessibilityLabel={label} size="small" color={fg} /> : icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text numberOfLines={1} style={[figmaType.button, { color: fg, flexShrink: 0 }]}>{label}</Text>
+  const fg = variant === "primary" ? colors.onPrimary : variant === "text" || variant === "coral" ? colors.primary : colors.text;
+  const bg = variant === "primary" ? colors.primary : variant === "secondary" ? colors.selectedSurface : variant === "coral" ? colors.pocketCoral : variant === "outline" ? colors.paper : "transparent";
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
+    style={({ pressed }) => [styles.button, { minHeight: size === "large" ? 48 : 40, paddingVertical: size === "large" ? 12 : 10, backgroundColor: bg }, variant === "outline" && { borderWidth: 1, borderColor: colors.border }, fullWidth && { alignSelf: "stretch" }, (disabled || busy) && { opacity: .5 }, pressed && { opacity: .75 }, style]}>
+    {busy ? <ActivityIndicator accessibilityLabel={label} size="small" color={fg} /> : icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text style={[figmaType.button, { color: fg, flexShrink: 1, textAlign: "center" }]}>{label}</Text>
   </Pressable>;
+}
+
+/** Figma Notice: 36 icon tile + title/body copy + optional action. */
+export function Notice({ tone = "info", title, body, action, liveRegion, style }: {
+  tone?: "success" | "warning" | "info"; title?: string; body: string; action?: ReactNode; liveRegion?: "none" | "polite" | "assertive"; style?: StyleProp<ViewStyle>;
+}) {
+  const { colors, styles } = useMobileStyles(createStyles);
+  const config = {
+    success: { icon: "check" as IconName, tileBg: colors.successSurface, iconFg: colors.success, titleFg: colors.success },
+    warning: { icon: "alert-circle-outline" as IconName, tileBg: colors.warningSurface, iconFg: colors.warning, titleFg: colors.warning },
+    info: { icon: "star-four-points-outline" as IconName, tileBg: colors.elevated, iconFg: colors.primary, titleFg: colors.text },
+  }[tone];
+  return <View accessibilityLiveRegion={liveRegion} style={[styles.noticeCard, style]}>
+    <View accessible={false} importantForAccessibility="no-hide-descendants" style={[styles.noticeTile, { backgroundColor: config.tileBg }]}>
+      <AppIcon name={config.icon} size={20} color={config.iconFg} />
+    </View>
+    <View style={styles.noticeCopy}>
+      {title ? <Text style={[figmaType.bodyStrong, { color: config.titleFg, flexShrink: 1 }]}>{title}</Text> : null}
+      <Text style={[figmaType.bodySmall, { color: colors.muted, flexShrink: 1 }]}>{body}</Text>
+      {action}
+    </View>
+  </View>;
+}
+
+/** Figma Select indicator: 22x22 circle (radio) or square (checkbox). */
+export function SelectIndicator({ checked, shape = "circle" }: { checked: boolean; shape?: "circle" | "square" }) {
+  const { colors } = useMobileStyles(createStyles);
+  const radius = shape === "circle" ? 11 : 7;
+  return <View accessible={false} importantForAccessibility="no-hide-descendants" style={{
+    width: 22, height: 22, borderRadius: radius, alignItems: "center", justifyContent: "center",
+    backgroundColor: checked ? colors.primary : "transparent",
+    borderWidth: checked ? 0 : 1.5,
+    borderColor: checked ? colors.primary : colors.border,
+  }}>
+    {checked ? <AppIcon name="check" size={13} color={colors.onPrimary} /> : null}
+  </View>;
+}
+
+/** Figma Dialog: 300 max-width paper card (radius 28, pad 24, gap 16) over 40% overlay. */
+export function ConfirmDialog({ visible, title, body, cancelLabel, confirmLabel, onCancel, onConfirm }: {
+  visible: boolean; title: string; body: string; cancelLabel: string; confirmLabel: string; onCancel(): void; onConfirm(): void;
+}) {
+  const { styles } = useMobileStyles(createStyles);
+  return <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <View style={styles.dialogOverlay}>
+      <Pressable accessibilityRole="button" accessibilityLabel={cancelLabel} onPress={onCancel} style={StyleSheet.absoluteFill} />
+      <View accessibilityViewIsModal style={[styles.dialogCard, figmaShadow("paper")]}>
+        <Text accessibilityRole="header" style={styles.dialogTitle}>{title}</Text>
+        <Text style={styles.dialogBody}>{body}</Text>
+        <View style={styles.dialogActions}>
+          <FigmaButton variant="text" size="medium" label={cancelLabel} onPress={onCancel} />
+          <FigmaButton variant="primary" size="medium" label={confirmLabel} onPress={onConfirm} />
+        </View>
+      </View>
+    </View>
+  </Modal>;
 }
 
 /**
@@ -119,7 +175,7 @@ export function DashedAddCard({ label, description, layout = "wide", onPress, ca
 /** Loading placeholder block (Skeleton): elevated colour at 65-75% opacity. */
 export function Skeleton({ width, height, radius, style, tone = "elevated" }: { width?: number | `${number}%`; height: number; radius?: number; style?: StyleProp<ViewStyle>; tone?: "elevated" | "onDark" }) {
   const { colors } = useMobileStyles(createStyles);
-  return <View accessible={false} importantForAccessibility="no" style={[{ width, height, borderRadius: radius ?? height / 2, backgroundColor: tone === "onDark" ? "#FFFFFF" : colors.elevated, opacity: tone === "onDark" ? .22 : .7 }, style]} />;
+  return <View accessible={false} importantForAccessibility="no" style={[{ width, height, borderRadius: radius ?? height / 2, backgroundColor: tone === "onDark" ? colors.onCamera : colors.elevated, opacity: tone === "onDark" ? .22 : .7 }, style]} />;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
@@ -136,4 +192,12 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   tile: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   addCard: { borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.muted, borderRadius: 24 },
   plus: { width: 36, height: 36, borderRadius: 18, borderWidth: 1.5, borderColor: colors.primary, alignItems: "center", justifyContent: "center" },
+  noticeCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 16, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  noticeTile: { width: 36, height: 36, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  noticeCopy: { flex: 1, minWidth: 0, gap: 2 },
+  dialogOverlay: { flex: 1, backgroundColor: colors.overlay, alignItems: "center", justifyContent: "center", padding: 24 },
+  dialogCard: { width: "100%", maxWidth: 300, backgroundColor: colors.paper, borderRadius: 28, padding: 24, gap: 16 },
+  dialogTitle: { ...figmaType.titleSection, color: colors.text, flexShrink: 1 },
+  dialogBody: { ...figmaType.bodySmall, color: colors.muted, flexShrink: 1 },
+  dialogActions: { flexDirection: "row", justifyContent: "flex-end", flexWrap: "wrap", gap: 8 },
 });

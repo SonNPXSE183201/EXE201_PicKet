@@ -1,0 +1,3 @@
+export default function ForecastLoading() {
+  return <div className="fc-page" aria-busy="true" aria-label="Đang tải dự báo"><header className="fc-page-head"><h1>Dự báo cuối tháng</h1></header><div className="fc-col" aria-hidden="true"><div className="fc-hero"><span className="fc-skel" style={{ width: "40%", height: 10 }} /><span className="fc-skel" style={{ width: "70%", height: 34 }} /><span className="fc-skel" style={{ width: "55%", height: 10 }} /><span className="fc-skel" style={{ width: "35%", height: 24 }} /></div><div className="fc-card"><span className="fc-skel" style={{ width: "50%", height: 12 }} /><span className="fc-skel" style={{ height: 120 }} /></div></div></div>;
+}

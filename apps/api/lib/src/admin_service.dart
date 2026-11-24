@@ -68,6 +68,7 @@ class AdminService {
       'auth_phone_signup_verified_gate',
       'auth_phone_reset_verified_gate',
       'auth_email_signup_start',
+      'forecast_settings_public',
     }.contains(name)) {
       throw const FormatException('Invalid auth operation.');
     }

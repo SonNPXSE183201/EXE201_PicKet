@@ -1,0 +1,64 @@
+name: Deploy production
+
+# Deploys api + web to the VPS after "Validate Picket source" passes on main.
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_SSH_KEY      private key allowed to log in as DEPLOY_USER (no passphrase)
+#   DEPLOY_HOST         VPS address
+#   DEPLOY_USER         SSH user on the VPS
+#   DEPLOY_KNOWN_HOSTS  output of `ssh-keyscan <host>` checked against the server's fingerprint
+#   SUPABASE_DB_URL     optional; when set, pending migrations are applied before the deploy
+# Put the secrets on the "production" environment to require a manual approval per deploy.
+on:
+  workflow_run:
+    workflows: ["Validate Picket source"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Release tag
+        id: tag
+        run: echo "tag=main-$(date -u +%Y%m%d%H%M)-$(git rev-parse --short=8 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Apply database migrations
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        if: env.SUPABASE_DB_URL != ''
+        run: npx --yes supabase@2 db push --db-url "$SUPABASE_DB_URL" --yes
+
+      - name: Configure SSH
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+
+      - name: Upload source and deploy
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          git archive --format=tar.gz -o source.tar.gz HEAD
+          SSH=(ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST")
+          scp -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes source.tar.gz deploy/release.sh "$USER@$HOST:/tmp/"
+          "${SSH[@]}" "set -e; chmod +x /tmp/release.sh; /tmp/release.sh '$TAG' /tmp/source.tar.gz; rm -f /tmp/source.tar.gz /tmp/release.sh"

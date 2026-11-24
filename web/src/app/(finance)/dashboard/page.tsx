@@ -10,6 +10,8 @@ import {
   vietnamDate,
 } from "@/core/finance/overview";
 import { Icon } from "@/core/ui/workspace-shell";
+import { loadForecast } from "@/features/forecast/load-forecast";
+import { ForecastHomeCard } from "@/features/forecast/forecast-home-card";
 import { ReceiptCalendar } from "@/core/ui/receipt-calendar";
 import {
   BalanceAmount,
@@ -32,6 +34,7 @@ export default async function DashboardPage({
       api.listReceipts(accessToken),
     ]);
   if (!profile?.onboardingCompleted) redirect("/onboarding");
+  const forecastData = await loadForecast(api, accessToken, profile, accounts, transactions);
   const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(query.month ?? "")
     ? query.month!
     : vietnamDate(new Date().toISOString()).slice(0, 7);
@@ -139,6 +142,7 @@ export default async function DashboardPage({
             <span>Thu nhập trừ chi tiêu</span>
           </article>
         </section>
+        <ForecastHomeCard data={forecastData} />
         <nav className="overview-actions" aria-label="Thao tác nhanh">
           <Link
             className="icon-action"

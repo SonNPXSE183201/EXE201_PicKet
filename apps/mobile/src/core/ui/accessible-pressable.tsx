@@ -21,7 +21,7 @@ export function AccessiblePressable({
       ? accessibilityState
       : { ...accessibilityState, disabled };
 
-  const flat = StyleSheet.flatten(typeof style === "function" ? style({ pressed: false, hovered: false }) : style) ?? {};
+  const flat = StyleSheet.flatten(typeof style === "function" ? style({ pressed: false, hovered: false } as never) : style) ?? {};
   const slop = (size: unknown) => typeof size === "number" && size < minimumTouchTarget ? Math.ceil((minimumTouchTarget - size) / 2) : 4;
   const resolvedSlop = hitSlop ?? { top: slop(flat.height), bottom: slop(flat.height), left: slop(flat.width), right: slop(flat.width) };
 

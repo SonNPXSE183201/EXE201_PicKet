@@ -4,6 +4,7 @@ import { SubmitButton } from "@/core/ui/submit-button";
 import { mutateAdmin } from "../actions";
 import { saveVerificationSettingsAction } from "../payment-actions";
 import { VerificationSettingsForm } from "../components/verification-settings-form";
+import { ForecastSettingsCard } from "./forecast-settings-card";
 import { AdminIcon } from "../ui/admin-icon";
 import { AdminPager } from "../ui/admin-pager";
 import { Button, Card, Chip, Field, Person, Table, Tile, display, formatDateTime, formatNumber, relativeTime, toneFor, type ChipTone, type Column } from "../ui/paper";
@@ -250,6 +251,7 @@ export function SettingsView(p: ViewProps) {
         </fieldset>
       </form>
       <VerificationSettingsCard {...p} />
+      <ForecastSettingsCard {...p} />
       <AsOf data={data} />
     </>
   );

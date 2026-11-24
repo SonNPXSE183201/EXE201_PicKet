@@ -77,12 +77,14 @@ export function PlanTiles({ plans, selectedId, onSelect, disabled = false, curre
           >
             {selected && <View style={styles.check}><AppIcon name="check" size={16} color={colors.onPrimary} /></View>}
             <Image accessible={false} source={plan.tier === "pro" ? sproutArt : coinsArt} resizeMode="contain" style={styles.tileArt} />
-            {plan.badge ? <Chip size="small" tone="success" label={plan.badge} style={styles.badge} /> : null}
+            {plan.badge ? <Chip size="small" tone="success" label={plan.badge} style={[styles.badge, selected && styles.badgeWithCheck]} /> : null}
             <Text style={[figmaType.bodyStrong, { color: figmaColors.text }]}>{plan.name}</Text>
             <Text style={[figmaType.captionStrong, { color: figmaColors.text }]}>{plan.quota}</Text>
             <Text style={[figmaType.bodyStrong, { color: figmaColors.text }]}>{plan.price}</Text>
-            {!!plan.note && <Text style={[figmaType.captionStrong, { color: figmaColors.muted }]}>{plan.note}</Text>}
-            {plan.current && <Text style={[figmaType.captionStrong, { color: figmaColors.primary }]}>{currentLabel}</Text>}
+            {!!plan.note && <Text numberOfLines={2} style={[figmaType.captionStrong, { color: figmaColors.muted }]}>{plan.note}</Text>}
+            <View style={styles.currentRow}>
+              {plan.current ? <Text style={[figmaType.captionStrong, { color: figmaColors.primary }]}>{currentLabel}</Text> : null}
+            </View>
           </Pressable>
         );
       })}
@@ -143,12 +145,14 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   toggleSelected: { backgroundColor: colors.paper, ...figmaShadow("stub") },
   toggleText: { color: colors.muted },
   toggleTextSelected: { color: colors.primary },
-  tiles: { flexDirection: "row", gap: 12 },
-  tile: { flex: 1, minHeight: 168, borderRadius: 18, padding: 14, gap: 4, justifyContent: "flex-end", borderWidth: 2, borderColor: "transparent" },
+  tiles: { flexDirection: "row", gap: 12, alignItems: "stretch" },
+  tile: { flex: 1, minHeight: 168, borderRadius: 18, padding: 14, gap: 4, justifyContent: "flex-start", borderWidth: 2, borderColor: "transparent" },
   tileSelected: { borderColor: figmaColors.primary },
-  tileArt: { alignSelf: "flex-end", width: 64, height: 64, marginTop: -6, marginRight: -4, marginBottom: 2 },
+  tileArt: { width: 64, height: 64, alignSelf: "flex-end" },
   check: { position: "absolute", top: 10, left: 10, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
-  badge: { alignSelf: "flex-start" },
+  badge: { position: "absolute", top: 14, left: 14, maxWidth: "45%" },
+  badgeWithCheck: { top: 38 },
+  currentRow: { minHeight: 18, marginTop: "auto", justifyContent: "center" },
   paper: { backgroundColor: colors.paper, borderRadius: 18, padding: 16, gap: 10 },
   includedRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   includedTick: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center", backgroundColor: colors.elevated },

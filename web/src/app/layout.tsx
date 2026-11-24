@@ -3,6 +3,7 @@ import "./globals.css";
 import "./workspace.css";
 import "./compact.css";
 import "./user-workspace.css";
+import "./forecast.css";
 
 export const metadata: Metadata = {
   title: "PicKet — Quản lý tài chính thông minh",
