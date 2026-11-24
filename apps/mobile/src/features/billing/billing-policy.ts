@@ -70,6 +70,44 @@ export function defaultPlanId(productIds: readonly string[], currentTier: string
   return productIds.find((id) => productTier(id) !== currentTier) ?? productIds[0] ?? null;
 }
 
+/** A PicKet subscription this Google Play account already owns. */
+export interface OwnedPlaySubscription { productId: string; purchaseToken: string }
+
+const planRank = (productId: string) => TIER_RANK[productTier(productId)] * 2 + (productId.endsWith("_yearly") ? 1 : 0);
+
+/** Active PicKet subscription to replace on a plan change: the highest-ranked one this account owns. */
+export function ownedPlaySubscription(purchases: readonly StorePurchaseForVerification[]): OwnedPlaySubscription | null {
+  let best: OwnedPlaySubscription | null = null;
+  for (const item of purchases) {
+    if (!isPicketSubscriptionId(item.productId) || typeof item.purchaseToken !== "string" || !item.purchaseToken) continue;
+    if (!best || planRank(item.productId) > planRank(best.productId)) best = { productId: item.productId, purchaseToken: item.purchaseToken };
+  }
+  return best;
+}
+
+export type PlayPlanChange =
+  | { action: "current" | "otherChannel" }
+  | { action: "upgrade" | "switch"; replace: { purchaseToken: string; oldProductId: string; replacementMode: "with-time-proration" | "deferred" } | null };
+
+/**
+ * What buying `targetId` means for this account. Without linking the old purchase, Google Play
+ * starts a second subscription and bills both, so every change from a Play plan replaces it:
+ * a higher tier or monthly→yearly starts now with the unused time credited (WITH_TIME_PRORATION);
+ * a lower tier or yearly→monthly starts when the current period ends (DEFERRED).
+ * A paid plan that did not come from this Play account (PayOS, a grant, another Google account)
+ * cannot be replaced from here, so purchases are blocked to avoid paying twice.
+ */
+export function playPlanChange(targetId: string, currentTier: string, owned: OwnedPlaySubscription | null): PlayPlanChange {
+  if ((TIER_RANK[currentTier] ?? 0) === 0) return { action: "upgrade", replace: null };
+  if (!owned || productTier(owned.productId) !== currentTier) return { action: "otherChannel" };
+  if (owned.productId === targetId) return { action: "current" };
+  const up = planRank(targetId) > planRank(owned.productId);
+  return {
+    action: up ? "upgrade" : "switch",
+    replace: { purchaseToken: owned.purchaseToken, oldProductId: owned.productId, replacementMode: up ? "with-time-proration" : "deferred" },
+  };
+}
+
 /** Call to action for the selected plan relative to the current tier. */
 export function planAction(productId: string, currentTier: string): "current" | "upgrade" | "switch" {
   const target = TIER_RANK[productTier(productId)];

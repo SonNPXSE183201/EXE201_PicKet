@@ -35,7 +35,9 @@ import {
   canStartPlayPurchase,
   verifyAndFinishPurchase,
   defaultPlanId,
-  planAction,
+  ownedPlaySubscription,
+  playPlanChange,
+  type OwnedPlaySubscription,
 } from "@/features/billing/billing-policy";
 
 const planKeys: Record<
@@ -87,6 +89,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   const [message, setMessage] = useState<{key:keyof typeof billingVi;tier?:string} | null>(null);
   const [success, setSuccess] = useState(false);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
+  const [owned, setOwned] = useState<OwnedPlaySubscription | null>(null);
   const [availability, setAvailability] = useState<{ token: string; ready: boolean } | null>(null);
   const storeReady = availability?.token === accessToken && availability.ready;
   const checkingStore = Boolean(picketApi) && availability?.token !== accessToken;
@@ -183,6 +186,16 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     };
   }, [accessToken,revision]);
 
+  // The Play subscription a plan change must replace; without it Google bills both plans.
+  useEffect(() => {
+    if (!connected || Platform.OS !== "android") return;
+    let active = true;
+    void getAvailablePurchases({ includeSuspendedAndroid: false })
+      .then(purchases => { if (active) setOwned(ownedPlaySubscription(purchases)); })
+      .catch(() => { if (active) setOwned(null); });
+    return () => { active = false; };
+  }, [connected, revision, entitlements?.tier]);
+
   /** Pull to refresh: reload Play prices and re-read the plan granted by the server. */
   async function pullToRefresh() {
     if (!catalogueBusy.current) setCatalogueAttempt((value) => value + 1);
@@ -248,7 +261,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     }
   }
 
-  async function purchase(product: ProductSubscription) {
+  async function purchase(product: ProductSubscription, change: ReturnType<typeof playPlanChange>) {
+    if (!("replace" in change)) return;
+    const replace = change.replace;
     if (Platform.OS !== "android" || product.platform !== "android") return;
     const scope=operationScope.current;
     const current=()=>scope.active&&operationScope.current===scope&&scope.token===accessToken;
@@ -277,6 +292,10 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
             skus: [product.id],
             subscriptionOffers: [{ sku: product.id, offerToken }],
             obfuscatedAccountId,
+            ...(replace ? {
+              purchaseToken: replace.purchaseToken,
+              subscriptionProductReplacementParams: { oldProductId: replace.oldProductId, replacementMode: replace.replacementMode },
+            } : {}),
           },
         },
         type: "subs",
@@ -351,7 +370,8 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   const tier = entitlements?.tier ?? "free";
   const preselectedId = defaultPlanId(orderedProducts.map((product) => product.id), tier, selectedId);
   const selectedProduct = orderedProducts.find((product) => product.id === preselectedId) ?? orderedProducts[0];
-  const selectedAction = selectedProduct ? planAction(selectedProduct.id, tier) : "upgrade";
+  const selectedChange = selectedProduct ? playPlanChange(selectedProduct.id, tier, owned) : { action: "upgrade" as const, replace: null };
+  const selectedAction = selectedChange.action;
   const tiles: PlanTileModel[] = orderedProducts.filter((product) => isPicketSubscriptionId(product.id)).map((product) => {
     const keys = planKeys[product.id as PicketSubscriptionId];
     const isPro = product.id.startsWith("picket_pro_");
@@ -362,11 +382,11 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       quota: t("quotaAmount", { count: isPro ? 100 : 30 }),
       price: purchaseOffer(product)?.displayPrice ?? t("priceUnavailable"),
       note: t(keys.cadence),
-      current: entitlements?.tier === (isPro ? "pro" : "plus"),
+      current: owned ? owned.productId === product.id : entitlements?.tier === (isPro ? "pro" : "plus"),
     };
   });
   const selectedKeys = selectedProduct && isPicketSubscriptionId(selectedProduct.id) ? planKeys[selectedProduct.id] : null;
-  const purchaseDisabled = selectedAction === "current" || !selectedProduct || catalogueLoading || !purchaseOffer(selectedProduct) || !storeReady || !connected || busyProduct !== null || restoring;
+  const purchaseDisabled = selectedAction === "current" || selectedAction === "otherChannel" || !selectedProduct || catalogueLoading || !purchaseOffer(selectedProduct) || !storeReady || !connected || busyProduct !== null || restoring;
 
   return (
     <PicketScreen onRefresh={pullToRefresh}>
@@ -385,37 +405,36 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           <Skeleton height={150} radius={28} />
         )}
         {tier !== "free" && <ThankYouCard title={t("thanksTitle")} body={t("thanksBody", { tier: tier.toUpperCase() })} />}
-        {tier !== "pro" && (
+        <CadenceToggle
+          value={cadence}
+          disabled={busyProduct !== null || restoring}
+          onChange={(value) => { setCadence(value); setSelectedId(null); }}
+          monthlyLabel={t("monthlyTab")}
+          yearlyLabel={t("yearlyTab")}
+        />
+        {Platform.OS !== "android" ? (
+          <Text style={styles.notice}>{t("androidOnly")}</Text>
+        ) : !connected ? (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.link} />
+            <Text style={styles.notice}>{t("connecting")}</Text>
+          </View>
+        ) : tiles.length === 0 ? (
+          <Text style={styles.notice}>{t("pricesUnavailable")}</Text>
+        ) : (
           <>
-            <CadenceToggle
-              value={cadence}
-              disabled={busyProduct !== null || restoring}
-              onChange={(value) => { setCadence(value); setSelectedId(null); }}
-              monthlyLabel={t("monthlyTab")}
-              yearlyLabel={t("yearlyTab")}
+            <PlanTiles plans={tiles} selectedId={selectedProduct?.id ?? null} onSelect={setSelectedId} disabled={busyProduct !== null || restoring} currentLabel={t("currentBadge")} />
+            <Text style={styles.notice}>{t(cadence === "monthly" ? "billedMonthly" : "billedYearly")}</Text>
+            <FigmaButton
+              fullWidth
+              busy={busyProduct !== null && busyProduct === selectedProduct?.id}
+              disabled={purchaseDisabled}
+              label={selectedAction === "current" ? t("currentPlanButton") : selectedAction === "otherChannel" ? t("otherChannelButton") : t(selectedAction, { name: selectedKeys?.name ?? "" })}
+              onPress={() => { if (selectedProduct) void purchase(selectedProduct, selectedChange); }}
             />
-            {Platform.OS !== "android" ? (
-              <Text style={styles.notice}>{t("androidOnly")}</Text>
-            ) : !connected ? (
-              <View style={styles.loadingRow}>
-                <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.link} />
-                <Text style={styles.notice}>{t("connecting")}</Text>
-              </View>
-            ) : tiles.length === 0 ? (
-              <Text style={styles.notice}>{t("pricesUnavailable")}</Text>
-            ) : (
-              <>
-                <PlanTiles plans={tiles} selectedId={selectedProduct?.id ?? null} onSelect={setSelectedId} disabled={busyProduct !== null || restoring} currentLabel={t("currentBadge")} />
-                <Text style={styles.notice}>{t(cadence === "monthly" ? "billedMonthly" : "billedYearly")}</Text>
-                <FigmaButton
-                  fullWidth
-                  busy={busyProduct !== null && busyProduct === selectedProduct?.id}
-                  disabled={purchaseDisabled}
-                  label={selectedAction === "current" ? t("currentPlanButton") : t(selectedAction, { name: selectedKeys?.name ?? "" })}
-                  onPress={() => { if (selectedProduct) void purchase(selectedProduct); }}
-                />
-              </>
-            )}
+            {selectedAction === "otherChannel" && <Text style={styles.notice}>{t("otherChannelNote")}</Text>}
+            {selectedChange.action === "switch" && "replace" in selectedChange && selectedChange.replace && <Text style={styles.notice}>{t("deferredNote")}</Text>}
+            {selectedChange.action === "upgrade" && "replace" in selectedChange && selectedChange.replace && <Text style={styles.notice}>{t("prorationNote")}</Text>}
           </>
         )}
         <IncludedList title={t("includedTitle")} items={[t("localIncluded"), t("includedUnlimited"), t("includedSync")]} />
