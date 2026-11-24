@@ -42,7 +42,7 @@ function AiSession({api,token}:{api:LearningAiApi;token:string}){
     return()=>{clearInterval(timer);listener.remove();};
   },[machine,pending,completed]);
   function button(label:string,action:()=>void,disabled=false){
-    return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={action} style={{minHeight:48,padding:14,borderRadius:paperShape.button,borderColor:c.border,borderWidth:1,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary,fontWeight:"600"}}>{label}</Text></Pressable>;
+    return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={action} style={{minHeight:48,justifyContent:"center",paddingVertical:12,paddingHorizontal:16,borderRadius:paperShape.button,borderColor:c.border,borderWidth:1,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary,fontWeight:"600",flexShrink:1}}>{label}</Text></Pressable>;
   }
   return <View style={{gap:12,padding:16,borderWidth:1,borderColor:c.border,borderRadius:paperShape.card,backgroundColor:c.surface}}>
     <Text accessibilityRole="header" style={{fontSize:22,fontWeight:"700",color:c.text}}>{t("title")}</Text>

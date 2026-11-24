@@ -41,7 +41,7 @@ export function EstimateSlider({ value, min, max, step, disabled, format, label,
       <View pointerEvents="none" style={{ height: 8, borderRadius: 4, backgroundColor: c.disabledSurface, overflow: "hidden" }}>
         <View style={{ width: `${ratio * 100}%`, height: 8, backgroundColor: disabled ? c.disabledText : c.primary }} />
       </View>
-      <View pointerEvents="none" style={{ position: "absolute", left: Math.max(0, ratio * width - 14), width: 28, height: 28, borderRadius: 14,
+      <View pointerEvents="none" style={{ position: "absolute", left: Math.max(0, Math.min(Math.max(0, width - 28), ratio * width - 14)), width: 28, height: 28, borderRadius: 14,
         backgroundColor: c.surface, borderWidth: 3, borderColor: disabled ? c.disabledText : c.primary }} />
     </View>
     <IconButton icon="plus" label={t("increase")} variant="surface" disabled={disabled || value >= max} onPress={() => nudge(1)} />

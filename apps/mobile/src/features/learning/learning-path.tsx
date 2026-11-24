@@ -22,10 +22,10 @@ export function TodayLessonCard({ lesson, number, stage, state, done, total, dis
   const { colors: c } = useAppTheme();
   const { t } = useTranslation("learning");
   const ratio = total ? done / total : 0;
-  return <View style={[{ gap: 12, padding: 20, borderRadius: paperShape.card, backgroundColor: c.surface }, figmaShadow("paper")]}>
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <Text style={[figmaText.overline, { flex: 1, color: c.link, textTransform: "uppercase" }]}>{lesson ? t("todayLesson") : t("allDoneTitle")}</Text>
-      <Text style={[figmaText.captionStrong, { color: c.muted }]}>{t("lessonsDone", { done, total })}</Text>
+  return <View style={[{ gap: 12, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: paperShape.card, backgroundColor: c.surface }, figmaShadow("paper")]}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+      <Text style={[figmaText.overline, { flexGrow: 1, flexShrink: 1, minWidth: 0, color: c.link, textTransform: "uppercase" }]}>{lesson ? t("todayLesson") : t("allDoneTitle")}</Text>
+      <Text style={[figmaText.captionStrong, { flexShrink: 1, color: c.muted }]}>{t("lessonsDone", { done, total })}</Text>
     </View>
     <View accessible accessibilityRole="progressbar" accessibilityLabel={t("lessonsDone", { done, total })} accessibilityValue={{ min: 0, max: total, now: done }}
       style={{ height: 8, borderRadius: 4, overflow: "hidden", backgroundColor: c.disabledSurface }}>
@@ -33,9 +33,9 @@ export function TodayLessonCard({ lesson, number, stage, state, done, total, dis
     </View>
     {lesson ? <>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <View style={{ flex: 1, gap: 6 }}>
-          {stage ? <Text style={[figmaText.bodySmall, { color: c.muted }]}>{t("stage")} {stage.order} · {stage.title}</Text> : null}
-          <Text accessibilityRole="header" style={[figmaText.display, { color: c.text }]}>{number}. {lesson.title}</Text>
+        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
+          {stage ? <Text style={[figmaText.bodySmall, { flexShrink: 1, color: c.muted }]}>{t("stage")} {stage.order} · {stage.title}</Text> : null}
+          <Text accessibilityRole="header" style={[figmaText.display, { flexShrink: 1, color: c.text }]}>{number}. {lesson.title}</Text>
         </View>
         <PaperArt id="education" style={{ width: 72, height: 72 }} />
       </View>
@@ -87,11 +87,11 @@ function PathRow({ lesson, number, state, last, disabled, label, stateLabel, onP
       {!last ? <View style={{ flex: 1, width: 2, minHeight: 12, backgroundColor: state === "done" ? c.success : c.border }} /> : null}
     </View>
     <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress}
-      style={{ flex: 1, minHeight: 56, marginBottom: last ? 0 : 8, justifyContent: "center", gap: 2, paddingVertical: 10, paddingHorizontal: 14,
+      style={{ flex: 1, minWidth: 0, minHeight: 56, marginBottom: last ? 0 : 8, justifyContent: "center", gap: 2, paddingVertical: 10, paddingHorizontal: 14,
         borderRadius: paperShape.button, borderWidth: active ? 2 : 1, borderColor: active ? c.primary : c.border,
         backgroundColor: state === "locked" ? c.canvas : c.surface }}>
-      <Text style={[figmaText.bodyStrong, { color: state === "locked" ? c.muted : c.text }]}>{number}. {lesson.title}</Text>
-      <Text style={[figmaText.bodySmall, { color: state === "done" ? c.success : active ? c.link : c.muted }]}>{stateLabel}</Text>
+      <Text style={[figmaText.bodyStrong, { flexShrink: 1, color: state === "locked" ? c.muted : c.text }]}>{number}. {lesson.title}</Text>
+      <Text style={[figmaText.bodySmall, { flexShrink: 1, color: state === "done" ? c.success : active ? c.link : c.muted }]}>{stateLabel}</Text>
     </Pressable>
   </View>;
 }

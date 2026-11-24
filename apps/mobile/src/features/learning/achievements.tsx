@@ -25,7 +25,7 @@ export function LearningAchievements({owner,progress}:{owner:string;progress:Lea
     <Text accessibilityRole="header" style={{color:c.text,fontSize:20,fontWeight:"700"}}>{t("achievements")}</Text>
     <Text accessibilityLiveRegion="polite" style={{color:c.text}}>{t("learningXp",{count:xp})}</Text>
     <Text style={{color:c.muted}}>{t("xpNotice")}</Text>
-    <View style={{flexDirection:"row",flexWrap:"wrap",gap:8}}>{badges.map(id=><View key={id} style={{padding:12,borderRadius:paperShape.card,backgroundColor:c.elevated}}><Text style={{color:c.text}}>{t(id)}</Text></View>)}</View>
+    <View style={{flexDirection:"row",flexWrap:"wrap",gap:8}}>{badges.map(id=><View key={id} style={{maxWidth:"100%",paddingVertical:10,paddingHorizontal:14,borderWidth:1,borderColor:c.border,borderRadius:paperShape.chip,backgroundColor:c.elevated}}><Text style={{color:c.text,flexShrink:1}}>{t(id)}</Text></View>)}</View>
     {failed&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("storageError")}</Text>}
   </View>;
 }

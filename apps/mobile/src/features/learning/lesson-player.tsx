@@ -89,7 +89,7 @@ function BlockView({ block, lesson, answers, disabled, onAnswer }: {
 
 function Panel({ children, tone = "surface" }: { children: React.ReactNode; tone?: "surface" | "elevated" }) {
   const { colors: c } = useAppTheme();
-  return <View style={[{ gap: 14, padding: 20, borderRadius: paperShape.card, backgroundColor: tone === "surface" ? c.surface : c.elevated }, figmaShadow("paper")]}>{children}</View>;
+  return <View style={[{ gap: 14, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: paperShape.card, backgroundColor: tone === "surface" ? c.surface : c.elevated }, figmaShadow("paper")]}>{children}</View>;
 }
 
 function Overline({ children }: { children: string }) {
@@ -105,9 +105,9 @@ function CardBlock({ block }: { block: Extract<LessonBlock, { type: "card" }> })
     <Overline>{label}</Overline>
     {block.text ? <Text accessibilityRole={block.kind === "objective" ? "header" : "text"}
       style={block.kind === "objective" ? [figmaText.display, { color: c.text }] : { color: c.text, fontSize: 17, lineHeight: 27 }}>{block.text}</Text> : null}
-    {block.points?.map(point => <View key={point} style={{ flexDirection: "row", gap: 10 }}>
-      <AppIcon name="check" size={22} color={c.success} />
-      <Text style={{ flex: 1, color: c.text, fontSize: 16, lineHeight: 25 }}>{point}</Text>
+    {block.points?.map(point => <View key={point} style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+      <View style={{ paddingTop: 2 }}><AppIcon name="check" size={20} color={c.success} /></View>
+      <Text style={{ flex: 1, minWidth: 0, flexShrink: 1, color: c.text, fontSize: 16, lineHeight: 25 }}>{point}</Text>
     </View>)}
   </Panel>;
 }
@@ -121,14 +121,14 @@ function Choice({ label, selected, state, disabled, onPress, colors: c }: {
   return <Pressable accessibilityRole="radio" accessibilityLabel={label} accessibilityState={{ checked: selected, disabled }} disabled={disabled} onPress={onPress}
     style={{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 16,
       borderRadius: paperShape.button, borderWidth: state === "idle" || state === "dimmed" ? 1 : 2, borderColor: border, backgroundColor: background }}>
-    <Text style={{ flex: 1, color: state === "dimmed" ? c.muted : c.text, fontSize: 15, lineHeight: 22, fontWeight: "600" }}>{label}</Text>
+    <Text style={{ flex: 1, minWidth: 0, flexShrink: 1, color: state === "dimmed" ? c.muted : c.text, fontSize: 15, lineHeight: 22, fontWeight: "600" }}>{label}</Text>
     {state === "right" ? <AppIcon name="check-circle" size={22} color={c.success} /> : state === "wrong" ? <AppIcon name="close" size={22} color={c.danger} /> : null}
   </Pressable>;
 }
 
 function Feedback({ right, title, body }: { right: boolean; title: string; body: string }) {
   const { colors: c } = useAppTheme();
-  return <View accessibilityLiveRegion="polite" style={{ gap: 6, padding: 16, borderRadius: paperShape.card, backgroundColor: right ? c.successSurface : c.warningSurface }}>
+  return <View accessibilityLiveRegion="polite" style={{ gap: 6, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: paperShape.card, backgroundColor: right ? c.successSurface : c.warningSurface }}>
     <Text style={[figmaText.bodyStrong, { color: right ? c.success : c.warning }]}>{title}</Text>
     <Text style={{ color: c.text, fontSize: 15, lineHeight: 23 }}>{body}</Text>
   </View>;
@@ -152,8 +152,8 @@ function MythBlock({ block, answer, disabled, onAnswer }: { block: LessonMythBlo
       <Overline>{t("mythTitle")}</Overline>
       <Text accessibilityRole="header" style={{ color: c.text, fontSize: 19, lineHeight: 28, fontWeight: "700" }}>“{block.statement}”</Text>
     </Panel>
-    <View accessibilityRole="radiogroup" accessibilityLabel={t("mythTitle")} style={{ flexDirection: "row", gap: 12 }}>
-      {options.map((label, value) => <View key={label} style={{ flex: 1 }}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={t("mythTitle")} style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+      {options.map((label, value) => <View key={label} style={{ flexGrow: 1, flexBasis: 140, minWidth: 0 }}>
         <Choice label={label} selected={answer === value} disabled={disabled || done} colors={c} onPress={() => choose(value)}
           state={!done ? "idle" : value === correct ? "right" : answer === value ? "wrong" : "dimmed"} />
       </View>)}
@@ -211,17 +211,17 @@ function EstimateBlock({ block, answer, disabled, onAnswer }: { block: LessonEst
       <Text accessibilityLiveRegion="polite" style={[figmaText.amountPocket, { color: c.primary, textAlign: "center" }]}>{t("estimateGuess", { value: money(done ? answer : guess) })}</Text>
       <EstimateSlider value={done ? answer : guess} min={block.min} max={block.max} step={block.step} disabled={disabled || done}
         label={block.prompt} format={money} onChange={setGuess} />
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={[figmaText.bodySmall, { color: c.muted }]}>{money(block.min)}</Text>
-        <Text style={[figmaText.bodySmall, { color: c.muted }]}>{money(block.max)}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
+        <Text style={[figmaText.bodySmall, { flexShrink: 1, color: c.muted }]}>{money(block.min)}</Text>
+        <Text style={[figmaText.bodySmall, { flexShrink: 1, color: c.muted }]}>{money(block.max)}</Text>
       </View>
       {!done ? <Text style={[figmaText.bodySmall, { color: c.muted }]}>{t("estimateHint")}</Text> : null}
     </Panel>
     {done
       ? <Feedback right={close} title={t(close ? "estimateClose" : "estimateFar", { answer: money(block.answer) })} body={block.explanation} />
       : <Pressable accessibilityRole="button" disabled={disabled} onPress={reveal}
-          style={{ minHeight: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, borderRadius: paperShape.button, borderWidth: 1, borderColor: c.primaryOutline, backgroundColor: c.surface }}>
-          <Text style={[figmaText.button, { color: c.link }]}>{t("estimateCheck")}</Text>
+          style={{ minHeight: 48, alignItems: "center", justifyContent: "center", paddingVertical: 12, paddingHorizontal: 16, borderRadius: paperShape.button, borderWidth: 1, borderColor: c.primaryOutline, backgroundColor: c.surface }}>
+          <Text style={[figmaText.button, { color: c.link, textAlign: "center", flexShrink: 1 }]}>{t("estimateCheck")}</Text>
         </Pressable>}
   </View>;
 }
@@ -243,7 +243,7 @@ export function LessonComplete({ lesson, answers, xpEarned, review, lessonsDone,
         <Text accessibilityRole="header" style={[figmaText.display, { color: c.text, textAlign: "center" }]}>{title}</Text>
         <Text style={[figmaText.bodyStrong, { color: c.muted, textAlign: "center" }]}>{lesson.title}</Text>
       </View>
-      <View style={{ flexDirection: "row", gap: 12 }}>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
         <Stat value={xpEarned > 0 ? t("xpEarned", { count: xpEarned }) : "0"} caption="XP" a11y={t("xpEarned", { count: xpEarned })} />
         <Stat value={`${score.correct}/${score.total}`} caption={t("statQuiz")} a11y={t("quizScore", { correct: score.correct, total: score.total })} />
         <Stat value={`${lessonsDone}/${lessonsTotal}`} caption={t("statLessons")} a11y={t("lessonsDone", { done: lessonsDone, total: lessonsTotal })} />
@@ -256,13 +256,13 @@ export function LessonComplete({ lesson, answers, xpEarned, review, lessonsDone,
       </Panel>
       <View style={{ gap: 4 }}>
         <Text style={[figmaText.captionStrong, { color: c.muted }]}>{t("sourcesTitle")}</Text>
-        {lesson.sources.map(url => <Text key={url} selectable numberOfLines={1} style={[figmaText.bodySmall, { color: c.muted }]}>{url}</Text>)}
+        {lesson.sources.map(url => <Text key={url} selectable numberOfLines={1} style={[figmaText.bodySmall, { flexShrink: 1, color: c.muted }]}>{url}</Text>)}
       </View>
     </ScrollView>
     <View style={{ gap: 10, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, borderTopWidth: 1, borderTopColor: c.border }}>
       {hasNext ? <PrimaryAction label={t("nextLesson")} onPress={onNext} /> : null}
-      <Pressable accessibilityRole="button" onPress={onBack} style={{ minHeight: 48, alignItems: "center", justifyContent: "center", borderRadius: paperShape.button, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
-        <Text style={[figmaText.button, { color: c.link }]}>{t("backToPath")}</Text>
+      <Pressable accessibilityRole="button" onPress={onBack} style={{ minHeight: 48, alignItems: "center", justifyContent: "center", paddingVertical: 12, paddingHorizontal: 16, borderRadius: paperShape.button, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+        <Text style={[figmaText.button, { color: c.link, textAlign: "center", flexShrink: 1 }]}>{t("backToPath")}</Text>
       </Pressable>
     </View>
   </SafeAreaView>;
@@ -270,8 +270,8 @@ export function LessonComplete({ lesson, answers, xpEarned, review, lessonsDone,
 
 function Stat({ value, caption, a11y }: { value: string; caption: string; a11y: string }) {
   const { colors: c } = useAppTheme();
-  return <View accessible accessibilityLabel={a11y} style={{ flex: 1, alignItems: "center", gap: 2, padding: 12, borderRadius: paperShape.card, backgroundColor: c.surface }}>
-    <Text numberOfLines={1} adjustsFontSizeToFit style={[figmaText.amountPocket, { color: c.text }]}>{value}</Text>
-    <Text numberOfLines={2} style={[figmaText.micro, { color: c.muted, textAlign: "center" }]}>{caption}</Text>
+  return <View accessible accessibilityLabel={a11y} style={{ flexGrow: 1, flexBasis: 96, minWidth: 0, alignItems: "center", justifyContent: "center", gap: 4, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: paperShape.card, backgroundColor: c.surface }}>
+    <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[figmaText.amountPocket, { color: c.text, textAlign: "center", flexShrink: 1 }]}>{value}</Text>
+    <Text style={[figmaText.micro, { color: c.muted, textAlign: "center", flexShrink: 1 }]}>{caption}</Text>
   </View>;
 }
