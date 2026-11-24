@@ -15,10 +15,10 @@ export type ChartGeometry = {
 };
 
 /** Scales a forecast path into an SVG viewport. Pure so it can be tested without a browser. */
-export function chartGeometry(path: ForecastPoint[], width: number, height: number, pad = 8): ChartGeometry {
+export function chartGeometry(path: ForecastPoint[], width: number, height: number, pad = 8, scalePath = path): ChartGeometry {
   if (!path.length) throw new Error("Empty forecast path");
-  const top = Math.max(0, ...path.map((point) => point.high));
-  const bottom = Math.min(0, ...path.map((point) => point.low));
+  const top = Math.max(0, ...scalePath.map((point) => point.high));
+  const bottom = Math.min(0, ...scalePath.map((point) => point.low));
   const span = Math.max(1, top - bottom);
   const inner = Math.max(1, height - pad * 2);
   const y = (value: number) => Number((height - pad - ((value - bottom) / span) * inner).toFixed(2));

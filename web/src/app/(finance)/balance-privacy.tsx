@@ -49,7 +49,7 @@ export function BalanceAmount({ value }: { value: string }) {
   return <>{hidden ? "••••••" : value}</>;
 }
 
-function useBalancePrivacy() {
+export function useBalancePrivacy() {
   const value = useContext(BalancePrivacyContext);
   if (!value) {
     throw new Error("BalanceAmount must be inside BalancePrivacyProvider");

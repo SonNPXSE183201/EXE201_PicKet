@@ -9,7 +9,7 @@ import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { spacing } from "@/core/ui/mobile-palette";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewStyle } from "react-native";
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, View, useWindowDimensions, type ViewStyle, type StyleProp } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { AppIcon, type IconName } from "./app-icon";
@@ -37,10 +37,10 @@ export function IconButton({ icon, label, onPress, disabled = false, expanded, v
   return <Pressable accessibilityLabel={label} accessibilityState={{ expanded, disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.iconButton, variant === "surface" && styles.iconButtonSurface, variant === "onDark" && styles.iconButtonOnDark, pressed && styles.pressed]}><AppIcon name={icon} size={variant === "plain" ? 24 : 22} color={variant === "onDark" ? colors.onCamera : variant === "surface" ? colors.text : undefined} />{badge && <View style={styles.iconBadge} />}</Pressable>;
 }
 
-export function TopAppBar({ title, subtitle, back = true, action, backDisabled = false, illustration, onBack }: { title: string; subtitle?: string; back?: boolean; action?: ReactNode; backDisabled?: boolean; illustration?: PaperAssetId; onBack?: () => void }) {
+export function TopAppBar({ title, subtitle, back = true, action, backDisabled = false, illustration, onBack, style }: { title: string; subtitle?: string; back?: boolean; action?: ReactNode; backDisabled?: boolean; illustration?: PaperAssetId; onBack?: () => void; style?: StyleProp<ViewStyle> }) {
   const { t } = useTranslation("common");
   const { styles } = useMobileStyles(createStyles);
-  return <View style={styles.appBar}><View style={styles.appBarRow}>{back && <IconButton variant="surface" icon="arrow-left" label={t("Quay lại")} disabled={backDisabled} onPress={onBack ?? (() => router.back())} />}<Text accessibilityRole="header" style={[styles.appBarTitle, back && styles.appBarChildTitle]}>{title}</Text>{action}{illustration && <PaperArt id={illustration} style={{ width: 58, height: 58 }} />}</View>{subtitle && <Text style={styles.appBarSubtitle}>{subtitle}</Text>}</View>;
+  return <View style={[styles.appBar, style]}><View style={styles.appBarRow}>{back && <IconButton variant="surface" icon="arrow-left" label={t("Quay lại")} disabled={backDisabled} onPress={onBack ?? (() => router.back())} />}<Text accessibilityRole="header" style={[styles.appBarTitle, back && styles.appBarChildTitle]}>{title}</Text>{action}{illustration && <PaperArt id={illustration} style={{ width: 58, height: 58 }} />}</View>{subtitle && <Text style={styles.appBarSubtitle}>{subtitle}</Text>}</View>;
 }
 
 export function MenuRow({ title, description, icon, illustration, onPress, disabled = false }: { title: string; description?: string; icon: IconName; illustration?: PaperAssetId; onPress(): void; disabled?: boolean }) {

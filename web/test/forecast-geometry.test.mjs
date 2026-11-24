@@ -27,3 +27,13 @@ test("progress and day helpers", () => {
   assert.equal(percentOf(1, 0), 0);
   assert.equal(shortDay("2026-11-30"), "30/11");
 });
+
+test("purchase and baseline paths share the same vertical scale", () => {
+  const base = [point("2026-11-24", 100), point("2026-11-25", 80)];
+  const purchase = base.map(p => ({...p, expected: p.expected - 90, low: p.low - 90, high: p.high - 90}));
+  const scale = [...base, ...purchase];
+  const a = chartGeometry(base, 200, 100, 8, scale);
+  const b = chartGeometry(purchase, 200, 100, 8, scale);
+  assert.equal(a.baseY, b.baseY);
+  assert.ok(b.end.y > a.end.y);
+});

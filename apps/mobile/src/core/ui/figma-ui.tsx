@@ -20,6 +20,17 @@ export function figmaShadow(name: keyof typeof figmaShadows, tint?: string): Vie
 
 export const figmaText = figmaType;
 
+/** Figma Notice: semantic icon tile, copy and optional action. */
+export function Notice({ tone = "info", title, body, action }: { tone?: "success" | "warning" | "info"; title?: string; body: string; action?: ReactNode }) {
+  const { colors } = useMobileStyles(createStyles);
+  const color = tone === "success" ? colors.success : tone === "warning" ? colors.warning : colors.primary;
+  const backgroundColor = tone === "success" ? colors.successSurface : tone === "warning" ? colors.warningSurface : colors.elevated;
+  return <View style={{ flexDirection: "row", gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 16, backgroundColor: colors.surface }}>
+    <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor, alignItems: "center", justifyContent: "center" }}><AppIcon name={tone === "success" ? "check" : tone === "warning" ? "alert-circle-outline" : "star-four-points-outline"} color={color} size={20} /></View>
+    <View style={{ flex: 1, gap: 2 }}>{title && <Text style={[figmaType.bodyStrong, { color: colors.text }]}>{title}</Text>}<Text style={[figmaType.bodySmall, { color: colors.muted }]}>{body}</Text>{action}</View>
+  </View>;
+}
+
 /** Figma SectionHeader: purple overline + 16 title, optional "link" or "add" action. */
 export function SectionHeader({ overline, title, action = "none", actionLabel, actionAccessibilityLabel, onAction, style }: {
   overline?: string; title: string; action?: "none" | "link" | "add"; actionLabel?: string; actionAccessibilityLabel?: string; onAction?: () => void; style?: StyleProp<ViewStyle>;
@@ -38,7 +49,7 @@ export function SectionHeader({ overline, title, action = "none", actionLabel, a
 /** Figma Chip. success/warning = status, neutral = selected filter, outline = unselected filter. */
 export function Chip({ label, tone = "neutral", size = "medium", onPress, style }: { label: string; tone?: "success" | "warning" | "neutral" | "outline"; size?: "small" | "medium"; onPress?: () => void; style?: StyleProp<ViewStyle> }) {
   const { colors, styles } = useMobileStyles(createStyles);
-  const palette = { success: [colors.successSurface, colors.success], warning: [colors.warningSurface, colors.warning], neutral: [colors.selectedSurface, colors.primary], outline: ["transparent", colors.text] }[tone];
+  const palette = { success: [colors.successSurface, colors.success], warning: [colors.warningSurface, colors.warning], neutral: [colors.selectedSurface, colors.primary], outline: ["transparent", colors.muted] }[tone];
   const body = <View style={[styles.chip, size === "small" && { paddingVertical: 2, paddingHorizontal: 8 }, { backgroundColor: palette[0] }, tone === "outline" && { borderWidth: 1, borderColor: colors.border }, style]}><Text style={[size === "small" ? figmaType.micro : { fontSize: 11, lineHeight: 16, fontWeight: "800" }, { color: palette[1] }]}>{label}</Text></View>;
   return onPress ? <Pressable accessibilityRole="button" onPress={onPress}>{body}</Pressable> : body;
 }
@@ -50,9 +61,9 @@ export function FigmaButton({ label, onPress, variant = "primary", size = "large
   const { colors, styles } = useMobileStyles(createStyles);
   const fg = variant === "primary" ? colors.onPrimary : variant === "text" ? colors.primary : colors.text;
   const bg = variant === "primary" ? colors.primary : variant === "secondary" ? colors.selectedSurface : variant === "outline" ? colors.surface : "transparent";
-  return <Pressable accessibilityRole="button" accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: disabled || busy, busy }} disabled={disabled || busy} onPress={onPress}
     style={({ pressed }) => [styles.button, { minHeight: size === "large" ? 48 : 40, backgroundColor: bg }, variant === "outline" && { borderWidth: 1, borderColor: colors.border }, fullWidth && { alignSelf: "stretch" }, (disabled || busy) && { opacity: .5 }, pressed && { opacity: .75 }, style]}>
-    {busy ? <ActivityIndicator accessibilityLabel={label} size="small" color={fg} /> : icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text numberOfLines={1} style={[figmaType.button, { color: fg, flexShrink: 0 }]}>{label}</Text>
+    {busy ? <ActivityIndicator accessibilityLabel={label} size="small" color={fg} /> : icon ? <AppIcon name={icon} size={18} color={fg} /> : null}<Text style={[figmaType.button, { color: fg, flexShrink: 1, textAlign: "center" }]}>{label}</Text>
   </Pressable>;
 }
 
@@ -119,7 +130,7 @@ export function DashedAddCard({ label, description, layout = "wide", onPress, ca
 /** Loading placeholder block (Skeleton): elevated colour at 65-75% opacity. */
 export function Skeleton({ width, height, radius, style, tone = "elevated" }: { width?: number | `${number}%`; height: number; radius?: number; style?: StyleProp<ViewStyle>; tone?: "elevated" | "onDark" }) {
   const { colors } = useMobileStyles(createStyles);
-  return <View accessible={false} importantForAccessibility="no" style={[{ width, height, borderRadius: radius ?? height / 2, backgroundColor: tone === "onDark" ? "#FFFFFF" : colors.elevated, opacity: tone === "onDark" ? .22 : .7 }, style]} />;
+  return <View accessible={false} importantForAccessibility="no" style={[{ width, height, borderRadius: radius ?? height / 2, backgroundColor: tone === "onDark" ? colors.onCamera : colors.elevated, opacity: tone === "onDark" ? .22 : .7 }, style]} />;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({

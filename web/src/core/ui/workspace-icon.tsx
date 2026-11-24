@@ -1,5 +1,9 @@
 export function Icon({ name }: { name: string }) {
   const paths: Record<string, string> = {
+    alert: "M12 8v5m0 4h.01M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z",
+    bolt: "m13 2-9 12h7l-1 8 10-12h-7Z",
+    sparkle: "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z",
+    list: "M9 6h12M9 12h12M9 18h12M3 6h.01M3 12h.01M3 18h.01",
     home: "m3 10 9-7 9 7v11h-6v-7H9v7H3Z",
     receipt: "M5 3h14v18l-3-2-4 2-4-2-3 2Zm3 5h8m-8 4h8m-8 4h5",
     wallet: "M3 6h17v15H3V3h14v3m3 5h-6v5h6m-3-2h.01",

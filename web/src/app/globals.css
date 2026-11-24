@@ -12,15 +12,37 @@
   font-weight: 700;
   font-display: swap;
 }
+@font-face {
+  font-family: Nunito;
+  src: url("/admin-paper/nunito-600.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: Nunito;
+  src: url("/admin-paper/nunito-800.ttf") format("truetype");
+  font-weight: 800;
+  font-display: swap;
+}
 
 :root {
   --cream: #fff8ed;
   --surface: #fffcf5;
+  --paper: #ffffff;
+  --camera: #793268;
+  --on-camera: #ffffff;
+  --elevated: #fbebdd;
+  --success: #166534;
+  --success-surface: #e8f5ef;
+  --warning: #854d0e;
+  --warning-surface: #fff3cd;
+  --pocket-blue: #b8d8e2;
+  --forecast-expense: #9f2545;
   --sidebar: #f6eddf;
   --peach: #fde6d8;
   --coral: #fce8e4;
   --mint: #dcebd7;
-  --pocket-lilac: #e8daee;
+  --pocket-lilac: #ddcbe8;
   --mauve: #793268;
   --mauve-hover: #632654;
   --ink: #302132;
@@ -29,6 +51,52 @@
   --border-control: #94818d;
   --income: #116044;
   --expense: #bd3152;
+}
+
+:root[data-theme="dark"] {
+  --cream: #211c23;
+  --surface: #302732;
+  --paper: #302732;
+  --elevated: #3b303d;
+  --ink: #f7eee7;
+  --muted: #c6b6c4;
+  --mauve: #e4a3d3;
+  --mauve-hover: #efb8e1;
+  --line: #534452;
+  --border-control: #c6b6c4;
+  --peach: #44303b;
+  --pocket-blue: #334a56;
+  --pocket-lilac: #4b3c59;
+  --forecast-expense: #ffa8ba;
+  --income: #86d9a0;
+  --success: #86d9a0;
+  --success-surface: #203626;
+  --warning: #f4d278;
+  --warning-surface: #3d321d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --cream: #211c23;
+    --surface: #302732;
+    --paper: #302732;
+    --elevated: #3b303d;
+    --ink: #f7eee7;
+    --muted: #c6b6c4;
+    --mauve: #e4a3d3;
+    --mauve-hover: #efb8e1;
+    --line: #534452;
+    --border-control: #c6b6c4;
+    --peach: #44303b;
+    --pocket-blue: #334a56;
+    --pocket-lilac: #4b3c59;
+    --forecast-expense: #ffa8ba;
+    --income: #86d9a0;
+    --success: #86d9a0;
+    --success-surface: #203626;
+    --warning: #f4d278;
+    --warning-surface: #3d321d;
+  }
 }
 
 * {

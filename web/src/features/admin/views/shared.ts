@@ -12,7 +12,7 @@ export type VerificationSettingsView = {
 };
 
 export type ForecastSettingsView = {
-  settings: { enabled: boolean; minHistoryDays: number; lookbackMonths: number; scenarioPlans: string[]; revision: number; updatedAt: string };
+  settings: { enabled: boolean; minHistoryDays: number; lookbackMonths: number; accessPlans?: string[]; scenarioPlans: string[]; revision: number; updatedAt: string };
   history: { before: Record<string, unknown>; after: Record<string, unknown>; reason: string; createdAt: string }[];
 };
 
