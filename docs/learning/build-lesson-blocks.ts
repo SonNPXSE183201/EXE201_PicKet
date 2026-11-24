@@ -27,7 +27,8 @@ for (const locale of ["vi", "en"] as const) {
   for (const target of targets[locale]) {
     let current = "";
     try { current = readFileSync(target, "utf8"); } catch { /* first generation */ }
-    if (current === text) continue;
+    // Git may check the files out with CRLF line endings on Windows.
+    if (current.replace(/\r\n/g, "\n") === text) continue;
     if (check) { stale++; console.error(`stale: ${path.relative(root, target)}`); continue; }
     writeFileSync(target, text, "utf8");
     console.log(`wrote ${path.relative(root, target)}`);
