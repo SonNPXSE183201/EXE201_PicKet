@@ -1,7 +1,9 @@
 import { SubmitButton } from "@/core/ui/submit-button";
+import { AdminIcon } from "../ui/admin-icon";
+import { ForecastStepper } from "../components/forecast-stepper";
 import { saveForecastSettingsAction } from "../payment-actions";
 import { FORECAST_PLANS, forecastSettingsSummary } from "../forecast-settings-form";
-import { Card, Chip, Field, formatDateTime, formatNumber } from "../ui/paper";
+import { Card, Chip, formatDateTime, formatNumber } from "../ui/paper";
 import type { ViewProps } from "./shared";
 
 const PLAN_NAMES: Record<string, string> = { free: "Free", plus: "Plus", pro: "Pro" };
@@ -27,29 +29,33 @@ export function ForecastSettingsCard(p: ViewProps) {
         <form action={saveForecastSettingsAction} className="av-form" key={s.revision}>
           <fieldset disabled={!p.mfaVerified}>
             <input type="hidden" name="revision" value={s.revision} />
-            <div className="av-switches">
-              <label className="av-switch-row">
-                <span><b>Bật dự báo cuối tháng</b><small>Thẻ dự báo ở trang chủ và màn chi tiết. Tắt sẽ ẩn hoàn toàn với mọi người dùng.</small></span>
+            <div className="fs-toggle">
+              <label className="fs-toggle-row">
+                <span><b>Bật tính năng dự báo</b><small>Tắt sẽ ẩn thẻ dự báo ở Home và màn chi tiết cho mọi người dùng.</small></span>
                 <span className="ap-switch"><input type="checkbox" name="enabled" defaultChecked={s.enabled} /><span /></span>
               </label>
             </div>
-            <div className="av-fields">
-              <Field label="Số ngày có ghi chép tối thiểu (90 ngày gần nhất)"><input name="minHistoryDays" type="number" min={1} max={90} step={1} required defaultValue={s.minHistoryDays} /></Field>
-              <Field label="Số tháng trước dùng để so sánh"><input name="lookbackMonths" type="number" min={1} max={6} step={1} required defaultValue={s.lookbackMonths} /></Field>
-            </div>
-            <fieldset className="av-switches" aria-label="Gói có kịch bản Nếu tôi mua">
-              <span className="ap-card-note"><b>Kịch bản &quot;Nếu tôi mua&quot;</b> dành cho các gói:</span>
-              {FORECAST_PLANS.map((plan) => (
-                <label key={plan} className="av-switch-row">
-                  <span><b>{PLAN_NAMES[plan]}</b></span>
-                  <span className="ap-switch"><input type="checkbox" name="scenarioPlans" value={plan} defaultChecked={s.scenarioPlans.includes(plan)} /><span /></span>
-                </label>
-              ))}
+            <ForecastStepper name="minHistoryDays" label="Số ngày lịch sử tối thiểu" min={1} max={90} defaultValue={s.minHistoryDays} unit="ngày" hint="Từ 1 đến 90 ngày" />
+            <ForecastStepper name="lookbackMonths" label="Số tháng nhìn lại" min={1} max={6} defaultValue={s.lookbackMonths} unit="tháng" hint="Từ 1 đến 6 tháng" />
+            <fieldset className="fs-plans">
+              <legend className="fs-label">Gói được dùng kịch bản &quot;Nếu tôi mua...&quot;</legend>
+              <div className="fs-chips">
+                {FORECAST_PLANS.map((plan) => (
+                  <label key={plan} className="fs-chip">
+                    <input type="checkbox" name="scenarioPlans" value={plan} defaultChecked={s.scenarioPlans.includes(plan)} />
+                    <span><AdminIcon name="check" size={14} />{PLAN_NAMES[plan]}</span>
+                  </label>
+                ))}
+              </div>
             </fieldset>
-            <div className="av-fields">
-              <Field label="Lý do thay đổi" grow><input name="reason" minLength={5} maxLength={500} required placeholder="Ví dụ: mở kịch bản cho gói Plus" /></Field>
+            <div className="fs-field">
+              <label className="fs-label" htmlFor="forecast-reason">Lý do thay đổi (bắt buộc, ghi vào nhật ký)</label>
+              <textarea id="forecast-reason" name="reason" className="fs-reason" minLength={5} maxLength={500} required rows={3} placeholder="Ví dụ: giảm số ngày tối thiểu để người dùng mới thấy dự báo sớm hơn" />
             </div>
-            <SubmitButton className="ap-btn">Lưu cấu hình dự báo</SubmitButton>
+            <div className="fs-actions">
+              <button type="reset" className="ap-btn is-secondary">Huỷ</button>
+              <SubmitButton className="ap-btn">Lưu thay đổi</SubmitButton>
+            </div>
           </fieldset>
         </form>
         {!!f.history.length && (

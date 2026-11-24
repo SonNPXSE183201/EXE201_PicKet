@@ -1,0 +1,58 @@
+/* Month-end forecast: dashboard card and /forecast page. Uses the workspace paper tokens only. */
+.fc-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.fc-eyebrow { margin: 0; color: var(--mauve); font-size: 11px; line-height: 16px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.fc-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.fc-col { display: grid; gap: 16px; min-width: 0; }
+.fc-card { border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow-paper); padding: 20px; min-width: 0; display: grid; gap: 10px; }
+.fc-card h2 { margin: 0; color: var(--ink); font-size: 16px; line-height: 24px; font-weight: 800; }
+.fc-home { margin: 0 0 24px; }
+.fc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.fc-big { margin: 0; color: var(--ink); font-size: 32px; line-height: 40px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fc-amount-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fc-amount-row img { flex: none; height: auto; }
+.fc-neg { color: var(--expense); }
+.fc-pos { color: var(--income); }
+.fc-muted { margin: 0; color: var(--muted); font-size: 13px; line-height: 20px; }
+.fc-note { margin: 20px 0 0; padding: 14px 16px; border: 1px dashed var(--border-control); border-radius: 20px; color: var(--muted); font-size: 13px; line-height: 20px; }
+.fc-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; color: var(--mauve); font-weight: 800; text-decoration: none; }
+.fc-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 2px 12px; border-radius: 999px; font-size: 12px; line-height: 18px; font-weight: 800; }
+.fc-chip svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.fc-chip-ok { background: var(--mint); color: var(--income); }
+.fc-chip-warn { background: var(--peach); color: var(--expense); }
+.fc-chip-pro { background: var(--pocket-lilac); color: var(--mauve); }
+.fc-chart { margin: 0; }
+.fc-chart svg { display: block; width: 100%; height: 150px; overflow: visible; }
+.fc-grid { stroke: var(--line); stroke-width: 1; }
+.fc-zero { stroke: var(--muted); stroke-width: 1.5; }
+.fc-band { fill: var(--pocket-lilac); opacity: .7; }
+.fc-band-sample { fill: var(--pocket-lilac); }
+.fc-line { stroke: var(--mauve); stroke-width: 2.5; stroke-dasharray: 8 5; stroke-linecap: round; }
+.fc-axis { display: flex; justify-content: space-between; margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 16px; font-weight: 700; }
+.fc-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 16px; font-weight: 700; }
+.fc-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.fc-legend svg { overflow: visible; }
+.fc-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fc-tile { display: grid; gap: 4px; align-content: start; padding: 16px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); min-width: 0; }
+.fc-tile small { color: var(--muted); font-size: 12px; line-height: 18px; }
+.fc-tile b { color: var(--ink); font-size: 16px; line-height: 22px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fc-tile b.fc-neg { color: var(--expense); }
+.fc-tile b.fc-pos { color: var(--income); }
+.fc-bar-row { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 13px; line-height: 20px; }
+.fc-bar-row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.fc-track { height: 8px; border-radius: 4px; background: var(--peach); overflow: hidden; }
+.fc-track span { display: block; height: 100%; border-radius: 4px; background: var(--mauve); }
+.fc-track-muted span { background: var(--muted); }
+.fc-form { display: grid; gap: 8px; }
+.fc-form label { color: var(--muted); font-size: 13px; line-height: 20px; }
+.fc-form input { min-height: 48px; padding: 0 16px; border: 1px solid var(--border-control); border-radius: 16px; background: var(--surface); color: var(--ink); font: inherit; }
+.fc-form .button { min-height: 48px; width: 100%; }
+.fc-result { display: grid; gap: 2px; padding: 14px 16px; border-radius: 16px; background: var(--mint); color: var(--income); }
+.fc-result b { font-size: 22px; line-height: 30px; font-variant-numeric: tabular-nums; }
+.fc-result-neg { background: var(--peach); color: var(--expense); }
+.fc-empty { justify-items: center; text-align: center; }
+.fc-empty .fc-track { width: 100%; }
+.fc-empty img { height: auto; }
+@media (max-width: 860px) {
+  .fc-layout { grid-template-columns: minmax(0, 1fr); }
+  .fc-big { font-size: 28px; line-height: 36px; }
+}

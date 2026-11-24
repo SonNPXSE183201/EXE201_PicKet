@@ -32,7 +32,7 @@ const userGroups: { title: string; links: UserLink[] }[] = [
       ["/keepsakes", "Kỷ niệm", "heart"],
     ],
   },
-  { title: "BÁO CÁO", links: [["/insights", "Thống kê", "chart"]] },
+  { title: "BÁO CÁO", links: [["/insights", "Thống kê", "chart"], ["/forecast", "Dự báo", "chart"]] },
   { title: "TÀI KHOẢN", links: [["/profile", "Cài đặt", "person"]] },
 ];
 
