@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { forecastMonthEnd, median, spendingPace, type ForecastInput } from "./month-forecast";
+import { forecastMonthEnd, median, spendingPace, type ForecastInput } from "@picket/domain";
 
 const wallet = { id: "w1", currencyCode: "VND", openingBalance: 0, archived: false, deletedAt: null };
 let seq = 0;

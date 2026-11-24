@@ -5,7 +5,7 @@ import { useAccounts } from "@/features/accounts/accounts-context";
 import { useProfile } from "@/features/profile/profile-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 import { useForecastSettings } from "./forecast-settings";
-import { forecastMonthEnd, type MonthForecast } from "./month-forecast";
+import { forecastMonthEnd, type MonthForecast } from "@picket/domain";
 
 import { forecastCurrencies } from "./forecast-currencies";
 
