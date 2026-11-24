@@ -2,7 +2,6 @@ import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { Redirect, router } from "expo-router";
 import { LearningAiCard } from "@/features/learning/ai-card";
-import { AssessmentDraftCard } from "@/features/learning/assessment-card";
 import { LearningAchievements } from "@/features/learning/achievements";
 import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
@@ -351,7 +350,6 @@ function LearningSession({ owner }: { owner: string }) {
         {progress ? <LearningAchievements owner={owner} progress={progress} /> : null}
         <WeeklyPractice owner={owner} />
         <LearningAiCard />
-        <AssessmentDraftCard key={owner} owner={owner} />
         {!localMode && session && process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED === "true" ? (
           <FigmaButton variant="outline" size="large" fullWidth label={t("storyTitle", { ns: "cashflow" })} onPress={() => router.push("/weekly-story-preview")} />
         ) : null}
