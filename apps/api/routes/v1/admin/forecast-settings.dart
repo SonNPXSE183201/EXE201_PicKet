@@ -18,6 +18,7 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
     }
     final input = jsonDecode(await readLimitedBody(request, 1024));
     final plans = input is Map ? input['scenarioPlans'] : null;
+    final access = input is Map ? input['accessPlans'] : null;
     if (input is! Map ||
         input.keys.any(
           (k) => !{
@@ -25,6 +26,7 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
             'minHistoryDays',
             'lookbackMonths',
             'scenarioPlans',
+            'accessPlans',
             'revision',
             'reason',
           }.contains(k),
@@ -34,6 +36,8 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
         input['lookbackMonths'] is! int ||
         plans is! List ||
         plans.any((p) => !_plans.contains(p)) ||
+        (access != null &&
+            (access is! List || access.any((p) => !_plans.contains(p)))) ||
         input['revision'] is! int ||
         input['reason'] is! String) {
       throw const FormatException('Invalid forecast settings.');
@@ -46,6 +50,7 @@ Future<Response> onRequest(RequestContext context) => handleAuthenticated(
         'p_scenario_plans': plans,
         'p_revision': input['revision'],
         'p_reason': input['reason'],
+        if (access != null) 'p_access_plans': access,
       }),
       headers: {'cache-control': 'no-store'},
     );

@@ -92,8 +92,9 @@ type PicketRequestInit = RequestInit & { timeoutMs?: number };
 
 export type SignupVerification={email:boolean;sms:boolean;smsProvider:'firebase'};
 export type AdminVerificationSettings={settings:{emailEnabled:boolean;smsEnabled:boolean;smsProvider:'firebase';smsDailyLimit:number;revision:number;updatedAt:string};history:{before:Record<string,unknown>;after:Record<string,unknown>;reason:string;createdAt:string}[]};
-export type ForecastSettings={enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenario:boolean;revision:number};
-export type AdminForecastSettings={settings:{enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenarioPlans:('free'|'plus'|'pro')[];revision:number;updatedAt:string};history:{before:Record<string,unknown>;after:Record<string,unknown>;reason:string;createdAt:string}[]};
+/** `allowed`: this caller (signed in, on an access plan) may see the forecast; `scenario`: their plan has the purchase scenario. Older API builds omit `allowed`/`signedIn`. */
+export type ForecastSettings={enabled:boolean;minHistoryDays:number;lookbackMonths:number;signedIn?:boolean;allowed?:boolean;scenario:boolean;revision:number};
+export type AdminForecastSettings={settings:{enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenarioPlans:('free'|'plus'|'pro')[];accessPlans?:('free'|'plus'|'pro')[];revision:number;updatedAt:string};history:{before:Record<string,unknown>;after:Record<string,unknown>;reason:string;createdAt:string}[]};
 export class ApiError extends Error {
   readonly status: number;
   readonly details?: unknown;
@@ -916,7 +917,7 @@ export class PicketApiClient {
   adminForecastSettings<T=AdminForecastSettings>(accessToken:string):Promise<T> {
     return this.request('/v1/admin/forecast-settings',{headers:this.authHeaders(accessToken)});
   }
-  saveForecastSettings(accessToken:string,body:{enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenarioPlans:('free'|'plus'|'pro')[];revision:number;reason:string}):Promise<AdminForecastSettings['settings']> {
+  saveForecastSettings(accessToken:string,body:{enabled:boolean;minHistoryDays:number;lookbackMonths:number;scenarioPlans:('free'|'plus'|'pro')[];accessPlans?:('free'|'plus'|'pro')[];revision:number;reason:string}):Promise<AdminForecastSettings['settings']> {
     return this.request('/v1/admin/forecast-settings',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(body)});
   }
   accountPhone(accessToken:string,body:{phone:string;action?:'attach'|'send'|'verify'|'firebase';challengeId?:string;code?:string;idToken?:string}):Promise<Record<string,unknown>> {

@@ -7,14 +7,17 @@ import 'package:picket_api/src/api_config.dart';
 import 'package:picket_api/src/authenticated_route.dart';
 import 'package:picket_api/src/supabase_gateway.dart';
 
-/// End-of-month forecast settings for the app. With a bearer token the answer
-/// says whether the caller's plan has the purchase scenario; without one
-/// (local mode) the scenario is off. Falls back to defaults if the settings
-/// cannot be read, so the forecast never disappears because of this call.
-const fallbackForecastSettings = <String, Object>{
+/// End-of-month forecast settings for the app. The forecast is a paid benefit:
+/// `allowed` says whether this caller (signed in, on an access plan) may see it
+/// and `scenario` whether their plan has the purchase scenario. Without a token
+/// (local mode) both are false. If the settings cannot be read the answer keeps
+/// the forecast locked rather than giving it away.
+Map<String, Object> fallbackForecastSettings({required bool signedIn}) => {
   'enabled': true,
   'minHistoryDays': 14,
   'lookbackMonths': 3,
+  'signedIn': signedIn,
+  'allowed': false,
   'scenario': false,
   'revision': 0,
 };
@@ -58,7 +61,7 @@ Future<Response> onRequest(RequestContext context) async {
   }
   final body = settings is Map && settings['enabled'] is bool
       ? settings
-      : fallbackForecastSettings;
+      : fallbackForecastSettings(signedIn: token != null);
   return Response.json(
     body: body,
     headers: {
