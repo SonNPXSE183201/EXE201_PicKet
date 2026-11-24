@@ -40,14 +40,14 @@ export function WeeklyPractice({owner}:{owner:string}) {
     try{setEvents(await weeklyPractice.record(owner,week,skipped));}catch{setError(true);}finally{setBusy(false);}
   }
   const disabled=events===null||error||busy||current?.skipped===false;
-  return <View style={{backgroundColor:c.surface,borderRadius:paperShape.card,padding:18,gap:12}}>
+  return <View style={{backgroundColor:c.surface,borderWidth:1,borderColor:c.border,borderRadius:paperShape.card,padding:16,gap:12}}>
     <Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("weeklyTitle")}</Text>
     <Text style={{color:c.muted}}>{t("weekOf",{date:formatCalendarDate(week,language)})}</Text>
     <Text style={{color:c.text}}>{t("weeklyTask")}</Text>
     <Text style={{color:c.muted}}>{t("optionalPractice")}</Text>
     <Text accessibilityLiveRegion="polite" style={{color:error?c.expense:c.text}}>{error?t("storageError"):current ? current.skipped ? t("weeklySkipped") : t("weeklyComplete") : ""}</Text>
-    {error && <Pressable onPress={()=>setRevision(value=>value+1)}><Text style={{color:c.link}}>{t("Thử lại",{ns:"common"})}</Text></Pressable>}
-    <Pressable disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(false)} style={{padding:14,backgroundColor:c.elevated,borderRadius:paperShape.button}}><Text style={{color:c.text}}>{t("weeklySave")}</Text></Pressable>
-    <Pressable disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(true)}><Text style={{color:c.link}}>{t("weeklySkip")}</Text></Pressable>
+    {error && <Pressable accessibilityRole="button" onPress={()=>setRevision(value=>value+1)} style={{minHeight:48,justifyContent:"center",alignItems:"center",paddingVertical:10,paddingHorizontal:16}}><Text style={{color:c.link,flexShrink:1,textAlign:"center"}}>{t("Thử lại",{ns:"common"})}</Text></Pressable>}
+    <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(false)} style={{minHeight:48,justifyContent:"center",alignItems:"center",paddingVertical:12,paddingHorizontal:16,backgroundColor:c.elevated,borderWidth:1,borderColor:c.border,borderRadius:paperShape.button}}><Text style={{color:c.text,fontWeight:"600",flexShrink:1,textAlign:"center"}}>{t("weeklySave")}</Text></Pressable>
+    <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(true)} style={{minHeight:48,justifyContent:"center",alignItems:"center",paddingVertical:10,paddingHorizontal:16}}><Text style={{color:c.link,flexShrink:1,textAlign:"center"}}>{t("weeklySkip")}</Text></Pressable>
   </View>;
 }

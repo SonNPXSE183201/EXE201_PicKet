@@ -182,9 +182,9 @@ function LearningSession({ owner }: { owner: string }) {
     return <View style={{ flex: 1, backgroundColor: c.canvas }}>
       <LessonPlayer key={`${lesson.lessonId}:${reviewOffset ?? "lesson"}`} lesson={lesson} initialAnswers={answers} busy={saving}
         onAnswersChange={changeAnswers} onExit={closeLesson} onFinish={final => void finish(final)} />
-      {storageError ? <View style={{ position: "absolute", left: 16, right: 16, top: 72, gap: 8, padding: 12, borderRadius: paperShape.card, backgroundColor: c.dangerSurface }}>
+      {storageError ? <View style={{ position: "absolute", left: 16, right: 16, top: 72, gap: 8, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: paperShape.card, backgroundColor: c.dangerSurface }}>
         <Text accessibilityRole="alert" style={{ color: c.danger }}>{t("storageError")}</Text>
-        <Pressable accessibilityRole="button" disabled={saving} onPress={() => void retryStorage()} style={{ minHeight: 48, justifyContent: "center" }}><Text style={{ color: c.link, fontWeight: "700" }}>{t("retryStorage")}</Text></Pressable>
+        <Pressable accessibilityRole="button" disabled={saving} onPress={() => void retryStorage()} style={{ minHeight: 48, justifyContent: "center" }}><Text style={{ color: c.link, fontWeight: "700", flexShrink: 1 }}>{t("retryStorage")}</Text></Pressable>
       </View> : null}
     </View>;
   }
@@ -193,20 +193,20 @@ function LearningSession({ owner }: { owner: string }) {
     <Text style={{ color: c.muted, fontSize: 12, fontWeight: "600", lineHeight: 18 }}>{t("intro")}</Text>
     {storageError ? <View style={{ gap: 8 }}>
       <Text accessibilityRole="alert" style={{ color: c.danger }}>{t("storageError")}</Text>
-      <Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={()=>void retryStorage()} style={{minHeight:48,padding:14,borderRadius:paperShape.button,backgroundColor:c.surface}}><Text style={{color:c.link}}>{t("retryStorage")}</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={()=>void retryStorage()} style={{minHeight:48,justifyContent:"center",paddingVertical:12,paddingHorizontal:16,borderWidth:1,borderColor:c.border,borderRadius:paperShape.button,backgroundColor:c.surface}}><Text style={{color:c.link,flexShrink:1}}>{t("retryStorage")}</Text></Pressable>
     </View> : !progress ? <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{t("loading")}</Text> : null}
     <TodayLessonCard lesson={today} number={today ? order.indexOf(today.lessonId) + 1 : 0} stage={pack.stages.find(row => row.stageId === today?.stageId)}
       state={today ? states.get(today.lessonId) ?? "current" : "done"} done={completedIds.size} total={lessons.length} disabled={blocked}
       onStart={() => { if (today) openLesson(today); }} />
     {reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:20,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=>{
       const target = lessons.find(item=>item.lessonId===review.lessonId);
-      return <Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" disabled={blocked || !target} accessibilityState={{disabled:blocked || !target}} onPress={()=>{if(target)openLesson(target,review.offset);}} style={{minHeight:48,padding:16,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link}}>{t("reviewOpen")} · {target?.title} · {review.dueDay}</Text></Pressable>;
+      return <Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" disabled={blocked || !target} accessibilityState={{disabled:blocked || !target}} onPress={()=>{if(target)openLesson(target,review.offset);}} style={{minHeight:48,justifyContent:"center",paddingVertical:12,paddingHorizontal:16,borderWidth:1,borderColor:c.border,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link,flexShrink:1}}>{t("reviewOpen")} · {target?.title} · {review.dueDay}</Text></Pressable>;
     })}</View>}
     <LessonPath stages={pack.stages} lessons={lessons} states={states} disabled={blocked} onOpen={row => openLesson(row)} />
     {progress && <LearningAchievements owner={owner} progress={progress}/>}
     <WeeklyPractice owner={owner} />
     <LearningAiCard />
     <AssessmentDraftCard key={owner} owner={owner} />
-    {!localMode&&session&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true"&&<Pressable accessibilityRole="button" onPress={()=>router.push("/weekly-story-preview")} style={{minHeight:48,padding:16,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link}}>{t("storyTitle",{ns:"cashflow"})}</Text></Pressable>}
+    {!localMode&&session&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true"&&<Pressable accessibilityRole="button" onPress={()=>router.push("/weekly-story-preview")} style={{minHeight:48,justifyContent:"center",paddingVertical:12,paddingHorizontal:16,borderWidth:1,borderColor:c.border,backgroundColor:c.surface,borderRadius:paperShape.button}}><Text style={{color:c.link,flexShrink:1}}>{t("storyTitle",{ns:"cashflow"})}</Text></Pressable>}
   </ScrollView></SafeAreaView>;
 }
