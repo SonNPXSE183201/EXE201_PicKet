@@ -22,6 +22,11 @@ export function Icon({ name }: { name: string }) {
     eyeOff: "m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a16 16 0 0 1-4 4.9M6.2 6.2C3.5 8.1 2 12 2 12s3.6 7 10 7c1.2 0 2.3-.2 3.3-.6",
     arrowLeft: "M19 12H5m7 7-7-7 7-7",
     arrowRight: "M5 12h14m-7-7 7 7-7 7",
+    book: "M4 4h6a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H4ZM20 4h-6a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h7Z",
+    check: "m5 12 5 5 9-10",
+    minus: "M5 12h14",
+    plus: "M12 5v14M5 12h14",
+    lock: "M6 11h12v10H6Zm2 0V8a4 4 0 0 1 8 0v3",
   };
   return (
     <svg

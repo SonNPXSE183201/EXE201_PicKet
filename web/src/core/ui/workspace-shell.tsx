@@ -12,6 +12,9 @@ import type { AdminNotice } from "@/features/admin/components/admin-notification
 
 type UserLink = readonly [href: string, label: string, icon: string];
 
+// Same gate as the mobile app: on in development, opt-in for production builds.
+const learningEnabled = process.env.NEXT_PUBLIC_LEARNING_ENABLED === "true" || process.env.NODE_ENV !== "production";
+
 const overviewLink: UserLink = ["/dashboard", "Tổng quan", "home"];
 const userGroups: { title: string; links: UserLink[] }[] = [
   {
@@ -33,6 +36,7 @@ const userGroups: { title: string; links: UserLink[] }[] = [
     ],
   },
   { title: "BÁO CÁO", links: [["/insights", "Thống kê", "chart"]] },
+  ...(learningEnabled ? [{ title: "HỌC TẬP", links: [["/learning", "Học tài chính", "book"] as UserLink] }] : []),
   { title: "TÀI KHOẢN", links: [["/profile", "Cài đặt", "person"]] },
 ];
 
