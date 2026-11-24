@@ -63,7 +63,7 @@ export function HomeForecastCard() {
           <Chip tone={status.kind === "ok" ? "success" : "warning"} label={statusText} style={styles.status} />
         </View>
         <View style={styles.amountRow}>
-          <Text style={[styles.amount, { flexShrink: 1 }, forecast.expected < 0 && { color: c.expense }]}>{money(forecast.expected)}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.amount, { flex: 1 }, forecast.expected < 0 && { color: c.expense }]}>{money(forecast.expected)}</Text>
           <Image accessible={false} source={paperAssets.moneyBloomScene} style={styles.art} resizeMode="contain" />
         </View>
         {forecast.monthsUsed > 1 && forecast.low !== forecast.high && (
@@ -79,14 +79,14 @@ export function HomeForecastCard() {
 const createStyles = (c: MobileThemeColors) => StyleSheet.create({
   section: { gap: 12 },
   card: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 24, padding: 16, gap: 10, minHeight: 44 },
-  headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  overline: { flex: 1, color: c.primary, fontSize: 11, lineHeight: 16, fontWeight: "800", letterSpacing: 0.4 },
-  status: { flexShrink: 1, maxWidth: "60%" },
+  headRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  overline: { flexGrow: 1, flexShrink: 1, flexBasis: 120, color: c.primary, fontSize: 11, lineHeight: 16, fontWeight: "800", letterSpacing: 0.4 },
+  status: { flexShrink: 1, maxWidth: "100%" },
   amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   amount: { color: c.text, fontSize: 28, lineHeight: 36, fontWeight: "800", fontVariant: ["tabular-nums"] },
   caption: { color: c.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
   link: { color: c.link, fontSize: 14, lineHeight: 20, fontWeight: "700", textAlign: "center", paddingVertical: 12 },
-  empty: { borderWidth: 1, borderStyle: "dashed", borderColor: c.controlBorder, borderRadius: 24, padding: 12, gap: 10 },
+  empty: { borderWidth: 1, borderStyle: "dashed", borderColor: c.controlBorder, borderRadius: 24, padding: 16, gap: 10 },
   emptyRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   art: { width: 64, height: 64 },
   track: { height: 8, borderRadius: 4, backgroundColor: c.selectedSurface, overflow: "hidden" },

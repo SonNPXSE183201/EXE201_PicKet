@@ -62,7 +62,7 @@ export default function ForecastScreen() {
           <Text style={styles.overline}>{t("expectedEnd", { day: date(shown.endDay) }).toUpperCase()}</Text>
           <Chip tone={s.kind === "ok" ? "success" : "warning"} label={s.kind === "ok" ? t("onTrack") : t(s.kind === "negative" ? "negativeDay" : "riskDay", { day: date(s.day) })} style={styles.status} />
         </View>
-        <Text accessibilityRole="header" style={[styles.big, shown.expected < 0 && { color: c.expense }]}>{money(shown.expected)}</Text>
+        <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit style={[styles.big, shown.expected < 0 && { color: c.expense }]}>{money(shown.expected)}</Text>
         {shown.monthsUsed > 1 && shown.low !== shown.high && <Text style={styles.caption}>{t("range", { low: money(shown.low), high: money(shown.high) })}</Text>}
         {hidden ? <Text style={styles.caption}>{t("hidden")}</Text> : (
           <ForecastChart path={shown.path} height={132} label={t("chartLabel")} todayLabel={t("today")} legend={{ forecast: t("legendForecast"), range: t("legendRange") }} dayLabel={point => t("chartDay", { day: date(point.day), amount: money(point.expected) })} />
@@ -97,7 +97,7 @@ export default function ForecastScreen() {
           <TextInput money accessibilityLabel={t("scenarioAmount")} placeholder={t("scenarioAmount")} placeholderTextColor={c.muted} keyboardType="number-pad" value={amountText} onChangeText={setAmountText} style={styles.input} />
           {what && whatStatus && <>
             <Text style={[styles.label, what.expected < 0 && { color: c.expense }]}>{t("scenarioResult", { amount: money(what.expected) })}</Text>
-            {whatStatus.kind !== "ok" && <Chip tone="warning" label={t(whatStatus.kind === "negative" ? "negativeDay" : "riskDay", { day: date(whatStatus.day) })} />}
+            {whatStatus.kind !== "ok" && <Chip tone="warning" style={styles.status} label={t(whatStatus.kind === "negative" ? "negativeDay" : "riskDay", { day: date(whatStatus.day) })} />}
             <Pressable accessibilityRole="button" onPress={() => setAmountText("")} style={styles.linkButton}><Text style={styles.link}>{t("scenarioClear")}</Text></Pressable>
           </>}
         </> : <>
@@ -123,7 +123,7 @@ export default function ForecastScreen() {
 }
 
 function Tile({ styles, label, value, tone, note }: { styles: ReturnType<typeof createStyles>; label: string; value: string; tone?: string; note?: string }) {
-  return <View style={styles.tile}><Text style={styles.caption}>{label}</Text><Text style={[styles.tileValue, tone ? { color: tone } : null]}>{value}</Text>{note ? <Text style={styles.caption}>{note}</Text> : null}</View>;
+  return <View style={styles.tile}><Text style={styles.caption}>{label}</Text><Text numberOfLines={1} adjustsFontSizeToFit style={[styles.tileValue, tone ? { color: tone } : null]}>{value}</Text>{note ? <Text style={styles.caption}>{note}</Text> : null}</View>;
 }
 
 function Line({ styles, label, value, tone }: { styles: ReturnType<typeof createStyles>; label: string; value: string; tone?: string }) {
@@ -134,23 +134,23 @@ const createStyles = (c: MobileThemeColors) => StyleSheet.create({
   stack: { gap: 16, marginTop: 16 },
   card: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 24, padding: 16, gap: 10 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  overline: { flex: 1, color: c.primary, fontSize: 11, lineHeight: 16, fontWeight: "800", letterSpacing: 0.4 },
-  status: { flexShrink: 1, maxWidth: "60%" },
+  headRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  overline: { flexGrow: 1, flexShrink: 1, flexBasis: 120, color: c.primary, fontSize: 11, lineHeight: 16, fontWeight: "800", letterSpacing: 0.4 },
+  status: { flexShrink: 1, maxWidth: "100%" },
   art: { width: 96, height: 96, alignSelf: "center" },
   tiles: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  tile: { flexBasis: "47%", flexGrow: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 20, padding: 14, gap: 4 },
+  tile: { flexBasis: "47%", flexGrow: 1, flexShrink: 1, minWidth: 0, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 24, padding: 16, gap: 4 },
   tileValue: { color: c.text, fontSize: 16, lineHeight: 22, fontWeight: "800", fontVariant: ["tabular-nums"] },
   track: { height: 8, borderRadius: 4, backgroundColor: c.selectedSurface, overflow: "hidden" },
   fill: { height: 8, borderRadius: 4, backgroundColor: c.primary },
-  linkButton: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center" },
+  linkButton: { alignSelf: "flex-start", maxWidth: "100%", minWidth: 44, minHeight: 44, justifyContent: "center" },
   big: { color: c.text, fontSize: 30, lineHeight: 38, fontWeight: "800", fontVariant: ["tabular-nums"] },
   heading: { color: c.text, fontSize: 16, lineHeight: 22, fontWeight: "700" },
   label: { color: c.text, fontSize: 14, lineHeight: 20, fontWeight: "700" },
   caption: { color: c.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
   link: { color: c.link, fontSize: 13, fontWeight: "700" },
-  line: { flexDirection: "row", justifyContent: "space-between", gap: 12 },
-  lineLabel: { color: c.muted, fontSize: 13, flex: 1 },
-  lineValue: { color: c.text, fontSize: 14, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  line: { flexDirection: "row", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
+  lineLabel: { color: c.muted, fontSize: 13, flexGrow: 1, flexShrink: 1 },
+  lineValue: { color: c.text, fontSize: 14, flexShrink: 1, textAlign: "right", fontWeight: "700", fontVariant: ["tabular-nums"] },
   input: { borderWidth: 1, borderColor: c.controlBorder, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, minHeight: 48, color: c.text, fontSize: 16 },
 });

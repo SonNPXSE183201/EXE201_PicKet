@@ -33,8 +33,8 @@ export function ForecastChart({ path }: { path: Ready["path"] }) {
 
 export function ForecastStatusChip({ forecast }: { forecast: Ready }) {
   const status = forecastStatus(forecast);
-  if (status.kind === "ok") return <span className="fc-chip fc-chip-ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>Đúng hướng</span>;
-  return <span className="fc-chip fc-chip-warn">{status.kind === "negative" ? "Dự kiến âm tiền từ " : "Có thể thiếu tiền từ "}{shortDay(status.day)}</span>;
+  if (status.kind === "ok") return <span className="fc-chip fc-chip-ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>Đủ tiền đến cuối tháng</span>;
+  return <span className="fc-chip fc-chip-warn">{status.kind === "negative" ? "Dự báo số dư âm từ " : "Có thể thiếu tiền từ "}{shortDay(status.day)}</span>;
 }
 
 /** Full forecast page: summary, chart, key numbers, spending pace and the PRO "if I buy" scenario. */
@@ -88,9 +88,9 @@ export function ForecastDetail({ forecast, scenarioAllowed, currency }: { foreca
       <div className="fc-col">
         <div className="fc-tiles">
           <div className="fc-tile"><small>Số dư hiện tại</small><b><BalanceAmount value={fmt(forecast.balanceNow)} /></b><small>{shortDay(forecast.today)}</small></div>
-          <div className="fc-tile"><small>Điểm thấp nhất</small><b className={forecast.lowest.expected < 0 ? "fc-neg" : undefined}><BalanceAmount value={fmt(forecast.lowest.expected)} /></b><small>dự kiến {shortDay(forecast.lowest.day)}</small></div>
-          <div className="fc-tile"><small>Thu còn lại dự kiến</small><b className="fc-pos">+<BalanceAmount value={fmt(forecast.remainingIncome)} /></b><small>theo nhịp thường lệ</small></div>
-          <div className="fc-tile"><small>Chi còn lại dự kiến</small><b className="fc-neg">−<BalanceAmount value={fmt(forecast.remainingExpense)} /></b><small>theo nhịp thường lệ</small></div>
+          <div className="fc-tile"><small>Số dư thấp nhất</small><b className={forecast.lowest.expected < 0 ? "fc-neg" : undefined}><BalanceAmount value={fmt(forecast.lowest.expected)} /></b><small>dự kiến {shortDay(forecast.lowest.day)}</small></div>
+          <div className="fc-tile"><small>Thu nhập dự kiến còn lại</small><b className="fc-pos">+<BalanceAmount value={fmt(forecast.remainingIncome)} /></b><small>theo nhịp thường lệ</small></div>
+          <div className="fc-tile"><small>Chi tiêu dự kiến còn lại</small><b className="fc-neg">−<BalanceAmount value={fmt(forecast.remainingExpense)} /></b><small>theo nhịp thường lệ</small></div>
         </div>
         <section className="fc-card" aria-labelledby="fc-if">
           <div className="fc-head"><h2 id="fc-if">Nếu tôi mua…?</h2><span className="fc-chip fc-chip-pro">PRO</span></div>
@@ -103,9 +103,9 @@ export function ForecastDetail({ forecast, scenarioAllowed, currency }: { foreca
               <button className="button primary" type="submit" disabled={!parsed}>Tính thử</button>
               {what && whatStatus && (
                 <div className={`fc-result${what.expected < 0 ? " fc-result-neg" : ""}`} role="status">
-                  <small>{name.trim() ? `Cuối tháng còn nếu mua “${name.trim()}”` : "Cuối tháng còn"}</small>
+                  <small>{name.trim() ? `Số dư cuối tháng nếu mua “${name.trim()}”` : "Số dư cuối tháng"}</small>
                   <b><BalanceAmount value={fmt(what.expected)} /></b>
-                  {whatStatus.kind !== "ok" && <span>{whatStatus.kind === "negative" ? `Bạn sẽ chạm số dư âm vào ${shortDay(whatStatus.day)} nếu mua hôm nay.` : `Có thể thiếu tiền từ ${shortDay(whatStatus.day)}.`}</span>}
+                  {whatStatus.kind !== "ok" && <span>{whatStatus.kind === "negative" ? `Dự báo số dư âm từ ${shortDay(whatStatus.day)} nếu mua hôm nay.` : `Có thể thiếu tiền từ ${shortDay(whatStatus.day)}.`}</span>}
                 </div>
               )}
             </form>

@@ -15,7 +15,7 @@ export function ForecastSettingsCard(p: ViewProps) {
   const s = f.settings;
   return (
     <Card receipt eyebrow="Dự báo tài chính" title="Dự báo số dư cuối tháng" actions={<Chip tone="outline">Phiên bản v{formatNumber(s.revision)}</Chip>}>
-      <div className="av-card-body">
+      <div className="av-card-body fs-settings">
         <p className="ap-card-note">
           Ứng dụng tự tính dự báo trên thiết bị từ ghi chép của người dùng (so sánh cùng khoảng ngày ở các tháng trước), không gửi giao dịch lên máy chủ.
           Cấu hình có hiệu lực trong khoảng 1 phút. Cần quyền <b>Cấu hình dự báo tài chính</b> và xác thực MFA.
@@ -31,12 +31,12 @@ export function ForecastSettingsCard(p: ViewProps) {
             <input type="hidden" name="revision" value={s.revision} />
             <div className="fs-toggle">
               <label className="fs-toggle-row">
-                <span><b>Bật tính năng dự báo</b><small>Tắt sẽ ẩn thẻ dự báo ở Home và màn chi tiết cho mọi người dùng.</small></span>
+                <span><b>Bật tính năng dự báo</b><small>Tắt sẽ ẩn thẻ dự báo ở trang chủ và màn hình chi tiết cho mọi người dùng.</small></span>
                 <span className="ap-switch"><input type="checkbox" name="enabled" defaultChecked={s.enabled} /><span /></span>
               </label>
             </div>
             <ForecastStepper name="minHistoryDays" label="Số ngày lịch sử tối thiểu" min={1} max={90} defaultValue={s.minHistoryDays} unit="ngày" hint="Từ 1 đến 90 ngày" />
-            <ForecastStepper name="lookbackMonths" label="Số tháng nhìn lại" min={1} max={6} defaultValue={s.lookbackMonths} unit="tháng" hint="Từ 1 đến 6 tháng" />
+            <ForecastStepper name="lookbackMonths" label="Số tháng dùng để so sánh" min={1} max={6} defaultValue={s.lookbackMonths} unit="tháng" hint="Từ 1 đến 6 tháng" />
             <fieldset className="fs-plans">
               <legend className="fs-label">Gói được dùng kịch bản &quot;Nếu tôi mua...&quot;</legend>
               <div className="fs-chips">

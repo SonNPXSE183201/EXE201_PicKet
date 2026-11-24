@@ -4,7 +4,7 @@ export const forecastVi = {
   range: "Khoảng {{low}} – {{high}}",
   onTrack: "Đủ tiền đến cuối tháng",
   riskDay: "Có thể thiếu tiền từ {{day}}",
-  negativeDay: "Dự kiến âm tiền từ {{day}}",
+  negativeDay: "Dự báo số dư âm từ {{day}}",
   needMore: "Cần thêm dữ liệu để dự báo",
   needMoreBody: "Ghi chép thêm {{count}} ngày nữa (đã có {{have}}/{{need}} ngày trong 90 ngày qua) để PicKet dự báo số dư cuối tháng.",
   needMonth: "PicKet cần ít nhất một tháng trước có ghi chép để so sánh. Hãy tiếp tục ghi chép, dự báo sẽ tự xuất hiện.",
@@ -25,7 +25,7 @@ export const forecastVi = {
   lowConfidence: "Mới có 1 tháng để so sánh nên dự báo chưa chắc chắn.",
   chartLabel: "Số dư dự kiến theo ngày",
   chartDay: "Ngày {{day}}: {{amount}}",
-  scenarioTitle: "Nếu tôi mua một khoản hôm nay",
+  scenarioTitle: "Nếu tôi mua hôm nay",
   scenarioHint: "Nhập số tiền để xem số dư cuối tháng thay đổi thế nào.",
   scenarioAmount: "Số tiền dự định chi",
   scenarioResult: "Sau khi mua, cuối tháng còn khoảng {{amount}}.",
@@ -46,9 +46,9 @@ export const forecastVi = {
   spendingTitle: "So với thường lệ",
   spentToDay: "Đã chi đến nay",
   typicalToDay: "Thường lệ cùng thời điểm",
-  lowestLabel: "Điểm thấp nhất",
-  incomeLeft: "Thu còn lại dự kiến",
-  expenseLeft: "Chi còn lại dự kiến",
+  lowestLabel: "Số dư thấp nhất",
+  incomeLeft: "Thu nhập dự kiến còn lại",
+  expenseLeft: "Chi tiêu dự kiến còn lại",
 } as const;
 
 export const forecastEn: Record<keyof typeof forecastVi, string> = {
@@ -99,7 +99,7 @@ export const forecastEn: Record<keyof typeof forecastVi, string> = {
   spendingTitle: "Compared with usual",
   spentToDay: "Spent so far",
   typicalToDay: "Usual by this day",
-  lowestLabel: "Lowest point",
+  lowestLabel: "Lowest balance",
   incomeLeft: "Income left (expected)",
   expenseLeft: "Spending left (expected)",
 };
