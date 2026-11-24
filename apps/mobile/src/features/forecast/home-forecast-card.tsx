@@ -1,15 +1,15 @@
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { AppIcon } from "@/core/ui/app-icon";
 import { Chip, SectionHeader, Skeleton } from "@/core/ui/figma-ui";
 import { formatCalendarDate, formatMoney } from "@/core/i18n/formatters";
 import { routes } from "@/core/navigation/routes";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
+import { paperAssets } from "@/core/theme/paper-assets";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { ForecastChart } from "./forecast-chart";
 import { forecastStatus } from "@picket/domain";
@@ -39,7 +39,7 @@ export function HomeForecastCard() {
         <SectionHeader overline={t("overline")} title={t("needMore")} />
         <View style={styles.empty}>
           <View style={styles.emptyRow}>
-            <View style={styles.spark}><AppIcon name="chart-timeline-variant" size={22} color={c.primary} /></View>
+            <Image accessible={false} source={paperAssets.rhythmEmptyScene} style={styles.art} resizeMode="contain" />
             <Text style={[styles.caption, { flex: 1 }]}>
               {missing > 0 ? t("needMoreBody", { count: missing, have: forecast.historyDays, need: forecast.neededDays }) : t("needMonth")}
             </Text>
@@ -62,7 +62,10 @@ export function HomeForecastCard() {
           <Text style={styles.overline}>{t("expectedEnd", { day: formatCalendarDate(forecast.endDay, language) }).toUpperCase()}</Text>
           <Chip tone={status.kind === "ok" ? "success" : "warning"} label={statusText} style={styles.status} />
         </View>
-        <Text style={[styles.amount, forecast.expected < 0 && { color: c.expense }]}>{money(forecast.expected)}</Text>
+        <View style={styles.amountRow}>
+          <Text style={[styles.amount, { flexShrink: 1 }, forecast.expected < 0 && { color: c.expense }]}>{money(forecast.expected)}</Text>
+          <Image accessible={false} source={paperAssets.moneyBloomScene} style={styles.art} resizeMode="contain" />
+        </View>
         {forecast.monthsUsed > 1 && forecast.low !== forecast.high && (
           <Text style={styles.caption}>{t("range", { low: money(forecast.low), high: money(forecast.high) })}</Text>
         )}
@@ -79,12 +82,13 @@ const createStyles = (c: MobileThemeColors) => StyleSheet.create({
   headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   overline: { flex: 1, color: c.primary, fontSize: 11, lineHeight: 16, fontWeight: "800", letterSpacing: 0.4 },
   status: { flexShrink: 1, maxWidth: "60%" },
+  amountRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   amount: { color: c.text, fontSize: 28, lineHeight: 36, fontWeight: "800", fontVariant: ["tabular-nums"] },
   caption: { color: c.muted, fontSize: 12, lineHeight: 18, fontWeight: "600" },
   link: { color: c.link, fontSize: 14, lineHeight: 20, fontWeight: "700", textAlign: "center", paddingVertical: 12 },
   empty: { borderWidth: 1, borderStyle: "dashed", borderColor: c.controlBorder, borderRadius: 24, padding: 12, gap: 10 },
   emptyRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  spark: { width: 40, height: 40, backgroundColor: c.pocketCoral, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  art: { width: 64, height: 64 },
   track: { height: 8, borderRadius: 4, backgroundColor: c.selectedSurface, overflow: "hidden" },
   fill: { height: 8, borderRadius: 4, backgroundColor: c.primary },
 });

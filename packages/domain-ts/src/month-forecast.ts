@@ -220,3 +220,28 @@ export function spendingPace(forecast: Extract<MonthForecast, { status: "ready" 
   if (forecast.typicalSpentSoFar <= 0) return null;
   return Math.round(((forecast.spentSoFar - forecast.typicalSpentSoFar) / forecast.typicalSpentSoFar) * 100);
 }
+
+/**
+ * The "what if I buy this today" view of an existing forecast. A purchase lowers every day of the
+ * path by the same amount, so a client holding a ready forecast can show it without the raw records
+ * (identical to calling `forecastMonthEnd` with `purchase`).
+ */
+export function applyPurchase(forecast: Extract<MonthForecast, { status: "ready" }>, purchase: number): Extract<MonthForecast, { status: "ready" }> {
+  if (!Number.isSafeInteger(purchase) || purchase < 0 || purchase > maxMoney) throw new Error("Invalid purchase");
+  const delta = purchase - forecast.purchase;
+  const path = forecast.path.map(point => ({ day: point.day, expected: checkMoney(point.expected - delta), low: checkMoney(point.low - delta), high: checkMoney(point.high - delta) }));
+  const end = path[path.length - 1];
+  return {
+    ...forecast,
+    balanceNow: forecast.balanceNow,
+    endDay: end.day,
+    expected: end.expected,
+    low: end.low,
+    high: end.high,
+    path,
+    lowest: path.reduce((min, point) => (point.expected < min.expected ? point : min), path[0]),
+    negativeDay: path.find(point => point.expected < 0)?.day ?? null,
+    riskDay: path.find(point => point.low < 0)?.day ?? null,
+    purchase,
+  };
+}

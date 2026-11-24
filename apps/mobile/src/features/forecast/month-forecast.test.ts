@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { forecastMonthEnd, median, spendingPace, type ForecastInput } from "@picket/domain";
+import { applyPurchase, forecastMonthEnd, median, spendingPace, type ForecastInput } from "@picket/domain";
 
 const wallet = { id: "w1", currencyCode: "VND", openingBalance: 0, archived: false, deletedAt: null };
 let seq = 0;
@@ -126,4 +126,15 @@ test("invalid scope and malformed records are rejected", () => {
   assert.throws(() => forecastMonthEnd(base({ purchase: -1 })));
   assert.throws(() => forecastMonthEnd(base({ transactions: [entry("expense", 1.5, at("2026-11-01"))] })));
   assert.throws(() => forecastMonthEnd(base({ transactions: [entry("gift", 1, at("2026-11-01"))] })));
+});
+
+test("applyPurchase matches running the engine with a purchase", () => {
+  const plain = forecastMonthEnd(base());
+  const direct = forecastMonthEnd(base({ purchase: 3_000_000 }));
+  assert.equal(plain.status, "ready");
+  assert.equal(direct.status, "ready");
+  if (plain.status !== "ready") return;
+  assert.deepEqual(applyPurchase(plain, 3_000_000), direct);
+  assert.deepEqual(applyPurchase(applyPurchase(plain, 3_000_000), 0), plain);
+  assert.throws(() => applyPurchase(plain, -1));
 });

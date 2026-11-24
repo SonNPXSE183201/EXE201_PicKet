@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Redirect, router } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 import { PicketText as Text } from "@/core/ui/picket-text";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -13,6 +13,7 @@ import { routes } from "@/core/navigation/routes";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { useAuth } from "@/features/auth/auth-context";
+import { paperAssets } from "@/core/theme/paper-assets";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { ForecastChart } from "@/features/forecast/forecast-chart";
 import { forecastStatus, parseScenarioAmount, spendingPace } from "@picket/domain";
@@ -39,6 +40,7 @@ export default function ForecastScreen() {
     const ratio = Math.min(1, forecast.neededDays > 0 ? forecast.historyDays / forecast.neededDays : 0);
     body = (
       <View style={styles.card}>
+        <Image accessible={false} source={paperAssets.rhythmEmptyScene} style={styles.art} resizeMode="contain" />
         <Text accessibilityRole="header" style={styles.heading}>{t("needMore")}</Text>
         <Text style={styles.caption}>{missing > 0 ? t("needMoreBody", { count: missing, have: forecast.historyDays, need: forecast.neededDays }) : t("needMonth")}</Text>
         <View accessible accessibilityRole="progressbar" accessibilityLabel={t("progress", { have: forecast.historyDays, need: forecast.neededDays })} accessibilityValue={{ min: 0, max: forecast.neededDays, now: Math.min(forecast.historyDays, forecast.neededDays) }} style={styles.track}>
@@ -135,6 +137,7 @@ const createStyles = (c: MobileThemeColors) => StyleSheet.create({
   headRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   overline: { flex: 1, color: c.primary, fontSize: 11, lineHeight: 16, fontWeight: "800", letterSpacing: 0.4 },
   status: { flexShrink: 1, maxWidth: "60%" },
+  art: { width: 96, height: 96, alignSelf: "center" },
   tiles: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   tile: { flexBasis: "47%", flexGrow: 1, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 20, padding: 14, gap: 4 },
   tileValue: { color: c.text, fontSize: 16, lineHeight: 22, fontWeight: "800", fontVariant: ["tabular-nums"] },
